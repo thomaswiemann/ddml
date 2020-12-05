@@ -1,0 +1,24 @@
+Package: ddml
+Title: An implementation of LIE-conform Double/Debiased Machine Learning
+Version: 0.1.0
+Date: 2020-12-01
+Authors@R: c(
+    person("Christian", "Hansen", role = "aut"),
+    person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
+Description: An implementation of LIE-conform Double/Debiased Machine Learning.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    MASS,
+    Matrix,
+    randomForest,
+    grf,
+    xgboost,
+    glmnet
+Suggest:
+    testthat,
+    parallel,
+    doParallel,
+    foreach
+RoxygenNote: 7.1.1

@@ -1,0 +1,19 @@
+#' ddml: An implementation of LIE-conform Double/Debiased Machine Learning
+#'
+#' The ddml package provides three categories of functions: 1) constructor
+#' functions for predictive models with prefix "\code{mdl_}", 2) functions for
+#' ensemble training with prefix "\code{ens_}", and 3) constructor functions for
+#' LIE-conform DDML estimators with prefix "\code{ddml_}".
+#'
+#' @section \code{mdl_} functions:
+#' The \code{mdl_} functions
+#'
+#' @section \code{ens_} functions:
+#' The \code{ens_} functions
+#'
+#' @section \code{ddml_} functions:
+#' The \code{ddml_} functions
+#'
+#' @docType package
+#' @name ddml
+NULL
