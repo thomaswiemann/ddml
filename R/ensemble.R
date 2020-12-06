@@ -52,12 +52,6 @@
 #'     selected at least one instrument. }
 #' }
 #'
-#' @section To do:
-#' \itemize{
-#' \item{Model objects typically replicate the data. This is very inefficient
-#'     regarding memory allocation. Needs a fix.}
-#' }
-#'
 #' @examples
 #' # Add example here.
 #'
@@ -202,15 +196,6 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
 #' \item{\code{weights}}{A matrix where each column gives the ensemble weights
 #'     for the corresponding ensemble as specified in \code{type}.}
 #' \item{\code{cv_res}}{Passed output from \code{\link{crossval}}.}
-#' }
-#'
-#' @section To do:
-#' \itemize{
-#' \item{Contemplate whether models should be exluced if they don't select IVs
-#'     in the crosvalidation procedure.}
-#' \item{Potential problems arise if one or less models are considered for
-#'     for the ensemble computation. Needs input and post-crossvalidation
-#'     check.}
 #' }
 #'
 #' @examples

@@ -1,6 +1,7 @@
 #' Compute (generalized) inverse of a square matrix.
 #'
 #' @param X A square matrix.
+#'
 csolve <- function(X) {
   # Attmept inversion
   X_inv <- tryCatch(solve(X), error = function(e) NA)
@@ -17,6 +18,7 @@ csolve <- function(X) {
 #'
 #' @param X A matrix.
 #' @param dof_adjust A number for degree of freedom correction.
+#'
 ccov <- function(X, dof_adjust = 1) {
   # Data parameters
   nrow_X <- nrow(X)
@@ -38,6 +40,7 @@ ccov <- function(X, dof_adjust = 1) {
 #'
 #' @param X A matrix.
 #' @param y An optional vector.
+#'
 ccor <- function(X, y = NULL) {
   # When y is specifed
   if (!is.null(y)) {

@@ -107,7 +107,7 @@ rlasso <- function(y, X,
 #'
 #' Predict method for rlasso fits.
 #'
-#' To do: prediction does not work for partialled out controls and needs a fix.
+#' @export predict.rlasso
 predict.rlasso <- function(obj, newdata = NULL,
                           post = TRUE){
   # Get coefficients and data from lasso.fit

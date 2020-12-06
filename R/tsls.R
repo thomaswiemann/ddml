@@ -67,8 +67,6 @@ predict.tsls <- function(obj, newdata = NULL) {
 #'
 #' Inference for tsls fits.
 #'
-#' To do: implement additional HC and HAC types, including clustered se.
-#'
 #' @export summary.tsls
 summary.tsls <- function(obj, type = "const") {
   # Data parameters

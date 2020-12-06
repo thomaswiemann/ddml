@@ -2,13 +2,6 @@
 #'
 #' Compute out-of-sample residuals via cross-validation.
 #'
-#' To do: \itemize{
-#'     \item{Data assignment in \code{crossval_compute} is not  efficient and
-#'         needs a fix. See the note in the source code.}
-#'     \item{Consider adding a boolean so that clusters are not termniated and
-#'         only initialized if none exist. Could substantially reduce overhead.}
-#' }
-#'
 #' @param y A response vector.
 #' @param X A feature matrix.
 #' @param Z An optional instrument matrix.
