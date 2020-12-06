@@ -250,7 +250,7 @@ rlasso_penalty <- function(y, X,
     } #IFELSE
 
     # Set penalty loadings to zero for those that are necessarily included
-    if (class(psi_k) != 'matrix') psi_k <- as.matrix(psi_k)
+    if (!("matrix" %in% class(psi_k))) psi_k <- as.matrix(psi_k)
     psi_k[include] <- 0
   }#FOR
 

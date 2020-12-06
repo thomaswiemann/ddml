@@ -109,7 +109,7 @@ mdl_randomForest <- function(y, X,
                              colsample_bytree = 0.6, subsample = 0.7,
                              replace = FALSE){
   # Compute randomForest
-  if(class(X)!='matrix') X <- as.matrix(X) # cannot take sparse matrix as input
+  if(!("matrix" %in% class(X))) X <- as.matrix(X) # cannot take sparse matrix as input
   mdl_fit <- randomForest::randomForest(X, y,
                                         ntree = ntree, nodesize = nodesize,
                                         maxnodes = maxnodes,
@@ -161,7 +161,7 @@ mdl_grf <- function(y, X,
                     min.node.size = 1,
                     honesty = TRUE){
   # Compute regression_forest
-  if(class(X)!='matrix') X <- as.matrix(X) # cannot take sparse matrix as input
+  if(!("matrix" %in% class(X))) X <- as.matrix(X) # cannot take sparse matrix as input
   mdl_fit <- grf::regression_forest(X, y,
                                     num.trees = num.trees,
                                     mtry = ceiling(colsample_bytree * ncol(X)),
