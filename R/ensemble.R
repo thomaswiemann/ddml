@@ -42,7 +42,7 @@
 #' An object of class "\code{ensemble}" is a list containig the following
 #'     components:
 #' \describe{
-#' \item{\code{mol_fits}}{A list containing the fitted model objects
+#' \item{\code{mdl_fits}}{A list containing the fitted model objects
 #'     corresponding to the estimators passed via \code{models}.}
 #' \item{\code{weights}}{A matrix where each column gives the ensemble weights
 #'     for the corresponding ensemble as specified in \code{type}.}

@@ -2,14 +2,14 @@
 % Please edit documentation in R/lsml.R
 \name{lsml}
 \alias{lsml}
-\title{Compute (weighted) least squares estimator.}
+\title{Compute an LS + ML estimator.}
 \usage{
 lsml(
-  response,
-  features,
+  y,
+  X,
   model,
-  args,
-  f_split = replicate(2, c(1:ncol(features)), F),
+  args = list(),
+  split_X = replicate(2, c(1:ncol(X)), F),
   max_iter = 10,
   eps = 1e-06,
   rnd_seed = sample(c(1:999999), 1),
@@ -21,32 +21,45 @@ lsml(
 
 \item{X}{A feature matrix.}
 
-\item{const}{A boolean indicating inclusion of a constant.}
+\item{model}{A constructor function for a nonlinear model.}
 
-\item{w}{An optional weights vector.}
+\item{args}{Arguments to be passed to \code{model}.}
+
+\item{split_X}{A list of two vectors of indices. The first contains the
+indices of variables in \code{X} that are used in the linear model. The
+second contains the indices of variables in \code{X} that are used in the
+nonlinear model.}
+
+\item{max_iter}{An upperbound on the number of iterations until convergence.}
+
+\item{eps}{The convergence criterion.}
+
+\item{rnd_seed}{A random seed number to fix inherit randomness in some ML
+procedures (e.g., varibale selection random forests) across iterations.}
+
+\item{silent}{A boolean indicating whether the iteration progress should be
+printed to the console.}
 }
 \value{
-\code{ols} returns an object of S3 class "\code{ols}".
+\code{lsml} returns an object of S3 class "\code{lsml}".
 
 The function \code{predict} computes fitted values for a trained model of
-    this class. The function \code{summary} computes the corresponding
-    standard errors, t-statistics, and p-values.
+    this class.
 
-An object of class "\code{ols}" is a list containig the following components:
+An object of class "\code{lsml}" is a list containig the following components:
 \describe{
-\item{\code{coef}}{A vector of least squares coefficients.}
+\item{\code{ls_fit}}{An object of class \code{ols}.}
+\item{\code{ml_fit}}{An object corresponding to the constructor function
+    passed via \code{model}.}
 \item{\code{y}}{A response vector.}
 \item{\code{X}}{A feature matrix.}
-\item{\code{const}}{A boolean indicating inclusion of a constant.}
-\item{\code{w}}{An optional weights vector.}
+\item{\code{split_X}}{Passthrough of the input under the same name.}
 }
 }
 \description{
-Compute (weighted) least squares estimator.
+Compute an LS + ML estimator.
 }
 \examples{
-X <- matrix(rnorm(100*3), 100, 3) # Simulate features
-y <- 1 + X \%*\% c(-1, 1, 0) + rnorm(100) # Simulate linear model
-ols(y, X, const = T) # Compute least squares fit
+# Add example here.
 
 }
