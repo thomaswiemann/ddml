@@ -23,10 +23,10 @@ ensemble(
 
 \item{Z}{An optional instrument matrix.}
 
-\item{type}{A string indicating he type of ensemble. Multiple types may be
+\item{type}{A string indicating the type of ensemble. Multiple types may be
 passed in form of a vector of strings.}
 
-\item{models}{A list of lists, each containing three named elements:
+\item{models}{A list of lists, each containing four named elements:
 \itemize{
     \item{\code{fun} The function used to trained the model. The
         function must be such that it predicts a named input \code{y}

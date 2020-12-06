@@ -5,9 +5,9 @@
 #' @param y A response vector.
 #' @param X A feature matrix.
 #' @param Z An optional instrument matrix.
-#' @param type A string indicating he type of ensemble. Multiple types may be
+#' @param type A string indicating the type of ensemble. Multiple types may be
 #'     passed in form of a vector of strings.
-#' @param models A list of lists, each containing three named elements:
+#' @param models A list of lists, each containing four named elements:
 #'     \itemize{
 #'         \item{\code{fun} The function used to trained the model. The
 #'             function must be such that it predicts a named input \code{y}
@@ -136,6 +136,7 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
   # Check for excluded models
   mdl_include <- which(rowSums(obj$weights) > 0)
   # Calculate fitted values for each model
+  first_fit <- T
   for (m in 1:nmodels) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
@@ -147,8 +148,9 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
                                                          newZ[, assign_Z]))
 
     # Initialize matrix of fitted values
-    if (m == 1) {
+    if (first_fit) {
       fitted_mat <- matrix(0, length(fitted), nmodels)
+      first_fit <- F
     }#IF
     fitted_mat[, m] <- fitted
   }#FOR
@@ -165,9 +167,9 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
 #' @param y A response vector.
 #' @param X A feature matrix.
 #' @param Z An optional instrument matrix.
-#' @param type A string indicating he type of ensemble. Multiple types may be
+#' @param type A string indicating the type of ensemble. Multiple types may be
 #'     passed in form of a vector of strings.
-#' @param models A list of lists, each containing three named elements:
+#' @param models A list of lists, each containing four named elements:
 #'     \itemize{
 #'         \item{\code{fun} The function used to trained the model. The
 #'             function must be such that it predicts a named input \code{y}

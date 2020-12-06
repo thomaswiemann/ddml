@@ -184,7 +184,7 @@ crossval_compute <- function(test_sample, model,
   assign_Z <- model$assign_Z
 
   # Compute model for this fold
-  #    Note: this is effectively copying the data -- fix needed.
+  #     Note: this is effectively copying the data -- fix needed.
   mdl_fun$args$y <- y[-test_sample];
   mdl_fun$args$X <- cbind(X[-test_sample, assign_X],
                           Z[-test_sample, assign_Z])

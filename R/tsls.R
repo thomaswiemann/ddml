@@ -28,6 +28,8 @@
 #'
 #' @export tsls
 tsls <- function(y, D, Z, X = matrix(1, nobs)) {
+  # Data parameters
+  nobs <- length(y)
   # Define sample matrices
   Z_ <- cbind(Z, X)
   X_ <- cbind(D, X)
