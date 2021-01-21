@@ -23,19 +23,21 @@ test_that("ensemble_weights returns a weight matrix", {
                       assign_Z = c(1:ncol(Z)))) # ols w/ important features
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(D, X, Z,
-                                type = c("average", "stacking", "cv"),
+                                type = c("average", "cv", "stacking",
+                                         "stacking_nn", "stacking_10"),
                                 models,
                                 cv_folds = 3,
                                 silent = T)
   # Compute via pass-through of cv_res
   ens_w_res_pt <- ensemble_weights(D, X, Z,
-                                   type = c("average", "stacking", "cv"),
+                                   type = c("average", "cv", "stacking",
+                                            "stacking_nn", "stacking_10"),
                                    models,
                                    cv_res = ens_w_res$cv_res,
                                    silent = T)
   # Check output with expectations
-  expect_equal(colSums(ens_w_res$weights), rep(1, 3))
-  expect_equal(colSums(ens_w_res_pt$weights), rep(1, 3))
+  expect_equal(dim(ens_w_res$weights), c(3, 5))
+  expect_equal(dim(ens_w_res_pt$weights), c(3, 5))
 })#TEST_THAT
 
 test_that("ensemble returns a list of fitted models", {

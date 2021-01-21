@@ -230,27 +230,35 @@ ensemble_weights <- function(y, X, Z = NULL,
       # Assign 1 to all included models and normalize
       weights[, k] <- 1
       weights[, k] <- weights[, k] / sum(weights[, k])
-    } else if (type[k] == "stacking") {
-      # Solve the minimizing MSPE problem. Initialize by inverse MSPE weighting.
-      inv_mspe <- 1 / colMeans(cv_res$oos_resid^2)[cv_res$cv_Z]
-      starting_par <- inv_mspe / sum(inv_mspe)
-      starting_par <- log(starting_par / starting_par[1])
-      # Optimize ensemble weights
-      res <- optim(par = starting_par[-1],
-                   fn = function(par, oos_resid) {
-                     coef <- c(1, exp(par))
-                     w <- coef / sum(coef)
-                     joint_mspe <- sum((oos_resid %*% w)^2)
-                     return(joint_mspe)
-                   }, oos_resid = cv_res$oos_resid[, cv_res$cv_Z],
-                   method = 'BFGS')
-      # Assign relative weight to included models. Normalize later.
-      weights[cv_res$cv_Z, k] <- c(1, exp(res$par))
-      weights[, k] <- weights[, k] / sum(weights[, k])
-    } else if (type[k] == "stacking_uc") {
+    } else if (type[k] == "stacking_01") {
+      # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
+      # the quadratic programming problem.
+      sq_resid <- crossprod(cv_res$oos_resid[, cv_res$cv_Z])
+      ncv_Z <- length(cv_res$cv_Z)
+      A <- matrix(1, 1, ncv_Z) # |w|_1 = 1 constraint
+      # Define sink so LowRankQP output is not printed
+      sink(file=file())
+      # Calculate solution
+      r <- LowRankQP::LowRankQP(Vmat = sq_resid,
+                                  dvec = rep(0, ncv_Z),
+                                  Amat = A,
+                                  bvec = 1,
+                                  uvec = rep(1, ncv_Z),
+                                  method = 'LU',
+                                  verbose = F)
+      weights[cv_res$cv_Z, k] <- r$alpha
+      # Remove sink so output is no longer surpressed
+      sink()
+    } else if (type[k] == "stacking_nn") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- replicate(length(cv_res$cv_Z), y) -
-        cv_res$oos_resid[, cv_res$cv_Z, drop = F]
+      oos_fitted <- as.numeric(y) -
+        cv_res$oos_resid[, cv_res$cv_Z, drop = FALSE]
+      # For non-negative stacking, calculate the non-negatuve ols coefficients
+      weights[cv_res$cv_Z, k] <- nnls::nnls(oos_fitted, y)$x
+    } else if (type[k] == "stacking") {
+      # Reconstruct out of sample fitted values
+      oos_fitted <- as.numeric(y) -
+        cv_res$oos_resid[, cv_res$cv_Z, drop = FALSE]
       # For unconstrained stacking, simply calculate the ols coefficients
       weights[cv_res$cv_Z, k] <- ols(y, oos_fitted)$coef
     } else if (type[k] == "cv") {

@@ -12,12 +12,14 @@ LazyData: true
 Imports: 
     MASS,
     Matrix,
+    glmnet,
     randomForest,
     grf,
-    xgboost,
-    glmnet
+    xgboost
 Suggest:
     testthat,
+    nnls,
+    LowRankQP,
     parallel,
     doParallel,
     foreach
