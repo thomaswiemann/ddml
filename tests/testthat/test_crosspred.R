@@ -50,13 +50,14 @@ test_that("crosspred computes with ensemble procedures", {
   # Compute cross-sample predictions
   crosspred_res <- crosspred(dat$D, dat$X, dat$Z,
                              models,
-                             ens_type = c("average", "stacking", "cv"),
+                             ens_type = c("average", "stacking",
+                                          "stacking_uc", "cv"),
                              cv_folds = 3,
                              sample_folds = 3,
                              subsamples = NULL,
                              compute_is_predictions = T,
                              silent = T)
   # Check output with expectations
-  expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 3))
+  expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 4))
   expect_equal(length(crosspred_res$is_fitted), 3)
 })#TEST_THAT

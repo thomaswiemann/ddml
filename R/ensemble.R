@@ -221,9 +221,15 @@ ensemble_weights <- function(y, X, Z = NULL,
   # Compute weights for each ensemble type
   weights <- matrix(0, length(models), length(type))
   for (k in 1:ntype) {
+    # Check if multiple models were selected. If not, w is a unit vector.
+    if (length(cv_res$cv_Z) == 1) {
+      weights[cv_res$cv_Z, k] <- 1
+      next
+    }#IF
     if (type[k] == "average") {
-      # Assign 1 to all included models. Normalize later.
+      # Assign 1 to all included models and normalize
       weights[, k] <- 1
+      weights[, k] <- weights[, k] / sum(weights[, k])
     } else if (type[k] == "stacking") {
       # Solve the minimizing MSPE problem. Initialize by inverse MSPE weighting.
       inv_mspe <- 1 / colMeans(cv_res$oos_resid^2)[cv_res$cv_Z]
@@ -240,6 +246,13 @@ ensemble_weights <- function(y, X, Z = NULL,
                    method = 'BFGS')
       # Assign relative weight to included models. Normalize later.
       weights[cv_res$cv_Z, k] <- c(1, exp(res$par))
+      weights[, k] <- weights[, k] / sum(weights[, k])
+    } else if (type[k] == "stacking_uc") {
+      # Reconstruct out of sample fitted values
+      oos_fitted <- replicate(length(cv_res$cv_Z), y) -
+        cv_res$oos_resid[, cv_res$cv_Z, drop = F]
+      # For unconstrained stacking, simply calculate the ols coefficients
+      weights[cv_res$cv_Z, k] <- ols(y, oos_fitted)$coef
     } else if (type[k] == "cv") {
       # Find MSPE-minimizing model
       mdl_min <- which.min(colMeans(cv_res$oos_resid^2)[cv_res$cv_Z])
@@ -248,8 +261,6 @@ ensemble_weights <- function(y, X, Z = NULL,
       weights[mdl_min, k] <- 1
     }#IFELSE
   }#FOR
-  # Normalize weights so they sum to 1
-  weights <- t(t(weights) / colSums(weights))
   # Organize and return output
   output <- list(weights = weights, cv_res = cv_res)
   return(output)
