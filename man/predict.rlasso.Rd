@@ -9,6 +9,3 @@
 \description{
 Predict method for rlasso fits.
 }
-\details{
-To do: prediction does not work for partialled out controls and needs a fix.
-}

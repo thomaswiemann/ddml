@@ -61,14 +61,6 @@ printed to the console.}
 \description{
 Compute out-of-sample residuals via cross-validation.
 }
-\details{
-To do: \itemize{
-    \item{Data assignment in \code{crossval_compute} is not  efficient and
-        needs a fix. See the note in the source code.}
-    \item{Consider adding a boolean so that clusters are not termniated and
-        only initialized if none exist. Could substantially reduce overhead.}
-}
-}
 \examples{
 
 # Simple example w/o instruments ============================================

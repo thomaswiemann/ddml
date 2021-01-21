@@ -79,14 +79,6 @@ An object of class "\code{ensemble}" is a list containig the following
 \description{
 Compute ensemble models.
 }
-\section{To do}{
-
-\itemize{
-\item{Model objects typically replicate the data. This is very inefficient
-    regarding memory allocation. Needs a fix.}
-}
-}
-
 \examples{
 # Add example here.
 

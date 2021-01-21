@@ -9,6 +9,3 @@
 \description{
 Inference for tsls fits.
 }
-\details{
-To do: implement additional HC and HAC types, including clustered se.
-}
