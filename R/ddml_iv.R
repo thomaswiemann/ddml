@@ -76,8 +76,9 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   nobs <- length(y)
   # Draw samples if not user-supplied
   if (is.null(subsamples)) {
-    subsamples <- split(c(1:nobs), sample(rep(c(1:sample_folds),
-                                              ceiling(nobs / sample_folds)))[1:nobs])
+    subsamples <- split(c(1:nobs),
+                        sample(rep(c(1:sample_folds),
+                                   ceiling(nobs / sample_folds)))[1:nobs])
   }#IF
   sample_folds <- length(subsamples)
   # Compute estimates of E[D|X,Z]
@@ -99,9 +100,27 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   y_r <- y - y_X_res$oos_fitted
   D_r <- D - D_X_res$oos_fitted
   V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+
   # Compute IV estimate with constructed variables
-  ddml_fit <- tsls(y_r, D_r, V_r)
+  iv_fit <- tsls(y_r, D_r, V_r)
+
+  # Organize complementary ensemble output
+  weights <- list(D_XZ = D_XZ_res$weights,
+                  D_X = D_X_res$weights,
+                  y_X = y_X_res$weights)
+  mspe <- list(D_XZ = D_XZ_res$mspe,
+               D_X = D_X_res$mspe,
+               y_X = y_X_res$mspe)
+  anyiv_cv <- list(D_XZ = D_XZ_res$anyiv_cv,
+               D_X = D_X_res$anyiv_cv,
+               y_X = y_X_res$anyiv_cv)
+
+  # Organize output
+  ddml_fit <- list(coef = iv_fit$coef, weights = weights,
+                   mspe = mspe, anyiv_cv = anyiv_cv,
+                   iv_fit = iv_fit)
+
   # Amend class and return
-  class(ddml_fit) <- c("ddml_iv", class(ddml_fit))
+  class(ddml_fit) <- c("ddml_iv")
   return(ddml_fit)
 }#DDML_IV

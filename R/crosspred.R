@@ -68,6 +68,7 @@ crosspred <- function(y, X, Z = NULL,
                       silent = F) {
   # Data parameters
   nobs <- nrow(X)
+  nmodels <- length(models)
   calc_ensemble <- !("what" %in% names(models))
   # Draw samples if not user-supplied
   if (is.null(subsamples)) {
@@ -75,9 +76,12 @@ crosspred <- function(y, X, Z = NULL,
                                 ceiling(nobs / sample_folds)))[1:nobs])
   }#IF
   sample_folds <- length(subsamples)
-  # Loop over training samples
+  # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ens_type)^(calc_ensemble))
   is_fitted <- rep(list(NULL), sample_folds)
+  weights <- array(0, dim = c(nmodels, length(ens_type), sample_folds))
+  mspe <- anyiv_cv <- matrix(0, nmodels, sample_folds)
+  # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble
     #     should be computed. Check whether the user-supplied response is
@@ -114,6 +118,12 @@ crosspred <- function(y, X, Z = NULL,
       oos_fitted[subsamples[[k]],] <- predict(mdl_fit,
                                             newX = X[subsamples[[k]], ],
                                             newZ = Z[subsamples[[k]], ])
+      # Record ensemble weights
+      weights[, , k] <- mdl_fit$weights
+      # Record model MSPEs
+      mspe[, k] <- colSums(mdl_fit$cv_res$oos_resid^2)
+      # Record which models select IVs
+      anyiv_cv[mdl_fit$mdl_w_iv, k] <- 1
     }#IFELSE
     # Compute in-sample predictions (optional)
     if (compute_is_predictions) {
@@ -127,6 +137,8 @@ crosspred <- function(y, X, Z = NULL,
     }#IF
   }#FOR
   # Organize and return output
-  output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted)
+  if (!calc_ensemble) weights <- mspe <- anyiv_cv <- NULL
+  output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted,
+                 weights = weights, mspe = mspe, anyiv_cv = anyiv_cv)
   return(output)
 }#CROSSPRED
