@@ -115,15 +115,15 @@ crosspred <- function(y, X, Z = NULL,
                           setup_parallel = setup_parallel,
                           silent = silent)
       # Compute out-of-sample predictions
-      oos_fitted[subsamples[[k]],] <- predict(mdl_fit,
-                                            newX = X[subsamples[[k]], ],
-                                            newZ = Z[subsamples[[k]], ])
+      oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
+                                               newX = X[subsamples[[k]], ],
+                                               newZ = Z[subsamples[[k]], ])
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
       # Record model MSPEs
-      mspe[, k] <- colSums(mdl_fit$cv_res$oos_resid^2)
+      if (!is.null(mdl_fit$cv_res))mspe[,k]<-colSums(mdl_fit$cv_res$oos_resid^2)
       # Record which models select IVs
-      anyiv_cv[mdl_fit$mdl_w_iv, k] <- 1
+      if (!is.null(mdl_fit$cv_res)) anyiv_cv[mdl_fit$mdl_w_iv, k] <- 1
     }#IFELSE
     # Compute in-sample predictions (optional)
     if (compute_is_predictions) {
@@ -136,6 +136,18 @@ crosspred <- function(y, X, Z = NULL,
       }#IFELSE
     }#IF
   }#FOR
+  # When multiple ensembles are computed, need to reorganize is_fitted
+  nensb <- length(ens_type)
+  if (compute_is_predictions & calc_ensemble & nensb > 1) {
+    # Loop over each ensemble type to creat list of is_fitted's
+    new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
+    for (i in 1:nensb) {
+      for (k in 1:sample_folds) {
+        new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = F]
+      }#FOR
+    }#FOR
+    is_fitted <- new_is_fitted
+  }#IF
   # Organize and return output
   if (!calc_ensemble) weights <- mspe <- anyiv_cv <- NULL
   output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted,

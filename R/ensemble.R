@@ -72,7 +72,7 @@ ensemble <- function(y, X, Z = NULL,
   weights <- ens_w_res$weights
   cv_res <- ens_w_res$cv_res
   # Check for excluded models
-  mdl_include <- which(rowSums(weights) > 0)
+  mdl_include <- which(rowSums(abs(weights)) > 0)
   # Compute fit for each included model
   mdl_fits <- rep(list(NULL), nmodels)
   ens_Z <- rep(FALSE, nmodels)

@@ -60,5 +60,5 @@ test_that("crosspred computes with ensemble procedures", {
                              silent = T)
   # Check output with expectations
   expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 5))
-  expect_equal(length(crosspred_res$is_fitted), 3)
+  expect_equal(length(crosspred_res$is_fitted), 5)
 })#TEST_THAT

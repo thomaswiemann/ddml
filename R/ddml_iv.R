@@ -86,37 +86,86 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                        models, ens_type, cv_folds,
                        sample_folds, subsamples, compute_is_predictions = T,
                        setup_parallel, silent)
-  # Compute LIE-conform estimates of E[D|X]
-  D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
-                      models, ens_type, cv_folds,
-                      sample_folds, subsamples, compute_is_predictions = F,
-                      setup_parallel, silent)
+
   # Compute estimates of E[y|X]
   y_X_res <- crosspred(y, X, Z = NULL,
-                      models, ens_type, cv_folds,
-                      sample_folds, subsamples, compute_is_predictions = F,
-                      setup_parallel, silent)
-  # Residualize
-  y_r <- y - y_X_res$oos_fitted
-  D_r <- D - D_X_res$oos_fitted
-  V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+                       models, ens_type, cv_folds,
+                       sample_folds, subsamples, compute_is_predictions = F,
+                       setup_parallel, silent)
 
-  # Compute IV estimate with constructed variables
-  iv_fit <- tsls(y_r, D_r, V_r)
+  # Check whether multiple ensembles are computed simultaneously
+  sim_ens <- "list" %in% class(D_XZ_res$is_fitted[[1]]) # use construction
 
-  # Organize complementary ensemble output
-  weights <- list(D_XZ = D_XZ_res$weights,
-                  D_X = D_X_res$weights,
-                  y_X = y_X_res$weights)
-  mspe <- list(D_XZ = D_XZ_res$mspe,
-               D_X = D_X_res$mspe,
-               y_X = y_X_res$mspe)
-  anyiv_cv <- list(D_XZ = D_XZ_res$anyiv_cv,
-               D_X = D_X_res$anyiv_cv,
-               y_X = y_X_res$anyiv_cv)
+  # If a single ensemble is calculated, no loops are required.
+  if (!sim_ens) {
+    # Compute LIE-conform estimates of E[D|X]
+    D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
+                         models, ens_type, cv_folds,
+                         sample_folds, subsamples, compute_is_predictions = F,
+                         setup_parallel, silent)
+
+    # Residualize
+    y_r <- y - y_X_res$oos_fitted
+    D_r <- D - D_X_res$oos_fitted
+    V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+
+    # Compute IV estimate with constructed variables
+    iv_fit <- tsls(y_r, D_r, V_r)
+
+    # Organize complementary ensemble output
+    coef <- iv_fit$coef[1]
+    weights <- list(D_XZ = D_XZ_res$weights,
+                    D_X = D_X_res$weights,
+                    y_X = y_X_res$weights)
+    mspe <- list(D_XZ = D_XZ_res$mspe,
+                 D_X = D_X_res$mspe,
+                 y_X = y_X_res$mspe)
+    anyiv_cv <- list(D_XZ = D_XZ_res$anyiv_cv,
+                     D_X = D_X_res$anyiv_cv,
+                     y_X = y_X_res$anyiv_cv)
+  }#IF
+
+  # If multiple ensembles are calculated, iterate over each type.
+  if (sim_ens) {
+    # Iterate over ensemble type. Compute DDML IV estimate for each.
+    nensb <- length(ens_type)
+    coef <- matrix(0, 1, nensb)
+    weights <- mspe <- anyiv_cv <- iv_fit <- rep(list(1), nensb)
+    for (j in 1:nensb) {
+      # Compute LIE-conform estimates of E[D|X]
+      D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
+                           models, ens_type[j], cv_folds,
+                           sample_folds, subsamples, compute_is_predictions = F,
+                           setup_parallel, silent)
+
+      # Residualize
+      y_r <- y - y_X_res$oos_fitted[, j]
+      D_r <- D - D_X_res$oos_fitted
+      V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted
+
+      # Compute IV estimate with constructed variables
+      iv_fit_j <- tsls(y_r, D_r, V_r)
+
+      # Organize complementary ensemble output
+      coef[j] <- iv_fit_j$coef[1]
+      weights[[j]] <- list(D_XZ = D_XZ_res$weights,
+                           D_X = D_X_res$weights,
+                           y_X = y_X_res$weights)
+      mspe[[j]] <- list(D_XZ = D_XZ_res$mspe,
+                        D_X = D_X_res$mspe,
+                        y_X = y_X_res$mspe)
+      anyiv_cv[[j]] <- list(D_XZ = D_XZ_res$anyiv_cv,
+                            D_X = D_X_res$anyiv_cv,
+                            y_X = y_X_res$anyiv_cv)
+      iv_fit[[j]] <- iv_fit_j
+    }#FOR
+    # Name output appropriately by ensemble type
+    names(weights) <- names(mspe) <- names(anyiv_cv) <- names(iv_fit) <-
+      ens_type
+  }#IF
 
   # Organize output
-  ddml_fit <- list(coef = iv_fit$coef, weights = weights,
+  ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
                    iv_fit = iv_fit)
 
