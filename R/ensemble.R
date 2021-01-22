@@ -214,7 +214,8 @@ ensemble_weights <- function(y, X, Z = NULL,
   ntype <- length(type)
   # Check whether out-of-sample residuals should be calculated to inform the
   #     ensemble weights, and whether previous results are available.
-  if (any(c("stacking", "cv") %in% type) && (is.null(cv_res))) {
+  if (any(c("stacking", "stacking_nn", "stacking_01", "cv") %in% type) &&
+      (is.null(cv_res))) {
     # Run crossvalidation procedure
     cv_res <- crossval(y, X, Z, models, cv_folds, setup_parallel, silent)
   }#IF
@@ -251,17 +252,18 @@ ensemble_weights <- function(y, X, Z = NULL,
       sink()
     } else if (type[k] == "stacking_nn") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z]
+      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z, drop = F]
       # For non-negative stacking, calculate the non-negatuve ols coefficients
       weights[cv_res$cv_Z, k] <- nnls::nnls(oos_fitted, y)$x
     } else if (type[k] == "stacking") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z]
+      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z, drop = F]
       # For unconstrained stacking, simply calculate the ols coefficients
       weights[cv_res$cv_Z, k] <- ols(y, oos_fitted)$coef
     } else if (type[k] == "cv") {
       # Find MSPE-minimizing model
-      mdl_min <- which.min(Matrix::colMeans(cv_res$oos_resid^2)[cv_res$cv_Z])
+      mdl_min <- which.min(Matrix::colMeans(cv_res$oos_resid^2)[cv_res$cv_Z,
+                                                                drop = F])
       mdl_min <- c(1:nmodels)[cv_res$cv_Z][mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1

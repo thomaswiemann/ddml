@@ -77,12 +77,13 @@ test_that("ddml_iv computes with multiple ensemble procedures", {
   # Compute LIE-conform DDML IV estimator
   ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
-                         ens_type = c("stacking", "cv", "average"),
+                         ens_type = c("stacking", "stacking_nn", "stacking_01",
+                                      "cv", "average"),
                          cv_folds = 3,
                          sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 3)
+  expect_equal(length(ddml_iv_fit$coef), 5)
 })#TEST_THAT
 
 test_that("ddml_iv computes with multiple ensemble procedures and
@@ -108,10 +109,11 @@ test_that("ddml_iv computes with multiple ensemble procedures and
   ddml_iv_fit <- ddml_iv(dat$y, dat$D, as(dat$Z, "sparseMatrix"),
                          as(dat$X, "sparseMatrix"),
                          models,
-                         ens_type = c("stacking", "cv", "average"),
+                         ens_type = c("stacking", "stacking_nn", "stacking_01",
+                                      "cv", "average"),
                          cv_folds = 3,
                          sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 3)
+  expect_equal(length(ddml_iv_fit$coef), 5)
 })#TEST_THAT

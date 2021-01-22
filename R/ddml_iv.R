@@ -84,8 +84,8 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
 
   # Compute number of required model computations
   cmp_cv <- length(setdiff(ens_type, "average")) > 0
+  nmodels <- length(models); nensb <- length(ens_type)
   if(!silent & cmp_cv)  {
-    nmodels <- length(models); nensb <- length(ens_type)
     num_comp <- nmodels * cv_folds * sample_folds *
       (2 + nensb - ("average" %in% ens_type)) +
       ("average" %in% ens_type) * nmodels * sample_folds
@@ -141,7 +141,11 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     nensb <- length(ens_type)
     coef <- matrix(0, 1, nensb)
-    weights <- mspe <- anyiv_cv <- iv_fit <- rep(list(1), nensb)
+    mspe <- anyiv_cv <- iv_fit <- rep(list(1), nensb)
+    weights <- replicate(3, array(0, dim = c(nmodels, nensb, sample_folds)),
+                         simplify = F)
+    weights[[1]] <- D_XZ_res$weights; weights[[3]] <- y_X_res$weights
+    names(weights) <- c("D_XZ", "D_X", "y_X")
     for (j in 1:nensb) {
       # Compute LIE-conform estimates of E[D|X]
       D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
@@ -159,9 +163,6 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
 
       # Organize complementary ensemble output
       coef[j] <- iv_fit_j$coef[1]
-      weights[[j]] <- list(D_XZ = D_XZ_res$weights,
-                           D_X = D_X_res$weights,
-                           y_X = y_X_res$weights)
       mspe[[j]] <- list(D_XZ = D_XZ_res$mspe,
                         D_X = D_X_res$mspe,
                         y_X = y_X_res$mspe)
@@ -169,9 +170,10 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                             D_X = D_X_res$anyiv_cv,
                             y_X = y_X_res$anyiv_cv)
       iv_fit[[j]] <- iv_fit_j
+      weights[[2]][, j, ] <- D_X_res$weights
     }#FOR
     # Name output appropriately by ensemble type
-    names(weights) <- names(mspe) <- names(anyiv_cv) <- names(iv_fit) <-
+    names(mspe) <- names(anyiv_cv) <- names(iv_fit) <-
       ens_type
   }#IF
 
