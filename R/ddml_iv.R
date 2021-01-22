@@ -81,6 +81,17 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                                    ceiling(nobs / sample_folds)))[1:nobs])
   }#IF
   sample_folds <- length(subsamples)
+
+  # Compute number of required model computations
+  cmp_cv <- length(setdiff(ens_type, "average")) > 0
+  if(!silent & cmp_cv)  {
+    nmodels <- length(models); nensb <- length(ens_type)
+    num_comp <- nmodels * cv_folds * sample_folds *
+      (2 + nensb - ("average" %in% ens_type)) +
+      ("average" %in% ens_type) * nmodels * sample_folds
+    print(paste0("# required model computations: ", num_comp))
+  }#IF
+
   # Compute estimates of E[D|X,Z]
   D_XZ_res <- crosspred(D, X, Z,
                        models, ens_type, cv_folds,
