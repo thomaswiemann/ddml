@@ -23,8 +23,8 @@ ccov <- function(X, dof_adjust = 1) {
   # Data parameters
   nrow_X <- nrow(X)
   # Calculate covariance
-  colmeans_X <- colMeans(X)
-  cov_XX <- (crossprod(X) - nrow_X * tcrossprod(colmeans_X)) /
+  colmeans_X <- Matrix::colMeans(X)
+  cov_XX <- ( Matrix::crossprod(X) - nrow_X *  Matrix::tcrossprod(colmeans_X)) /
     (nrow_X - dof_adjust)
   # Return covariance
   return(cov_XX)
@@ -50,7 +50,7 @@ ccor <- function(X, y = NULL) {
   }#IF
   # Calculate correlation matrix
   cov_XX <- ccov(X)
-  sd_XX <- tcrossprod(sqrt(diag(cov_XX)))
+  sd_XX <-  Matrix::tcrossprod(sqrt(Matrix::diag(cov_XX)))
   cor_XX <- cov_XX / sd_XX
   # Select only partial correlation vector if y is not NULL
   if (!is.null(y)) {

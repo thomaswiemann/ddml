@@ -200,7 +200,7 @@ rlasso_penalty <- function(y, X,
         resid.k <- response
       } else {
         minus_include <- setdiff(c(1:ncol_X), include)
-        cor_y_x <- ccor(X[, minus_include], y)
+        cor_y_x <- ccor(X[, minus_include, drop = F], y)
         sorder_cor_y_x <- order(abs(cor_y_x), decreasing = T)[1:d]
         # Select which features have greatest correlation coefficient and
         #     features that are necessarily included in the model.
@@ -225,16 +225,16 @@ rlasso_penalty <- function(y, X,
     }#IFELSE
 
     # Calculate the kth-step penalty loadings for all features
-    sigma_k <- sqrt(mean(resid_k^2))
+    sigma_k <- sqrt(Matrix::mean(resid_k^2))
     if (HC_robust) {
       # W <- Diagonal(x=as.numeric(resid.k))
       # psi.k <- sqrt(diag(ccov(W%*%features, 0)))
       # psi.k <-  sqrt(as.matrix((1/N)*t(crossprod(resid.k^2, features^2)) -
       #     t((1/N)*crossprod(resid.k, features))^2)) # no DOF adjustment
-      mean_X <- colMeans(X)
-      psi_k <- t(crossprod(resid_k^2, X^2) / nobs +
+      mean_X <- Matrix::colMeans(X)
+      psi_k <- t(Matrix::crossprod(resid_k^2, X^2) / nobs +
                    (mean_X^2)*(sigma_k^2) -
-                   2 * mean_X * crossprod(resid_k^2, X) / nobs)
+                   2 * mean_X * Matrix::crossprod(resid_k^2, X) / nobs)
       if (all(psi_k>0)) {
         psi_k <- sqrt(psi_k)
       } else {
@@ -246,7 +246,7 @@ rlasso_penalty <- function(y, X,
       #     FALSE)^2)/N)
     } else {
       # Penalty loadings under homoskedasticity (no dof adjustment)
-      psi_k <- sigma_k * sqrt(colMeans(X^2) - colMeans(X)^2)
+      psi_k <- sigma_k * sqrt(Matrix::colMeans(X^2) - Matrix::colMeans(X)^2)
     } #IFELSE
 
     # Set penalty loadings to zero for those that are necessarily included

@@ -150,6 +150,7 @@ crossval <- function(y, X, Z = NULL,
   if (setup_parallel$cores == 1 || setup_parallel$type == "static"){
     cv_res <- t(cv_res)
   }#IF
+
   oos_resid <- unlist(sapply(c(1:(cv_folds * nmodels)),
                              function(x){cv_res[[x, 1]]}))
   cv_Z <- unlist(sapply(c(1:(cv_folds * nmodels)), function(x){cv_res[[x, 2]]}))
@@ -186,7 +187,7 @@ crossval_compute <- function(test_sample, model,
   # Compute out of sample residuals
   oos_fitted <- predict(mdl_fit, cbind(X[test_sample, assign_X],
                                        Z[test_sample, assign_Z]))
-  oos_resid <- y[test_sample] - oos_fitted
+  oos_resid <- y[test_sample] - as(oos_fitted, "matrix")
 
   # Check whether instruments were selected (optional) and return fold
   #     results.

@@ -34,13 +34,13 @@ tsls <- function(y, D, Z, X = matrix(1, nobs)) {
   Z_ <- cbind(Z, X)
   X_ <- cbind(D, X)
   # Calculate matrix products
-  ZZ <- as.matrix(crossprod(Z_))
-  XZ <- crossprod(X_, Z_)
-  ZY <- crossprod(Z_, y)
-  FS <- tcrossprod(csolve(ZZ), XZ)
+  ZZ <- as.matrix(Matrix::crossprod(Z_))
+  XZ <- Matrix::crossprod(X_, Z_)
+  ZY <- Matrix::crossprod(Z_, y)
+  FS <- Matrix::tcrossprod(csolve(ZZ), XZ)
   # Calculate TSLS coefficient
-  coef <- crossprod(csolve(as.matrix(XZ %*%FS)),
-                    crossprod(FS, ZY))
+  coef <- Matrix::crossprod(csolve(as.matrix(XZ %*%FS)),
+                    Matrix::crossprod(FS, ZY))
   coef <- as.matrix(coef)
   # Organize and return output
   try(rownames(coef) <- colnames(X_)) # variable names
@@ -76,11 +76,11 @@ summary.tsls <- function(obj, type = "const") {
   resid <- (obj$y - predict(obj))[, 1]
   # Calculate matrix products
   PZ <- obj$Z_ %*% obj$FS
-  PZZP_inv <- csolve(as.matrix(crossprod(obj$X_, obj$Z_) %*% obj$FS))
+  PZZP_inv <- csolve(as.matrix(Matrix::crossprod(obj$X_, obj$Z_) %*% obj$FS))
   if (type == "const") {
     se <- sqrt(diag(sum(resid^2) * PZZP_inv) / (nobs-ncol_Z))
   } else if (type == "HC1") {
-    XuuX <- crossprod(PZ * resid^2, PZ) * (nobs/(nobs-ncol_Z))
+    XuuX <- Matrix::crossprod(PZ * resid^2, PZ) * (nobs/(nobs-ncol_Z))
     S1 <- PZZP_inv %*% XuuX
     se <- sqrt(diag(S1 %*% PZZP_inv)) # in two steps for numerical accuracy
   }#IF

@@ -168,9 +168,9 @@
 #'
 #' # Equipped with the multiple coefficient estimates, we may recalculate the
 #' # Number of products with inelastic demand as in CHS2015. BLP1995's estimates
-#' suggest about 746. DDML_IV estimates suggest lower values. (Note the
-#' estimates differ from those in CHS2015 quite substantially. This is likely
-#' due to a construction error in the instruments.)
+#' # suggest about 746. DDML_IV estimates suggest lower values. (Note the
+#' # estimates differ from those in CHS2015 quite substantially. This is likely
+#' # due to a construction error in the instruments.)
 #' sum(ols(y, x1)$coef[6] * (BLP_1995$price) * (1 - BLP_1995$share) > -1)
 #' sum(tsls(y, D = BLP_1995$price, Z = Z_, X = X_)$coef[1] * (BLP_1995$price) *
 #'       (1 - BLP_1995$share) > -1)

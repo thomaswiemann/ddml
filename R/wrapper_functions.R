@@ -109,7 +109,7 @@ mdl_randomForest <- function(y, X,
                              colsample_bytree = 0.6, subsample = 0.7,
                              replace = FALSE){
   # Compute randomForest
-  if(!("matrix" %in% class(X))) X <- as.matrix(X)
+  if(!("matrix" %in% class(X))) X <- Matrix::as.matrix(X)
   mdl_fit <- randomForest::randomForest(X, y,
                                         ntree = ntree, nodesize = nodesize,
                                         maxnodes = maxnodes,

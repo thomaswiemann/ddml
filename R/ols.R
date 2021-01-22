@@ -39,12 +39,12 @@ ols <- function(y, X,
 
   # Compute OLS coefficient
   if (!calc_wls) {
-    XX_inv <- csolve(as.matrix(crossprod(X)))
-    coef <- XX_inv %*% crossprod(X, y)
+    XX_inv <- csolve(as.matrix(Matrix::crossprod(X)))
+    coef <- XX_inv %*% Matrix::crossprod(X, y)
   } else { # Or calculate WLS coefficient whenever weights are specified
     Xw <- X * w # weight rows
-    XX_inv <- csolve(as.matrix(crossprod(Xw, X)))
-    coef <- XX_inv %*% crossprod(Xw, y)
+    XX_inv <- csolve(as.matrix(Matrix::crossprod(Xw, X)))
+    coef <- XX_inv %*% Matrix::crossprod(Xw, y)
   }#IFELSE
   # Return estimate
   coef <- as.matrix(coef)
@@ -89,11 +89,11 @@ summary.ols <- function(obj,
   # Calculate standard errors, t-statistic, and p-value
   resid <- as.numeric(obj$y - predict(obj))
   if (!calc_wls) { # OLS
-    XX_inv <- csolve(as.matrix(crossprod(obj$X)))
+    XX_inv <- csolve(as.matrix(Matrix::crossprod(obj$X)))
     if (type == "const") {
       se <- sqrt(diag(sum(resid^2) * XX_inv) / (nobs - ncol_X))
     } else if (type == "HC1"){
-      XuuX <- crossprod(obj$X *(resid^2), obj$X)
+      XuuX <- Matrix::crossprod(obj$X *(resid^2), obj$X)
       S1 <- XX_inv %*% XuuX * (nobs/(nobs - ncol_X))
       se <- sqrt(diag(S1 %*% XX_inv)) # in two steps for numerical accuracy
     }#IFELSE

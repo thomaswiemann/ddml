@@ -84,3 +84,34 @@ test_that("ddml_iv computes with multiple ensemble procedures", {
   # Check output with expectations
   expect_equal(length(ddml_iv_fit$coef), 3)
 })#TEST_THAT
+
+test_that("ddml_iv computes with multiple ensemble procedures and
+          sparse matrices", {
+  # Simulate small dataset
+  dat <- sim_dat(100)
+  ncol_X <- ncol(dat$X)
+  ncol_Z <- ncol(dat$Z)
+  # Define arguments
+  models <- list(list(fun = mdl_xgboost,
+                      args = list(num_parallel_tree = 3),
+                      assign_X = c(1:ncol_X),
+                      assign_Z = c(1:ncol_Z)),
+                 list(fun = mdl_glmnet,
+                      args = list(alpha = 0.5),
+                      assign_X = c(1:ncol_X),
+                      assign_Z = c(1:ncol_Z)),
+                 list(fun = ols,
+                      args = list(),
+                      assign_X = c(1:ncol_X),
+                      assign_Z = c(1:ncol_Z)))
+  # Compute LIE-conform DDML IV estimator
+  ddml_iv_fit <- ddml_iv(dat$y, dat$D, as(dat$Z, "sparseMatrix"),
+                         as(dat$X, "sparseMatrix"),
+                         models,
+                         ens_type = c("stacking", "cv", "average"),
+                         cv_folds = 3,
+                         sample_folds = 3,
+                         silent = T)
+  # Check output with expectations
+  expect_equal(length(ddml_iv_fit$coef), 3)
+})#TEST_THAT

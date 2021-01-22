@@ -128,7 +128,7 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
   # Data parameters
   nmodels <- length(obj$mdl_fits)
   # Check for excluded models
-  mdl_include <- which(rowSums(obj$weights) > 0)
+  mdl_include <- which(rowSums(abs(obj$weights)) > 0)
   # Calculate fitted values for each model
   first_fit <- T
   for (m in 1:nmodels) {
@@ -146,7 +146,7 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
       fitted_mat <- matrix(0, length(fitted), nmodels)
       first_fit <- F
     }#IF
-    fitted_mat[, m] <- fitted
+    fitted_mat[, m] <- as(fitted, "matrix")
   }#FOR
   # Compute matrix of fitted values by ensemble type and return
   fitted_ens <- fitted_mat %*% obj$weights
@@ -222,7 +222,7 @@ ensemble_weights <- function(y, X, Z = NULL,
   weights <- matrix(0, length(models), length(type))
   for (k in 1:ntype) {
     # Check if multiple models were selected. If not, w is a unit vector.
-    if (length(cv_res$cv_Z) == 1) {
+    if (length(cv_res$cv_Z) == 1 & "average" != type[k]) {
       weights[cv_res$cv_Z, k] <- 1
       next
     }#IF
@@ -233,7 +233,7 @@ ensemble_weights <- function(y, X, Z = NULL,
     } else if (type[k] == "stacking_01") {
       # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
       # the quadratic programming problem.
-      sq_resid <- crossprod(cv_res$oos_resid[, cv_res$cv_Z])
+      sq_resid <- Matrix::crossprod(cv_res$oos_resid[, cv_res$cv_Z])
       ncv_Z <- length(cv_res$cv_Z)
       A <- matrix(1, 1, ncv_Z) # |w|_1 = 1 constraint
       # Define sink so LowRankQP output is not printed
@@ -251,19 +251,17 @@ ensemble_weights <- function(y, X, Z = NULL,
       sink()
     } else if (type[k] == "stacking_nn") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) -
-        cv_res$oos_resid[, cv_res$cv_Z, drop = FALSE]
+      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z]
       # For non-negative stacking, calculate the non-negatuve ols coefficients
       weights[cv_res$cv_Z, k] <- nnls::nnls(oos_fitted, y)$x
     } else if (type[k] == "stacking") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) -
-        cv_res$oos_resid[, cv_res$cv_Z, drop = FALSE]
+      oos_fitted <- as.numeric(y) - cv_res$oos_resid[, cv_res$cv_Z]
       # For unconstrained stacking, simply calculate the ols coefficients
       weights[cv_res$cv_Z, k] <- ols(y, oos_fitted)$coef
     } else if (type[k] == "cv") {
       # Find MSPE-minimizing model
-      mdl_min <- which.min(colMeans(cv_res$oos_resid^2)[cv_res$cv_Z])
+      mdl_min <- which.min(Matrix::colMeans(cv_res$oos_resid^2)[cv_res$cv_Z])
       mdl_min <- c(1:nmodels)[cv_res$cv_Z][mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1

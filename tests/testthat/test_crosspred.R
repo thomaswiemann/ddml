@@ -62,3 +62,35 @@ test_that("crosspred computes with ensemble procedures", {
   expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 5))
   expect_equal(length(crosspred_res$is_fitted), 5)
 })#TEST_THAT
+
+test_that("crosspred computes with ensemble procedures and sparse matrices", {
+  # Simulate small dataset
+  dat <- sim_dat(100)
+  ncol_X <- ncol(dat$X)
+  ncol_Z <- ncol(dat$Z)
+  # Define arguments
+  models <- list(list(fun = rlasso,
+                      args = list(include = NULL,
+                                  iter_resid = 1, d = 5),
+                      assign_X = c(1:ncol_X),
+                      assign_Z = c(1:ncol_Z)),
+                 list(fun = ols,
+                      args = list(),
+                      assign_X = c(1:ncol_X),
+                      assign_Z = c(1:ncol_Z)))
+  # Compute cross-sample predictions
+  crosspred_res <- crosspred(dat$D, as(dat$X, "sparseMatrix"),
+                             as(dat$Z, "sparseMatrix"),
+                             models,
+                             ens_type = c("average", "stacking",
+                                          "stacking_01", "stacking_nn",
+                                          "cv"),
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             subsamples = NULL,
+                             compute_is_predictions = T,
+                             silent = T)
+  # Check output with expectations
+  expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 5))
+  expect_equal(length(crosspred_res$is_fitted), 5)
+})#TEST_THAT
