@@ -10,6 +10,7 @@ ddml_iv(
   Z,
   X = matrix(1, nobs(y)),
   models,
+  models_FS = models,
   ens_type = c("average"),
   cv_folds = 5,
   sample_folds = 2,
@@ -51,6 +52,9 @@ containing four named elements:
     \item{\code{args} Optional arguments to be passed to \code{fun}}
 }}
 
+\item{models_FS}{Same as \code{models}. May be used to consider an seperate
+set of models to be used for the estimation of E[D|X,Z] (first stage).}
+
 \item{ens_type}{A string indicating the type of ensemble. Multiple types may
 be passed in form of a vector of strings.}
 
@@ -71,9 +75,9 @@ printed to the console.}
 }
 \value{
 \code{ddml_iv} returns an object of S3 class
-    \code{c("ddml_iv", "tsls")}.
+    \code{cddml_iv}.
 
-An object of class \code{c("ddml_iv", "tsls")}is a list containig the
+An object of class \code{ddml_iv}is a list containig the
     following components:
 
 \code{crosspred} returns a list containig the following
@@ -81,12 +85,7 @@ An object of class \code{c("ddml_iv", "tsls")}is a list containig the
 \describe{
 \item{\code{coef}}{A vector with the LIE-conform DDML IV coefficent in the
     first entry.}
-\item{\code{y}}{The residualized response vector.}
-\item{\code{X_}}{A matrix combining the residualized endogeneous variable D
-    and a vector of ones.}
-\item{\code{Z_}}{{A matrix combining a vector of ones and the constructed
-    instrument estimated from \code{E[D|X,Z]-E[D|X]}.}}
-\item{\code{FS}}{The first stage coefficient matrix.}
+    \item{\code{...}}{...}
 }
 }
 \description{

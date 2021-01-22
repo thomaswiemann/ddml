@@ -12,7 +12,7 @@ rlasso(
   gamma = 0.1/log(nobs),
   post = TRUE,
   partial = FALSE,
-  iter_resid = 15,
+  iter_resid = 1,
   d = 5,
   HC_robust = FALSE
 )

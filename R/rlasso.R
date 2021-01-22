@@ -50,7 +50,7 @@ rlasso <- function(y, X,
                    c = 1.1, gamma = 0.1 / log(nobs),
                    post = TRUE,
                    partial = FALSE,
-                   iter_resid = 15, d = 5,
+                   iter_resid = 1, d = 5,
                    HC_robust = FALSE) {
   # Partial out controls or center y
   if (partial) {

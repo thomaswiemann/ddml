@@ -29,6 +29,8 @@
 #'             instruments in \code{Z} that should be used for training.}
 #'         \item{\code{args} Optional arguments to be passed to \code{fun}}
 #'     }
+#' @param models_FS Same as \code{models}. May be used to consider an seperate
+#'     set of models to be used for the estimation of E[D|X,Z] (first stage).
 #' @param ens_type A string indicating the type of ensemble. Multiple types may
 #'     be passed in form of a vector of strings.
 #' @param cv_folds The number for cross-validation folds.
@@ -43,21 +45,16 @@
 #'     printed to the console.
 #'
 #' @return \code{ddml_iv} returns an object of S3 class
-#'     \code{c("ddml_iv", "tsls")}.
+#'     \code{cddml_iv}.
 #'
-#' An object of class \code{c("ddml_iv", "tsls")}is a list containig the
+#' An object of class \code{ddml_iv}is a list containig the
 #'     following components:
 #' @return \code{crosspred} returns a list containig the following
 #'     components:
 #' \describe{
 #' \item{\code{coef}}{A vector with the LIE-conform DDML IV coefficent in the
 #'     first entry.}
-#' \item{\code{y}}{The residualized response vector.}
-#' \item{\code{X_}}{A matrix combining the residualized endogeneous variable D
-#'     and a vector of ones.}
-#' \item{\code{Z_}}{{A matrix combining a vector of ones and the constructed
-#'     instrument estimated from \code{E[D|X,Z]-E[D|X]}.}}
-#' \item{\code{FS}}{The first stage coefficient matrix.}
+#'     \item{\code{...}}{...}
 #' }
 #'
 #' @examples
@@ -66,6 +63,7 @@
 #' @export ddml_iv
 ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                     models,
+                    models_FS = models,
                     ens_type = c("average"),
                     cv_folds = 5,
                     sample_folds = 2,
@@ -94,9 +92,9 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
 
   # Compute estimates of E[D|X,Z]
   D_XZ_res <- crosspred(D, X, Z,
-                       models, ens_type, cv_folds,
-                       sample_folds, subsamples, compute_is_predictions = T,
-                       setup_parallel, silent)
+                        models_FS, ens_type, cv_folds,
+                        sample_folds, subsamples, compute_is_predictions = T,
+                        setup_parallel, silent)
 
   # Compute estimates of E[y|X]
   y_X_res <- crosspred(y, X, Z = NULL,
@@ -180,6 +178,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
+                   models = models, models_FS = models_FS,
                    iv_fit = iv_fit)
 
   # Amend class and return
