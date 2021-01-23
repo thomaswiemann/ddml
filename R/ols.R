@@ -61,6 +61,7 @@ ols <- function(y, X,
 #' Predict method for ols fits.
 #'
 #' @export predict.ols
+#' @export
 predict.ols <- function(obj, newdata = NULL){
   # Obtain datamatrix
   if (is.null(newdata)) {
@@ -81,6 +82,7 @@ predict.ols <- function(obj, newdata = NULL){
 #'     Implement se for wls.
 #'
 #' @export summary.ols
+#' @export
 summary.ols <- function(obj,
                         type = "const") {
   # Data parameters
@@ -116,6 +118,7 @@ summary.ols <- function(obj,
 #' Instrument selection for ols fits. Always returns \code{TRUE}.
 #'
 #' @export any_iv.ols
+#' @export
 any_iv.ols <- function(obj, ...){
   TRUE
 }#ANY_IV.OLS

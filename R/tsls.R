@@ -55,6 +55,7 @@ tsls <- function(y, D, Z, X = matrix(1, nobs)) {
 #' Predict method for tsls fits.
 #'
 #' @export predict.tsls
+#' @export
 predict.tsls <- function(obj, newdata = NULL) {
   # Obtain datamatrix
   if(is.null(newdata)) newdata <- obj$X_
@@ -68,6 +69,7 @@ predict.tsls <- function(obj, newdata = NULL) {
 #' Inference for tsls fits.
 #'
 #' @export summary.tsls
+#' @export
 summary.tsls <- function(obj, type = "const") {
   # Data parameters
   nobs <- length(obj$y)

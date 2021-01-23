@@ -80,6 +80,7 @@ lsml <- function(y, X,
 #' Predict method for lsml fits.
 #'
 #' @export predict.lsml
+#' @export
 predict.lsml <- function(obj, newdata = NULL){
   # Check for new data
   if(is.null(newdata)) newdata <- obj$X
@@ -96,6 +97,7 @@ predict.lsml <- function(obj, newdata = NULL){
 #' Instrument selection for lsml fits. Always returns \code{TRUE}.
 #'
 #' @export any_iv.lsml
+#' @export
 any_iv.lsml <- function(obj, ...){
   TRUE
 }#ANY_IV.LSML

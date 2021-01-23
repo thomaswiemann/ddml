@@ -108,6 +108,7 @@ rlasso <- function(y, X,
 #' Predict method for rlasso fits.
 #'
 #' @export predict.rlasso
+#' @export
 predict.rlasso <- function(obj, newdata = NULL,
                           post = TRUE){
   # Get coefficients and data from lasso.fit
@@ -134,6 +135,7 @@ predict.rlasso <- function(obj, newdata = NULL,
 #'     instrument is retained..
 #'
 #' @export any_iv.rlasso
+#' @export
 any_iv.rlasso <- function(obj, index_iv, ...){
   # Check whether any instruments are retained
   length(intersect(obj$retained, index_iv)) > 0
