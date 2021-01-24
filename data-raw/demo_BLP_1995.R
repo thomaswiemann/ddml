@@ -219,9 +219,9 @@ ensemble_fit$weights
 #'     estimates suggest about 746. CHS2015's results suggests that there is
 #'     inelastic demand for only 305 products when variables are selected from
 #'     the extended set. (Note: these numbers differ from those reported in
-#'     CHS2015 due to the abovementioned construction error.) The DDML IV
-#'     estimates suggest that there is inelastic demand for more products than
-#'     suggested by the BLP1995 estimates.
+#'     CHS2015 due to the abovementioned construction error.) The ensemble DDML
+#'     IV estimates suggest that there is inelastic demand for more products
+#'     than suggested by the BLP1995 estimates.
 
 # BLP1995 OLS implied number of products with inelastic demand
 sum(ols(y, x1)$coef[6] * (BLP_1995$price) *
