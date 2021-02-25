@@ -18,8 +18,11 @@ library(ddml)
 
 # Data prepraration
 n <- length(BLP_1995$model.id)
-y <- log(BLP_1995$share) -  log(BLP_1995$outshr)
+y <- as.matrix(log(BLP_1995$share) -  log(BLP_1995$outshr))
+D <- as.matrix(BLP_1995$price)
 x1 <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air", "mpd", "space", "price")]))
+colnames(y) <- "share"
+colnames(D) <- "price"
 
 #' Construct the BLP1995 instruments. Instruments are sums of product
 #'     characteristics (excluding price and other potentially endogenous
@@ -90,13 +93,18 @@ models_SS <- list(what = ols,
                   args = list())
 
 # DDML IV. We consider cross-residiualization across 10 sample folds here.
-ddml_rlasso_fit <- ddml_iv(y, D = BLP_1995$price,
+ddml_rlasso_fit <- ddml_iv(y, D = D,
                            Z = ZL_, X = XL_,
                            models = models_SS,
                            models_FS = models_FS,
                            sample_folds = 5,
                            silent = T)
 ddml_rlasso_fit$coef[1]
+
+# Export orthogonalized variables (optional)
+if (FALSE) {
+  export_ddml(ddml_rlasso_fit, "rlasso")
+}#IF
 
 # Ensemble DDML IV =============================================================
 
@@ -194,7 +202,7 @@ models_SS <- list(list(fun = ols,
 ens_type <- c("stacking_01", "stacking_nn", "cv", "stacking", "average")
 
 #' We may now estimate the DDML IV coefficient. Computation may take up to 1min.
-ensemble_fit <- ddml_iv(y, D = BLP_1995$price,
+ensemble_fit <- ddml_iv(y, D = D,
                         Z = Z_c, X = X_c,
                         models = models_SS,
                         models_FS = models_FS,
@@ -203,6 +211,11 @@ ensemble_fit <- ddml_iv(y, D = BLP_1995$price,
                         sample_folds = 2,
                         silent = T)
 ensemble_fit$coef
+
+# Export orthogonalized variables (optional)
+if (FALSE) {
+  export_ddml(ensemble_fit, "ensemble")
+}#IF
 
 #' To better understand the composition of the ensembles, it is often useful to
 #'     inspect the ensemble coefficients. These may readily be retrieved from

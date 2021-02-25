@@ -16,3 +16,15 @@
 any_iv <- function(obj, ...) {
   UseMethod("any_iv")
 }#ANY_IV
+
+#' Generic function for exporting fitted ddml model.
+#'
+#' Generic function for exporting fitted ddml model.
+#'
+#' @param obj A ddml fit object.
+#' @param filename Location and name of the savefiles.
+#'
+#' @export export_ddml
+export_ddml <- function(obj, filename) {
+  UseMethod("export_ddml")
+}#EXPORT_DDML

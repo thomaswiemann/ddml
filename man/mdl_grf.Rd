@@ -4,16 +4,13 @@
 \alias{mdl_grf}
 \title{Wrapper function for \code{grf}'s \code{regression_forest}.}
 \usage{
-mdl_grf(
-  y,
-  X,
-  num.trees = 100,
-  colsample_bytree = 0.6,
-  sample.fraction = 0.7,
-  min.node.size = 1,
-  honesty = TRUE
-)
+mdl_grf(y, X)
+
+mdl_grf(y, X)
 }
 \description{
 Wrapper function for \code{grf}'s \code{regression_forest}.
+
+Wrapper function for \code{keras}'s neural net implementation. Tensorflow is
+    used as a backend for computation.
 }

@@ -179,9 +179,94 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
                    models = models, models_FS = models_FS,
-                   iv_fit = iv_fit)
+                   iv_fit = iv_fit,
+                   subsamples = subsamples,
+                   ens_type = ens_type,
+                   nobs = nobs,
+                   y = y,
+                   D = D)
 
   # Amend class and return
   class(ddml_fit) <- c("ddml_iv")
   return(ddml_fit)
 }#DDML_IV
+
+#' Function for exporting ddml_iv fits.
+#'
+#' Function for exporting ddml_iv fits.
+#'
+#' @export export_ddml.ddml_iv
+#' @export
+export_ddml.ddml_iv <- function(obj, filename) {
+
+  # Data parameters
+  nensemble <- length(obj$ens_type)
+
+  # Assign fold-id
+  fid <- rep(0, obj$nobs)
+  sample_folds <- length(obj$subsamples)
+  for (k in 1:sample_folds) {
+    fid[obj$subsamples[[k]]] <- k
+  }#FOR
+
+  # Check whether a) multiple ensembles, or b) single ensemble, or c) single
+  #     model were used for orthogonalization.
+  y_mat <- D_mat <- Z_mat <- matrix(0, obj$nobs, nensemble)
+  if (nensemble > 1) {
+    # Multiple ensembles
+    # Compile variables
+    for (e in 1:nensemble) {
+      y_mat[, e] <- obj$iv_fit[[e]]$y
+      D_mat[, e] <- obj$iv_fit[[e]]$X_[, 1]
+      Z_mat[, e] <- obj$iv_fit[[e]]$Z_[, 1]
+    }#FOR
+
+    # Assign names
+    cnames <- paste0("_", names(obj$iv_fit))
+    colnames(y_mat) <- paste0("y", cnames)
+    colnames(D_mat) <- paste0("D", cnames)
+    colnames(Z_mat) <- paste0("Z", cnames)
+  } else {
+    # For single ensemble or single model, only the naming differs. First,
+    #     compile variables.
+    y_mat <- obj$iv_fit$y
+    D_mat <- as.matrix(obj$iv_fit$X_[, 1])
+    Z_mat <- as.matrix(obj$iv_fit$Z_[, 1])
+    # Then assign names.
+        calc_ensemble <- !("what" %in% names(obj$models)) |
+      !("what" %in% names(obj$models_FS))
+    if (calc_ensemble) {
+      # Single ensemble
+      cnames <- paste0("_", obj$ens_type)
+      colnames(y_mat) <- paste0("y", cnames)
+      colnames(D_mat) <- paste0("D", cnames)
+      colnames(Z_mat) <- paste0("Z", cnames)
+
+    } else {
+      # Single model
+      # Single ensemble
+      cnames <- paste0("_", "mdl")
+      colnames(y_mat) <- paste0("y", cnames)
+      colnames(D_mat) <- paste0("D", cnames)
+      colnames(Z_mat) <- paste0("Z", cnames)
+    }#IFELSE
+  }#IFELSE
+
+  # Print orthogonalized variables to csv
+  ids <- cbind(c(1:obj$nobs), fid); colnames(ids) <- c("id", "fid")
+  v_mat <- cbind(y_mat, D_mat, Z_mat)
+  write.table(cbind(ids, v_mat),
+            paste0(filename, ".csv"),
+            row.names = FALSE,
+            sep = ",")
+  # Print dict
+  y_name <- colnames(obj$y); if (is.null(y_name)) y_name <- "y"
+  D_name <- colnames(obj$D); if (is.null(D_name)) D_name <- "D"
+  dict <- rbind(colnames(v_mat),
+                c(rep(y_name, nensemble), rep(D_name, 2 * nensemble)),
+                c(rep("yeq", nensemble), rep("deq", nensemble),
+                  rep("zeq", nensemble)))
+  write.table(dict, paste0(filename, "_dict.csv"),
+            col.names = FALSE, row.names = FALSE,
+            sep = ",")
+}#EXPORT_DDML.DDML_IV

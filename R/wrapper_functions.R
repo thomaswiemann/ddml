@@ -199,3 +199,64 @@ any_iv.mdl_grf <- function(obj, index_iv, ...){
   ivselected <- intersect(vselected, index_iv)
   length(ivselected) > 0
 }#ANY_IV.MDL_GRF
+
+# keras ========================================================================
+#' Wrapper function for \code{keras}'s neural net implementation.
+#'
+#' Wrapper function for \code{keras}'s neural net implementation. Tensorflow is
+#'     used as a backend for computation.
+#'
+#' @export mdl_keras
+mdl_keras <- function(y, X){
+  # Compile model
+
+  # Estimate
+
+  # Organize and return output
+
+  # Organize and return output
+  class(mdl_fit) <- c("mdl_grf", class(mdl_fit))
+  return(mdl_fit)
+}#MDL_GRF
+
+#' Predict method for mdl_keras fits.
+#'
+#' Predict method for mdl_keras fits.
+#'
+#' @export predict.mdl_keras
+predict.mdl_keras <- function(obj, newdata = NULL){
+  # Check for new data
+  #if(is.null(newdata)) newdata <- obj$X
+  class(obj) <- class(obj)[2]
+  # Predict data and output as matrix
+  as.numeric(predict(obj, newdata)$predictions) # don't return a data.frame
+}#PREDICT.MDL_GRF
+
+#' Instrument selection for mdl_keras fits.
+#'
+#' Instrument selection for mdl_keras fits.
+#'
+#' @export any_iv.mdl_keras
+any_iv.mdl_keras <- function(obj, index_iv, ...){
+  # Check whether instruments have non-zero varibale importance
+
+}#ANY_IV.MDL_GRF
+
+# Build neural net
+build_nnet <- function(num_layers = 1) {
+  model <- keras_model_sequential() %>%
+    layer_dense(units = 100, activation = "relu",
+                input_shape = dim(train_data)[[2]])
+
+  for (k in 1:num_layers) {
+    model <- model %>% layer_dense(units = 100, activation = "relu")
+  }#FOR
+
+  model <- model %>% layer_dense(units = 1)
+
+  model %>% compile(
+    optimizer = "rmsprop",
+    loss = "mse",
+    metrics = c("mae")
+  )
+}#BUILD_MODEL
