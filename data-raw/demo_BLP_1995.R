@@ -106,6 +106,42 @@ if (FALSE) {
   export_ddml(ddml_rlasso_fit, "rlasso")
 }#IF
 
+# Neurel Net DDML IV ===========================================================
+
+#' As an alternative, we may also consider neural networks. A wrapper for keras
+#'     is already implemented. All that is left is to specify the architecture
+#'     and pass it as an option to the wrapper. For specifying the architecture,
+#'     keras high-level syntax is particularly intuitive. To use it, we
+#'     explicitly load the keras library.
+
+library(keras)
+
+nnet <- keras::keras_model_sequential() %>%
+  keras::layer_dense(units = 30, activation = "relu") %>%
+  keras::layer_dense(units = 30, activation = "relu") %>%
+  keras::layer_dense(units = 20, activation = "relu") %>%
+  keras::layer_dense(units = 20, activation = "relu") %>%
+  keras::layer_dense(units = 10, activation = "relu") %>%
+  keras::layer_dense(units = 1)
+
+# First stage model
+model <- list(what = mdl_keras,
+              args = list(model = nnet,
+                          epochs = 200))
+
+# DDML IV. We consider cross-residiualization across 10 sample folds here.
+ddml_keras_fit <- ddml_iv(y, D = D,
+                          Z = ZL_, X = XL_,
+                          models = model,
+                          sample_folds = 5,
+                          silent = T)
+ddml_keras_fit$coef[1]
+
+#' Note that the architecture of a neural network is an intricate
+#'     hyperparameter. specifying an ensemble of neural networks, where the
+#'     choosen architecture performs well in cross-validation, may be helpful
+#'     when prior knowledge is not available.
+
 # Ensemble DDML IV =============================================================
 
 #' A more ambitious approach may consider a variety of computational models for
