@@ -1,9 +1,9 @@
 library(ddml)
 context("Testing wrapper functions for imported ML procedures.")
 
-sim_data <- function() {
-  X <- matrix(rnorm(100*50), 100, 50) # Simulate features
-  y <- 1 + X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(100)
+sim_data <- function(N = 100) {
+  X <- matrix(rnorm(N*50), N, 50) # Simulate features
+  y <- 1 + X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(N)
   return(list(y = y, X = X))
 }#SIM_DATA
 
@@ -57,5 +57,26 @@ test_that("mdl_grf is working", {
   # Check output with expectations
   expect_is(mdl_fit, "mdl_grf")
   expect_equal(length(fitted), 100)
+  expect_is(iv_selected, "logical")
+})#TEST_THAT
+
+test_that("mdl_keras is working", {
+  # Simulate small dataset
+  dat <- sim_data(N = 1000)
+  # Build simple neural net
+  model <- keras::keras_model_sequential() %>%
+    keras::layer_dense(units = 10, activation = "relu",
+                       input_shape = dim(dat$X)[[2]]) %>%
+    keras::layer_dense(units = 10, activation = "relu") %>%
+    keras::layer_dense(units = 1)
+  # Estimate model
+  mdl_fit <- mdl_keras(dat$y, dat$X, model,
+                       epochs = 10)
+  # Check methods predict() and any_iv()
+  fitted <- predict(mdl_fit, newdata = dat$X)
+  iv_selected <- any_iv(mdl_fit, index_iv = c(11:20))
+  # Check output with expectations
+  expect_is(mdl_fit, "mdl_keras")
+  expect_equal(length(fitted), 1000)
   expect_is(iv_selected, "logical")
 })#TEST_THAT

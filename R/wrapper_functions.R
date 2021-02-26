@@ -207,17 +207,29 @@ any_iv.mdl_grf <- function(obj, index_iv, ...){
 #'     used as a backend for computation.
 #'
 #' @export mdl_keras
-mdl_keras <- function(y, X){
-  # Compile model
+mdl_keras <- function(y, X,
+                      model,
+                      optimizer = "rmsprop",
+                      loss = "mse",
+                      epochs = 10,
+                      batch_size = min(1000, length(y)),
+                      metrics = c("mae"),
+                      verbose = 0) {
+  # Copy model and compile
+  model_copy <- keras::clone_model(model)
+  model_copy %>% keras::compile(optimizer = optimizer,
+                                loss = loss,
+                                metrics = metrics)
 
-  # Estimate
-
-  # Organize and return output
-
-  # Organize and return output
-  class(mdl_fit) <- c("mdl_grf", class(mdl_fit))
-  return(mdl_fit)
-}#MDL_GRF
+  # Fit neural net
+  model_copy %>% keras::fit(X, y,
+                            epochs = epochs,
+                            batch_size = batch_size,
+                            verbose = verbose)
+  # Return fit
+  class(model_copy) <- c("mdl_keras", class(model_copy))
+  return(model_copy)
+}#MDL_KERAS
 
 #' Predict method for mdl_keras fits.
 #'
@@ -227,10 +239,10 @@ mdl_keras <- function(y, X){
 predict.mdl_keras <- function(obj, newdata = NULL){
   # Check for new data
   #if(is.null(newdata)) newdata <- obj$X
-  class(obj) <- class(obj)[2]
   # Predict data and output as matrix
-  as.numeric(predict(obj, newdata)$predictions) # don't return a data.frame
-}#PREDICT.MDL_GRF
+  class(obj) <- class(obj)[-1]
+  as.numeric(predict(obj, newdata))
+}#PREDICT.MDL_KERAS
 
 #' Instrument selection for mdl_keras fits.
 #'
@@ -238,25 +250,5 @@ predict.mdl_keras <- function(obj, newdata = NULL){
 #'
 #' @export any_iv.mdl_keras
 any_iv.mdl_keras <- function(obj, index_iv, ...){
-  # Check whether instruments have non-zero varibale importance
-
-}#ANY_IV.MDL_GRF
-
-# Build neural net
-build_nnet <- function(num_layers = 1) {
-  model <- keras_model_sequential() %>%
-    layer_dense(units = 100, activation = "relu",
-                input_shape = dim(train_data)[[2]])
-
-  for (k in 1:num_layers) {
-    model <- model %>% layer_dense(units = 100, activation = "relu")
-  }#FOR
-
-  model <- model %>% layer_dense(units = 1)
-
-  model %>% compile(
-    optimizer = "rmsprop",
-    loss = "mse",
-    metrics = c("mae")
-  )
-}#BUILD_MODEL
+  TRUE
+}#ANY_IV.MDL_KERAS
