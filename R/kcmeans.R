@@ -92,7 +92,7 @@ predict.kcmeans <- function(obj, newdata = NULL){
   }#FOR
   # Return fitted values
   return(fitted)
-}#PREDICT.kcmeans
+}#PREDICT.KCMEANS
 
 #' Instrument selection for kcmeans fits.
 #'
