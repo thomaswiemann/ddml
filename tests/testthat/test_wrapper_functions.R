@@ -60,6 +60,8 @@ test_that("mdl_grf is working", {
   expect_is(iv_selected, "logical")
 })#TEST_THAT
 
+# Skip this for now -- takes to long
+if(FALSE) {
 test_that("mdl_keras is working", {
   # Simulate small dataset
   dat <- sim_data(N = 1000)
@@ -80,3 +82,4 @@ test_that("mdl_keras is working", {
   expect_equal(length(fitted), 1000)
   expect_is(iv_selected, "logical")
 })#TEST_THAT
+}

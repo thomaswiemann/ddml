@@ -12,6 +12,9 @@ mdl_keras(
   loss = "mse",
   epochs = 10,
   batch_size = min(1000, length(y)),
+  validation_split = 0,
+  callbacks = NULL,
+  steps_per_epoch = NULL,
   metrics = c("mae"),
   verbose = 0
 )

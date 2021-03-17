@@ -213,6 +213,9 @@ mdl_keras <- function(y, X,
                       loss = "mse",
                       epochs = 10,
                       batch_size = min(1000, length(y)),
+                      validation_split = 0,
+                      callbacks = NULL,
+                      steps_per_epoch = NULL,
                       metrics = c("mae"),
                       verbose = 0) {
   # Copy model and compile
@@ -225,9 +228,12 @@ mdl_keras <- function(y, X,
   model_copy %>% keras::fit(X, y,
                             epochs = epochs,
                             batch_size = batch_size,
+                            validation_split = validation_split,
+                            callbacks = callbacks,
+                            steps_per_epoch = steps_per_epoch,
                             verbose = verbose)
   # Return fit
-  class(model_copy) <- c("mdl_keras", class(model_copy))
+  class(model_copy) <- c("mdl_keras", class(model_copy)) # amend class
   return(model_copy)
 }#MDL_KERAS
 
@@ -240,7 +246,7 @@ predict.mdl_keras <- function(obj, newdata = NULL){
   # Check for new data
   #if(is.null(newdata)) newdata <- obj$X
   # Predict data and output as matrix
-  class(obj) <- class(obj)[-1]
+  class(obj) <- class(obj)[-1] # Not a pretty solution...
   as.numeric(predict(obj, newdata))
 }#PREDICT.MDL_KERAS
 

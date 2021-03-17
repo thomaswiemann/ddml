@@ -58,7 +58,7 @@ kcmeans <- function(y, X,
   # Organize and return output
   output <- list(alpha = alpha,
                  cluster_map = cluster_map,
-                 y = y)
+                 y = y, X = X, K = K)
   class(output) <- "kcmeans"
   return(output)
 }#KCMEANS
@@ -75,20 +75,19 @@ predict.kcmeans <- function(obj, newdata = NULL){
   if (is.null(newdata)) {
     newdata <- obj$X
   }#IF
-
+  nobs <- length(newdata)
   # Calculate and return fitted values
   unq_x <- sort(unique(newdata))
   J <- length(unq_x)
-
+  # Get subsamples
+  indx_j <- lapply(unq_x, function(j) which(j == newdata))
   # Get cluster assignment
   fitted <- matrix(0, nobs, 1)
-  for (k in 1:K) {
-    indx_jk <- unlist(indx_j[cluster_map[[k]]])
-    cluster[indx_jk] <- k
+  for (k in 1:obj$K) {
+    indx_jk <- unlist(indx_j[obj$cluster_map[[k]]])
+    fitted[indx_jk] <- obj$alpha[k]
   }#FOR
-
-  # Calculate and return fitted values with the OLS coefficient
-  fitted <- newdata%*%obj$coef
+  # Return fitted values
   return(fitted)
 }#PREDICT.kcmeans
 
@@ -100,7 +99,7 @@ predict.kcmeans <- function(obj, newdata = NULL){
 #' @export
 any_iv.kcmeans <- function(obj, ...){
   TRUE
-}#ANY_IV.kcmeans
+}#ANY_IV.KCMEANS
 
 # Complementary functions ======================================================
 #' Initial cluster means for kcmeans.
@@ -117,7 +116,7 @@ init_kcmeans <- function(y, X, K) {
   unq_x <- sort(unique(X))
   J <- length(unq_x)
   # Get subsamples
-  indx_j <- lapply(unq_x, function(j) which(j == x))
+  indx_j <- lapply(unq_x, function(j) which(j == X))
   # Initialize centers, means, and distances
   centers <- alpha_0 <- NULL
   dist_c <- matrix(1, J, 1)

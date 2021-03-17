@@ -124,7 +124,7 @@ nnet <- keras::keras_model_sequential() %>%
   keras::layer_dense(units = 10, activation = "relu") %>%
   keras::layer_dense(units = 1)
 
-# First stage model
+# First and second stage model
 model <- list(what = mdl_keras,
               args = list(model = nnet,
                           epochs = 200))
