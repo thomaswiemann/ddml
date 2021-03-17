@@ -100,9 +100,9 @@ crosspred <- function(y, X, Z = NULL,
       # Compute model
       mdl_fit <- do.call(do.call, models)
       # Compute out-of-sample predictions
-      oos_fitted[subsamples[[k]],] <- predict(mdl_fit,
-                                            cbind(X[subsamples[[k]], ],
-                                                  Z[subsamples[[k]], ]))
+      oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
+                                               cbind(X[subsamples[[k]], ],
+                                                     Z[subsamples[[k]], ]))
     } else if (calc_ensemble) {
       # When multiple models are passed, fit an ensemble on the training data.
       if ("list" %in% class(y)) {
@@ -110,14 +110,17 @@ crosspred <- function(y, X, Z = NULL,
       } else {
         y_ <- y[-subsamples[[k]]]
       }#IFELSE
-      mdl_fit <- ensemble(y_, X[-subsamples[[k]], ], Z[-subsamples[[k]], ],
+      mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = F],
+                          Z[-subsamples[[k]], , drop = F],
                           ens_type, models, cv_folds,
                           setup_parallel = setup_parallel,
                           silent = silent)
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
-                                               newX = X[subsamples[[k]], ],
-                                               newZ = Z[subsamples[[k]], ])
+                                               newX = X[subsamples[[k]], ,
+                                                        drop = F],
+                                               newZ = Z[subsamples[[k]], ,
+                                                        drop = F])
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
       # Record model MSPEs
@@ -131,8 +134,8 @@ crosspred <- function(y, X, Z = NULL,
         is_fitted[[k]] <- predict(mdl_fit, cbind(X[-subsamples[[k]], ],
                                                  Z[-subsamples[[k]], ]))
       } else if (calc_ensemble) {
-        is_fitted[[k]] <- predict(mdl_fit, newX = X[-subsamples[[k]], ],
-                                  newZ = Z[-subsamples[[k]], ])
+        is_fitted[[k]] <- predict(mdl_fit, newX = X[-subsamples[[k]],,drop = F],
+                                  newZ = Z[-subsamples[[k]], , drop = F])
       }#IFELSE
     }#IF
   }#FOR

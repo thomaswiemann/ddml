@@ -124,6 +124,7 @@ ensemble <- function(y, X, Z = NULL,
 #' Predict method for ensemble models.
 #'
 #' @export predict.ensemble
+#' @export
 predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
   # Data parameters
   nmodels <- length(obj$mdl_fits)
@@ -138,8 +139,9 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
     assign_X <- obj$models[[m]]$assign_X
     assign_Z <- obj$models[[m]]$assign_Z
     # Compute predictions
-    fitted <- predict(obj$mdl_fits[[m]], newdata = cbind(newX[, assign_X],
-                                                         newZ[, assign_Z]))
+    fitted <- predict(obj$mdl_fits[[m]],
+                      newdata = cbind(newX[, assign_X],
+                                      newZ[, assign_Z]))
 
     # Initialize matrix of fitted values
     if (first_fit) {
