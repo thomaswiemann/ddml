@@ -51,6 +51,9 @@ kcmeans <- function(y, X,
       indx_jk <- unlist(indx_j[cluster_map[[k]]])
       alpha[k] <- mean(y[indx_jk])
     }#FOR
+    # Assign random center to empty clusters
+    is_NaN <- is.nan(alpha)
+    alpha[is_NaN] <- sample(alpha[!is_NaN], 1) + (1 - 2*runif(1)) # add noise
     # Check convergence
     if (all(abs(alpha - alpha_0) <= eps)) break
     alpha_0 <- alpha
