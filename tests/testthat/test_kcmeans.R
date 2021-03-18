@@ -27,6 +27,16 @@ test_that("kcmeans computes k conditional means estimator", {
   expect_equal(length(mdl_kcmeans$alpha), 4)
 })#TEST_THAT
 
+test_that("kcmeans_vns computes k conditional means estimator", {
+  # Simulate small dataset
+  dat <- sim_data()
+  # Estimate kcmeans
+  mdl_kcmeans <- kcmeans_vns(dat$y, dat$X, K = 4)
+  # Check output with expectations
+  expect_is(mdl_kcmeans$alpha, "numeric")
+  expect_equal(length(mdl_kcmeans$alpha), 4)
+})#TEST_THAT
+
 test_that("kcmeans predicts out of sample", {
   # Simulate small dataset
   dat <- sim_data()

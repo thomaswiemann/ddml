@@ -72,8 +72,7 @@ predict.pooled_kcmeans <- function(obj, newdata = NULL){
     fake_obj <- list(alpha = obj$alpha_mat[n,  ],
                      cluster_map = obj$cluster_maps[[n]],
                      K = obj$K)
-    class(fake_obj) <- "kcmeans"
-    fitted <- fitted + predict(fake_obj, newdata)
+    fitted <- fitted + predict.kcmeans(fake_obj, newdata)
   }#FOR
   fitted <- fitted / obj$ncluster
   # Return fitted values
