@@ -141,6 +141,9 @@ kcmeans_vns <- function(y, X,
         # Check loss associated with each reassignment
         for (k in 1:(K-1)) {
           # Reassign from cl_j to not_cl_j[k]
+          #print("newk")
+          #print(cluster_map)
+          #print(cl_j)
           cluster_map_k <- reassign_j(j_i, cl_j, not_cl_j[k], cluster_map_n)
           # Compute new cluster means for the two clusters
           alpha_k <- alpha
@@ -196,7 +199,7 @@ predict.kcmeans <- function(obj, newdata = NULL){
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == newdata))
   # Get cluster assignment
-  fitted <- matrix(0, nobs, 1)
+  fitted <- matrix(mean(obj$y), nobs, 1)
   for (k in 1:obj$K) {
     indx_jk <- unlist(indx_j[obj$cluster_map[[k]]])
     fitted[indx_jk] <- obj$alpha[k]
