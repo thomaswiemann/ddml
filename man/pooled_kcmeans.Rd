@@ -12,7 +12,8 @@ pooled_kcmeans(
   subsample = 0.7,
   replace = F,
   eps = 0,
-  max_iter = 500
+  max_iter = 500,
+  silent = T
 )
 }
 \arguments{

@@ -140,8 +140,8 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
     assign_Z <- obj$models[[m]]$assign_Z
     # Compute predictions
     fitted <- predict(obj$mdl_fits[[m]],
-                      newdata = cbind(newX[, assign_X],
-                                      newZ[, assign_Z]))
+                      newdata = cbind(newX[, assign_X, drop = F],
+                                      newZ[, assign_Z, drop = F]))
 
     # Initialize matrix of fitted values
     if (first_fit) {

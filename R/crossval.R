@@ -180,13 +180,13 @@ crossval_compute <- function(test_sample, model,
   # Compute model for this fold
   #     Note: this is effectively copying the data -- fix needed.
   mdl_fun$args$y <- y[-test_sample];
-  mdl_fun$args$X <- cbind(X[-test_sample, assign_X],
-                          Z[-test_sample, assign_Z])
+  mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = F],
+                          Z[-test_sample, assign_Z, drop = F])
   mdl_fit <- do.call(do.call, mdl_fun)
 
   # Compute out of sample residuals
-  oos_fitted <- predict(mdl_fit, cbind(X[test_sample, assign_X],
-                                       Z[test_sample, assign_Z]))
+  oos_fitted <- predict(mdl_fit, cbind(X[test_sample, assign_X, drop = F],
+                                       Z[test_sample, assign_Z, drop = F]))
   oos_resid <- y[test_sample] - as(oos_fitted, "matrix")
 
   # Check whether instruments were selected (optional) and return fold
@@ -195,7 +195,7 @@ crossval_compute <- function(test_sample, model,
     index_iv <- (length(assign_X) + 1):length(c(assign_X, assign_Z))
     cv_Z <- any_iv(obj = mdl_fit,
                    index_iv = index_iv,
-                   names_iv = colnames(Z[1:2, assign_Z]))
+                   names_iv = colnames(Z[1:2, assign_Z, drop = F]))
   } else {
     cv_Z <- TRUE
   }#IFELSE
