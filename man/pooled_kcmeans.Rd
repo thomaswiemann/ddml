@@ -23,23 +23,40 @@ pooled_kcmeans(
 
 \item{K}{Number of conditional means.}
 
+\item{ncluster}{Number of kcmeans estimators to average.}
+
+\item{subsample}{Subsampling rate for each conditional mean estimator.}
+
+\item{replace}{Boolean for whether subsampling should be with replacement.}
+
+\item{eps}{Convergence tolerance.}
+
+\item{max_iter}{Maximum number of iterations until algorithm is terminated.}
+
+\item{silent}{Boolean indicating whether computation process should be
+printed.}
+
 \item{alpha_0}{K dimensional vector of initial  conditional means. When set
 to NULL, the KMeans++ initialization procedure is used.}
 }
 \value{
-\code{kcmeans} returns an object of S3 class "\code{kcmeans}".
+\code{pooled_kcmeans} returns an object of S3 class
+    "\code{pooled_kcmeans}".
 
 The function \code{predict} computes fitted values for a trained model of
     this class.
 
-An object of class "\code{kcmeans}" is a list containig the following
+An object of class "\code{pooled_kcmeans}" is a list containig the following
     components:
 \describe{
-\item{\code{coef}}{A vector of least squares coefficients.}
-\item{\code{y}}{A response vector.}
-\item{\code{X}}{A feature matrix.}
-\item{\code{const}}{A boolean indicating inclusion of a constant.}
-\item{\code{w}}{An optional weights vector.}
+\item{\code{alpha_mat}}{A matrix of conditional means.}
+\item{\code{cluster_maps map}}{A list of cluster maps, each a list of sets of
+    indices, denoting which values of \code{X} correspond to which
+    conditional means.}
+\item{\code{y}}{The outcome vector.}
+\item{\code{X}}{The feature vector.}
+\item{\code{K}}{The number of conditional means.}
+\item{\code{ncluster}}{The number of kcmeans estimators used.}
 }
 }
 \description{

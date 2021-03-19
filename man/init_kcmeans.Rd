@@ -2,12 +2,12 @@
 % Please edit documentation in R/kcmeans.R
 \name{init_kcmeans}
 \alias{init_kcmeans}
-\title{Initial cluster means for kcmeans.}
+\title{Initial cluster means for \code{kcmeans}.}
 \usage{
 init_kcmeans(y, X, K)
 }
 \description{
-Initial cluster means for kcmeans.
+Initial cluster means for \code{kcmeans}.
 }
 \examples{
 # Add example here.

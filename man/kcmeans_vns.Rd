@@ -2,7 +2,7 @@
 % Please edit documentation in R/kcmeans.R
 \name{kcmeans_vns}
 \alias{kcmeans_vns}
-\title{Compute K conditional means estimator via Variable Neighborhood Search.}
+\title{Compute K conditional means estimator via variable neighborhood search.}
 \usage{
 kcmeans_vns(
   y,
@@ -25,9 +25,17 @@ kcmeans_vns(
 
 \item{alpha_0}{K dimensional vector of initial  conditional means. When set
 to NULL, the KMeans++ initialization procedure is used.}
+
+\item{eps}{Convergence tolerance.}
+
+\item{max_iter}{Maximum number of iterations until algorithm is terminated.}
+
+\item{max_neighborhood}{Maximum number of neighborhood reassignments.}
+
+\item{max_iter_kcmeans}{Maxmimum number of iterations in the kcmeans step.}
 }
 \value{
-\code{kcmeans} returns an object of S3 class "\code{kcmeans}".
+\code{kcmeans_vns} returns an object of S3 class "\code{kcmeans}".
 
 The function \code{predict} computes fitted values for a trained model of
     this class.
@@ -35,15 +43,16 @@ The function \code{predict} computes fitted values for a trained model of
 An object of class "\code{kcmeans}" is a list containig the following
     components:
 \describe{
-\item{\code{coef}}{A vector of least squares coefficients.}
-\item{\code{y}}{A response vector.}
-\item{\code{X}}{A feature matrix.}
-\item{\code{const}}{A boolean indicating inclusion of a constant.}
-\item{\code{w}}{An optional weights vector.}
+\item{\code{alpha}}{A vector of conditional means.}
+\item{\code{cluster map}}{A list of sets of indices, denoting which values
+    of \code{X} correspond to which conditional means.}
+\item{\code{y}}{The outcome vector.}
+\item{\code{X}}{The feature vector.}
+\item{\code{K}}{The number of conditional means.}
 }
 }
 \description{
-Compute K conditional means estimator via Variable Neighborhood Search..
+Compute K conditional means estimator via variable neighborhood search.
 }
 \examples{
 

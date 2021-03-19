@@ -2,10 +2,11 @@
 % Please edit documentation in R/kcmeans.R
 \name{any_iv.kcmeans}
 \alias{any_iv.kcmeans}
-\title{Instrument selection for kcmeans fits.}
+\title{Instrument selection for objects of type \code{kcmeans}.}
 \usage{
 \method{any_iv}{kcmeans}(obj, ...)
 }
 \description{
-Instrument selection for kcmeans fits. Always returns \code{TRUE}.
+Instrument selection for objects of type \code{kcmeans}. Always returns
+    \code{TRUE}.
 }

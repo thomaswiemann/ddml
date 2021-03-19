@@ -15,6 +15,10 @@ kcmeans(y, X, K, alpha_0 = init_kcmeans(y, X, K), eps = 0, max_iter = 500)
 
 \item{alpha_0}{K dimensional vector of initial  conditional means. When set
 to NULL, the KMeans++ initialization procedure is used.}
+
+\item{eps}{Convergence tolerance.}
+
+\item{max_iter}{Maximum number of iterations until algorithm is terminated.}
 }
 \value{
 \code{kcmeans} returns an object of S3 class "\code{kcmeans}".
@@ -25,11 +29,12 @@ The function \code{predict} computes fitted values for a trained model of
 An object of class "\code{kcmeans}" is a list containig the following
     components:
 \describe{
-\item{\code{coef}}{A vector of least squares coefficients.}
-\item{\code{y}}{A response vector.}
-\item{\code{X}}{A feature matrix.}
-\item{\code{const}}{A boolean indicating inclusion of a constant.}
-\item{\code{w}}{An optional weights vector.}
+\item{\code{alpha}}{A vector of conditional means.}
+\item{\code{cluster map}}{A list of sets of indices, denoting which values
+    of \code{X} correspond to which conditional means.}
+\item{\code{y}}{The outcome vector.}
+\item{\code{X}}{The feature vector.}
+\item{\code{K}}{The number of conditional means.}
 }
 }
 \description{

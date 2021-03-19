@@ -2,10 +2,10 @@
 % Please edit documentation in R/kcmeans.R
 \name{predict.kcmeans}
 \alias{predict.kcmeans}
-\title{Predict method for kcmeans.}
+\title{Predict method for objects of type \code{kcmeans}.}
 \usage{
 \method{predict}{kcmeans}(obj, newdata = NULL)
 }
 \description{
-Predict method for kcmeans.
+Predict method for objects of type \code{kcmeans}.
 }
