@@ -7,6 +7,8 @@
 #' @param K Number of conditional means.
 #' @param alpha_0 K dimensional vector of initial  conditional means. When set
 #'     to NULL, the KMeans++ initialization procedure is used.
+#' @param eps Convergence tolerance.
+#' @param max_iter Maximum number of iterations until algorithm is terminated.
 #'
 #' @return \code{kcmeans} returns an object of S3 class "\code{kcmeans}".
 #'
@@ -16,11 +18,12 @@
 #' An object of class "\code{kcmeans}" is a list containig the following
 #'     components:
 #' \describe{
-#' \item{\code{coef}}{A vector of least squares coefficients.}
-#' \item{\code{y}}{A response vector.}
-#' \item{\code{X}}{A feature matrix.}
-#' \item{\code{const}}{A boolean indicating inclusion of a constant.}
-#' \item{\code{w}}{An optional weights vector.}
+#' \item{\code{alpha}}{A vector of conditional means.}
+#' \item{\code{cluster map}}{A list of sets of indices, denoting which values
+#'     of \code{X} correspond to which conditional means.}
+#' \item{\code{y}}{The outcome vector.}
+#' \item{\code{X}}{The feature vector.}
+#' \item{\code{K}}{The number of conditional means.}
 #' }
 #'
 #' @examples
@@ -63,17 +66,21 @@ kcmeans <- function(y, X,
   return(output)
 }#KCMEANS
 
-#' Compute K conditional means estimator via Variable Neighborhood Search.
+#' Compute K conditional means estimator via variable neighborhood search.
 #'
-#' Compute K conditional means estimator via Variable Neighborhood Search..
+#' Compute K conditional means estimator via variable neighborhood search.
 #'
 #' @param y A response vector.
 #' @param X A feature vector.
 #' @param K Number of conditional means.
 #' @param alpha_0 K dimensional vector of initial  conditional means. When set
 #'     to NULL, the KMeans++ initialization procedure is used.
+#' @param eps Convergence tolerance.
+#' @param max_iter Maximum number of iterations until algorithm is terminated.
+#' @param max_neighborhood Maximum number of neighborhood reassignments.
+#' @param max_iter_kcmeans Maxmimum number of iterations in the kcmeans step.
 #'
-#' @return \code{kcmeans} returns an object of S3 class "\code{kcmeans}".
+#' @return \code{kcmeans_vns} returns an object of S3 class "\code{kcmeans}".
 #'
 #' The function \code{predict} computes fitted values for a trained model of
 #'     this class.
@@ -81,11 +88,12 @@ kcmeans <- function(y, X,
 #' An object of class "\code{kcmeans}" is a list containig the following
 #'     components:
 #' \describe{
-#' \item{\code{coef}}{A vector of least squares coefficients.}
-#' \item{\code{y}}{A response vector.}
-#' \item{\code{X}}{A feature matrix.}
-#' \item{\code{const}}{A boolean indicating inclusion of a constant.}
-#' \item{\code{w}}{An optional weights vector.}
+#' \item{\code{alpha}}{A vector of conditional means.}
+#' \item{\code{cluster map}}{A list of sets of indices, denoting which values
+#'     of \code{X} correspond to which conditional means.}
+#' \item{\code{y}}{The outcome vector.}
+#' \item{\code{X}}{The feature vector.}
+#' \item{\code{K}}{The number of conditional means.}
 #' }
 #'
 #' @examples
@@ -181,9 +189,9 @@ kcmeans_vns <- function(y, X,
 }#KCMEANS_VNS
 
 # Complementary methods ========================================================
-#' Predict method for kcmeans.
+#' Predict method for objects of type \code{kcmeans}.
 #'
-#' Predict method for kcmeans.
+#' Predict method for objects of type \code{kcmeans}.
 #'
 #' @export predict.kcmeans
 #' @export
@@ -208,9 +216,10 @@ predict.kcmeans <- function(obj, newdata = NULL){
   return(fitted)
 }#PREDICT.KCMEANS
 
-#' Instrument selection for kcmeans fits.
+#' Instrument selection for objects of type \code{kcmeans}.
 #'
-#' Instrument selection for kcmeans fits. Always returns \code{TRUE}.
+#' Instrument selection for objects of type \code{kcmeans}. Always returns
+#'     \code{TRUE}.
 #'
 #' @export any_iv.kcmeans
 #' @export
@@ -219,9 +228,9 @@ any_iv.kcmeans <- function(obj, ...){
 }#ANY_IV.KCMEANS
 
 # Complementary functions ======================================================
-#' Initial cluster means for kcmeans.
+#' Initial cluster means for \code{kcmeans}.
 #'
-#' Initial cluster means for kcmeans.
+#' Initial cluster means for \code{kcmeans}.
 #'
 #' @examples
 #' # Add example here.
@@ -261,6 +270,7 @@ init_kcmeans <- function(y, X, K) {
   return(alpha_0)
 }#INIT_KCMEANS
 
+# Internal functions ===========================================================
 #' Computation of conditional means given cluster map
 get_cmeans <- function(y, indx_j, K,  cluster_map){
   alpha <- c(1:K)

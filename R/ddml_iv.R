@@ -49,8 +49,6 @@
 #'
 #' An object of class \code{ddml_iv}is a list containig the
 #'     following components:
-#' @return \code{crosspred} returns a list containig the following
-#'     components:
 #' \describe{
 #' \item{\code{coef}}{A vector with the LIE-conform DDML IV coefficent in the
 #'     first entry.}
