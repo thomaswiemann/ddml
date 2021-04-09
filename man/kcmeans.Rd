@@ -30,7 +30,7 @@ An object of class "\code{kcmeans}" is a list containig the following
     components:
 \describe{
 \item{\code{alpha}}{A vector of conditional means.}
-\item{\code{cluster map}}{A list of sets of indices, denoting which values
+\item{\code{cluster_map}}{A list of sets of indices, denoting which values
     of \code{X} correspond to which conditional means.}
 \item{\code{y}}{The outcome vector.}
 \item{\code{X}}{The feature vector.}

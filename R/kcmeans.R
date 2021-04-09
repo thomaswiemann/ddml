@@ -19,7 +19,7 @@
 #'     components:
 #' \describe{
 #' \item{\code{alpha}}{A vector of conditional means.}
-#' \item{\code{cluster map}}{A list of sets of indices, denoting which values
+#' \item{\code{cluster_map}}{A list of sets of indices, denoting which values
 #'     of \code{X} correspond to which conditional means.}
 #' \item{\code{y}}{The outcome vector.}
 #' \item{\code{X}}{The feature vector.}
@@ -100,7 +100,7 @@ kcmeans <- function(y, X,
 #'
 #' @export kcmeans_vns
 kcmeans_vns <- function(y, X,
-                        K, alpha_0 = init_kcmeans(y, X, K), N = 2,
+                        K, alpha_0 = init_kcmeans(y, X, K),
                         eps = 0, max_iter = 10, max_neighborhood = 10,
                         max_iter_kcmeans = 100) {
   # Data parameters

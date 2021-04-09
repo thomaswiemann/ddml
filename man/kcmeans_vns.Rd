@@ -9,7 +9,6 @@ kcmeans_vns(
   X,
   K,
   alpha_0 = init_kcmeans(y, X, K),
-  N = 2,
   eps = 0,
   max_iter = 10,
   max_neighborhood = 10,
