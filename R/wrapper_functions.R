@@ -209,7 +209,7 @@ any_iv.mdl_grf <- function(obj, index_iv, ...){
 #' @export mdl_keras
 mdl_keras <- function(y, X,
                       model,
-                      optimizer = "rmsprop",
+                      optimizer_fun = "rmsprop",
                       loss = "mse",
                       epochs = 10,
                       batch_size = min(1000, length(y)),
@@ -219,22 +219,26 @@ mdl_keras <- function(y, X,
                       metrics = c("mae"),
                       verbose = 0) {
   # Copy model and compile
-  model_copy <- keras::clone_model(model)
-  model_copy %>% keras::compile(optimizer = optimizer,
-                                loss = loss,
-                                metrics = metrics)
+  model %>% keras::compile(optimizer = optimizer_fun,
+                           loss = loss,
+                           metrics = metrics)
+
+  keras::compile(model,
+          optimizer = optimizer_fun,
+          loss = loss,
+          metrics = metrics)
 
   # Fit neural net
-  model_copy %>% keras::fit(X, y,
-                            epochs = epochs,
-                            batch_size = batch_size,
-                            validation_split = validation_split,
-                            callbacks = callbacks,
-                            steps_per_epoch = steps_per_epoch,
-                            verbose = verbose)
+  model %>% keras::fit(X, y,
+                       epochs = epochs,
+                       batch_size = batch_size,
+                       validation_split = validation_split,
+                       callbacks = callbacks,
+                       steps_per_epoch = steps_per_epoch,
+                       verbose = verbose)
   # Return fit
-  class(model_copy) <- c("mdl_keras", class(model_copy)) # amend class
-  return(model_copy)
+  class(model) <- c("mdl_keras", class(model)) # amend class
+  return(model)
 }#MDL_KERAS
 
 #' Predict method for mdl_keras fits.
