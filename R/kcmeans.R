@@ -202,14 +202,17 @@ predict.kcmeans <- function(obj, newdata = NULL){
   }#IF
   nobs <- length(newdata)
   # Calculate and return fitted values
-  unq_x <- sort(unique(newdata))
+  unq_x <- unique(newdata)
   J <- length(unq_x)
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == newdata))
   # Get cluster assignment
   fitted <- matrix(mean(obj$y), nobs, 1)
   for (k in 1:obj$K) {
-    indx_jk <- unlist(indx_j[obj$cluster_map[[k]]])
+    # Get unq_x associated with cluster k
+    is_in_k <- sapply(unq_x, function(v) any(v == obj$cluster_map[[k]]))
+    # Associate observations with cluster k
+    indx_jk <- unlist(indx_j[is_in_k])
     fitted[indx_jk] <- obj$alpha[k]
   }#FOR
   # Return fitted values
