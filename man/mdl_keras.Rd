@@ -8,7 +8,7 @@ mdl_keras(
   y,
   X,
   model,
-  optimizer = "rmsprop",
+  optimizer_fun = "rmsprop",
   loss = "mse",
   epochs = 10,
   batch_size = min(1000, length(y)),
