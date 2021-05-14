@@ -17,6 +17,9 @@
 #'         \item{\code{args} Optional arguments to be passed to \code{what}}
 #'     }
 #' @param cv_folds The number for cross-validation folds.
+#' @param cv_subsamples An optional list of vectors, each containing indices of
+#'     a test-sample. If not used-provided, the split sample folds are randomly
+#'     drawn.
 #' @param setup_parallel An list containing two named elements:
 #'     \itemize{
 #'         \item{\code{type} A string of value \code{"static"} or
@@ -67,6 +70,7 @@
 crossval <- function(y, X, Z = NULL,
                      models,
                      cv_folds = 5,
+                     cv_subsamples = NULL,
                      setup_parallel = list(type = 'dynamic',
                                            cores = 1),
                      silent = F) {
@@ -75,8 +79,12 @@ crossval <- function(y, X, Z = NULL,
   nmodels <- length(models)
 
   # Create CV fold tuple
-  folds <- split(c(1:nobs), sample(rep(c(1:cv_folds),
-                                       ceiling(nobs / cv_folds)))[1:nobs])
+  if (is.null(cv_subsamples)) {
+    cv_subsamples <- split(c(1:nobs), sample(rep(c(1:cv_folds),
+                                              ceiling(nobs / cv_folds)))[1:nobs])
+  }#IF
+  cv_folds <- length(cv_subsamples)
+  nobs <- length(unlist(cv_subsamples))
 
   # Run cross-validation depending on parallelization specification
   if (setup_parallel$cores == 1) {
@@ -85,7 +93,7 @@ crossval <- function(y, X, Z = NULL,
       # Select model and cv-fold for this job
       j <- ceiling(x / cv_folds) # jth model
       i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
-      fold_x <- folds[[i]]
+      fold_x <- cv_subsamples[[i]]
       # Print fold and lambda
       if(!silent) print(paste0(paste0("model = ", j, paste0(": Fold ", i))))
       # Compute model for this fold
@@ -100,7 +108,7 @@ crossval <- function(y, X, Z = NULL,
     parallel::clusterExport(cl,
                             c("y", "X", "Z",
                               "models", "cv_folds",
-                              "nobs", "nmodels", "folds",
+                              "nobs", "nmodels", "cv_folds",
                               "silent"),
                             envir = environment())
     parallel::clusterEvalQ(cl, library(ddml))
@@ -112,7 +120,7 @@ crossval <- function(y, X, Z = NULL,
         # Select model and cv-fold for this job
         j <- ceiling(x / cv_folds) # jth model
         i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
-        fold_x <- folds[[i]]
+        fold_x <- cv_subsamples[[i]]
         # Print fold and lambda
         if(!silent) print(paste0(paste0("model = ", j, paste0(": Fold ", i))))
         # Compute model for this fold
@@ -129,7 +137,7 @@ crossval <- function(y, X, Z = NULL,
         # Select model and cv-fold for this job
         j <- ceiling(x / cv_folds)
         i <- x - cv_folds * (ceiling(x / cv_folds) - 1)
-        fold_x <- folds[[i]]
+        fold_x <- cv_subsamples[[i]]
         # Print fold and lambda
         if(!silent) print(paste0(paste0("model = ", j, paste0("; Fold ", i))))
         # Compute model for this fold

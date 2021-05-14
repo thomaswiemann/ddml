@@ -219,7 +219,11 @@ ensemble_weights <- function(y, X, Z = NULL,
   if (any(c("stacking", "stacking_nn", "stacking_01", "cv") %in% type) &&
       (is.null(cv_res))) {
     # Run crossvalidation procedure
-    cv_res <- crossval(y, X, Z, models, cv_folds, setup_parallel, silent)
+    cv_res <- crossval(y, X, Z,
+                       models = models,
+                       cv_folds = cv_folds,
+                       setup_parallel = setup_parallel,
+                       silent = silent)
   }#IF
   # Compute weights for each ensemble type
   weights <- matrix(0, length(models), length(type))
