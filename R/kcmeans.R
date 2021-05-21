@@ -38,6 +38,7 @@ kcmeans <- function(y, X,
   J <- length(unq_x)
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == X))
+  names(indx_j) <- unq_x
   # Run K conditional means algorithm
   alpha <- alpha_0
   for (n in 1:max_iter) {
@@ -47,13 +48,15 @@ kcmeans <- function(y, X,
       # Calculate distances
       dist_k <- sapply(c(1:K), function(k) mean((y[indx_j[[j]]] - alpha[k])^2))
       # assign to new cluster
-      cluster_map[[which.min(dist_k)]] <- c(cluster_map[[which.min(dist_k)]], j)
+      min_k <- which.min(dist_k)[1]
+      cluster_map[[min_k]] <- c(cluster_map[[min_k]], unq_x[j])
     }#FOR
     # Obtain new cluster means
     alpha <- get_cmeans(y, indx_j, K, cluster_map)
     # Assign random center to empty clusters
     is_NaN <- is.nan(alpha)
-    alpha[is_NaN] <- sample(alpha[!is_NaN], 1) + (1 - 2*runif(1)) # add noise
+    alpha[is_NaN] <- sample(alpha[!is_NaN], sum(is_NaN)) +
+      (1 - 2*runif(sum(is_NaN))) # add noise
     # Check convergence
     if (all(abs(alpha - alpha_0) <= eps)) break
     alpha_0 <- alpha
@@ -107,8 +110,11 @@ kcmeans_vns <- function(y, X,
   nobs <- length(y)
   unq_x <- sort(unique(X))
   J <- length(unq_x)
+
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == X))
+  names(indx_j) <- unq_x
+
   # Get initial cluster map and corresponding loss
   cluster_map <- kcmeans(y, X, K, alpha_0 = alpha_0, max_iter = 1)$cluster_map
   loss <- get_loss(y, indx_j, K, alpha_0, cluster_map)
@@ -202,10 +208,11 @@ predict.kcmeans <- function(obj, newdata = NULL){
   }#IF
   nobs <- length(newdata)
   # Calculate and return fitted values
-  unq_x <- unique(newdata)
+  unq_x <- sort(unique(newdata))
   J <- length(unq_x)
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == newdata))
+  names(indx_j) <- unq_x
   # Get cluster assignment
   fitted <- matrix(mean(obj$y), nobs, 1)
   for (k in 1:obj$K) {
@@ -278,7 +285,13 @@ init_kcmeans <- function(y, X, K) {
 get_cmeans <- function(y, indx_j, K,  cluster_map){
   alpha <- c(1:K)
   for (k in 1:K) {
-    indx_jk <- unlist(indx_j[cluster_map[[k]]])
+    # Check whether cluster is empty
+    if (is.null(cluster_map[[k]])) {
+      alpha[k] <- NaN
+      next
+    }#IF
+    # Assign new cluster mean
+    indx_jk <- unlist(indx_j[sapply(cluster_map[[k]], toString)])
     alpha[k] <- mean(y[indx_jk])
   }#FOR
   return(alpha)
