@@ -32,6 +32,9 @@
 kcmeans <- function(y, X,
                     K, alpha_0 = init_kcmeans(y, X, K),
                     eps = 0, max_iter = 500) {
+  # Check inputs
+  if (!is.null(ncol(X))) X <- X[, 1] # convert to numeric
+
   # Data parameters
   nobs <- length(y)
   unq_x <- sort(unique(X))
