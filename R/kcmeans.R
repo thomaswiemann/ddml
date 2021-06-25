@@ -205,10 +205,15 @@ kcmeans_vns <- function(y, X,
 #' @export predict.kcmeans
 #' @export
 predict.kcmeans <- function(obj, newdata = NULL){
+
   # Obtain datamatrix
   if (is.null(newdata)) {
     newdata <- obj$X
   }#IF
+
+  # Check inputs
+  if (!is.null(ncol(newdata))) newdata <- newdata[, 1] # convert to numeric
+
   nobs <- length(newdata)
   # Calculate and return fitted values
   unq_x <- sort(unique(newdata))
