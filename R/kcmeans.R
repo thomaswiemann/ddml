@@ -255,6 +255,8 @@ any_iv.kcmeans <- function(obj, ...){
 #'
 #' @export init_kcmeans
 init_kcmeans <- function(y, X, K) {
+  # Check inputs
+  if (!is.null(ncol(X))) X <- X[, 1] # convert to numeric
   # Data parameters
   nobs <- length(y)
   unq_x <- sort(unique(X))
