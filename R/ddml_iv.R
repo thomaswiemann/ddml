@@ -66,6 +66,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                     cv_folds = 5,
                     sample_folds = 2,
                     subsamples = NULL,
+                    enforce_LIE = TRUE,
                     setup_parallel = list(type = 'dynamic', cores = 1),
                     silent = F) {
   # Data parameters
@@ -88,28 +89,43 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     print(paste0("# required model computations: ", num_comp))
   }#IF
 
-  # Compute estimates of E[D|X,Z]
-  D_XZ_res <- crosspred(D, X, Z,
-                        models_FS, ens_type, cv_folds,
-                        sample_folds, subsamples, compute_is_predictions = T,
-                        setup_parallel, silent)
-
   # Compute estimates of E[y|X]
   y_X_res <- crosspred(y, X, Z = NULL,
                        models, ens_type, cv_folds,
                        sample_folds, subsamples, compute_is_predictions = F,
                        setup_parallel, silent)
 
-  # Check whether multiple ensembles are computed simultaneously
-  sim_ens <- "list" %in% class(D_XZ_res$is_fitted[[1]]) # use construction
+  # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
+  #     the LIE is enforced.
+  D_XZ_res <- crosspred(D, X, Z,
+                        models_FS, ens_type, cv_folds,
+                        sample_folds, subsamples,
+                        compute_is_predictions = enforce_LIE,
+                        setup_parallel, silent)
 
-  # If a single ensemble is calculated, no loops are required.
-  if (!sim_ens) {
-    # Compute LIE-conform estimates of E[D|X]
-    D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
+  # When the LIE is not enforced, estimating E[D|X] is straightforward.
+  if (!enforce_LIE) {
+    D_X_res <- crosspred(D, X, Z = NULL,
                          models, ens_type, cv_folds,
                          sample_folds, subsamples, compute_is_predictions = F,
                          setup_parallel, silent)
+  }#IF
+
+  # Check whether multiple ensembles are computed simultaneously
+  sim_ens <- length(ens_type) > 1
+
+  # If a single ensemble is calculated, no loops are required.
+  if (!sim_ens) {
+    # Check whether the law of iterated expectations (LIE) should be enforced.
+    #     When the LIE is enforced (recommended), the estimates of E[D|X,Z] are
+    #     used for the calculation of the estimates of E[D|X].
+    if (enforce_LIE) {
+      # Compute LIE-conform estimates of E[D|X]
+      D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
+                           models, ens_type, cv_folds,
+                           sample_folds, subsamples, compute_is_predictions = F,
+                           setup_parallel, silent)
+    }#IFELSE
 
     # Residualize
     y_r <- y - y_X_res$oos_fitted
@@ -143,34 +159,46 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     weights[[1]] <- D_XZ_res$weights; weights[[3]] <- y_X_res$weights
     names(weights) <- c("D_XZ", "D_X", "y_X")
     for (j in 1:nensb) {
-      # Compute LIE-conform estimates of E[D|X]
-      D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
-                           models, ens_type[j], cv_folds,
-                           sample_folds, subsamples, compute_is_predictions = F,
-                           setup_parallel, silent)
+      # When the LIE is enforced, compute LIE-conform estimates of E[D|X].
+      #     Otherwise use the previously calculated estimates of E[D|X].
+      if (enforce_LIE) {
+        D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
+                             models, ens_type[j], cv_folds,
+                             sample_folds, subsamples, compute_is_predictions = F,
+                             setup_parallel, silent)
+        # Residualize
+        D_r <- D - D_X_res$oos_fitted
+        V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted
+      } else {
+        # Residualize
+        D_r <- D - D_X_res$oos_fitted[, j]
+        V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted[, j]
+      }#IFELSE
 
-      # Residualize
+      # Residualize y
       y_r <- y - y_X_res$oos_fitted[, j]
-      D_r <- D - D_X_res$oos_fitted
-      V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted
 
       # Compute IV estimate with constructed variables
       iv_fit_j <- tsls(y_r, D_r, V_r)
 
       # Organize complementary ensemble output
       coef[j] <- iv_fit_j$coef[1]
+      iv_fit[[j]] <- iv_fit_j
       mspe[[j]] <- list(D_XZ = D_XZ_res$mspe,
                         D_X = D_X_res$mspe,
                         y_X = y_X_res$mspe)
       anyiv_cv[[j]] <- list(D_XZ = D_XZ_res$anyiv_cv,
                             D_X = D_X_res$anyiv_cv,
                             y_X = y_X_res$anyiv_cv)
-      iv_fit[[j]] <- iv_fit_j
-      weights[[2]][, j, ] <- D_X_res$weights
+      if (enforce_LIE) {
+        weights[[2]][, j, ] <- D_X_res$weights
+      } else {
+        weights[[2]][, j, ] <- D_X_res$weights[, j, ]
+      }#IFELSE
+
     }#FOR
     # Name output appropriately by ensemble type
-    names(mspe) <- names(anyiv_cv) <- names(iv_fit) <-
-      ens_type
+    names(mspe) <- names(anyiv_cv) <- names(iv_fit) <- ens_type
   }#IF
 
   # Organize output
@@ -180,6 +208,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                    iv_fit = iv_fit,
                    subsamples = subsamples,
                    ens_type = ens_type,
+                   enforce_LIE = enforce_LIE,
                    nobs = nobs,
                    y = y,
                    D = D)
