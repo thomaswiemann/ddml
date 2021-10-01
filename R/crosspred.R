@@ -79,8 +79,8 @@ crosspred <- function(y, X, Z = NULL,
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ens_type)^(calc_ensemble))
   is_fitted <- rep(list(NULL), sample_folds)
+  mspe <- anyiv_cv <- anyiv <- matrix(0, nmodels^(calc_ensemble), sample_folds)
   weights <- array(0, dim = c(nmodels, length(ens_type), sample_folds))
-  mspe <- anyiv_cv <- matrix(0, nmodels, sample_folds)
   # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble
@@ -103,6 +103,13 @@ crosspred <- function(y, X, Z = NULL,
       oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
                                                cbind(X[subsamples[[k]], ],
                                                      Z[subsamples[[k]], ]))
+      # Check whether instruments were selected (optional).
+      if (!is.null(Z)) {
+        index_iv <- (ncol(X) + 1):length(c(ncol(X), ncol(Z)))
+        anyiv[1, k] <- any_iv(obj = mdl_fit,
+                              index_iv = index_iv,
+                              names_iv = colnames(Z))
+      }#IF
     } else if (calc_ensemble) {
       # When multiple models are passed, fit an ensemble on the training data.
       if ("list" %in% class(y)) {
@@ -127,6 +134,20 @@ crosspred <- function(y, X, Z = NULL,
       if (!is.null(mdl_fit$cv_res))mspe[,k]<-colSums(mdl_fit$cv_res$oos_resid^2)
       # Record which models select IVs
       if (!is.null(mdl_fit$cv_res)) anyiv_cv[mdl_fit$mdl_w_iv, k] <- 1
+      # Check whether instruments were selected (optional).
+      if (!is.null(Z)) {
+        for (m in 1:nmodels) {
+          # Check for X, Z assignment
+          assign_X <- mdl_fit$models[[m]]$assign_X
+          assign_Z <- mdl_fit$models[[m]]$assign_Z
+          index_iv <- (length(assign_X) + 1):length(c(assign_X, assign_Z))
+          anyiv[m, k] <- any_iv(obj = mdl_fit$mdl_fits[[m]],
+                                index_iv = index_iv,
+                                names_iv = colnames(Z[, assign_Z, drop = F]))
+
+
+        }#FOR
+      }#IF
     }#IFELSE
     # Compute in-sample predictions (optional)
     if (compute_is_predictions) {
@@ -153,7 +174,7 @@ crosspred <- function(y, X, Z = NULL,
   }#IF
   # Organize and return output
   if (!calc_ensemble) weights <- mspe <- anyiv_cv <- NULL
-  output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted,
+  output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted, anyiv = anyiv,
                  weights = weights, mspe = mspe, anyiv_cv = anyiv_cv)
   return(output)
 }#CROSSPRED

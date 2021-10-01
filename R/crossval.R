@@ -180,6 +180,10 @@ crossval <- function(y, X, Z = NULL,
 #' @export crossval_compute
 crossval_compute <- function(test_sample, model,
                              y, X, Z = NULL) {
+  # Check whether X, Z assignment has been specified. If not, include all.
+  if (is.null(model$assign_X)) model$assign_X <- c(1:ncol(X))
+  if (is.null(model$assign_Z) & !is.null(Z)) model$assign_Z <- c(1:ncol(Z))
+
   # Extract model arguments
   mdl_fun <- list(what = model$fun, args = model$args)
   assign_X <- model$assign_X

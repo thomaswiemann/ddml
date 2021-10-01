@@ -38,7 +38,7 @@ predict.mdl_glmnet <- function(obj, newdata = NULL){
 #' @export any_iv.mdl_glmnet
 any_iv.mdl_glmnet <- function(obj, index_iv, ...){
   # Check whether any instruments are retained
-  retained <- c(1, which((obj$beta != 0)[, 1]))
+  retained <- c(1, which((obj$beta[, obj$dim[2]] != 0)))
   length(intersect(retained, index_iv)) > 0
 }#ANY_IV.MDL_GLMNET
 

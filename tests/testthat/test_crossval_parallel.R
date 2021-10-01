@@ -21,10 +21,8 @@ test_that("crossval works w/ parallelization w/ static job scheduling", {
                                   iter_resid = 1, d = 5),
                       assign_X = c(1:ncol(X))), # rlasso
                  list(fun = ols,
-                      args = list(),
                       assign_X = c(1:ncol(X))), # ols w/ all features
                  list(fun = ols,
-                      args = list(),
                       assign_X = which(nonzero_X))) # ols w/ important features
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
@@ -49,10 +47,8 @@ test_that("crossval works w/ parallelization w/ dynamic job scheduling", {
                                   iter_resid = 1, d = 5),
                       assign_X = c(1:ncol(X))), # rlasso
                  list(fun = ols,
-                      args = list(),
                       assign_X = c(1:ncol(X))), # ols w/ all features
                  list(fun = ols,
-                      args = list(),
                       assign_X = which(nonzero_X))) # ols w/ important features
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,

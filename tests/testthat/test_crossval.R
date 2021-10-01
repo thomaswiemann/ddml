@@ -9,8 +9,7 @@ test_that("crossval_compute returns residuals (w/o instruments)", {
   test_sample <- sample(c(1:length(y)), 33)
   model <- list(fun = rlasso,
                 args = list(include = c(1:10),
-                            iter_resid = 1, d = 5),
-                assign_X = c(1:ncol(X)))
+                            iter_resid = 1, d = 5))
   # Compute cross-validation instance
   cv_res <- crossval_compute(test_sample, model,
                              y, X, Z = NULL)
@@ -26,14 +25,9 @@ test_that("crossval returns residuals by model (w/o instruments)", {
   y <- X %*% (10*runif(100) * nonzero_X) + rnorm(100)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X))), # rlasso
+                      args = list(iter_resid = 1, d = 5)), # rlasso
+                 list(fun = ols), # ols w/ all features
                  list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol(X))), # ols w/ all features
-                 list(fun = ols,
-                      args = list(),
                       assign_X = which(nonzero_X))) # ols w/ important features
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
@@ -52,13 +46,8 @@ test_that("crossval returns residuals by model (w/ instruments)", {
   # Define arguments
   models <- list(list(fun = rlasso,
                       args = list(include = c(35:45),
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))), # rlasso
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z)))) # ols w/ important features
+                                  iter_resid = 1, d = 5)), # rlasso
+                 list(fun = ols)) # ols w/ important features
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
                      models,

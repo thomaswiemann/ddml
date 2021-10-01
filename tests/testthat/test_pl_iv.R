@@ -1,5 +1,5 @@
 library(ddml)
-context("Testing ddml_iv.")
+context("Testing pl_iv.")
 
 sim_dat <- function(nobs) {
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
@@ -12,22 +12,23 @@ sim_dat <- function(nobs) {
   return(output)
 }#SIM_DAT
 
-test_that("ddml_iv computes with a single model", {
+test_that("pl_iv computes with a single model", {
   # Simulate small dataset
   dat <- sim_dat(100)
   # Define arguments
   models <- list(what = mdl_glmnet,
                  args = list(alpha = 0.5))
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
-                         models,
-                         cv_folds = 3,
-                         sample_folds = 3,
-                         silent = T)
+  y = dat$y; D = dat$D; Z = dat$Z; X = dat$X
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(y, D, Z, X,
+                     models,
+                     cv_folds = 3,
+                     silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 1)
+  expect_equal(length(pl_iv_fit$coef), 1)
 })#TEST_THAT
 
-test_that("ddml_iv computes with an ensemble procedure", {
+test_that("pl_iv computes with an ensemble procedure", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -38,18 +39,17 @@ test_that("ddml_iv computes with an ensemble procedure", {
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          ens_type = c("stacking"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 1)
+  expect_equal(length(pl_iv_fit$coef), 1)
 })#TEST_THAT
 
-test_that("ddml_iv computes with an ensemble procedure w/o enforcing the LIE", {
+test_that("pl_iv computes with an ensemble procedure w/o enforcing the LIE", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -60,19 +60,18 @@ test_that("ddml_iv computes with an ensemble procedure w/o enforcing the LIE", {
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          ens_type = c("stacking"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          enforce_LIE = FALSE,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 1)
+  expect_equal(length(pl_iv_fit$coef), 1)
 })#TEST_THAT
 
-test_that("ddml_iv computes with multiple ensemble procedures", {
+test_that("pl_iv computes with multiple ensemble procedures", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -83,19 +82,18 @@ test_that("ddml_iv computes with multiple ensemble procedures", {
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 5)
+  expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_iv computes with multiple ensemble procedures w/o the LIE", {
+test_that("pl_iv computes with multiple ensemble procedures w/o the LIE", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -106,29 +104,27 @@ test_that("ddml_iv computes with multiple ensemble procedures w/o the LIE", {
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          enforce_LIE = FALSE,
                          silent = T)
 
-  ddml_iv_fit2 <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  pl_iv_fit2 <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          enforce_LIE = T,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 5)
+  expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_iv computes with multiple ensemble procedures and
+test_that("pl_iv computes with multiple ensemble procedures and
           sparse matrices", {
   # Simulate small dataset
   dat <- sim_dat(100)
@@ -140,20 +136,19 @@ test_that("ddml_iv computes with multiple ensemble procedures and
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, as(dat$Z, "sparseMatrix"),
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, as(dat$Z, "sparseMatrix"),
                          as(dat$X, "sparseMatrix"),
                          models,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 5)
+  expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_iv computes with two sets of models", {
+test_that("pl_iv computes with two sets of models", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -168,15 +163,14 @@ test_that("ddml_iv computes with two sets of models", {
                       args = list(alpha = 0.5)),
                  list(fun = mdl_glmnet,
                       args = list(alpha = 1)))
-  # Compute LIE-conform DDML IV estimator
-  ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
                          models_FS = models_FS,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
-                         sample_folds = 3,
                          silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_iv_fit$coef), 5)
+  expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT

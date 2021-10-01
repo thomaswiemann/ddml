@@ -45,7 +45,7 @@
 #'     printed to the console.
 #'
 #' @return \code{ddml_iv} returns an object of S3 class
-#'     \code{cddml_iv}.
+#'     \code{ddml_iv}.
 #'
 #' An object of class \code{ddml_iv}is a list containig the
 #'     following components:
@@ -140,12 +140,6 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     weights <- list(D_XZ = D_XZ_res$weights,
                     D_X = D_X_res$weights,
                     y_X = y_X_res$weights)
-    mspe <- list(D_XZ = D_XZ_res$mspe,
-                 D_X = D_X_res$mspe,
-                 y_X = y_X_res$mspe)
-    anyiv_cv <- list(D_XZ = D_XZ_res$anyiv_cv,
-                     D_X = D_X_res$anyiv_cv,
-                     y_X = y_X_res$anyiv_cv)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
@@ -153,7 +147,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     nensb <- length(ens_type)
     coef <- matrix(0, 1, nensb)
-    mspe <- anyiv_cv <- iv_fit <- rep(list(1), nensb)
+    mspe <- anyiv_cv <- anyiv <- iv_fit <- rep(list(1), nensb)
     weights <- replicate(3, array(0, dim = c(nmodels, nensb, sample_folds)),
                          simplify = F)
     weights[[1]] <- D_XZ_res$weights; weights[[3]] <- y_X_res$weights
@@ -184,12 +178,6 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
       # Organize complementary ensemble output
       coef[j] <- iv_fit_j$coef[1]
       iv_fit[[j]] <- iv_fit_j
-      mspe[[j]] <- list(D_XZ = D_XZ_res$mspe,
-                        D_X = D_X_res$mspe,
-                        y_X = y_X_res$mspe)
-      anyiv_cv[[j]] <- list(D_XZ = D_XZ_res$anyiv_cv,
-                            D_X = D_X_res$anyiv_cv,
-                            y_X = y_X_res$anyiv_cv)
       if (enforce_LIE) {
         weights[[2]][, j, ] <- D_X_res$weights
       } else {
@@ -198,20 +186,26 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
 
     }#FOR
     # Name output appropriately by ensemble type
-    names(mspe) <- names(anyiv_cv) <- names(iv_fit) <- ens_type
+    names(iv_fit) <- ens_type
   }#IF
+
+  # Store complementary ensemble output
+  mspe <- list(D_XZ = D_XZ_res$mspe,
+               D_X = D_X_res$mspe,
+               y_X = y_X_res$mspe)
+  anyiv_cv <- D_XZ_res$anyiv_cv
+  anyiv <- D_XZ_res$anyiv
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
+                   anyiv = anyiv,
                    models = models, models_FS = models_FS,
                    iv_fit = iv_fit,
                    subsamples = subsamples,
                    ens_type = ens_type,
                    enforce_LIE = enforce_LIE,
-                   nobs = nobs,
-                   y = y,
-                   D = D)
+                   nobs = nobs, y = y, D = D)
 
   # Amend class and return
   class(ddml_fit) <- c("ddml_iv")

@@ -79,6 +79,11 @@ ensemble <- function(y, X, Z = NULL,
   for (m in 1:nmodels) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
+    # Check whether X, Z assignment has been specified. If not, include all.
+    if (is.null(models[[m]]$assign_X))
+      models[[m]]$assign_X <- c(1:ncol(X))
+    if (is.null(models[[m]]$assign_Z) & !is.null(Z))
+      models[[m]]$assign_Z <- c(1:ncol(Z))
     # Else fit on data. Begin by selecting the model constructor and the
     #     variable assignment.
     mdl_fun <- list(what = models[[m]]$fun, args = models[[m]]$args)

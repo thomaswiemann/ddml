@@ -14,10 +14,10 @@ test_that("crosspred computes with a single model", {
   # Simulate small dataset
   dat <- sim_dat(100)
   # Define arguments
-  models <- list(what = mdl_xgboost,
-                 args = list())
+  models <- list(what = mdl_xgboost)
   # Compute cross-sample predictions
-  crosspred_res <- crosspred(dat$D, dat$X, dat$Z,
+  y = dat$D; X = dat$X;  Z = dat$Z
+  crosspred_res <- crosspred(y, X, Z,
                              models,
                              sample_folds = 3,
                              subsamples = NULL,
@@ -35,18 +35,9 @@ test_that("crosspred computes with ensemble procedures", {
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol_X),
-                      assign_Z = c(1:ncol_Z)),
-                 list(fun = mdl_randomForest,
-                      args = list(),
-                      assign_X = c(1:ncol_X),
-                      assign_Z = c(1:ncol_Z)),
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol_X),
-                      assign_Z = c(1:ncol_Z)))
+                      args = list(iter_resid = 1, d = 5)),
+                 list(fun = mdl_randomForest),
+                 list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(dat$D, dat$X, dat$Z,
                              models,
@@ -70,14 +61,8 @@ test_that("crosspred computes with ensemble procedures and sparse matrices", {
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol_X),
-                      assign_Z = c(1:ncol_Z)),
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol_X),
-                      assign_Z = c(1:ncol_Z)))
+                      args = list(iter_resid = 1, d = 5)),
+                 list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(dat$D, as(dat$X, "sparseMatrix"),
                              as(dat$Z, "sparseMatrix"),
