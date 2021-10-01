@@ -7,10 +7,23 @@ sim_data <- function(N = 100) {
   return(list(y = y, X = X))
 }#SIM_DATA
 
-test_that("mdl_glmnet is working", {
+test_that("mdl_glmnet with cv is working", {
   # Simulate small dataset and fit the model
   dat <- sim_data()
   mdl_fit <- mdl_glmnet(dat$y, dat$X)
+  # Check methods predict() and any_iv()
+  fitted <- predict(mdl_fit, newdata = dat$X)
+  iv_selected <- any_iv(mdl_fit, index_iv = c(11:20))
+  # Check output with expectations
+  expect_is(mdl_fit, "mdl_glmnet")
+  expect_equal(length(fitted), 100)
+  expect_is(iv_selected, "logical")
+})#TEST_THAT
+
+test_that("mdl_glmnet w/o cv is working", {
+  # Simulate small dataset and fit the model
+  dat <- sim_data()
+  mdl_fit <- mdl_glmnet(dat$y, dat$X, cv = FALSE)
   # Check methods predict() and any_iv()
   fitted <- predict(mdl_fit, newdata = dat$X)
   iv_selected <- any_iv(mdl_fit, index_iv = c(11:20))
