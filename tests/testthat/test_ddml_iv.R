@@ -115,15 +115,6 @@ test_that("ddml_iv computes with multiple ensemble procedures w/o the LIE", {
                          sample_folds = 3,
                          enforce_LIE = FALSE,
                          silent = T)
-
-  ddml_iv_fit2 <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
-                         models,
-                         ens_type = c("stacking", "stacking_nn", "stacking_01",
-                                      "cv", "average"),
-                         cv_folds = 3,
-                         sample_folds = 3,
-                         enforce_LIE = T,
-                         silent = T)
   # Check output with expectations
   expect_equal(length(ddml_iv_fit$coef), 5)
 })#TEST_THAT
