@@ -127,7 +127,7 @@ postLassoTSLS <- function(response, control, D, instrument,
                      s*(!splitSample.IVChoice)]==0 & !nullEst) next
 
       # Compute post Lasso first stage
-      ZZ1 <- as.matrix(crossprod(features.s2))
+      ZZ1 <- as.matrix(Matrix::crossprod(features.s2))
       DZ1 <- Matrix::crossprod(cbind(D.s2, control.s2), features.s2)
       FS1 <- Matrix::tcrossprod(csolve(ZZ1), DZ1)
 
@@ -177,6 +177,7 @@ calcPenalty <- function(response, features,
                         K.resid = 15, d = 5,
                         c = 1.1, gamma = 0.1/log(N),
                         lambda = NULL){
+
   # Data parameters
   N <- length(response)
   nfeatures <- ncol(features)
@@ -204,7 +205,7 @@ calcPenalty <- function(response, features,
         # Select which features have greatest correlation coefficient + features that are necessarily included in the model
         selected.features <- c(include, c(1:nfeatures)[minus.include][order(abs(cor.y.x), decreasing = TRUE)[1:d]])
         # Calculate OLS residuals using subset of selected features
-        resid.k <- response - predict(ols(response, features[, selected.features]))
+        resid.k <- response - predict(ols(response, features[, selected.features, drop = F]))
       }#IFELSE
     } else {
       # Calculate glmnet rescaling of penalty factors
@@ -222,13 +223,15 @@ calcPenalty <- function(response, features,
     }#IFELSE
 
     # Calculate the kth-step penalty loadings for all features
-    sigma.k <- sqrt(mean(resid.k^2))
+    sigma.k <- sqrt(Matrix::mean(resid.k^2))
     if(heteroskedasticity == TRUE){
       # W <- Diagonal(x=as.numeric(resid.k))
       # psi.k <- sqrt(diag(ccov(W%*%features, 0)))
       #psi.k <-  sqrt(as.matrix((1/N)*t(crossprod(resid.k^2, features^2)) - t((1/N)*crossprod(resid.k, features))^2)) # no DOF adjustment
-      features.mean <- colMeans(features)
-      psi.k <-  t(crossprod(resid.k^2, features^2)/N + (features.mean^2)*(sigma.k^2) - 2*features.mean*crossprod(resid.k^2, features)/N)
+      features.mean <- Matrix::colMeans(features)
+      psi.k <-  t(Matrix::crossprod(resid.k^2, features^2)/N +
+                    (features.mean^2)*(sigma.k^2) -
+                    2*features.mean*Matrix::crossprod(resid.k^2, features)/N)
       if(all(psi.k>0)){
         psi.k <- sqrt(psi.k)
       } else {
@@ -240,7 +243,8 @@ calcPenalty <- function(response, features,
     } else {
       # Penalty loadings under homoskedasticity
       #psi.k <- sigma.k*sqrt(diag(ccov(features, 0)))
-      psi.k <- sigma.k * sqrt(colMeans(features^2) - colMeans(features)^2) # no DOF adjustment
+      psi.k <- sigma.k * sqrt(Matrix::colMeans(features^2) -
+                                Matrix::colMeans(features)^2) # no DOF adjustment
       #psi.k <- sigma.k * sqrt(colMeans(scale(features, colMeans(features), FALSE)^2))
     } #IFELSE
 

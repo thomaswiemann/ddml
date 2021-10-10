@@ -25,3 +25,18 @@ test_that("postLassoTSLS computes", {
   # Check output with expectations
   expect_equal(length(pLTSLS_fit$coef), 1)
 })#TEST_THAT
+
+test_that("postLassoTSLS computes", {
+  # Simulate small dataset
+  dat <- sim_dat(1000)
+  # Define arguments
+  pLTSLS_fit <- postLassoTSLS(dat$y, as(dat$X, "sparseMatrix"),
+                              dat$D, as(dat$Z, "sparseMatrix"),
+                              splitSample = FALSE,
+                              splitSample.IVChoice = FALSE,
+                              penaltyMethod = 'r',
+                              K.resid = 1, d = 5,
+                              heteroskedasticity = FALSE)
+  # Check output with expectations
+  expect_equal(length(pLTSLS_fit$coef), 1)
+})#TEST_THAT
