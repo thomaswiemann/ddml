@@ -255,18 +255,21 @@ mdl_keras <- function(y, X,
                       metrics = c("mae"),
                       verbose = 0) {
   # Compile model
-  model %>% keras::compile(optimizer = optimizer_fun,
-                           loss = loss,
-                           metrics = metrics)
+  keras::compile(model,
+                 optimizer = optimizer_fun,
+                 loss = loss,
+                 metrics = metrics)
 
   # Fit neural net
-  model %>% keras::fit(X, y,
-                       epochs = epochs,
-                       batch_size = batch_size,
-                       validation_split = validation_split,
-                       callbacks = callbacks,
-                       steps_per_epoch = steps_per_epoch,
-                       verbose = verbose)
+  keras::fit(model,
+             X, y,
+             epochs = epochs,
+             batch_size = batch_size,
+             validation_split = validation_split,
+             callbacks = callbacks,
+             steps_per_epoch = steps_per_epoch,
+             verbose = verbose)
+
   # Return fit
   class(model) <- c("mdl_keras", class(model)) # amend class
   return(model)

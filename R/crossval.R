@@ -129,17 +129,25 @@ crossval <- function(y, X, Z = NULL,
                          y, X, Z)
       })#PARSAPPLY
     } else if (setup_parallel$type == 'dynamic') {
+      # total number of jobs
+      njobs <- cv_folds * nmodels
+      # Progress bar
+      pb <- txtProgressBar(min = 0, max = njobs, style = 3) # progress bar
+      progress <- function(n) setTxtProgressBar(pb, n)
+      opts <- list(progress = progress)
+
       # For dynamic job scheduling, use foreach
-      doParallel::registerDoParallel(cl, cores = setup_parallel$cores)
+      doSNOW::registerDoSNOW(cl)
       `%dopar%` <- foreach::`%dopar%` # workaround
-      cv_res <- foreach::foreach(x = 1:(cv_folds * nmodels),
-                        .combine = "rbind") %dopar% {
+      cv_res <- foreach::foreach(x = 1:njobs,
+                        .combine = "rbind",
+                        .options.snow = opts) %dopar% {
         # Select model and cv-fold for this job
         j <- ceiling(x / cv_folds)
         i <- x - cv_folds * (ceiling(x / cv_folds) - 1)
         fold_x <- cv_subsamples[[i]]
         # Print fold and lambda
-        if(!silent) print(paste0(paste0("model = ", j, paste0("; Fold ", i))))
+        #if(!silent) print(paste0(paste0("model = ", j, paste0("; Fold ", i))))
         # Compute model for this fold
         ddml::crossval_compute(test_sample = fold_x,
                          model = models[[j]],
