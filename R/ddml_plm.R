@@ -101,7 +101,7 @@ ddml_plm <- function(y, D, X,
     D_r <- D - D_X_res$oos_fitted
 
     # Compute IV estimate with constructed variables
-    ols_fit <- ols(y_r, D_r, const = TRUE)
+    ols_fit <- ols(y_r, D_r)
 
     # Organize complementary ensemble output
     coef <- ols_fit$coef[2]
@@ -127,7 +127,7 @@ ddml_plm <- function(y, D, X,
       y_r <- y - y_X_res$oos_fitted[, j]
 
       # Compute IV estimate with constructed variables
-      ols_fit_j <- ols(y_r, D_r, const = TRUE)
+      ols_fit_j <- ols(y_r, D_r)
 
       # Organize complementary ensemble output
       coef[j] <- ols_fit_j$coef[2]
