@@ -104,7 +104,7 @@ ddml_plm <- function(y, D, X,
     ols_fit <- ols(y_r, D_r)
 
     # Organize complementary ensemble output
-    coef <- ols_fit$coef[2]
+    coef <- ols_fit$coef[1]
     weights <- list(D_X = D_X_res$weights,
                     y_X = y_X_res$weights)
   }#IF
@@ -130,7 +130,7 @@ ddml_plm <- function(y, D, X,
       ols_fit_j <- ols(y_r, D_r)
 
       # Organize complementary ensemble output
-      coef[j] <- ols_fit_j$coef[2]
+      coef[j] <- ols_fit_j$coef[1]
       ols_fit[[j]] <- ols_fit_j
       weights[[2]][, j, ] <- D_X_res$weights[, j, ]
     }#FOR
