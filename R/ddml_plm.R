@@ -105,8 +105,8 @@ ddml_plm <- function(y, D, X,
 
     # Organize complementary ensemble output
     coef <- ols_fit$coef[1]
-    weights <- list(D_X = D_X_res$weights,
-                    y_X = y_X_res$weights)
+    weights <- list(y_X = y_X_res$weights,
+                    D_X = D_X_res$weights)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
@@ -117,8 +117,8 @@ ddml_plm <- function(y, D, X,
     mspe <- ols_fit <- rep(list(1), nensb)
     weights <- replicate(2, array(0, dim = c(nmodels, nensb, sample_folds)),
                          simplify = F)
-    weights[[1]] <- D_X_res$weights; weights[[2]] <- y_X_res$weights
-    names(weights) <- c("D_X", "y_X")
+    weights[[2]] <- D_X_res$weights; weights[[1]] <- y_X_res$weights
+    names(weights) <- c("y_X", "D_X")
     for (j in 1:nensb) {
       # Residualize
       D_r <- D - D_X_res$oos_fitted[, j]
