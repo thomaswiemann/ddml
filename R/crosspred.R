@@ -131,7 +131,7 @@ crosspred <- function(y, X, Z = NULL,
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
       # Record model MSPEs
-      if (!is.null(mdl_fit$cv_res))mspe[,k]<-colSums(mdl_fit$cv_res$oos_resid^2)
+      if (!is.null(mdl_fit$cv_res))mspe[,k]<-colMeans(mdl_fit$cv_res$oos_resid^2)
       # Record which models select IVs
       if (!is.null(mdl_fit$cv_res)) anyiv_cv[mdl_fit$mdl_w_iv, k] <- 1
       # Check whether instruments were selected (optional).
