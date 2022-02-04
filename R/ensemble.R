@@ -79,6 +79,11 @@ ensemble <- function(y, X, Z = NULL,
   for (m in 1:nmodels) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
+    # Check whether X, Z assignment has been specified. If not, include all.
+    if (is.null(models[[m]]$assign_X))
+      models[[m]]$assign_X <- c(1:ncol(X))
+    if (is.null(models[[m]]$assign_Z) & !is.null(Z))
+      models[[m]]$assign_Z <- c(1:ncol(Z))
     # Else fit on data. Begin by selecting the model constructor and the
     #     variable assignment.
     mdl_fun <- list(what = models[[m]]$fun, args = models[[m]]$args)
@@ -140,8 +145,8 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
     assign_Z <- obj$models[[m]]$assign_Z
     # Compute predictions
     fitted <- predict(obj$mdl_fits[[m]],
-                      newdata = cbind(newX[, assign_X, drop = F],
-                                      newZ[, assign_Z, drop = F]))
+                      newdata = cbind(newX[, assign_X],
+                                      newZ[, assign_Z]))
 
     # Initialize matrix of fitted values
     if (first_fit) {
@@ -219,7 +224,11 @@ ensemble_weights <- function(y, X, Z = NULL,
   if (any(c("stacking", "stacking_nn", "stacking_01", "cv") %in% type) &&
       (is.null(cv_res))) {
     # Run crossvalidation procedure
-    cv_res <- crossval(y, X, Z, models, cv_folds, setup_parallel, silent)
+    cv_res <- crossval(y, X, Z,
+                       models = models,
+                       cv_folds = cv_folds,
+                       setup_parallel = setup_parallel,
+                       silent = silent)
   }#IF
   # Compute weights for each ensemble type
   weights <- matrix(0, length(models), length(type))

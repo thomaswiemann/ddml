@@ -17,6 +17,9 @@
 #'         \item{\code{args} Optional arguments to be passed to \code{what}}
 #'     }
 #' @param cv_folds The number for cross-validation folds.
+#' @param cv_subsamples An optional list of vectors, each containing indices of
+#'     a test-sample. If not used-provided, the split sample folds are randomly
+#'     drawn.
 #' @param setup_parallel An list containing two named elements:
 #'     \itemize{
 #'         \item{\code{type} A string of value \code{"static"} or
@@ -67,6 +70,7 @@
 crossval <- function(y, X, Z = NULL,
                      models,
                      cv_folds = 5,
+                     cv_subsamples = NULL,
                      setup_parallel = list(type = 'dynamic',
                                            cores = 1),
                      silent = F) {
@@ -75,8 +79,12 @@ crossval <- function(y, X, Z = NULL,
   nmodels <- length(models)
 
   # Create CV fold tuple
-  folds <- split(c(1:nobs), sample(rep(c(1:cv_folds),
-                                       ceiling(nobs / cv_folds)))[1:nobs])
+  if (is.null(cv_subsamples)) {
+    cv_subsamples <- split(c(1:nobs), sample(rep(c(1:cv_folds),
+                                              ceiling(nobs / cv_folds)))[1:nobs])
+  }#IF
+  cv_folds <- length(cv_subsamples)
+  nobs <- length(unlist(cv_subsamples))
 
   # Run cross-validation depending on parallelization specification
   if (setup_parallel$cores == 1) {
@@ -85,7 +93,7 @@ crossval <- function(y, X, Z = NULL,
       # Select model and cv-fold for this job
       j <- ceiling(x / cv_folds) # jth model
       i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
-      fold_x <- folds[[i]]
+      fold_x <- cv_subsamples[[i]]
       # Print fold and lambda
       if(!silent) print(paste0(paste0("model = ", j, paste0(": Fold ", i))))
       # Compute model for this fold
@@ -100,7 +108,7 @@ crossval <- function(y, X, Z = NULL,
     parallel::clusterExport(cl,
                             c("y", "X", "Z",
                               "models", "cv_folds",
-                              "nobs", "nmodels", "folds",
+                              "nobs", "nmodels", "cv_folds",
                               "silent"),
                             envir = environment())
     parallel::clusterEvalQ(cl, library(ddml))
@@ -112,7 +120,7 @@ crossval <- function(y, X, Z = NULL,
         # Select model and cv-fold for this job
         j <- ceiling(x / cv_folds) # jth model
         i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
-        fold_x <- folds[[i]]
+        fold_x <- cv_subsamples[[i]]
         # Print fold and lambda
         if(!silent) print(paste0(paste0("model = ", j, paste0(": Fold ", i))))
         # Compute model for this fold
@@ -121,17 +129,25 @@ crossval <- function(y, X, Z = NULL,
                          y, X, Z)
       })#PARSAPPLY
     } else if (setup_parallel$type == 'dynamic') {
+      # total number of jobs
+      njobs <- cv_folds * nmodels
+      # Progress bar
+      pb <- txtProgressBar(min = 0, max = njobs, style = 3) # progress bar
+      progress <- function(n) setTxtProgressBar(pb, n)
+      opts <- list(progress = progress)
+
       # For dynamic job scheduling, use foreach
-      doParallel::registerDoParallel(cl, cores = setup_parallel$cores)
+      doSNOW::registerDoSNOW(cl)
       `%dopar%` <- foreach::`%dopar%` # workaround
-      cv_res <- foreach::foreach(x = 1:(cv_folds * nmodels),
-                        .combine = "rbind") %dopar% {
+      cv_res <- foreach::foreach(x = 1:njobs,
+                        .combine = "rbind",
+                        .options.snow = opts) %dopar% {
         # Select model and cv-fold for this job
         j <- ceiling(x / cv_folds)
         i <- x - cv_folds * (ceiling(x / cv_folds) - 1)
-        fold_x <- folds[[i]]
+        fold_x <- cv_subsamples[[i]]
         # Print fold and lambda
-        if(!silent) print(paste0(paste0("model = ", j, paste0("; Fold ", i))))
+        #if(!silent) print(paste0(paste0("model = ", j, paste0("; Fold ", i))))
         # Compute model for this fold
         ddml::crossval_compute(test_sample = fold_x,
                          model = models[[j]],
@@ -172,6 +188,10 @@ crossval <- function(y, X, Z = NULL,
 #' @export crossval_compute
 crossval_compute <- function(test_sample, model,
                              y, X, Z = NULL) {
+  # Check whether X, Z assignment has been specified. If not, include all.
+  if (is.null(model$assign_X)) model$assign_X <- c(1:ncol(X))
+  if (is.null(model$assign_Z) & !is.null(Z)) model$assign_Z <- c(1:ncol(Z))
+
   # Extract model arguments
   mdl_fun <- list(what = model$fun, args = model$args)
   assign_X <- model$assign_X

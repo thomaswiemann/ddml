@@ -8,19 +8,11 @@ test_that("ensemble_weights returns a weight matrix", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))),
+                      args = list(iter_resid = 1, d = 5)),
                  list(fun = rlasso,
                       args = list(include = c(35:45),
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))), # rlasso
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z)))) # ols w/ important features
+                                  iter_resid = 1, d = 5)), # rlasso
+                 list(fun = ols)) # ols w/ important features
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(D, X, Z,
                                 type = c("average", "cv", "stacking",
@@ -47,19 +39,11 @@ test_that("ensemble returns a list of fitted models", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))),
+                      args = list(iter_resid = 1, d = 5)),
                  list(fun = rlasso,
                       args = list(include = c(35:45),
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))), # rlasso
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z)))) # ols w/ important features
+                                  iter_resid = 1, d = 5)), # rlasso
+                 list(fun = ols)) # ols w/ important features
   # Compute ensemble
   ens_fit <- ensemble(D, X, Z,
                       type = c("average", "stacking", "cv"),
@@ -78,19 +62,11 @@ test_that("prediction with ensemble models returns fitted values", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
   models <- list(list(fun = rlasso,
-                      args = list(include = NULL,
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))),
+                      args = list(iter_resid = 1, d = 5)),
                  list(fun = rlasso,
                       args = list(include = c(35:45),
-                                  iter_resid = 1, d = 5),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z))), # rlasso
-                 list(fun = ols,
-                      args = list(),
-                      assign_X = c(1:ncol(X)),
-                      assign_Z = c(1:ncol(Z)))) # ols w/ important features
+                                  iter_resid = 1, d = 5)), # rlasso
+                 list(fun = ols)) # ols w/ important features
   # Compute ensemble
   ens_fit <- ensemble(D, X, Z,
                       type = c("average", "stacking", "cv"),

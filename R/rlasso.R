@@ -234,9 +234,9 @@ rlasso_penalty <- function(y, X,
       # psi.k <-  sqrt(as.matrix((1/N)*t(crossprod(resid.k^2, features^2)) -
       #     t((1/N)*crossprod(resid.k, features))^2)) # no DOF adjustment
       mean_X <- Matrix::colMeans(X)
-      psi_k <- t(Matrix::crossprod(resid_k^2, X^2) / nobs +
-                   (mean_X^2)*(sigma_k^2) -
-                   2 * mean_X * Matrix::crossprod(resid_k^2, X) / nobs)
+      psi_k <- Matrix::t(Matrix::crossprod(resid_k^2, X^2) / nobs +
+                           (mean_X^2)*(sigma_k^2) -
+                           2 * mean_X * Matrix::crossprod(resid_k^2, X) / nobs)
       if (all(psi_k>0)) {
         psi_k <- sqrt(psi_k)
       } else {

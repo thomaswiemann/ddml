@@ -7,13 +7,24 @@
 mdl_glmnet <- function(y, X,
                        alpha = 1, lambda = NULL,
                        standardize = TRUE, intercept = TRUE,
-                       family = "gaussian"){
-  # Compute glmnet
-  mdl_fit <- glmnet::glmnet(x = X, y = y,
-                            family = family,
-                            lambda = lambda,
-                            standardize = standardize,
-                            intercept = intercept)
+                       family = "gaussian",
+                       cv = TRUE, nfolds = 10){
+  # Either copute glmnet with given lambda or determine lambda with cv.
+  if (cv) {
+    mdl_fit <- glmnet::cv.glmnet(x = X, y = y,
+                                 family = family,
+                                 lambda = lambda,
+                                 standardize = standardize,
+                                 intercept = intercept,
+                                 nfolds = nfolds)
+  } else {
+    mdl_fit <- glmnet::glmnet(x = X, y = y,
+                              family = family,
+                              lambda = lambda,
+                              standardize = standardize,
+                              intercept = intercept)
+  }#IFELSE
+
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_glmnet", class(mdl_fit))
   return(mdl_fit)
@@ -25,9 +36,23 @@ mdl_glmnet <- function(y, X,
 #'
 #' @export predict.mdl_glmnet
 predict.mdl_glmnet <- function(obj, newdata = NULL){
-  # Predict using glmnet prediction method
-  fitted <- glmnet::predict.glmnet(obj, newdata,
-                                   obj$lambda[obj$dim[2]])
+  # Check whether cv.glmnet was run
+  cv <- "cv.glmnet" %in% class(obj)
+  # Compute predictions
+  if (cv) {
+    # Determine mse-minimizing lambda
+    which_lambda <- which.min(obj$cvm)
+    # Predict using glmnet prediction method
+    fitted <- glmnet::predict.glmnet(obj$glmnet.fit, newdata,
+                                     obj$lambda[which_lambda])
+  } else {
+    # Determine least regularizing lambda
+    which_lambda <- length(obj$lambda)
+    # Predict using glmnet prediction method
+    fitted <- glmnet::predict.glmnet(obj, newdata,
+                                     obj$lambda[which_lambda])
+  }#IFELSE
+
   return(fitted)
 }#PREDICT.MDL_GLMNET
 
@@ -37,8 +62,19 @@ predict.mdl_glmnet <- function(obj, newdata = NULL){
 #'
 #' @export any_iv.mdl_glmnet
 any_iv.mdl_glmnet <- function(obj, index_iv, ...){
+  # Check whether cv.glmnet was run
+  cv <- "cv.glmnet" %in% class(obj)
+  if (cv) {
+    # Determine mse-minimizing lambda and get beta matrix
+    which_lambda <- which.min(obj$cvm)
+    beta <- obj$glmnet.fit$beta
+  } else {
+    # Determine least regularizing lambda and get beta matrix
+    which_lambda <- length(obj$lambda)
+    beta <- obj$beta
+  }#IFELSE
   # Check whether any instruments are retained
-  retained <- c(1, which((obj$beta != 0)[, 1]))
+  retained <- c(1, which((beta[, which_lambda] != 0)))
   length(intersect(retained, index_iv)) > 0
 }#ANY_IV.MDL_GLMNET
 
@@ -209,7 +245,7 @@ any_iv.mdl_grf <- function(obj, index_iv, ...){
 #' @export mdl_keras
 mdl_keras <- function(y, X,
                       model,
-                      optimizer = "rmsprop",
+                      optimizer_fun = "rmsprop",
                       loss = "mse",
                       epochs = 10,
                       batch_size = min(1000, length(y)),
@@ -218,23 +254,25 @@ mdl_keras <- function(y, X,
                       steps_per_epoch = NULL,
                       metrics = c("mae"),
                       verbose = 0) {
-  # Copy model and compile
-  model_copy <- keras::clone_model(model)
-  model_copy %>% keras::compile(optimizer = optimizer,
-                                loss = loss,
-                                metrics = metrics)
+  # Compile model
+  keras::compile(model,
+                 optimizer = optimizer_fun,
+                 loss = loss,
+                 metrics = metrics)
 
   # Fit neural net
-  model_copy %>% keras::fit(X, y,
-                            epochs = epochs,
-                            batch_size = batch_size,
-                            validation_split = validation_split,
-                            callbacks = callbacks,
-                            steps_per_epoch = steps_per_epoch,
-                            verbose = verbose)
+  keras::fit(model,
+             X, y,
+             epochs = epochs,
+             batch_size = batch_size,
+             validation_split = validation_split,
+             callbacks = callbacks,
+             steps_per_epoch = steps_per_epoch,
+             verbose = verbose)
+
   # Return fit
-  class(model_copy) <- c("mdl_keras", class(model_copy)) # amend class
-  return(model_copy)
+  class(model) <- c("mdl_keras", class(model)) # amend class
+  return(model)
 }#MDL_KERAS
 
 #' Predict method for mdl_keras fits.

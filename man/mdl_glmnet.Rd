@@ -11,7 +11,9 @@ mdl_glmnet(
   lambda = NULL,
   standardize = TRUE,
   intercept = TRUE,
-  family = "gaussian"
+  family = "gaussian",
+  cv = TRUE,
+  nfolds = 10
 )
 }
 \description{

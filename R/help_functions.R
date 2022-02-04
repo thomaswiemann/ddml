@@ -59,3 +59,37 @@ ccor <- function(X, y = NULL) {
   # Return correlations
   return(cor_XX)
 }#CCOR
+
+#' Generate subsamples by cell.
+#'
+#' Generate subsamples by cell.
+#'
+#' @export
+subsample_by_cell <- function(X, folds = 2, cell_threshold = 2) {
+  # Data parameters
+  nX <- ncol(X)
+
+  # Subsample by cell
+  subsamples <- rep(list(integer(0)), folds)
+  for (j in 1:nX) {
+    # Define cell
+    cell_x <- which(X[, j] == 1)
+    n_cell_x <- length(cell_x)
+
+    # Check whether cell has sufficiently many observations
+    if (n_cell_x < cell_threshold) next
+
+    # Sample by cell
+    cell_split <- split(c(1:n_cell_x),
+                        sample(rep(c(1:folds),
+                                   ceiling(n_cell_x / folds)))[1:n_cell_x])
+
+    for (k in 1:folds) {
+      subsamples[[k]] <- c(subsamples[[k]],
+                           cell_x[cell_split[[toString(k)]]])
+    }#FOR
+  }#FOR
+
+  # Return subsample list
+  return(subsamples)
+}#SUBSAMPLE_BY_CELL

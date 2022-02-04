@@ -84,7 +84,7 @@ summary.tsls <- function(obj, type = "const") {
   } else if (type == "HC1") {
     XuuX <- Matrix::crossprod(PZ * resid^2, PZ) * (nobs/(nobs-ncol_Z))
     S1 <- PZZP_inv %*% XuuX
-    se <- sqrt(diag(S1 %*% PZZP_inv)) # in two steps for numerical accuracy
+    se <- sqrt(Matrix::diag(S1 %*% PZZP_inv)) # in two steps
   }#IF
   t_stat <- obj$coef / se
   p_val <- 2 * pnorm(-abs(t_stat))

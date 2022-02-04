@@ -97,7 +97,7 @@ summary.ols <- function(obj,
     } else if (type == "HC1"){
       XuuX <- Matrix::crossprod(obj$X *(resid^2), obj$X)
       S1 <- XX_inv %*% XuuX * (nobs/(nobs - ncol_X))
-      se <- sqrt(diag(S1 %*% XX_inv)) # in two steps for numerical accuracy
+      se <- sqrt(Matrix::diag(S1 %*% XX_inv))
     }#IFELSE
   }#IF
   t_stat <- obj$coef / se

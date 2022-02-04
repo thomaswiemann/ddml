@@ -10,6 +10,7 @@ crossval(
   Z = NULL,
   models,
   cv_folds = 5,
+  cv_subsamples = NULL,
   setup_parallel = list(type = "dynamic", cores = 1),
   silent = F
 )
@@ -34,6 +35,10 @@ crossval(
 }}
 
 \item{cv_folds}{The number for cross-validation folds.}
+
+\item{cv_subsamples}{An optional list of vectors, each containing indices of
+a test-sample. If not used-provided, the split sample folds are randomly
+drawn.}
 
 \item{setup_parallel}{An list containing two named elements:
 \itemize{
