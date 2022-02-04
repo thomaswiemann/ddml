@@ -4,7 +4,7 @@
 \alias{kcmeans}
 \title{Compute K conditional means estimator.}
 \usage{
-kcmeans(y, X, K, alpha_0 = init_kcmeans(y, X, K), eps = 0, max_iter = 500)
+kcmeans(y, X, K, alpha_0 = NULL, beta_0 = NULL, eps = 0, max_iter = 500)
 }
 \arguments{
 \item{y}{A response vector.}
@@ -19,6 +19,8 @@ to NULL, the KMeans++ initialization procedure is used.}
 \item{eps}{Convergence tolerance.}
 
 \item{max_iter}{Maximum number of iterations until algorithm is terminated.}
+
+\item{W}{A matrix of regressors.}
 }
 \value{
 \code{kcmeans} returns an object of S3 class "\code{kcmeans}".

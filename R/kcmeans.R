@@ -4,6 +4,7 @@
 #'
 #' @param y A response vector.
 #' @param X A feature vector.
+#' @param W A matrix of regressors.
 #' @param K Number of conditional means.
 #' @param alpha_0 K dimensional vector of initial  conditional means. When set
 #'     to NULL, the KMeans++ initialization procedure is used.
@@ -29,173 +30,86 @@
 #' @examples
 #'
 #' @export kcmeans
-kcmeans <- function(y, X,
-                    K, alpha_0 = init_kcmeans(y, X, K),
+kcmeans <- function(y, X, K,
+                    alpha_0 = NULL, beta_0 = NULL,
                     eps = 0, max_iter = 500) {
   # Check inputs
-  if (!is.null(ncol(X))) X <- X[, 1] # convert to numeric
+  nX <- ncol(X)
+  if (!is.null(nX) && nX == 1) {
+    x <- X[, 1] # convert to numeric
+    W <- NULL
+  } else if (!is.null(nX) && nX > 1) {
+    x <- X[, 1]
+    W <- X[, -1]
+  } else if (is.null(nX)) {
+    x <- X
+    W <- NULL
+  }#IFELSE
 
   # Data parameters
   nobs <- length(y)
-  unq_x <- sort(unique(X))
+  unq_x <- sort(unique(x))
   J <- length(unq_x)
+
+  # Initialize parameters
+  if (is.null(beta_0)) {
+    if (is.null(W)) W <- matrix(0, nobs, 1)
+    fit_ols <- ols(y, W)
+    beta_0 <- fit_ols$coef
+  }#IF
+  if (is.null(alpha_0)) {
+    resid <- y - W %*% beta_0
+    alpha_0 <- init_kcmeans(resid, x, K)
+  }#IF
+
   # Get subsamples
   indx_j <- lapply(unq_x, function(j) which(j == X))
   names(indx_j) <- unq_x
+
   # Run K conditional means algorithm
   alpha <- alpha_0
+  beta <- beta_0
   for (n in 1:max_iter) {
     # Obtain new clustering
     cluster_map <- rep(list(NULL), K)
     for (j in 1:J) {
       # Calculate distances
-      dist_k <- sapply(c(1:K), function(k) mean((y[indx_j[[j]]] - alpha[k])^2))
+      dist_k <- sapply(c(1:K), function(k) {
+        resid <- y[indx_j[[j]]] - alpha[k] - W[indx_j[[j]], , drop = F] %*% beta
+        mean(resid^2)
+        })#SAPPLY
       # assign to new cluster
       min_k <- which.min(dist_k)[1]
       cluster_map[[min_k]] <- c(cluster_map[[min_k]], unq_x[j])
     }#FOR
-    # Obtain new cluster means
-    alpha <- get_cmeans(y, indx_j, K, cluster_map)
+
+    # Obtain new cluster means or intercepts
+    x2 <- factor(rep(1, nobs), levels = c(1:K))
+    for (k in 1:K) {
+      indx_k <- unlist(indx_j[cluster_map[[k]]])
+      x2[indx_k] <- k
+    }#FOR
+    x2_mat <- Matrix::sparse.model.matrix(~ 0 + x2)
+    fit_ols <- ols(y, cbind(x2_mat, W))
+    alpha <- fit_ols$coef[1:K]
+    beta <- fit_ols$coef[-c(1:K)]
+
     # Assign random center to empty clusters
-    is_NaN <- is.nan(alpha)
-    alpha[is_NaN] <- sample(alpha[!is_NaN], sum(is_NaN)) +
-      (1 - 2*runif(sum(is_NaN))) # add noise
+    is_empty <- alpha == 0
+    alpha[is_empty] <- sample(alpha[!is_empty], sum(is_empty)) +
+      (1 - 2*runif(sum(is_empty))) # add noise
+
     # Check convergence
-    if (all(abs(alpha - alpha_0) <= eps)) break
-    alpha_0 <- alpha
+    if (all(abs(c(alpha - alpha_0, beta - beta_0)) <= eps)) break
+    alpha_0 <- alpha; beta_0 <- beta
   }#FOR
   # Organize and return output
-  output <- list(alpha = alpha,
+  output <- list(alpha = alpha, beta = beta,
                  cluster_map = cluster_map,
-                 y = y, X = X, K = K)
+                 y = y, X = cbind(x, W), K = K)
   class(output) <- "kcmeans"
   return(output)
 }#KCMEANS
-
-#' Compute K conditional means estimator via variable neighborhood search.
-#'
-#' Compute K conditional means estimator via variable neighborhood search.
-#'
-#' @param y A response vector.
-#' @param X A feature vector.
-#' @param K Number of conditional means.
-#' @param alpha_0 K dimensional vector of initial  conditional means. When set
-#'     to NULL, the KMeans++ initialization procedure is used.
-#' @param eps Convergence tolerance.
-#' @param max_iter Maximum number of iterations until algorithm is terminated.
-#' @param max_neighborhood Maximum number of neighborhood reassignments.
-#' @param max_iter_kcmeans Maxmimum number of iterations in the kcmeans step.
-#'
-#' @return \code{kcmeans_vns} returns an object of S3 class "\code{kcmeans}".
-#'
-#' The function \code{predict} computes fitted values for a trained model of
-#'     this class.
-#'
-#' An object of class "\code{kcmeans}" is a list containig the following
-#'     components:
-#' \describe{
-#' \item{\code{alpha}}{A vector of conditional means.}
-#' \item{\code{cluster map}}{A list of sets of indices, denoting which values
-#'     of \code{X} correspond to which conditional means.}
-#' \item{\code{y}}{The outcome vector.}
-#' \item{\code{X}}{The feature vector.}
-#' \item{\code{K}}{The number of conditional means.}
-#' }
-#'
-#' @examples
-#'
-#' @export kcmeans_vns
-kcmeans_vns <- function(y, X,
-                        K, alpha_0 = init_kcmeans(y, X, K),
-                        eps = 0, max_iter = 10, max_neighborhood = 10,
-                        max_iter_kcmeans = 100) {
-  # Data parameters
-  nobs <- length(y)
-  unq_x <- sort(unique(X))
-  J <- length(unq_x)
-
-  # Get subsamples
-  indx_j <- lapply(unq_x, function(j) which(j == X))
-  names(indx_j) <- unq_x
-
-  # Get initial cluster map and corresponding loss
-  cluster_map <- kcmeans(y, X, K, alpha_0 = alpha_0, max_iter = 1)$cluster_map
-  loss <- get_loss(y, indx_j, K, alpha_0, cluster_map)
-
-  # Run variable neighborhood search algorithm
-  alpha <- alpha_0
-  for (iter in 1:max_iter) {
-    n = 1
-    while(n <= max_neighborhood) {
-      # Relocate n randomly selected values
-      rnd_j <- sample(c(1:J), n)
-      cl_j <- matrix(sapply(cluster_map, function (c) !(rnd_j %in% c)), n, K)
-      cluster_map_n <- cluster_map
-      for (j in 1:n) {
-        new_cl <- sample(c(1:K)[cl_j[j, ]], 1)
-        old_cl <- which(!cl_j[j, ])
-        cluster_map_n <- reassign_j(rnd_j[j], old_cl, new_cl, cluster_map)
-      }#FOR
-
-      # Obtain new cluster means
-      alpha <- get_cmeans(y, indx_j, K, cluster_map_n)
-
-      # Run kcmeans until convergence
-      fit_kcmeans <- kcmeans(y, X, K, alpha_0 = alpha,
-                             max_iter = max_iter_kcmeans)
-      alpha <- fit_kcmeans$alpha
-      cluster_map_n <- fit_kcmeans$cluster_map
-
-      # Local search
-      loss_n <- get_loss(y, indx_j, K, alpha, cluster_map_n)
-      set_j <- sample(c(1:J))
-
-      for (i in 1:J) {
-        j_i <- set_j[i]
-        # Find current cluster
-        cl_j <- which(sapply(cluster_map, function (c) (j_i %in% c)))
-        not_cl_j <- setdiff(c(1:K), cl_j)
-        # Check loss associated with each reassignment
-        for (k in 1:(K-1)) {
-          # Reassign from cl_j to not_cl_j[k]
-          #print("newk")
-          #print(cluster_map)
-          #print(cl_j)
-          cluster_map_k <- reassign_j(j_i, cl_j, not_cl_j[k], cluster_map_n)
-          # Compute new cluster means for the two clusters
-          alpha_k <- alpha
-          alpha_k[cl_j] <- mean(y[unlist(indx_j[cluster_map_k[[cl_j]]])])
-          alpha_k[not_cl_j[k]] <-
-            mean(y[unlist(indx_j[cluster_map_k[[not_cl_j[k]]]])])
-          # Get new loss
-          loss_k <- get_loss(y, indx_j, K, alpha_k, cluster_map_k)
-          # Update if improvement
-          if (loss_k < loss_n) {
-            loss_n <- loss_k
-            alpha <- alpha_k
-            cluster_map_n <- cluster_map_k
-          }#IF
-        }#FOR
-      }#FOR
-
-      # Check for improvement
-      if (loss_n < loss) {
-        cluster_map <- cluster_map_n
-        loss <- loss_n
-        n = 1
-      } else {
-        n <- n + 1
-      }#IFELSE
-    }#WHILE
-  }#FOR
-
-  # Organize and return output
-  output <- list(alpha = alpha,
-                 cluster_map = cluster_map,
-                 y = y, X = X, K = K)
-  class(output) <- "kcmeans"
-  return(output)
-}#KCMEANS_VNS
 
 # Complementary methods ========================================================
 #' Predict method for objects of type \code{kcmeans}.
@@ -212,17 +126,32 @@ predict.kcmeans <- function(obj, newdata = NULL){
   }#IF
 
   # Check inputs
-  if (!is.null(ncol(newdata))) newdata <- newdata[, 1] # convert to numeric
+  nX <- ncol(newdata)
+  if (!is.null(nX) && nX == 1) {
+    x <- newdata[, 1] # convert to numeric
+    W <- matrix(0, length(x), 1)
+  } else if (!is.null(nX) && nX > 1) {
+    x <- newdata[, 1]
+    W <- newdata[, -1]
+  } else if (is.null(nX)) {
+    x <- newdata
+    W <- matrix(0, length(x), 1)
+  }#IFELSE
+  nobs = length(x)
 
-  nobs <- length(newdata)
   # Calculate and return fitted values
-  unq_x <- sort(unique(newdata))
+  unq_x <- sort(unique(x))
   J <- length(unq_x)
+
   # Get subsamples
-  indx_j <- lapply(unq_x, function(j) which(j == newdata))
+  indx_j <- lapply(unq_x, function(j) which(j == x))
   names(indx_j) <- unq_x
+
+  # Calculate mean intercept
+  mean_intercept <- mean(obj$y - obj$X[, -1, drop = F] %*% obj$beta)
+
   # Get cluster assignment
-  fitted <- matrix(mean(obj$y), nobs, 1)
+  fitted <- matrix(mean_intercept, nobs, 1)
   for (k in 1:obj$K) {
     # Get unq_x associated with cluster k
     is_in_k <- sapply(unq_x, function(v) any(v == obj$cluster_map[[k]]))
@@ -230,6 +159,8 @@ predict.kcmeans <- function(obj, newdata = NULL){
     indx_jk <- unlist(indx_j[is_in_k])
     fitted[indx_jk] <- obj$alpha[k]
   }#FOR
+  fitted <- fitted + W %*% obj$beta
+
   # Return fitted values
   return(fitted)
 }#PREDICT.KCMEANS
@@ -289,40 +220,3 @@ init_kcmeans <- function(y, X, K) {
   # Return inital conditional means
   return(alpha_0)
 }#INIT_KCMEANS
-
-# Internal functions ===========================================================
-#' Computation of conditional means given cluster map
-get_cmeans <- function(y, indx_j, K,  cluster_map){
-  alpha <- c(1:K)
-  for (k in 1:K) {
-    # Check whether cluster is empty
-    if (is.null(cluster_map[[k]])) {
-      alpha[k] <- NaN
-      next
-    }#IF
-    # Assign new cluster mean
-    indx_jk <- unlist(indx_j[sapply(cluster_map[[k]], toString)])
-    alpha[k] <- mean(y[indx_jk])
-  }#FOR
-  return(alpha)
-}#GET_CMEANS
-
-#' Reassign values to different cluster
-reassign_j <- function(j, old_cl, new_cl, cluster_map) {
-  cluster_map[[new_cl]] <- c(cluster_map[[new_cl]], j)
-  cluster_map[[old_cl]] <- setdiff(cluster_map[[old_cl]], j)
-  return(cluster_map)
-}#REASSIGN_J
-
-#' Calculate current loss
-get_loss <- function(y, indx_j, K, alpha, cluster_map){
-  # Get fitted values
-  fitted <- matrix(0, length(y), 1)
-  for (k in 1:K) {
-    indx_jk <- unlist(indx_j[cluster_map[[k]]])
-    fitted[indx_jk] <- alpha[k]
-  }#FOR
-  # Get and return loss
-  loss <- mean((y-fitted)^2)
-  return(loss)
-}#GET_LOSS
