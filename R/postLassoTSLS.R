@@ -2,6 +2,9 @@
 #'
 #' An implementation of post-Lasso TSLS.
 #'
+#' TO DO: should be cleaned up + aligned with rlasso implementation. (No need
+#'     for a second penalty-calculation function here!)
+#'
 #' @export postLassoTSLS
 postLassoTSLS <- function(response, control, D, instrument,
                           splitSample = FALSE,
