@@ -10,7 +10,8 @@ pl_iv(
   Z,
   X = matrix(1, nobs(y)),
   models,
-  models_FS = models,
+  models_DXZ = models,
+  models_DX = models_DXZ,
   ens_type = c("average"),
   cv_folds = 5,
   enforce_LIE = TRUE,
@@ -51,9 +52,6 @@ containing four named elements:
     \item{\code{args} Optional arguments to be passed to \code{fun}}
 }}
 
-\item{models_FS}{Same as \code{models}. May be used to consider an seperate
-set of models to be used for the estimation of E[D|X,Z] (first stage).}
-
 \item{ens_type}{A string indicating the type of ensemble. Multiple types may
 be passed in form of a vector of strings.}
 
@@ -64,6 +62,9 @@ be passed in form of a vector of strings.}
 
 \item{silent}{A boolean indicating whether current models and folds should be
 printed to the console.}
+
+\item{models_FS}{Same as \code{models}. May be used to consider an seperate
+set of models to be used for the estimation of E[D|X,Z] (first stage).}
 }
 \value{
 \code{pl_iv} returns an object of S3 class

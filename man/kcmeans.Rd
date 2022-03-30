@@ -4,7 +4,16 @@
 \alias{kcmeans}
 \title{Compute K conditional means estimator.}
 \usage{
-kcmeans(y, X, K, alpha_0 = NULL, beta_0 = NULL, eps = 0, max_iter = 500)
+kcmeans(
+  y,
+  X,
+  K,
+  alpha_0 = NULL,
+  beta_0 = NULL,
+  which_is_cat = 1,
+  eps = 0,
+  max_iter = 500
+)
 }
 \arguments{
 \item{y}{A response vector.}

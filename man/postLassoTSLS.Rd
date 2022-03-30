@@ -29,3 +29,7 @@ postLassoTSLS(
 \description{
 An implementation of post-Lasso TSLS.
 }
+\details{
+TO DO: should be cleaned up + aligned with rlasso implementation. (No need
+    for a second penalty-calculation function here!)
+}
