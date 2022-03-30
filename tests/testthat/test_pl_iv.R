@@ -113,13 +113,6 @@ test_that("pl_iv computes with multiple ensemble procedures w/o the LIE", {
                          enforce_LIE = FALSE,
                          silent = T)
 
-  pl_iv_fit2 <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
-                         models,
-                         ens_type = c("stacking", "stacking_nn", "stacking_01",
-                                      "cv", "average"),
-                         cv_folds = 3,
-                         enforce_LIE = T,
-                         silent = T)
   # Check output with expectations
   expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT
@@ -157,7 +150,7 @@ test_that("pl_iv computes with two sets of models", {
   models <- list(list(fun = ols),
                  list(fun = ols),
                  list(fun = ols))
-  models_FS <- list(list(fun = mdl_xgboost,
+  models_DXZ <- list(list(fun = mdl_xgboost,
                       args = list(num_parallel_tree = 3)),
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
@@ -166,11 +159,38 @@ test_that("pl_iv computes with two sets of models", {
   # Estimate IV coefficient from partially linear model
   pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
-                         models_FS = models_FS,
+                         models_DXZ = models_DXZ,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
                          silent = T)
+  # Check output with expectations
+  expect_equal(length(pl_iv_fit$coef), 5)
+})#TEST_THAT
+
+test_that("pl_iv computes with constant X", {
+  # Simulate small dataset
+  dat <- sim_dat(100)
+  ncol_Z <- ncol(dat$Z)
+  # Define arguments
+  models <- list(list(fun = ols),
+                 list(fun = ols),
+                 list(fun = ols))
+  models_DXZ <- list(list(fun = mdl_xgboost,
+                          args = list(num_parallel_tree = 3)),
+                     list(fun = mdl_glmnet,
+                          args = list(alpha = 0.5)),
+                     list(fun = mdl_glmnet,
+                          args = list(alpha = 1)))
+  # Estimate IV coefficient from partially linear model
+  pl_iv_fit <- pl_iv(dat$y, dat$D, dat$Z, matrix(1, 100, 1),
+                     models = models,
+                     models_DXZ = models_DXZ,
+                     models_DX = models,
+                     ens_type = c("stacking", "stacking_nn", "stacking_01",
+                                  "cv", "average"),
+                     cv_folds = 3,
+                     silent = T)
   # Check output with expectations
   expect_equal(length(pl_iv_fit$coef), 5)
 })#TEST_THAT

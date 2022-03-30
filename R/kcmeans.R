@@ -32,15 +32,16 @@
 #' @export kcmeans
 kcmeans <- function(y, X, K,
                     alpha_0 = NULL, beta_0 = NULL,
+                    which_is_cat = 1,
                     eps = 0, max_iter = 500) {
   # Check inputs
   nX <- ncol(X)
   if (!is.null(nX) && nX == 1) {
-    x <- X[, 1] # convert to numeric
+    x <- X[, which_is_cat] # convert to numeric
     W <- NULL
   } else if (!is.null(nX) && nX > 1) {
-    x <- X[, 1]
-    W <- X[, -1]
+    x <- X[, which_is_cat]
+    W <- X[, -which_is_cat, drop = F]
   } else if (is.null(nX)) {
     x <- X
     W <- NULL
@@ -63,7 +64,7 @@ kcmeans <- function(y, X, K,
   }#IF
 
   # Get subsamples
-  indx_j <- lapply(unq_x, function(j) which(j == X))
+  indx_j <- lapply(unq_x, function(j) which(j == x))
   names(indx_j) <- unq_x
 
   # Run K conditional means algorithm
@@ -106,7 +107,8 @@ kcmeans <- function(y, X, K,
   # Organize and return output
   output <- list(alpha = alpha, beta = beta,
                  cluster_map = cluster_map,
-                 y = y, X = cbind(x, W), K = K)
+                 y = y, X = cbind(x, W), K = K,
+                 which_is_cat = which_is_cat)
   class(output) <- "kcmeans"
   return(output)
 }#KCMEANS
@@ -128,11 +130,11 @@ predict.kcmeans <- function(obj, newdata = NULL){
   # Check inputs
   nX <- ncol(newdata)
   if (!is.null(nX) && nX == 1) {
-    x <- newdata[, 1] # convert to numeric
+    x <- newdata[, obj$which_is_cat] # convert to numeric
     W <- matrix(0, length(x), 1)
   } else if (!is.null(nX) && nX > 1) {
-    x <- newdata[, 1]
-    W <- newdata[, -1]
+    x <- newdata[, obj$which_is_cat]
+    W <- newdata[, -obj$which_is_cat, drop = F]
   } else if (is.null(nX)) {
     x <- newdata
     W <- matrix(0, length(x), 1)
