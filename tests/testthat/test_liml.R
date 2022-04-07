@@ -29,9 +29,10 @@ test_that("predict.liml returns fitted values", {
 
 test_that("summary.liml returns numerical se, t-stats, and p-values", {
   # Simulate small dataset and fit tsls
-  X <- cbind(1, matrix(rnorm(100*3), 100, 3));
-  Z <- matrix(rnorm(100*2), 100, 2) # overidentified
-  UV <- matrix(rnorm(2*100), 100, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  nobs <- 10000
+  X <- cbind(1, matrix(rnorm(nobs*3), nobs, 3));
+  Z <- matrix(rnorm(nobs*2), nobs, 2) # overidentified
+  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(4) + Z %*% c(1, runif(1)) + UV[, 1]
   y <- D + X %*% runif(4) + UV[, 2]
   mdl_fit <- liml(y, D, Z, X)
