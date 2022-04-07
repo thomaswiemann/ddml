@@ -10,3 +10,7 @@
 Inference for liml fits. CSE denote the standard errors in Hansen, Hausman, &
      Newey (2008).
 }
+\details{
+To do: give an option for memory-intensive CSE calculation as alternative to
+    the memory-efficient (but runtime-intensive) current implementation.
+}

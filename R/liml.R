@@ -28,7 +28,7 @@ liml <- function(y, D, Z, X,
   WW_inv <-csolve(WW)
   # Calculate remaining LIML matrix
   WZ <- Matrix::crossprod(W, Z_)
-  M <- WW_inv %*% WZ %*% tcrossprod(ZZ_inv, WZ)
+  M <- WW_inv %*% WZ %*% Matrix::tcrossprod(ZZ_inv, WZ)
 
   # Calculate LIML as normalized eigenvector of the smallest non-zero eigenvalue
   eigen_res <- eigen(M)
@@ -63,6 +63,9 @@ predict.liml <- function(obj, data = NULL){
 #' Inference for liml fits. CSE denote the standard errors in Hansen, Hausman, &
 #'      Newey (2008).
 #'
+#' To do: give an option for memory-intensive CSE calculation as alternative to
+#'     the memory-efficient (but runtime-intensive) current implementation.
+#'
 #' @export summary.liml
 #' @export
 summary.liml <- function(obj, type = "CSE") {
@@ -72,42 +75,61 @@ summary.liml <- function(obj, type = "CSE") {
   nZ <- dim(obj$Z_)[2]
 
   # Calculate matrix products
-  u = (obj$y - predict(obj))[, 1]
-  uu = sum(u^2)
-  ZZZ_inv = obj$Z_ %*% obj$ZZ_inv
-  PX = ZZZ_inv %*% crossprod(obj$Z_, obj$X_)
-  uPu = (tcrossprod(crossprod(u, ZZZ_inv), obj$Z_) %*% u / uu)[1]
+  u <- (obj$y - predict(obj))[, 1]
+  uu <- sum(u^2)
+  XX <- Matrix::crossprod(obj$X_)
+  XZ <- Matrix::crossprod(obj$X_, obj$Z_)
+  uZ <- Matrix::crossprod(u, obj$Z_)
+  uPu <- (Matrix::tcrossprod(uZ %*% obj$ZZ_inv, uZ) / uu)[1]
+  XPX <- Matrix::tcrossprod(XZ %*% obj$ZZ_inv, XZ)
 
   # Calculate standard errors
-  H = crossprod(obj$X_, PX) - uPu  * crossprod(obj$X_)
-  H_inv = csolve(H)
+  H <- as.matrix(XPX - uPu * XX)
+  H_inv <- csolve(H)
   sgm2 <- uu / (nobs - nX)
   if (type == "const") {
     # Standard errors under homoskedastic normal errors
-    se <- sqrt(sgm2 * diag(H_inv))
+    se <- sqrt(sgm2 * Matrix::diag(H_inv))
   } else if (type == "CSE") {
     # Calculate additional matrix products
-    X_tld <- obj$X_ - u %*% crossprod(u, obj$X_) / uu
-    PX_tld <- ZZZ_inv %*% crossprod(obj$Z_, X_tld)
-    V <- X_tld - PX_tld
-    p_vec <- matrix(t(ZZZ_inv), nZ * nobs) *
-      matrix(t(obj$Z_), nZ * nobs) # compute diags w/o redundant crossproducts
-    p_vec <- colSums(matrix(p_vec, nZ, nobs))
-    kappa <- sum(p_vec^2) / nZ
+    uX <- Matrix::crossprod(u, obj$X_)
+    XuuX <- Matrix::crossprod(uX)
+    uPX <- Matrix::tcrossprod(uZ %*% obj$ZZ_inv, XZ)
+    XuuPX <- Matrix::crossprod(uX, uPX)
     tau <- nZ / nobs
-    SgmB <- ((1 - uPu)^2 * crossprod(X_tld, PX_tld) +
-      uPu^2 * crossprod(X_tld, V)) * sgm2
-    A <- tcrossprod(colSums((p_vec - tau) * PX), colSums(u^2 * V)) / nobs
-    # Ugly loop to compute B :(
-    B <- 0
+    XX_tld <- XX - XuuX / uu
+    XPX_tld <- XPX + uPu * XuuX / uu - (XuuPX + Matrix::t(XuuPX)) / uu
+    # Compute SgmB
+    SgmB <- sgm2 *((1-uPu)^2 * XPX_tld + uPu * (XX_tld - XPX_tld))
+    # Compute A and B
+    p_vec <- matrix(0, nobs, 1)
+    A_LHS <- A_RHS <- matrix(0, 1, nX)
+    B <- matrix(0, nX, nX)
+    ZuuX_ZX <- (Matrix::crossprod(uZ, uX) / uu - Matrix::t(XZ))
+    pb_se <- txtProgressBar(min = 0, max = nobs, style = 3) # progress bar
     for (i in 1:nobs) {
-      B <- B + tcrossprod(V[i, ]) * (u[i]^2 - sgm2)
+      # Calculate observation-specific terms
+      ZZZ_inv_i <- obj$Z_[i, ] %*% obj$ZZ_inv
+      Upsilon_i <- Matrix::tcrossprod(ZZZ_inv_i, XZ)
+      p_vec[i] <- ZZZ_inv_i %*% obj$Z_[i, ]
+      V_i <- obj$X_[i, ] - u[1] * uX / uu +
+        ZZZ_inv_i %*% ZuuX_ZX
+      # Compute A, B
+      A_LHS <- A_LHS + (p_vec[i] - tau) * Upsilon_i
+      A_RHS <- A_RHS + u[i]^2 * V_i
+      B <- B + (u[i]^2 - sgm2) * Matrix::crossprod(V_i)
+      # Update progress bar.
+      setTxtProgressBar(pb_se, i)
     }#FOR
+    close(pb_se)
+    A <- Matrix::crossprod(A_LHS, A_RHS) / nobs
+    kappa <- sum(p_vec^2) / nobs
     B <- B * nZ * (kappa - tau) / (nobs * (1 -  2 * tau + kappa * tau))
-    # Combine and calculate corrected standard errors
-    Sgm <- SgmB + A + t(A) + B
+    # Construct Sgm
+    Sgm <- SgmB + A + Matrix::t(A) + B
+    # Calculate corrected standard errors
     Var <- H_inv %*% Sgm %*% H_inv
-    se <- sqrt(diag(Var))
+    se <- sqrt(Matrix::diag(Var))
   }#IF
   t_stat <- obj$coef / se
   p_val <- 2 * pnorm(-abs(t_stat))
