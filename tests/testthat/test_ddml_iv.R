@@ -144,7 +144,7 @@ test_that("ddml_iv computes with multiple ensemble procedures and
   expect_equal(length(ddml_iv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_iv computes with two sets of models", {
+test_that("ddml_iv computes with different sets of models", {
   # Simulate small dataset
   dat <- sim_dat(100)
   ncol_X <- ncol(dat$X)
@@ -153,16 +153,21 @@ test_that("ddml_iv computes with two sets of models", {
   models <- list(list(fun = ols),
                  list(fun = ols),
                  list(fun = ols))
-  models_FS <- list(list(fun = mdl_xgboost,
+  models_DXZ <- list(list(fun = mdl_xgboost,
                       args = list(num_parallel_tree = 3)),
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = mdl_glmnet,
                       args = list(alpha = 1)))
+  models_DX <- list(list(fun = ols),
+                    list(fun = mdl_glmnet,
+                         args = list(alpha = 0.5)),
+                    list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_iv_fit <- ddml_iv(dat$y, dat$D, dat$Z, dat$X,
                          models,
-                         models_FS = models_FS,
+                         models_DXZ = models_DXZ,
+                         models_DX = models_DX,
                          ens_type = c("stacking", "stacking_nn", "stacking_01",
                                       "cv", "average"),
                          cv_folds = 3,
