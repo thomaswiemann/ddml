@@ -100,9 +100,9 @@ crosspred <- function(y, X, Z = NULL,
       # Compute model
       mdl_fit <- do.call(do.call, models)
       # Compute out-of-sample predictions
-      oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
-                                               cbind(X[subsamples[[k]], ],
-                                                     Z[subsamples[[k]], ]))
+      oos_fitted[subsamples[[k]], ] <-
+        as.numeric(predict(mdl_fit, cbind(X[subsamples[[k]], ],
+                                          Z[subsamples[[k]], ])))
       # Check whether instruments were selected (optional).
       if (!is.null(Z)) {
         index_iv <- (ncol(X) + 1):length(c(ncol(X), ncol(Z)))
@@ -123,11 +123,12 @@ crosspred <- function(y, X, Z = NULL,
                           setup_parallel = setup_parallel,
                           silent = silent)
       # Compute out-of-sample predictions
-      oos_fitted[subsamples[[k]], ] <- predict(mdl_fit,
-                                               newX = X[subsamples[[k]], ,
-                                                        drop = F],
-                                               newZ = Z[subsamples[[k]], ,
-                                                        drop = F])
+      oos_fitted[subsamples[[k]], ] <-
+        as.numeric(predict(mdl_fit,
+                           newX = X[subsamples[[k]], ,
+                                    drop = F],
+                           newZ = Z[subsamples[[k]], ,
+                                    drop = F]))
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
       # Record model MSPEs
@@ -144,8 +145,6 @@ crosspred <- function(y, X, Z = NULL,
           anyiv[m, k] <- any_iv(obj = mdl_fit$mdl_fits[[m]],
                                 index_iv = index_iv,
                                 names_iv = colnames(Z[, assign_Z, drop = F]))
-
-
         }#FOR
       }#IF
     }#IFELSE

@@ -61,7 +61,8 @@
 #' @export ddml_iv
 ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                     models,
-                    models_FS = models,
+                    models_DXZ = models,
+                    models_DX = models_DXZ,
                     ens_type = c("average"),
                     cv_folds = 5,
                     sample_folds = 2,
@@ -98,7 +99,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
   D_XZ_res <- crosspred(D, X, Z,
-                        models_FS, ens_type, cv_folds,
+                        models_DXZ, ens_type, cv_folds,
                         sample_folds, subsamples,
                         compute_is_predictions = enforce_LIE,
                         setup_parallel, silent)
@@ -106,7 +107,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {
     D_X_res <- crosspred(D, X, Z = NULL,
-                         models, ens_type, cv_folds,
+                         models_DX, ens_type, cv_folds,
                          sample_folds, subsamples, compute_is_predictions = F,
                          setup_parallel, silent)
   }#IF
@@ -122,7 +123,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     if (enforce_LIE) {
       # Compute LIE-conform estimates of E[D|X]
       D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
-                           models, ens_type, cv_folds,
+                           models_DX, ens_type, cv_folds,
                            sample_folds, subsamples, compute_is_predictions = F,
                            setup_parallel, silent)
     }#IFELSE
@@ -157,7 +158,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
       #     Otherwise use the previously calculated estimates of E[D|X].
       if (enforce_LIE) {
         D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
-                             models, ens_type[j], cv_folds,
+                             models_DX, ens_type[j], cv_folds,
                              sample_folds, subsamples, compute_is_predictions = F,
                              setup_parallel, silent)
         # Residualize
@@ -200,7 +201,8 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
                    anyiv = anyiv,
-                   models = models, models_FS = models_FS,
+                   models = models,
+                   models_DXZ = models_DXZ, models_DX = models_DX,
                    iv_fit = iv_fit,
                    subsamples = subsamples,
                    ens_type = ens_type,
