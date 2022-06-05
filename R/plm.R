@@ -65,7 +65,7 @@ plm <- function(y, D, X,
                     cv_folds, setup_parallel, silent)
 
   # Compute estimates of E[D|X].
-  D_X_res <- ispred(y, X, Z = NULL,
+  D_X_res <- ispred(D, X, Z = NULL,
                     models, ens_type,
                     cv_folds, setup_parallel, silent)
 
