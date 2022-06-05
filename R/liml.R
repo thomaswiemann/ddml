@@ -107,6 +107,9 @@ summary.liml <- function(obj, type = "CSE") {
     B <- matrix(0, nX, nX)
     ZuuX_ZX <- (Matrix::crossprod(uZ, uX) / uu - Matrix::t(XZ))
     pb_se <- txtProgressBar(min = 0, max = nobs, style = 3) # progress bar
+
+    # maybe do QR decomposition here?
+
     for (i in 1:nobs) {
       # Calculate observation-specific terms
       ZZZ_inv_i <- obj$Z_[i, ] %*% obj$ZZ_inv
