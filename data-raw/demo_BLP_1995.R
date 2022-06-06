@@ -84,22 +84,25 @@ summary(tsls(y, D = BLP_1995$price, Z = ZL_, X = XL_), type = "HC1")$res[1, ]
 #'     among controls. For this purpose, we specify two sets of models for the
 #'     first and second stage computations, respectively.
 
-# First stage model
-models_FS <- list(what = rlasso,
+# Estimator for E[D|X, Z]
+models_DXZ <- list(what = rlasso,
                   args = list(include = c(1:ncol_XL)))
 
-# Second stage model
-models_SS <- list(what = ols,
-                  args = list())
+# Estimator for E[D|X] and E[Y|X]
+models_ols <- list(what = ols,
+                   args = list())
 
 # DDML IV. We consider cross-residiualization across 10 sample folds here.
 ddml_rlasso_fit <- ddml_iv(y, D = D,
                            Z = ZL_, X = XL_,
-                           models = models_SS,
-                           models_FS = models_FS,
+                           models = models_ols,
+                           models_DXZ = models_DXZ,
+                           models_DX = models_ols,
                            sample_folds = 5,
                            silent = T)
 ddml_rlasso_fit$coef[1]
+
+# NOTE: EXPORT_DDML NOT UP TO DATE
 
 # Export orthogonalized variables (optional)
 if (FALSE) {
@@ -127,40 +130,40 @@ set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 #' First stage models. When computing ensemble procedures, the control and
 #'     instruments must be explicitely assigned via `assign_X' and `assign_Z'.
-models_FS <- list(list(fun = ols,
-                       args = list(),
-                       assign_X = set_X,
-                       assign_Z = set_Z),
-                  list(fun = ols,
-                       args = list(),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL),
-                  list(fun = rlasso,
-                       args = list(include = 1:ncol(XL_)),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL),
-                  list(fun = mdl_glmnet,
-                       args = list(alpha = 0.5),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL),
-                  list(fun = mdl_glmnet,
-                       args = list(alpha = 0),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL),
-                  list(fun = mdl_xgboost,
-                       args = list(num_parallel_tree = 1,
-                                   nrounds = 6,
-                                   max.depth = 3),
-                       assign_X = set_X,
-                       assign_Z = set_Z),
-                  list(fun = mdl_randomForest,
-                       args = list(ntree  = 100),
-                       assign_X = set_X,
-                       assign_Z = set_Z),
-                  list(fun = mdl_grf,
-                       args = list(num.trees  = 100),
-                       assign_X = set_X,
-                       assign_Z = set_Z))
+models_DXZ <- list(list(fun = ols,
+                        args = list(),
+                        assign_X = set_X,
+                        assign_Z = set_Z),
+                   list(fun = ols,
+                        args = list(),
+                        assign_X = set_XL,
+                        assign_Z = set_ZL),
+                   list(fun = rlasso,
+                        args = list(include = 1:ncol(XL_)),
+                        assign_X = set_XL,
+                        assign_Z = set_ZL),
+                   list(fun = mdl_glmnet,
+                        args = list(alpha = 0.5),
+                        assign_X = set_XL,
+                        assign_Z = set_ZL),
+                   list(fun = mdl_glmnet,
+                        args = list(alpha = 0),
+                        assign_X = set_XL,
+                        assign_Z = set_ZL),
+                   list(fun = mdl_xgboost,
+                        args = list(num_parallel_tree = 1,
+                                    nrounds = 6,
+                                    max.depth = 3),
+                        assign_X = set_X,
+                        assign_Z = set_Z),
+                   list(fun = mdl_randomForest,
+                        args = list(ntree  = 100),
+                        assign_X = set_X,
+                        assign_Z = set_Z),
+                   list(fun = mdl_grf,
+                        args = list(num.trees  = 100),
+                        assign_X = set_X,
+                        assign_Z = set_Z))
 
 # Second stage models. Here, we only omit the rlasso procedure, which selects
 #'     only among instruments (and is thus identical to ols in the second
@@ -205,12 +208,15 @@ ens_type <- c("stacking_01", "stacking_nn", "cv", "stacking", "average")
 ensemble_fit <- ddml_iv(y, D = D,
                         Z = Z_c, X = X_c,
                         models = models_SS,
-                        models_FS = models_FS,
+                        models_DXZ = models_DXZ,
+                        models_DX = models_SS,
                         ens_type = ens_type,
                         cv_folds = 5,
                         sample_folds = 2,
                         silent = T)
 ensemble_fit$coef
+
+# NOTE: EXPORT_DDML NOT UP TO DATE
 
 # Export orthogonalized variables (optional)
 if (FALSE) {
@@ -223,7 +229,6 @@ if (FALSE) {
 #'     been assigned the most weight in the crossvalidation informed ensemble
 #'     procedures (all excpet `average').
 ensemble_fit$weights
-
 
 # Elasticities =================================================================
 
