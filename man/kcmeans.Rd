@@ -51,3 +51,6 @@ An object of class "\code{kcmeans}" is a list containig the following
 \description{
 Compute K conditional means estimator.
 }
+\examples{
+
+}

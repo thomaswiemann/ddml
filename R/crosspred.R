@@ -138,6 +138,8 @@ crosspred <- function(y, X, Z = NULL,
       # Check whether instruments were selected (optional).
       if (!is.null(Z)) {
         for (m in 1:nmodels) {
+          # Check if model is included in ensemble
+          if (mdl_fit$weights[m] == 0) next
           # Check for X, Z assignment
           assign_X <- mdl_fit$models[[m]]$assign_X
           assign_Z <- mdl_fit$models[[m]]$assign_Z

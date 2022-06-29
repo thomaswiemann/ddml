@@ -16,8 +16,9 @@ mdl_xgboost(
   max.depth = .Machine$integer.max,
   eta = 0.3,
   gamma = 0,
-  nrounds = 3,
+  nrounds = 500,
   objective = "reg:squarederror",
+  interaction_constraints = list(),
   verbose = 0
 )
 }

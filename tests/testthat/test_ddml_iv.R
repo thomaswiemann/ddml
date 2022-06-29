@@ -34,7 +34,8 @@ test_that("ddml_iv computes with an ensemble procedure", {
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   models <- list(list(fun = mdl_xgboost,
-                      args = list(num_parallel_tree = 3)),
+                      args = list(num_parallel_tree = 1,
+                                  nrounds = 5)),
                  list(fun = mdl_glmnet,
                       args = list(alpha = 0.5)),
                  list(fun = ols))

@@ -89,7 +89,8 @@ mdl_xgboost <- function(y, X,
                         colsample_bytree = 0.7, subsample = 0.7,
                         colsample_bylevel = 1, colsample_bynode = 1,
                         max.depth = .Machine$integer.max, eta = 0.3, gamma = 0,
-                        nrounds = 3, objective = "reg:squarederror",
+                        nrounds = 500, objective = "reg:squarederror",
+                        interaction_constraints = list(),
                         verbose = 0){
   # Compute xgboost
   mdl_fit <- xgboost::xgboost(data = X, label = y,
@@ -101,7 +102,9 @@ mdl_xgboost <- function(y, X,
                               colsample_bynode = colsample_bynode,
                               max.depth = max.depth, eta = eta,
                               gamma = gamma, nrounds = nrounds,
-                              objective = objective, verbose = verbose)
+                              objective = objective,
+                              interaction_constraints = interaction_constraints,
+                              verbose = verbose)
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_xgboost", class(mdl_fit))
   return(mdl_fit)
