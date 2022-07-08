@@ -159,7 +159,8 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
       if (enforce_LIE) {
         D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
                              models_DX, ens_type[j], cv_folds,
-                             sample_folds, subsamples, compute_is_predictions = F,
+                             sample_folds, subsamples,
+                             compute_is_predictions = F,
                              setup_parallel, silent)
         # Residualize
         D_r <- D - D_X_res$oos_fitted
