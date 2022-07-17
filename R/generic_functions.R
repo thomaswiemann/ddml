@@ -17,6 +17,15 @@ any_iv <- function(obj, ...) {
   UseMethod("any_iv")
 }#ANY_IV
 
+#' Generic function to check first stage fit.
+#'
+#' Generic function to check first stage fit.
+#'
+#' @export fstage
+fstage <- function(obj, ...) {
+  UseMethod("fstage")
+}#FSTAGE
+
 #' Generic function for exporting fitted ddml model.
 #'
 #' Generic function for exporting fitted ddml model.
@@ -28,3 +37,4 @@ any_iv <- function(obj, ...) {
 export_ddml <- function(obj, filename) {
   UseMethod("export_ddml")
 }#EXPORT_DDML
+

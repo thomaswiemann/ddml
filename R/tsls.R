@@ -98,3 +98,23 @@ summary.tsls <- function(obj, type = "const") {
   output <- list(res = res, nobs = nobs, R2 = R2)
   return(output)
 }#SUMMARY.TSLS
+
+#' First stage assesment for tsls fits.
+#'
+#' First stage assesment for tsls fits.
+#'
+#' @export fstage.tsls
+#' @export
+fstage.tsls <- function(obj) {
+  # Compute covariance matrix
+  iv_cov <- cov(cbind(obj$y, obj$X_[, 1], obj$Z_[, 1]))
+
+  # Compute reduced form coefficients
+  coef_yD <- iv_cov[1, 2] / iv_cov [2, 2]
+  coef_yZ <- iv_cov[1, 3] / iv_cov [3, 3]
+  coef_DZ <- iv_cov[2, 3] / iv_cov [3, 3]
+  # Organize and return output
+  output <- list(iv_cov = iv_cov,
+                 c(coef_yD = coef_yD, coef_yZ = coef_yZ, coef_DZ = coef_DZ))
+  return(output)
+}#FSTAGE.TSLS

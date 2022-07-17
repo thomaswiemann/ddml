@@ -198,6 +198,9 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
   anyiv_cv <- D_XZ_res$anyiv_cv
   anyiv <- D_XZ_res$anyiv
 
+  # Get first stage parameters
+
+
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights,
                    mspe = mspe, anyiv_cv = anyiv_cv,
