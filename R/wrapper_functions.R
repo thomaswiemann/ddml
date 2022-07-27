@@ -8,7 +8,8 @@ mdl_glmnet <- function(y, X,
                        alpha = 1, lambda = NULL,
                        standardize = TRUE, intercept = TRUE,
                        family = "gaussian",
-                       cv = TRUE, nfolds = 10){
+                       cv = TRUE, nfolds = 10,
+                       thres = 1e-7){
   # Either copute glmnet with given lambda or determine lambda with cv.
   if (cv) {
     mdl_fit <- glmnet::cv.glmnet(x = X, y = y,
@@ -16,13 +17,15 @@ mdl_glmnet <- function(y, X,
                                  lambda = lambda,
                                  standardize = standardize,
                                  intercept = intercept,
-                                 nfolds = nfolds)
+                                 nfolds = nfolds,
+                                 thres = thres)
   } else {
     mdl_fit <- glmnet::glmnet(x = X, y = y,
                               family = family,
                               lambda = lambda,
                               standardize = standardize,
-                              intercept = intercept)
+                              intercept = intercept,
+                              thres = thres)
   }#IFELSE
 
   # Set custom S3 class

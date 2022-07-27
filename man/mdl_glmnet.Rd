@@ -13,7 +13,8 @@ mdl_glmnet(
   intercept = TRUE,
   family = "gaussian",
   cv = TRUE,
-  nfolds = 10
+  nfolds = 10,
+  thres = 1e-07
 )
 }
 \description{
