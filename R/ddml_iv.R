@@ -68,6 +68,7 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                     sample_folds = 2,
                     subsamples = NULL,
                     enforce_LIE = TRUE,
+                    split_LIE = FALSE,
                     setup_parallel = list(type = 'dynamic', cores = 1),
                     silent = F) {
   # Data parameters
@@ -105,11 +106,16 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                         setup_parallel, silent)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
-  if (!enforce_LIE) {
+  if (!enforce_LIE | split_LIE) {
     D_X_res <- crosspred(D, X, Z = NULL,
                          models_DX, ens_type, cv_folds,
                          sample_folds, subsamples, compute_is_predictions = F,
                          setup_parallel, silent)
+  }#IF
+
+  # If LIE estimation is split for second stage E[D|X], precompute
+  if (split_LIE) {
+    D_X_res_direct <- D_X_res
   }#IF
 
   # Check whether multiple ensembles are computed simultaneously
@@ -129,9 +135,15 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
     }#IFELSE
 
     # Residualize
-    y_r <- y - y_X_res$oos_fitted
-    D_r <- D - D_X_res$oos_fitted
-    V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+    if (!split_LIE) {
+      y_r <- y - y_X_res$oos_fitted
+      D_r <- D - D_X_res$oos_fitted
+      V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+    } else {
+      y_r <- y - y_X_res$oos_fitted
+      D_r <- D - D_X_res_direct$oos_fitted
+      V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
+    }#IF
 
     # Compute IV estimate with constructed variables
     iv_fit <- tsls(y_r, D_r, V_r)
@@ -162,11 +174,16 @@ ddml_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                              sample_folds, subsamples,
                              compute_is_predictions = F,
                              setup_parallel, silent)
-        # Residualize
+      }#IF
+
+      # Residualize
+      if (enforce_LIE & !split_LIE) {
         D_r <- D - D_X_res$oos_fitted
         V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted
+      } else if (enforce_LIE & split_LIE) {
+        D_r <- D - D_X_res_direct$oos_fitted[, j]
+        V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted
       } else {
-        # Residualize
         D_r <- D - D_X_res$oos_fitted[, j]
         V_r <- D_XZ_res$oos_fitted[, j] - D_X_res$oos_fitted[, j]
       }#IFELSE

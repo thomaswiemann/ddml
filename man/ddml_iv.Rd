@@ -17,6 +17,7 @@ ddml_iv(
   sample_folds = 2,
   subsamples = NULL,
   enforce_LIE = TRUE,
+  split_LIE = FALSE,
   setup_parallel = list(type = "dynamic", cores = 1),
   silent = F
 )
