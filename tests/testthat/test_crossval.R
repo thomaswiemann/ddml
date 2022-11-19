@@ -7,52 +7,48 @@ test_that("crossval_compute returns residuals (w/o instruments)", {
   y <- 1 + X %*% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
   # Define arguments
   test_sample <- sample(c(1:length(y)), 33)
-  model <- list(fun = rlasso,
-                args = list(include = c(1:10),
-                            iter_resid = 1, d = 5))
+  learner <- list(fun = mdl_glmnet)
   # Compute cross-validation instance
-  cv_res <- crossval_compute(test_sample, model,
+  oos_resid <- crossval_compute(test_sample, learner,
                              y, X, Z = NULL)
   # Check output with expectations
-  expect_equal(length(cv_res$oos_resid), 33)
-  expect_equal(cv_res$cv_Z, TRUE)
+  expect_equal(length(oos_resid), 33)
 })#TEST_THAT
 
-test_that("crossval returns residuals by model (w/o instruments)", {
+test_that("crossval returns residuals by learner (w/o instruments)", {
   # Simulate small dataset
   X <- cbind(1, matrix(rnorm(100*99), 100, 99)) # Simulate features
   nonzero_X <- (runif(100) < 0.05)
   y <- X %*% (10*runif(100) * nonzero_X) + rnorm(100)
   # Define arguments
-  models <- list(list(fun = rlasso,
-                      args = list(iter_resid = 1, d = 5)), # rlasso
+  learners <- list(list(fun = mdl_glmnet), # lasso
                  list(fun = ols), # ols w/ all features
                  list(fun = ols,
                       assign_X = which(nonzero_X))) # ols w/ important features
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
-                     models,
+                     learners,
                      cv_folds = 3,
                      silent = T)
   # Check output with expectations
-  expect_equal(dim(cv_res$oos_resid), c(length(y), length(models)))
+  expect_equal(dim(cv_res$oos_resid), c(length(y), length(learners)))
 })#TEST_THAT
 
-test_that("crossval returns residuals by model (w/ instruments)", {
+test_that("crossval returns residuals by learner (w/ instruments)", {
   # Simulate small dataset
   X <- cbind(1, matrix(rnorm(100*39), 100, 39))
   Z <- matrix(rnorm(100*10), 100, 10)
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
-  models <- list(list(fun = rlasso,
-                      args = list(include = c(35:45),
-                                  iter_resid = 1, d = 5)), # rlasso
-                 list(fun = ols)) # ols w/ important features
+  learners <- list(list(fun = mdl_glmnet), # lasso
+                 list(fun = ols), # ols
+                 list(fun = ols)) # ols again
+
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
-                     models,
+                     learners,
                      cv_folds = 3,
                      silent = T)
   # Check output with expectations
-  expect_equal(length(cv_res), 2)
+  expect_equal(all(cv_res$oos_resid[,2] == cv_res$oos_resid[,3]), 2)
 })#TEST_THAT

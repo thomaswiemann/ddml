@@ -2,10 +2,10 @@
 % Please edit documentation in R/ensemble.R
 \name{predict.ensemble}
 \alias{predict.ensemble}
-\title{Predict method for ensemble models.}
+\title{Predict method for ensemble learners.}
 \usage{
 \method{predict}{ensemble}(obj, newX = NULL, newZ = NULL)
 }
 \description{
-Predict method for ensemble models.
+Predict method for ensemble learners.
 }

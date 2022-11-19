@@ -72,6 +72,16 @@ ddml_epliv <- function(y, D, Z, X,
   # Data parameters
   nobs <- length(y)
 
+  # Create sample fold tuple
+  if (is.null(subsamples)) {
+    sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
+    sample_groups <- sample(sampleframe, size=nobs, replace=FALSE)
+    subsamples <- sapply(c(1:sample_folds),
+                         function(x) {which(sample_groups == x)})
+  }#IF
+  # In case subsamples are user-provided
+  sample_folds <- length(subsamples)
+
   # Draw samples if not user-supplied
   if (is.null(subsamples)) {
     subsamples <- split(c(1:nobs),

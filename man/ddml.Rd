@@ -3,4 +3,4 @@
 \docType{package}
 \name{ddml}
 \alias{ddml}
-\title{ddml: An implementation of LIE-conform Double/Debiased Machine Learning}
+\title{ddml: An implementation of Double/Debiased Machine Learning}

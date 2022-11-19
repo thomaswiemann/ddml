@@ -14,14 +14,13 @@ test_that("crosspred computes with a single model", {
   # Simulate small dataset
   dat <- sim_dat(100)
   # Define arguments
-  models <- list(what = mdl_xgboost)
+  learners <- list(what = mdl_xgboost)
   # Compute cross-sample predictions
   y = dat$D; X = dat$X;  Z = dat$Z
   crosspred_res <- crosspred(y, X, Z,
-                             models,
+                             learners,
                              sample_folds = 3,
-                             subsamples = NULL,
-                             compute_is_predictions = T,
+                             compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
   expect_equal(length(crosspred_res$oos_fitted), length(dat$D))
@@ -34,20 +33,18 @@ test_that("crosspred computes with ensemble procedures", {
   ncol_X <- ncol(dat$X)
   ncol_Z <- ncol(dat$Z)
   # Define arguments
-  models <- list(list(fun = rlasso,
-                      args = list(iter_resid = 1, d = 5)),
+  learners <- list(list(fun = mdl_glmnet),
                  list(fun = mdl_randomForest),
                  list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(dat$D, dat$X, dat$Z,
-                             models,
-                             ens_type = c("average", "stacking",
+                             learners,
+                             ensemble_type = c("average", "stacking",
                                           "stacking_01", "stacking_nn",
                                           "cv"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             subsamples = NULL,
-                             compute_is_predictions = T,
+                             compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
   expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 5))
@@ -60,20 +57,18 @@ test_that("crosspred computes with ensemble procedures and sparse matrices", {
   ncol_X <- ncol(dat$X)
   ncol_Z <- ncol(dat$Z)
   # Define arguments
-  models <- list(list(fun = rlasso,
-                      args = list(iter_resid = 1, d = 5)),
+  learners <- list(list(fun = mdl_glmnet),
                  list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(dat$D, as(dat$X, "sparseMatrix"),
                              as(dat$Z, "sparseMatrix"),
-                             models,
-                             ens_type = c("average", "stacking",
+                             learners,
+                             ensemble_type = c("average", "stacking",
                                           "stacking_01", "stacking_nn",
                                           "cv"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             subsamples = NULL,
-                             compute_is_predictions = T,
+                             compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
   expect_equal(dim(crosspred_res$oos_fitted), c(length(dat$D), 5))

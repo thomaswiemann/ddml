@@ -2,17 +2,16 @@
 % Please edit documentation in R/ensemble.R
 \name{ensemble}
 \alias{ensemble}
-\title{Compute ensemble models.}
+\title{Compute ensemble learners.}
 \usage{
 ensemble(
   y,
   X,
   Z = NULL,
   type = c("average"),
-  models,
+  learners,
   cv_folds = 5,
-  cv_res = NULL,
-  setup_parallel = list(type = "dynamic", cores = 1),
+  cv_subsamples = NULL,
   silent = F
 )
 }
@@ -26,7 +25,7 @@ ensemble(
 \item{type}{A string indicating the type of ensemble. Multiple types may be
 passed in form of a vector of strings.}
 
-\item{models}{A list of lists, each containing four named elements:
+\item{learners}{A list of lists, each containing four named elements:
 \itemize{
     \item{\code{fun} The function used to trained the model. The
         function must be such that it predicts a named input \code{y}
@@ -40,7 +39,10 @@ passed in form of a vector of strings.}
 
 \item{cv_folds}{The number for cross-validation folds.}
 
-\item{cv_res}{Optional output from \code{\link{crossval}}. If availbale, this
+\item{silent}{A boolean indicating whether current learners and folds should be
+printed to the console.}
+
+\item{cv_results}{Optional output from \code{\link{crossval}}. If availbale, this
 avoids unnecessary computation.}
 
 \item{setup_parallel}{An list containing two named elements:
@@ -53,9 +55,6 @@ avoids unnecessary computation.}
         parallel.
     }
 }}
-
-\item{silent}{A boolean indicating whether current models and folds should be
-printed to the console.}
 }
 \value{
 \code{ensemble} returns an object of S3 class "\code{ensemble}".
@@ -67,17 +66,17 @@ An object of class "\code{ensemble}" is a list containig the following
     components:
 \describe{
 \item{\code{mdl_fits}}{A list containing the fitted model objects
-    corresponding to the estimators passed via \code{models}.}
+    corresponding to the estimators passed via \code{learners}.}
 \item{\code{weights}}{A matrix where each column gives the ensemble weights
     for the corresponding ensemble as specified in \code{type}.}
-\item{\code{models}}{Passthrough of the input \code{models}.}
-\item{\code{cv_res}}{Passed output from \code{\link{crossval}}.}
-\item{\code{mdl_w_iv}}{A vector of model indices corresponding to models that
+\item{\code{learners}}{Passthrough of the input \code{learners}.}
+\item{\code{cv_results}}{Passed output from \code{\link{crossval}}.}
+\item{\code{mdl_w_iv}}{A vector of model indices corresponding to learners that
     selected at least one instrument. }
 }
 }
 \description{
-Compute ensemble models.
+Compute ensemble learners.
 }
 \examples{
 # Add example here.

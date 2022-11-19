@@ -4,7 +4,7 @@
 \alias{crossval_compute}
 \title{Compute results for a single cross-validation instance.}
 \usage{
-crossval_compute(test_sample, model, y, X, Z = NULL)
+crossval_compute(test_sample, learner, y, X, Z = NULL)
 }
 \description{
 Compute results for a single cross-validation instance.

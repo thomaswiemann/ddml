@@ -8,10 +8,9 @@ crossval(
   y,
   X,
   Z = NULL,
-  models,
+  learners,
   cv_folds = 5,
   cv_subsamples = NULL,
-  setup_parallel = list(type = "dynamic", cores = 1),
   silent = F
 )
 }
@@ -22,7 +21,7 @@ crossval(
 
 \item{Z}{An optional instrument matrix.}
 
-\item{models}{A list of lists, each containing three named elements:
+\item{learners}{A list of lists, each containing three named elements:
 \itemize{
     \item{\code{fun} The function used to trained the model. The
         function must be such that it predicts a named input \code{y}
@@ -40,6 +39,9 @@ crossval(
 a test-sample. If not used-provided, the split sample folds are randomly
 drawn.}
 
+\item{silent}{A boolean indicating whether current learners and folds should be
+printed to the console.}
+
 \item{setup_parallel}{An list containing two named elements:
 \itemize{
     \item{\code{type} A string of value \code{"static"} or
@@ -50,16 +52,13 @@ drawn.}
         parallel.
     }
 }}
-
-\item{silent}{A boolean indicating whether current models and folds should be
-printed to the console.}
 }
 \value{
 \code{crossval} a list containig the following components:
 \describe{
 \item{\code{oos_resid}}{A matrix of out-of-sample residuals, each column
-    corresponding to a model in \code{models}.}
-\item{\code{cv_Z}}{A vector of model indices corresponding to models that
+    corresponding to a model in \code{learners}.}
+\item{\code{cv_Z}}{A vector of model indices corresponding to learners that
     selected at least one instrument in each cross-validation fold.}
 }
 }
@@ -73,7 +72,7 @@ Compute out-of-sample residuals via cross-validation.
 X <- cbind(1, matrix(rnorm(100*99), 100, 99)) # Simulate features
 y <- X \%*\% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
 # Define arguments
-models <- list(list(fun = rlasso,
+learners <- list(list(fun = rlasso,
                     args = list(include = NULL,
                                 iter_resid = 1, d = 5),
                     assign_X = c(1:ncol(X))), # rlasso
@@ -85,7 +84,7 @@ models <- list(list(fun = rlasso,
                     assign_X = c(1:50)) # ols w/ some arbitrary features
 # Compute cross-validation residuals
 cv_res <- crossval(y, X,
-                   models = models,
+                   learners = learners,
                    cv_folds = 3,
                    silent = T)
 # Compute MSPE by model

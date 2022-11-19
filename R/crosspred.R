@@ -64,22 +64,29 @@ crosspred <- function(y, X, Z = NULL,
                       cv_folds = 5,
                       compute_insample_predictions = FALSE,
                       subsamples = NULL,
+                      cv_subsamples_list = NULL,
                       silent = F) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
   calc_ensemble <- !("what" %in% names(learners))
-  # Draw samples if not user-supplied
+  # Create sample fold tuple
   if (is.null(subsamples)) {
-    subsamples <- split(c(1:nobs), sample(rep(c(1:sample_folds),
-                                              ceiling(nobs / sample_folds)))[1:nobs])
+    sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
+    sample_groups <- sample(sampleframe, size=nobs, replace=F)
+    subsamples <- sapply(c(1:sample_folds),
+                         function(x) {which(sample_groups == x)},
+                         simplify=F)
   }#IF
+  # In case subsamples are user-provided
   sample_folds <- length(subsamples)
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
   is_fitted <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
+  colnames(mspe) <- paste("sample fold ", c(1:sample_folds))
   weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
+  dimnames(weights) <- list(NULL, NULL, paste("sample fold ", c(1:sample_folds)))
   # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble
@@ -111,8 +118,8 @@ crosspred <- function(y, X, Z = NULL,
       }#IFELSE
       mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = F],
                           Z[-subsamples[[k]], , drop = F],
-                          ensemble_type, learners, cv_folds,
-                          setup_parallel = setup_parallel,
+                          ensemble_type, learners,
+                          cv_folds, cv_subsamples_list[[k]],
                           silent = silent)
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
@@ -123,8 +130,10 @@ crosspred <- function(y, X, Z = NULL,
                                     drop = F]))
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
-      # Record model MSPEs
-      if (!is.null(mdl_fit$cv_res))mspe[,k]<-colMeans(mdl_fit$cv_res$oos_resid^2)
+      # Record model MSPEs when weights were computed via cross validation
+      if (!is.null(mdl_fit$cv_res)) {
+        mspe[,k] <- colMeans(mdl_fit$cv_res$oos_resid^2)
+      }#IF
     }#IFELSE
     # Compute in-sample predictions (optional)
     if (compute_insample_predictions) {
