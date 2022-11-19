@@ -61,13 +61,14 @@ ensemble <- function(y, X, Z = NULL,
                      learners,
                      cv_folds = 5,
                      cv_subsamples = NULL,
+                     cv_results = NULL,
                      silent = F) {
   # Data parameters
   nlearners <- length(learners)
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(y, X, Z,
                                 type, learners,
-                                cv_folds, cv_subsamples,
+                                cv_folds, cv_subsamples, cv_results,
                                 silent)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
@@ -95,7 +96,8 @@ ensemble <- function(y, X, Z = NULL,
     mdl_fits[[m]] <- do.call(do.call, mdl_fun)
   }#FOR
   # Organize and return output
-  output <- list(mdl_fits = mdl_fits, weights = weights, learners = learners)
+  output <- list(mdl_fits = mdl_fits, weights = weights,
+                 learners = learners, cv_results = cv_results)
   class(output) <- "ensemble"
   return(output)
 }#ENSEMBLE
@@ -191,6 +193,7 @@ ensemble_weights <- function(y, X, Z = NULL,
                              learners,
                              cv_folds = 5,
                              cv_subsamples = NULL,
+                             cv_results = NULL,
                              silent = F) {
   # Data parameters
   nlearners <- length(learners)
@@ -198,7 +201,7 @@ ensemble_weights <- function(y, X, Z = NULL,
   # Check whether out-of-sample residuals should be calculated to inform the
   #     ensemble weights, and whether previous results are available.
   cv_stacking <- c("stacking", "stacking_nn", "stacking_01", "stacking_best")
-  if (any(cv_stacking %in% type)) {
+  if (any(cv_stacking %in% type) & is.null(cv_results)) {
     # Run crossvalidation procedure
     cv_results <- crossval(y, X, Z,
                        learners = learners,
