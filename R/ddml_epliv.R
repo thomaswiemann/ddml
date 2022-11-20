@@ -94,9 +94,8 @@ ddml_epliv <- function(y, D, Z, X,
   # Compute estimates of E[y|X]
   y_X_res <- crosspred(y, X, Z = NULL,
                        learners = learners, ensemble_type = ensemble_type,
-                       cv_folds = cv_folds,
                        cv_subsamples_list = cv_subsamples_list,
-                       sample_folds = sample_folds, subsamples = subsamples,
+                       subsamples = subsamples,
                        compute_insample_predictions = F,
                        silent = silent, progress = "E[Y|X]: ")
   update_progress(silent)
@@ -105,9 +104,8 @@ ddml_epliv <- function(y, D, Z, X,
   #     the LIE is enforced.
   D_XZ_res <- crosspred(D, X, Z,
                         learners = learners_DXZ, ensemble_type = ensemble_type,
-                        cv_folds = cv_folds,
                         cv_subsamples_list = cv_subsamples_list,
-                        sample_folds = sample_folds, subsamples = subsamples,
+                        subsamples = subsamples,
                         compute_insample_predictions = enforce_LIE,
                         silent = silent, progress = "E[D|Z,X]: ")
   update_progress(silent)
@@ -116,9 +114,8 @@ ddml_epliv <- function(y, D, Z, X,
   if (!enforce_LIE) {
     D_X_res <- crosspred(D, X, Z = NULL,
                          learners = learners_DX, ensemble_type = ensemble_type,
-                         cv_folds = cv_folds,
                          cv_subsamples_list = cv_subsamples_list,
-                         sample_folds = sample_folds, subsamples = subsamples,
+                         subsamples = subsamples,
                          compute_insample_predictions = F,
                          silent = silent, progress = "E[D|X]: ")
     update_progress(silent)
@@ -137,9 +134,7 @@ ddml_epliv <- function(y, D, Z, X,
       D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
                            learners = learners_DX,
                            ensemble_type = ensemble_type,
-                           cv_folds = cv_folds,
                            cv_subsamples_list = cv_subsamples_list,
-                           sample_folds = sample_folds,
                            subsamples = subsamples,
                            compute_insample_predictions = F,
                            silent = silent, progress = "E[D|X]: ")
@@ -172,13 +167,14 @@ ddml_epliv <- function(y, D, Z, X,
     weights <- list(array(0, dim = c(nlearners, nensb, sample_folds)),
                     array(0, dim = c(nlearners_DX, nensb, sample_folds)),
                     array(0, dim = c(nlearners_DXZ, nensb, sample_folds)))
-    weights[[1]] <- y_X_res$weights; weights[[3]] <- D_XZ_res$weights;
+    weights[[1]] <- y_X_res$weights; weights[[3]] <- D_XZ_res$weights
     # Assign names for more legible output
     colnames(coef) <- names(mspe) <- names(iv_fit) <- ensemble_type
     names(weights) <- c("y_X", "D_X", "D_XZ")
     for (j in 1:3) {
       dimnames(weights[[j]]) <- list(NULL, ensemble_type, NULL)
     }#FOR
+    # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # When the LIE is enforced, compute LIE-conform estimates of E[D|X].
       #     Otherwise use the previously calculated estimates of E[D|X].
@@ -187,9 +183,7 @@ ddml_epliv <- function(y, D, Z, X,
         D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
                              learners = learners_DX,
                              ensemble_type = ensemble_type[j],
-                             cv_folds = cv_folds,
                              cv_subsamples_list = cv_subsamples_list,
-                             sample_folds = sample_folds,
                              subsamples = subsamples,
                              compute_insample_predictions = F,
                              silent = silent,

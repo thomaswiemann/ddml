@@ -62,7 +62,7 @@ test_that("ddml_epliv computes with stacking w/o enforcing the LIE", {
                                sample_folds = 2,
                                cv_folds = 2,
                                enforce_LIE = FALSE,
-                               silent = T)
+                               silent = F)
   # Check output with expectations
   expect_equal(length(ddml_epliv_fit$coef), 1)
 })#TEST_THAT

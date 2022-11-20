@@ -50,7 +50,7 @@ test_that("mdl_xgboost is working", {
 test_that("mdl_randomForest is working", {
   # Simulate small dataset and fit the model
   dat <- sim_data()
-  mdl_fit <- mdl_randomForest(as.vector(dat$y), dat$X)
+  mdl_fit <- mdl_randomForest(dat$y, dat$X)
   # Check methods predict() and any_iv()
   fitted <- predict(mdl_fit, newdata = dat$X)
   iv_selected <- any_iv(mdl_fit, index_iv = c(11:20))

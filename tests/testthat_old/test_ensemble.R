@@ -43,6 +43,7 @@ test_that("ensemble returns a list of fitted learners", {
                       silent = T)
   # Check output with expectations
   expect_equal(length(ens_fit$mdl_fits), length(learners))
+  expect_is(ens_fit$mdl_w_iv, "integer")
 })#TEST_THAT
 
 test_that("prediction with ensemble learners returns fitted values", {

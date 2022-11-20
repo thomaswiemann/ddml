@@ -75,6 +75,17 @@ crosspred <- function(y, X, Z = NULL,
     subsamples <- generate_subsamples(nobs, sample_folds)
   }#IF
   sample_folds <- length(subsamples)
+
+  # Create cv-subsamples tuple
+  if (is.null(cv_subsamples_list)) {
+    cv_subsamples_list <- rep(list(NULL), sample_folds)
+    for (k in 1:sample_folds) {
+      nobs_k <- nobs - length(subsamples[[k]])
+      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
+    }# FOR
+  }#IF
+  cv_folds <- length(cv_subsamples_list[[1]])
+
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
   is_fitted <- rep(list(NULL), sample_folds)
