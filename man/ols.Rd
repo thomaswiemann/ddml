@@ -34,9 +34,3 @@ An object of class "\code{ols}" is a list containig the following components:
 \description{
 Compute (weighted) least squares estimator.
 }
-\examples{
-X <- matrix(rnorm(100*3), 100, 3) # Simulate features
-y <- 1 + X \%*\% c(-1, 1, 0) + rnorm(100) # Simulate linear model
-ols(y, X, const = T) # Compute least squares fit
-
-}

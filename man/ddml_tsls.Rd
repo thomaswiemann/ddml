@@ -89,7 +89,3 @@ An object of class \code{ddml_iv}is a list containig the
 \description{
 Compute DDML IV estimators.
 }
-\examples{
-# Add example here.
-
-}

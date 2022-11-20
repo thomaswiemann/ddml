@@ -66,29 +66,3 @@ printed to the console.}
 \description{
 Compute out-of-sample residuals via cross-validation.
 }
-\examples{
-
-# Simple example w/o instruments ============================================
-# Simulate small dataset
-X <- cbind(1, matrix(rnorm(100*99), 100, 99)) # Simulate features
-y <- X \%*\% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
-# Define arguments
-learners <- list(list(fun = rlasso,
-                    args = list(include = NULL,
-                                iter_resid = 1, d = 5),
-                    assign_X = c(1:ncol(X))), # rlasso
-               list(fun = ols,
-                    args = list(),
-                    assign_X = c(1:ncol(X))), # ols w/ all features
-               list(fun = ols,
-                    args = list(),
-                    assign_X = c(1:50)) # ols w/ some arbitrary features
-# Compute cross-validation residuals
-cv_res <- crossval(y, X,
-                   learners = learners,
-                   cv_folds = 3,
-                   silent = T)
-# Compute MSPE by model
-colMeans(cv_res$oos_resid)
-
-}

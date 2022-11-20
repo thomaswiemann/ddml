@@ -4,7 +4,7 @@
 \alias{fstage.tsls}
 \title{First stage assesment for tsls fits.}
 \usage{
-\method{fstage}{tsls}(obj)
+fstage.tsls(obj)
 }
 \description{
 First stage assesment for tsls fits.

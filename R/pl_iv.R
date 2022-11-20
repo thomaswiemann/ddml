@@ -49,9 +49,6 @@
 #'     \item{\code{...}}{...}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export pl_iv
 pl_iv <- function(y, D, Z, X = matrix(1, nobs(y)),
                   models,

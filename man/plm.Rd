@@ -69,7 +69,3 @@ An object of class \code{plm}is a list containig the
 \description{
 Compute PLM estimators.
 }
-\examples{
-# Add example here.
-
-}

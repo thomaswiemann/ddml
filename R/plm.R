@@ -45,9 +45,6 @@
 #'     \item{\code{...}}{...}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export plm
 plm <- function(y, D, X,
                      models,

@@ -39,11 +39,6 @@
 #'     Lasso model.}
 #' }
 #'
-#' @examples
-#' X <- matrix(rnorm(100*100), 100, 100) # Simulate features
-#' y <- 1 + X %*% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
-#' rlasso(y, X) # Compute rlasso
-#'
 #' @export rlasso
 rlasso <- function(y, X,
                    include = NULL,
@@ -128,18 +123,6 @@ predict.rlasso <- function(obj, newdata = NULL,
   fitted <- as.matrix(fitted + obj$mean_y)
   return(fitted)
 }#PREDICT.RLASSO
-
-#' Instrument selection for rlasso fits.
-#'
-#' Instrument selection for rlasso fits. Returns \code{TRUE} if at least one
-#'     instrument is retained..
-#'
-#' @export any_iv.rlasso
-#' @export
-any_iv.rlasso <- function(obj, index_iv, ...){
-  # Check whether any instruments are retained
-  length(intersect(obj$retained, index_iv)) > 0
-}#ANY_IV.RLASSO
 
 # Complementary functions ======================================================
 #' Compute plug-in penalty level and loadings for rlasso.

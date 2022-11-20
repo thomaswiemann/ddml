@@ -55,8 +55,6 @@
 #'     \item{\code{...}}{...}
 #' }
 #'
-#' @examples
-#' # Add example here.
 #'
 #' @export ddml_tsls
 ddml_tsls <- function(y, D, Z, X = matrix(1, nobs(y)),

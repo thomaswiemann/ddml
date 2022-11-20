@@ -22,11 +22,6 @@
 #' \item{\code{w}}{An optional weights vector.}
 #' }
 #'
-#' @examples
-#' X <- matrix(rnorm(100*3), 100, 3) # Simulate features
-#' y <- 1 + X %*% c(-1, 1, 0) + rnorm(100) # Simulate linear model
-#' ols(y, X, const = T) # Compute least squares fit
-#'
 #' @export ols
 ols <- function(y, X,
                 const = FALSE,
@@ -126,13 +121,3 @@ summary.ols <- function(obj,
   output <- list(res = res, nobs = nobs, R2 = R2)
   return(output)
 }#SUMMARY.OLS
-
-#' Instrument selection for ols fits.
-#'
-#' Instrument selection for ols fits. Always returns \code{TRUE}.
-#'
-#' @export any_iv.ols
-#' @export
-any_iv.ols <- function(obj, ...){
-  TRUE
-}#ANY_IV.OLS

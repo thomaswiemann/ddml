@@ -68,9 +68,3 @@ An object of class "\code{rlasso}" is a list containig the following
 \description{
 Compute Lasso with plug-in penalty level and loadings.
 }
-\examples{
-X <- matrix(rnorm(100*100), 100, 100) # Simulate features
-y <- 1 + X \%*\% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
-rlasso(y, X) # Compute rlasso
-
-}

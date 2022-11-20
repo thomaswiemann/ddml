@@ -90,7 +90,3 @@ An object of class \code{ddml_epliv}is a list containig the
 \description{
 DDML estimator for the Extended Partially Linear IV model.
 }
-\examples{
-# Add example here.
-
-}

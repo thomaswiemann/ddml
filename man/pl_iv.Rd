@@ -80,7 +80,3 @@ An object of class \code{pl_iv}is a list containig the
 \description{
 Compute LIE-conform partially linear IV estimators w/o sample splitting.
 }
-\examples{
-# Add example here.
-
-}

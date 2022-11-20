@@ -80,7 +80,3 @@ An object of class "\code{ensemble}" is a list containig the following
 \description{
 Compute ensemble learners.
 }
-\examples{
-# Add example here.
-
-}

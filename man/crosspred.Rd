@@ -85,7 +85,3 @@ printed to the console.}
 \description{
 Compute cross-sample predictions.
 }
-\examples{
-# Add example here.
-
-}

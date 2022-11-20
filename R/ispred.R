@@ -44,9 +44,6 @@
 #'     corresponding to an ensemble as passed via \code{ens_type}.}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export ispred
 ispred <- function(y, X, Z = NULL,
                    models,

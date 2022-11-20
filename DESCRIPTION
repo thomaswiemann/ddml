@@ -5,28 +5,25 @@ Date: 2020-12-01
 Authors@R: c(
     person("Christian", "Hansen", role = "aut"),
     person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
-Description: An implementation of LIE-conform Double/Debiased Machine Learning.
-License: What license is it under?
+Description: An implementation of Double/Debiased Machine Learning.
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Imports: 
     MASS,
     Matrix,
+    nnls,
+    LowRankQP,
     glmnet,
     randomForest,
     grf,
     xgboost,
     keras
 Suggest:
-    testthat,
-    nnls,
-    LowRankQP,
-    foreach,
-    parallel,
-    doSNOW
-RoxygenNote: 7.2.0
+    testthat
+RoxygenNote: 7.2.2
 Depends: 
-    R (>= 2.10)
+    R (>= 4.2.2)
 Suggests: 
     covr,
     testthat (>= 3.0.0)

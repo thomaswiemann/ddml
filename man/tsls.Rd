@@ -35,7 +35,3 @@ An object of class "\code{tsls}" is a list containig the following
 \description{
 Compute two stage least squares estimator.
 }
-\examples{
-# Add example here
-
-}

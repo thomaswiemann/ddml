@@ -22,7 +22,3 @@ liml(y, D, Z, X, zero.threshold = 1e-10)
 Compute limited information maximum likelihood based on Hansen, Hausman, &
      Newey (2008).
 }
-\examples{
-# Add example here
-
-}

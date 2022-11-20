@@ -27,8 +27,6 @@
 #' \item{\code{K}}{The number of conditional means.}
 #' }
 #'
-#' @examples
-#'
 #' @export kcmeans
 kcmeans <- function(y, X, K,
                     alpha_0 = NULL, beta_0 = NULL,
@@ -166,17 +164,6 @@ predict.kcmeans <- function(obj, newdata = NULL){
   # Return fitted values
   return(fitted)
 }#PREDICT.KCMEANS
-
-#' Instrument selection for objects of type \code{kcmeans}.
-#'
-#' Instrument selection for objects of type \code{kcmeans}. Always returns
-#'     \code{TRUE}.
-#'
-#' @export any_iv.kcmeans
-#' @export
-any_iv.kcmeans <- function(obj, ...){
-  TRUE
-}#ANY_IV.KCMEANS
 
 # Complementary functions ======================================================
 #' Initial cluster means for \code{kcmeans}.

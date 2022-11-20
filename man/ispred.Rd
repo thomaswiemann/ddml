@@ -69,7 +69,3 @@ printed to the console.}
 \description{
 Compute in-sample predictions.
 }
-\examples{
-# Add example here.
-
-}

@@ -59,28 +59,6 @@ predict.mdl_glmnet <- function(obj, newdata = NULL){
   return(fitted)
 }#PREDICT.MDL_GLMNET
 
-#' Instrument selection for mdl_glmnet fits.
-#'
-#' Instrument selection for mdl_glmnet fits.
-#'
-#' @export any_iv.mdl_glmnet
-any_iv.mdl_glmnet <- function(obj, index_iv, ...){
-  # Check whether cv.glmnet was run
-  cv <- "cv.glmnet" %in% class(obj)
-  if (cv) {
-    # Determine mse-minimizing lambda and get beta matrix
-    which_lambda <- which.min(obj$cvm)
-    beta <- obj$glmnet.fit$beta
-  } else {
-    # Determine least regularizing lambda and get beta matrix
-    which_lambda <- length(obj$lambda)
-    beta <- obj$beta
-  }#IFELSE
-  # Check whether any instruments are retained
-  retained <- c(1, which((beta[, which_lambda] != 0)))
-  length(intersect(retained, index_iv)) > 0
-}#ANY_IV.MDL_GLMNET
-
 # xgboost ======================================================================
 #' Wrapper function for \code{xgboost}.
 #'
@@ -126,20 +104,6 @@ predict.mdl_xgboost <- function(obj, newdata = NULL){
   predict(obj, newdata)
 }#PREDICT.MDL_XGBOOST
 
-#' Instrument selection for mdl_xgboost fits.
-#'
-#' Instrument selection for mdl_xgboost fits.
-#'
-#' @export any_iv.mdl_xgboost
-any_iv.mdl_xgboost <- function(obj, index_iv, names_iv, ...){
-  # Check whether names_iv is NULL, in which case a replacement is needed
-  if (is.null(names_iv)) names_iv <- index_iv
-  # Check whether instruments have non-zero varibale importance
-  vselected <- xgboost::xgb.importance(model = obj)[, 1]
-  ivselected <- intersect(sapply(vselected, function(x) x), names_iv)
-  length(ivselected) > 0
-}#ANY_IV.MDL_XGBOOST
-
 # randomForest =================================================================
 #' Wrapper function for \code{randomForest}.
 #'
@@ -178,17 +142,6 @@ predict.mdl_randomForest <- function(obj, newdata = NULL){
   # Predict using randomForest prediction method
   predict(obj, newdata)
 }#PREDICT.MDL_RANDOMFOREST
-
-#' Instrument selection for mdl_xgboost fits.
-#'
-#' Instrument selection for mdl_xgboost fits.
-#'
-#' @export any_iv.mdl_randomForest
-any_iv.mdl_randomForest <- function(obj, index_iv, ...){
-  # Check whether instruments have non-zero varibale importance
-  vselected <- which(obj$importance > 0)
-  length(intersect(vselected, index_iv)) > 0
-}#ANY_IV.MDL_RANDOMFOREST
 
 # grf ==========================================================================
 #' Wrapper function for \code{grf}'s \code{regression_forest}.
@@ -229,18 +182,6 @@ predict.mdl_grf <- function(obj, newdata = NULL){
   # Predict data and output as matrix
   as.numeric(predict(obj, newdata)$predictions) # don't return a data.frame
 }#PREDICT.MDL_GRF
-
-#' Instrument selection for mdl_grf fits.
-#'
-#' Instrument selection for mdl_grf fits.
-#'
-#' @export any_iv.mdl_grf
-any_iv.mdl_grf <- function(obj, index_iv, ...){
-  # Check whether instruments have non-zero varibale importance
-  vselected <- which(grf::variable_importance(obj) > 0)
-  ivselected <- intersect(vselected, index_iv)
-  length(ivselected) > 0
-}#ANY_IV.MDL_GRF
 
 # keras ========================================================================
 #' Wrapper function for \code{keras}'s neural net implementation.
@@ -293,12 +234,3 @@ predict.mdl_keras <- function(obj, newdata = NULL){
   class(obj) <- class(obj)[-1] # Not a pretty solution...
   as.numeric(predict(obj, newdata))
 }#PREDICT.MDL_KERAS
-
-#' Instrument selection for mdl_keras fits.
-#'
-#' Instrument selection for mdl_keras fits.
-#'
-#' @export any_iv.mdl_keras
-any_iv.mdl_keras <- function(obj, index_iv, ...){
-  TRUE
-}#ANY_IV.MDL_KERAS

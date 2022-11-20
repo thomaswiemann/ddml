@@ -10,9 +10,6 @@
 #'
 #' @return \code{liml} returns an object of S3 class "\code{liml}".
 #'
-#' @examples
-#' # Add example here
-#'
 #' @export liml
 liml <- function(y, D, Z, X,
                  zero.threshold = 1e-10){

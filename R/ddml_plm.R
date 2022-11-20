@@ -52,9 +52,6 @@
 #'     \item{\code{...}}{...}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export ddml_plm
 ddml_plm <- function(y, D, X,
                     learners,

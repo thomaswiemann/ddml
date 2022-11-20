@@ -52,9 +52,6 @@
 #'     selected at least one instrument. }
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export ensemble
 ensemble <- function(y, X, Z = NULL,
                      type = c("average"),

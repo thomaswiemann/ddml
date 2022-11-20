@@ -8,12 +8,13 @@ ddml_plm(
   y,
   D,
   X,
-  models,
-  ens_type = c("average"),
-  cv_folds = 5,
+  learners,
+  learners_DX = learners,
   sample_folds = 2,
+  ensemble_type = c("average"),
+  cv_folds = 5,
   subsamples = NULL,
-  setup_parallel = list(type = "dynamic", cores = 1),
+  cv_subsamples_list = NULL,
   silent = F
 )
 }
@@ -24,10 +25,10 @@ ddml_plm(
 
 \item{X}{A control matrix.}
 
-\item{models}{May take one of two forms, depending on whether a single model
+\item{learners}{May take one of two forms, depending on whether a single model
 should be used for residualization, or whether an ensemble procedure
 should be employed.
-If a single model should be used, \code{models} is a list with two named
+If a single model should be used, \code{learners} is a list with two named
 elements:
 \itemize{
     \item{\code{what} The function used to trained the model. The
@@ -35,7 +36,7 @@ elements:
         using a named input \code{X}.}
     \item{\code{args} Optional arguments to be passed to \code{what}.}
 }
-If an ensemble should be used, \code{models} is a list of lists, each
+If an ensemble should be used, \code{learners} is a list of lists, each
 containing four named elements:
 \itemize{
     \item{\code{fun} The function used to trained the model. The
@@ -48,23 +49,23 @@ containing four named elements:
     \item{\code{args} Optional arguments to be passed to \code{fun}}
 }}
 
-\item{ens_type}{A string indicating the type of ensemble. Multiple types may
+\item{sample_folds}{The number of split sample folds used for calculation of
+the out-of-sample predictions.}
+
+\item{ensemble_type}{A string indicating the type of ensemble. Multiple types may
 be passed in form of a vector of strings.}
 
 \item{cv_folds}{The number for cross-validation folds.}
-
-\item{sample_folds}{The number of split sample folds used for calculation of
-the out-of-sample predictions.}
 
 \item{subsamples}{An optional list of vectors, each containing indices of
 a test-sample. If not used-provided, the split sample folds are randomly
 drawn.}
 
+\item{silent}{A boolean indicating whether current learners and folds should be
+printed to the console.}
+
 \item{setup_parallel}{An list containing details on the parallelization of
 \code{crossval}.}
-
-\item{silent}{A boolean indicating whether current models and folds should be
-printed to the console.}
 }
 \value{
 \code{ddml_plm} returns an object of S3 class
@@ -80,8 +81,4 @@ An object of class \code{ddml_plm}is a list containig the
 }
 \description{
 Compute DDML PLM estimators.
-}
-\examples{
-# Add example here.
-
 }

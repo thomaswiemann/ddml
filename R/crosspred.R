@@ -53,9 +53,6 @@
 #'     corresponding to an ensemble as passed via \code{ensemble_type}.}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export crosspred
 crosspred <- function(y, X, Z = NULL,
                       learners,

@@ -55,9 +55,6 @@
 #'     \item{\code{...}}{...}
 #' }
 #'
-#' @examples
-#' # Add example here.
-#'
 #' @export ddml_epliv
 ddml_epliv <- function(y, D, Z, X,
                        learners,
