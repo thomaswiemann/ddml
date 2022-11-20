@@ -4,7 +4,7 @@
 \alias{predict.ensemble}
 \title{Predict method for ensemble learners.}
 \usage{
-\method{predict}{ensemble}(obj, newX = NULL, newZ = NULL)
+\method{predict}{ensemble}(object, newdata, newZ = NULL, ...)
 }
 \description{
 Predict method for ensemble learners.

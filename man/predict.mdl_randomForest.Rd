@@ -4,7 +4,7 @@
 \alias{predict.mdl_randomForest}
 \title{Predict method for mdl_randomForest fits.}
 \usage{
-\method{predict}{mdl_randomForest}(obj, newdata = NULL)
+\method{predict}{mdl_randomForest}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for mdl_randomForest fits.

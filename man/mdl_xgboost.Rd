@@ -19,7 +19,8 @@ mdl_xgboost(
   nrounds = 500,
   objective = "reg:squarederror",
   interaction_constraints = list(),
-  verbose = 0
+  verbose = 0,
+  ...
 )
 }
 \description{

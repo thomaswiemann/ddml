@@ -57,15 +57,15 @@ ols <- function(y, X,
 #'
 #' @export predict.ols
 #' @export
-predict.ols <- function(obj, newdata = NULL){
+predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix
   if (is.null(newdata)) {
-    newdata <- obj$X
-  } else if (obj$const) {
+    newdata <- object$X
+  } else if (object$const) {
     newdata <- cbind(1, newdata)
   }#IFELSE
   # Calculate and return fitted values with the OLS coefficient
-  fitted <- newdata%*%obj$coef
+  fitted <- newdata%*%object$coef
   return(fitted)
 }#PREDICT.OLS
 
@@ -78,20 +78,18 @@ predict.ols <- function(obj, newdata = NULL){
 #'
 #' @export summary.ols
 #' @export
-summary.ols <- function(obj,
-                        type = "const",
-                        cluster = NULL) {
+summary.ols <- function(object, type = "const", cluster = NULL, ...) {
   # Data parameters
-  nobs <- length(obj$y); ncol_X <- ncol(obj$X)
-  calc_wls <- !is.null(obj$w)
+  nobs <- length(object$y); ncol_X <- ncol(object$X)
+  calc_wls <- !is.null(object$w)
   # Calculate standard errors, t-statistic, and p-value
-  resid <- as.numeric(obj$y - predict(obj))
+  resid <- as.numeric(object$y - predict(object))
   if (!calc_wls) { # OLS
-    XX_inv <- csolve(as.matrix(Matrix::crossprod(obj$X)))
+    XX_inv <- csolve(as.matrix(Matrix::crossprod(object$X)))
     if (type == "const") {
       se <- sqrt(diag(sum(resid^2) * XX_inv) / (nobs - ncol_X))
     } else if (type == "HC1"){
-      XuuX <- Matrix::crossprod(obj$X *(resid^2), obj$X)
+      XuuX <- Matrix::crossprod(object$X *(resid^2), object$X)
       S1 <- XX_inv %*% XuuX * (nobs/(nobs - ncol_X))
       se <- sqrt(Matrix::diag(S1 %*% XX_inv))
     } else if (type == "cluster" && !is.null(cluster)) {
@@ -103,20 +101,20 @@ summary.ols <- function(obj,
         } else {
           colSums(Xu[cluster==x,])
         }#IFELSE
-      }, cluster = cluster, Xu = obj$X * resid))
+      }, cluster = cluster, Xu = object$X * resid))
       XuuX <- crossprod(Xu_m) * ((nobs-1)/(nobs-ncol_X)) * (ncl/(ncl-1))
       S1 <- XX_inv %*% (XuuX)
       se <- sqrt(diag(S1%*%XX_inv))
     }#IFELSE
   }#IF
-  t_stat <- obj$coef / se
+  t_stat <- object$coef / se
   p_val <- 2 * pnorm(-abs(t_stat))
   # Compile estimate and se
-  res <- cbind(obj$coef, se, t_stat, p_val)
-  rownames(res) <- rownames(obj$coef)
+  res <- cbind(object$coef, se, t_stat, p_val)
+  rownames(res) <- rownames(object$coef)
   colnames(res) <- c("Coef.", "S.E.", "t Stat.", "p-val.")
   # Compute R^2
-  R2 <- 1 - var(resid) / var(obj$y)
+  R2 <- 1 - var(resid) / var(object$y)
   # Compile output
   output <- list(res = res, nobs = nobs, R2 = R2)
   return(output)

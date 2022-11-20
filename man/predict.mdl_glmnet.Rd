@@ -4,7 +4,7 @@
 \alias{predict.mdl_glmnet}
 \title{Predict method for mdl_glmnet fits.}
 \usage{
-\method{predict}{mdl_glmnet}(obj, newdata = NULL)
+\method{predict}{mdl_glmnet}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for mdl_glmnet fits.

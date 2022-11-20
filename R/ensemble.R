@@ -108,22 +108,22 @@ ensemble <- function(y, X, Z = NULL,
 #'
 #' @export predict.ensemble
 #' @export
-predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
+predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   # Data parameters
-  nlearners <- length(obj$mdl_fits)
+  nlearners <- length(object$mdl_fits)
   # Check for excluded learners
-  mdl_include <- which(rowSums(abs(obj$weights)) > 0)
+  mdl_include <- which(rowSums(abs(object$weights)) > 0)
   # Calculate fitted values for each model
   first_fit <- T
   for (m in 1:nlearners) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
     # Get assign_X and assing_Z
-    assign_X <- obj$learners[[m]]$assign_X
-    assign_Z <- obj$learners[[m]]$assign_Z
+    assign_X <- object$learners[[m]]$assign_X
+    assign_Z <- object$learners[[m]]$assign_Z
     # Compute predictions
-    fitted <- predict(obj$mdl_fits[[m]],
-                      newdata = cbind(newX[, assign_X],
+    fitted <- predict(object$mdl_fits[[m]],
+                      newdata = cbind(newdata[, assign_X],
                                       newZ[, assign_Z]))
 
     # Initialize matrix of fitted values
@@ -134,7 +134,7 @@ predict.ensemble <- function(obj, newX = NULL, newZ = NULL){
     fitted_mat[, m] <- as(fitted, "matrix")
   }#FOR
   # Compute matrix of fitted values by ensemble type and return
-  fitted_ens <- fitted_mat %*% obj$weights
+  fitted_ens <- fitted_mat %*% object$weights
   return(fitted_ens)
 }#PREDICT.ENSEMBLE
 

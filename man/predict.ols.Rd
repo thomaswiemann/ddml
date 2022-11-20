@@ -4,7 +4,7 @@
 \alias{predict.ols}
 \title{Predict method for ols fits.}
 \usage{
-\method{predict}{ols}(obj, newdata = NULL)
+\method{predict}{ols}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for ols fits.

@@ -4,7 +4,7 @@
 \alias{predict.mdl_xgboost}
 \title{Predict method for mdl_xgboost fits.}
 \usage{
-\method{predict}{mdl_xgboost}(obj, newdata = NULL)
+\method{predict}{mdl_xgboost}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for mdl_xgboost fits.

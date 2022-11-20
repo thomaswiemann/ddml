@@ -53,11 +53,11 @@ tsls <- function(y, D, Z, X = matrix(1, nobs)) {
 #'
 #' @export predict.tsls
 #' @export
-predict.tsls <- function(obj, newdata = NULL) {
+predict.tsls <- function(object, newdata = NULL, ...) {
   # Obtain datamatrix
-  if(is.null(newdata)) newdata <- obj$X_
+  if(is.null(newdata)) newdata <- object$X_
   # Calculate and return fitted values with the TSLS coefficient
-  fitted <- newdata %*% obj$coef
+  fitted <- newdata %*% object$coef
   return(fitted)
 }#PREDICT.TSLS
 
@@ -67,15 +67,15 @@ predict.tsls <- function(obj, newdata = NULL) {
 #'
 #' @export summary.tsls
 #' @export
-summary.tsls <- function(obj, type = "const") {
+summary.tsls <- function(object, type = "const", ...) {
   # Data parameters
-  nobs <- length(obj$y)
-  ncol_X <- ncol(obj$X_); ncol_Z <- ncol(obj$Z_)
+  nobs <- length(object$y)
+  ncol_X <- ncol(object$X_); ncol_Z <- ncol(object$Z_)
   # Calculate residuals
-  resid <- (obj$y - predict(obj))[, 1]
+  resid <- (object$y - predict(object))[, 1]
   # Calculate matrix products
-  PZ <- obj$Z_ %*% obj$FS
-  PZZP_inv <- csolve(as.matrix(Matrix::crossprod(obj$X_, obj$Z_) %*% obj$FS))
+  PZ <- object$Z_ %*% object$FS
+  PZZP_inv <- csolve(as.matrix(Matrix::crossprod(object$X_, object$Z_) %*% object$FS))
   if (type == "const") {
     se <- sqrt(diag(sum(resid^2) * PZZP_inv) / (nobs-ncol_Z))
   } else if (type == "HC1") {
@@ -83,35 +83,15 @@ summary.tsls <- function(obj, type = "const") {
     S1 <- PZZP_inv %*% XuuX
     se <- sqrt(Matrix::diag(S1 %*% PZZP_inv)) # in two steps
   }#IF
-  t_stat <- obj$coef / se
+  t_stat <- object$coef / se
   p_val <- 2 * pnorm(-abs(t_stat))
   # Compile estimate and se
-  res <- cbind(obj$coef, se, t_stat, p_val)
+  res <- cbind(object$coef, se, t_stat, p_val)
   rownames(res) <- rownames(coef)
   colnames(res) <- c("Coef.", "S.E.", "t Stat.", "p-val.")
   # Compute R^2
-  R2 <- 1 - var(resid)/var(obj$y)
+  R2 <- 1 - var(resid)/var(object$y)
   # Organize and return output
   output <- list(res = res, nobs = nobs, R2 = R2)
   return(output)
 }#SUMMARY.TSLS
-
-#' First stage assesment for tsls fits.
-#'
-#' First stage assesment for tsls fits.
-#'
-#' @export fstage.tsls
-#' @export
-fstage.tsls <- function(obj) {
-  # Compute covariance matrix
-  iv_cov <- cov(cbind(obj$y, obj$X_[, 1], obj$Z_[, 1]))
-
-  # Compute reduced form coefficients
-  coef_yD <- iv_cov[1, 2] / iv_cov [2, 2]
-  coef_yZ <- iv_cov[1, 3] / iv_cov [3, 3]
-  coef_DZ <- iv_cov[2, 3] / iv_cov [3, 3]
-  # Organize and return output
-  output <- list(iv_cov = iv_cov,
-                 c(coef_yD = coef_yD, coef_yZ = coef_yZ, coef_DZ = coef_DZ))
-  return(output)
-}#FSTAGE.TSLS

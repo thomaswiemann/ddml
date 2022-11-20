@@ -9,7 +9,7 @@ mdl_glmnet <- function(y, X,
                        standardize = TRUE, intercept = TRUE,
                        family = "gaussian",
                        cv = TRUE, nfolds = 10,
-                       thres = 1e-7){
+                       thres = 1e-7, ...){
   # Either copute glmnet with given lambda or determine lambda with cv.
   if (cv) {
     mdl_fit <- glmnet::cv.glmnet(x = X, y = y,
@@ -18,14 +18,14 @@ mdl_glmnet <- function(y, X,
                                  standardize = standardize,
                                  intercept = intercept,
                                  nfolds = nfolds,
-                                 thres = thres)
+                                 thres = thres, ...)
   } else {
     mdl_fit <- glmnet::glmnet(x = X, y = y,
                               family = family,
                               lambda = lambda,
                               standardize = standardize,
                               intercept = intercept,
-                              thres = thres)
+                              thres = thres, ...)
   }#IFELSE
 
   # Set custom S3 class
@@ -38,22 +38,23 @@ mdl_glmnet <- function(y, X,
 #' Predict method for mdl_glmnet fits.
 #'
 #' @export predict.mdl_glmnet
-predict.mdl_glmnet <- function(obj, newdata = NULL){
+#' @export
+predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
-  cv <- "cv.glmnet" %in% class(obj)
+  cv <- "cv.glmnet" %in% class(object)
   # Compute predictions
   if (cv) {
     # Determine mse-minimizing lambda
-    which_lambda <- which.min(obj$cvm)
+    which_lambda <- which.min(object$cvm)
     # Predict using glmnet prediction method
-    fitted <- glmnet::predict.glmnet(obj$glmnet.fit, newdata,
-                                     obj$lambda[which_lambda])
+    fitted <- glmnet::predict.glmnet(object$glmnet.fit, newdata,
+                                     object$lambda[which_lambda], ...)
   } else {
     # Determine least regularizing lambda
-    which_lambda <- length(obj$lambda)
+    which_lambda <- length(object$lambda)
     # Predict using glmnet prediction method
-    fitted <- glmnet::predict.glmnet(obj, newdata,
-                                     obj$lambda[which_lambda])
+    fitted <- glmnet::predict.glmnet(object, newdata,
+                                     object$lambda[which_lambda], ...)
   }#IFELSE
 
   return(fitted)
@@ -72,7 +73,7 @@ mdl_xgboost <- function(y, X,
                         max.depth = .Machine$integer.max, eta = 0.3, gamma = 0,
                         nrounds = 500, objective = "reg:squarederror",
                         interaction_constraints = list(),
-                        verbose = 0){
+                        verbose = 0, ...){
   # Compute xgboost
   mdl_fit <- xgboost::xgboost(data = X, label = y,
                               num_parallel_tree = num_parallel_tree,
@@ -85,7 +86,7 @@ mdl_xgboost <- function(y, X,
                               gamma = gamma, nrounds = nrounds,
                               objective = objective,
                               interaction_constraints = interaction_constraints,
-                              verbose = verbose)
+                              verbose = verbose, ...)
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_xgboost", class(mdl_fit))
   return(mdl_fit)
@@ -96,12 +97,13 @@ mdl_xgboost <- function(y, X,
 #' Predict method for mdl_xgboost fits.
 #'
 #' @export predict.mdl_xgboost
-predict.mdl_xgboost <- function(obj, newdata = NULL){
+#' @export
+predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that 'predict.xgb.Booster'
   #     is not an exported object from 'namespace:xgboost', hence the less ideal
   #     fix.
-  class(obj) <- class(obj)[2] #
-  predict(obj, newdata)
+  class(object) <- class(object)[2] #
+  predict(object, newdata, ...)
 }#PREDICT.MDL_XGBOOST
 
 # randomForest =================================================================
@@ -113,7 +115,7 @@ predict.mdl_xgboost <- function(obj, newdata = NULL){
 mdl_randomForest <- function(y, X,
                              ntree = 100, nodesize = 1, maxnodes = NULL,
                              colsample_bytree = 0.6, subsample = 0.7,
-                             replace = FALSE){
+                             replace = FALSE, ...){
   # Compute randomForest
   if(!("matrix" %in% class(X))) X <- Matrix::as.matrix(X)
   mdl_fit <- randomForest::randomForest(X, y,
@@ -123,7 +125,7 @@ mdl_randomForest <- function(y, X,
                                                          ncol(X)),
                                         sampsize = ceiling(subsample *
                                                              length(y)),
-                                        replace = replace)
+                                        replace = replace, ...)
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_randomForest", class(mdl_fit))
   return(mdl_fit)
@@ -134,13 +136,14 @@ mdl_randomForest <- function(y, X,
 #' Predict method for mdl_randomForest fits.
 #'
 #' @export predict.mdl_randomForest
-predict.mdl_randomForest <- function(obj, newdata = NULL){
+#' @export
+predict.mdl_randomForest <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that
   #     'predict.randomForest' is not an exported object from
   #     'namespace:randomForest', hence the less ideal fix.
-  class(obj) <- class(obj)[2]
+  class(object) <- class(object)[2]
   # Predict using randomForest prediction method
-  predict(obj, newdata)
+  predict(object, newdata, ...)
 }#PREDICT.MDL_RANDOMFOREST
 
 # grf ==========================================================================
@@ -154,7 +157,7 @@ mdl_grf <- function(y, X,
                     colsample_bytree = 0.6,
                     sample.fraction = 0.7,
                     min.node.size = 1,
-                    honesty = TRUE){
+                    honesty = TRUE, ...){
   # Compute regression_forest
   if(!("matrix" %in% class(X))) X <- as.matrix(X)
   mdl_fit <- grf::regression_forest(X, y,
@@ -164,7 +167,7 @@ mdl_grf <- function(y, X,
                                     min.node.size = min.node.size,
                                     honesty = honesty,
                                     ci.group.size = 1,
-                                    compute.oob.predictions = F)
+                                    compute.oob.predictions = F, ...)
   # Organize and return output
   class(mdl_fit) <- c("mdl_grf", class(mdl_fit))
   return(mdl_fit)
@@ -175,62 +178,11 @@ mdl_grf <- function(y, X,
 #' Predict method for mdl_grf fits.
 #'
 #' @export predict.mdl_grf
-predict.mdl_grf <- function(obj, newdata = NULL){
+#' @export
+predict.mdl_grf <- function(object, newdata = NULL, ...){
   # Check for new data
-  #if(is.null(newdata)) newdata <- obj$X
-  class(obj) <- class(obj)[2]
+  #if(is.null(newdata)) newdata <- object$X
+  class(object) <- class(object)[2]
   # Predict data and output as matrix
-  as.numeric(predict(obj, newdata)$predictions) # don't return a data.frame
+  as.numeric(predict(object, newdata, ...)$predictions)
 }#PREDICT.MDL_GRF
-
-# keras ========================================================================
-#' Wrapper function for \code{keras}'s neural net implementation.
-#'
-#' Wrapper function for \code{keras}'s neural net implementation. Tensorflow is
-#'     used as a backend for computation.
-#'
-#' @export mdl_keras
-mdl_keras <- function(y, X,
-                      model,
-                      optimizer_fun = "rmsprop",
-                      loss = "mse",
-                      epochs = 10,
-                      batch_size = min(1000, length(y)),
-                      validation_split = 0,
-                      callbacks = NULL,
-                      steps_per_epoch = NULL,
-                      metrics = c("mae"),
-                      verbose = 0) {
-  # Compile model
-  keras::compile(model,
-                 optimizer = optimizer_fun,
-                 loss = loss,
-                 metrics = metrics)
-
-  # Fit neural net
-  keras::fit(model,
-             X, y,
-             epochs = epochs,
-             batch_size = batch_size,
-             validation_split = validation_split,
-             callbacks = callbacks,
-             steps_per_epoch = steps_per_epoch,
-             verbose = verbose)
-
-  # Return fit
-  class(model) <- c("mdl_keras", class(model)) # amend class
-  return(model)
-}#MDL_KERAS
-
-#' Predict method for mdl_keras fits.
-#'
-#' Predict method for mdl_keras fits.
-#'
-#' @export predict.mdl_keras
-predict.mdl_keras <- function(obj, newdata = NULL){
-  # Check for new data
-  #if(is.null(newdata)) newdata <- obj$X
-  # Predict data and output as matrix
-  class(obj) <- class(obj)[-1] # Not a pretty solution...
-  as.numeric(predict(obj, newdata))
-}#PREDICT.MDL_KERAS

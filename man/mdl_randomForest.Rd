@@ -12,7 +12,8 @@ mdl_randomForest(
   maxnodes = NULL,
   colsample_bytree = 0.6,
   subsample = 0.7,
-  replace = FALSE
+  replace = FALSE,
+  ...
 )
 }
 \description{

@@ -11,7 +11,8 @@ mdl_grf(
   colsample_bytree = 0.6,
   sample.fraction = 0.7,
   min.node.size = 1,
-  honesty = TRUE
+  honesty = TRUE,
+  ...
 )
 }
 \description{

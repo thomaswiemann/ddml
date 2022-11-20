@@ -4,7 +4,7 @@
 \alias{predict.mdl_grf}
 \title{Predict method for mdl_grf fits.}
 \usage{
-\method{predict}{mdl_grf}(obj, newdata = NULL)
+\method{predict}{mdl_grf}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for mdl_grf fits.

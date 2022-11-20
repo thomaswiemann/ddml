@@ -4,7 +4,7 @@
 \alias{summary.tsls}
 \title{Inference for tsls fits.}
 \usage{
-\method{summary}{tsls}(obj, type = "const")
+\method{summary}{tsls}(object, type = "const", ...)
 }
 \description{
 Inference for tsls fits.

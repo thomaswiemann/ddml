@@ -147,7 +147,7 @@ crosspred <- function(y, X, Z = NULL,
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
         as.numeric(predict(mdl_fit,
-                           newX = X[subsamples[[k]], ,
+                           newdata = X[subsamples[[k]], ,
                                     drop = F],
                            newZ = Z[subsamples[[k]], ,
                                     drop = F]))
@@ -164,7 +164,8 @@ crosspred <- function(y, X, Z = NULL,
         is_fitted[[k]] <- predict(mdl_fit, cbind(X[-subsamples[[k]], ],
                                                  Z[-subsamples[[k]], ]))
       } else if (calc_ensemble) {
-        is_fitted[[k]] <- predict(mdl_fit, newX = X[-subsamples[[k]],,drop = F],
+        is_fitted[[k]] <- predict(mdl_fit,
+                                  newdata = X[-subsamples[[k]], ,drop = F],
                                   newZ = Z[-subsamples[[k]], , drop = F])
       }#IFELSE
     }#IF
