@@ -121,13 +121,12 @@ crosspred <- function(y, X, Z = NULL,
       # Compile progress-preamble
       if (!silent) {
         progress_k = paste0(progress,
-                            " sample fold ", k,
+                            "sample fold ", k,
                             "/", sample_folds)
         # Print immediately if no cv is needed
         cv_stacking <- c("stacking", "stacking_nn",
                          "stacking_01", "stacking_best")
         if (!any(cv_stacking %in% ensemble_type)) cat(paste0("\r", progress_k))
-
       }#IF
 
       # Compute ensemble
@@ -135,7 +134,8 @@ crosspred <- function(y, X, Z = NULL,
                           Z[-subsamples[[k]], , drop = F],
                           ensemble_type, learners,
                           cv_folds, cv_subsamples_list[[k]],
-                          silent = silent, progress = progress_k)
+                          silent = silent,
+                          progress = paste0(progress_k, ", "))
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
         as.numeric(predict(mdl_fit,

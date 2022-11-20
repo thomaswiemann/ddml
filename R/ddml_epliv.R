@@ -98,7 +98,7 @@ ddml_epliv <- function(y, D, Z, X,
                        cv_subsamples_list = cv_subsamples_list,
                        sample_folds = sample_folds, subsamples = subsamples,
                        compute_insample_predictions = F,
-                       silent = silent, progress = "E[Y|X]:")
+                       silent = silent, progress = "E[Y|X]: ")
   update_progress(silent)
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
@@ -109,7 +109,7 @@ ddml_epliv <- function(y, D, Z, X,
                         cv_subsamples_list = cv_subsamples_list,
                         sample_folds = sample_folds, subsamples = subsamples,
                         compute_insample_predictions = enforce_LIE,
-                        silent = silent, progress = "E[D|Z,X]:")
+                        silent = silent, progress = "E[D|Z,X]: ")
   update_progress(silent)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
@@ -120,7 +120,7 @@ ddml_epliv <- function(y, D, Z, X,
                          cv_subsamples_list = cv_subsamples_list,
                          sample_folds = sample_folds, subsamples = subsamples,
                          compute_insample_predictions = F,
-                         silent = silent, progress = "E[D|X]:")
+                         silent = silent, progress = "E[D|X]: ")
     update_progress(silent)
   }#IF
 
@@ -142,7 +142,7 @@ ddml_epliv <- function(y, D, Z, X,
                            sample_folds = sample_folds,
                            subsamples = subsamples,
                            compute_insample_predictions = F,
-                           silent = silent, progress = "E[D|X]:")
+                           silent = silent, progress = "E[D|X]: ")
       update_progress(silent)
     }#IFELSE
 
@@ -183,7 +183,7 @@ ddml_epliv <- function(y, D, Z, X,
       # When the LIE is enforced, compute LIE-conform estimates of E[D|X].
       #     Otherwise use the previously calculated estimates of E[D|X].
       if (enforce_LIE) {
-        progress_j <- paste0("E[D|X] (", ensemble_type[j], "):")
+        progress_j <- paste0("E[D|X] (", ensemble_type[j], "): ")
         D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
                              learners = learners_DX,
                              ensemble_type = ensemble_type[j],

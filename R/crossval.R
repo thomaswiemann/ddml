@@ -92,7 +92,7 @@ crossval <- function(y, X, Z = NULL,
     # Print progress
     if (!silent) {
       cat(paste0("\r", progress,
-                 ", learner ", j, "/", nlearners,
+                 "learner ", j, "/", nlearners,
                  ", cv fold ", i, "/", cv_folds))
     }#IF
     # Compute model for this fold
