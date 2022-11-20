@@ -5,7 +5,7 @@ Date: 2020-12-01
 Authors@R: c(
     person("Christian", "Hansen", role = "aut"),
     person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
-Description: An implementation of Double/Debiased Machine Learning.
+Description: Double/Debiased Machine Learning in R.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -23,7 +23,7 @@ Suggest:
     testthat
 RoxygenNote: 7.2.2
 Depends: 
-    R (>= 4.2.2)
+    R (>= 4.2)
 Suggests: 
     covr,
     testthat (>= 3.0.0)
