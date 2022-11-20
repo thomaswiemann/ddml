@@ -17,7 +17,7 @@ test_that("ddml_epliv computes with a single model", {
   dat <- sim_dat(1000)
   # Define arguments
   learners <- list(what = mdl_glmnet,
-                 args = list(alpha = 0.5))
+                   args = list(alpha = 0.5))
   ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, dat$Z, dat$X,
                                learners,
                                sample_folds = 2,
@@ -33,36 +33,36 @@ test_that("ddml_epliv computes with an ensemble procedure", {
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet,
-                      args = list(alpha = 0.5)),
-                 list(fun = ols))
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, dat$Z, dat$X,
-                         learners,
-                         ensemble_type = c("stacking"),
-                         cv_folds = 2,
-                         sample_folds = 2,
-                         silent = T)
+                               learners,
+                               ensemble_type = c("stacking"),
+                               cv_folds = 2,
+                               sample_folds = 2,
+                               silent = T)
   # Check output with expectations
   expect_equal(length(ddml_epliv_fit$coef), 1)
 })#TEST_THAT
 
-test_that("ddml_epliv computes with an ensemble procedure w/o enforcing the LIE", {
+test_that("ddml_epliv computes with stacking w/o enforcing the LIE", {
   # Simulate small dataset
   dat <- sim_dat(500)
   ncol_X <- ncol(dat$X)
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet,
-                      args = list(alpha = 0.5)),
-                 list(fun = ols))
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, dat$Z, dat$X,
-                         learners,
-                         ensemble_type = c("stacking"),
-                         sample_folds = 2,
-                         cv_folds = 2,
-                         enforce_LIE = FALSE,
-                         silent = F)
+                               learners,
+                               ensemble_type = c("stacking"),
+                               sample_folds = 2,
+                               cv_folds = 2,
+                               enforce_LIE = FALSE,
+                               silent = F)
   # Check output with expectations
   expect_equal(length(ddml_epliv_fit$coef), 1)
 })#TEST_THAT
@@ -90,15 +90,15 @@ test_that("ddml_epliv computes with multiple ensemble procedures", {
   expect_equal(length(ddml_epliv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_epliv computes with multiple ensemble procedures w/o the LIE", {
+test_that("ddml_epliv computes with multiple ensembles w/o the LIE", {
   # Simulate small dataset
   dat <- sim_dat(500)
   ncol_X <- ncol(dat$X)
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet,
-                      args = list(alpha = 0.5)),
-                 list(fun = ols))
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, dat$Z, dat$X,
                                learners,
@@ -113,18 +113,18 @@ test_that("ddml_epliv computes with multiple ensemble procedures w/o the LIE", {
   expect_equal(length(ddml_epliv_fit$coef), 5)
 })#TEST_THAT
 
-test_that("ddml_epliv computes with multiple ensemble procedures and
-          sparse matrices", {
+test_that("ddml_epliv computes with multiple ensembles and sparse matrices", {
   # Simulate small dataset
   dat <- sim_dat(500)
   ncol_X <- ncol(dat$X)
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet,
-                      args = list(alpha = 0.5)),
-                 list(fun = ols))
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
   # Compute LIE-conform DDML IV estimator
-  ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, as(dat$Z, "sparseMatrix"),
+  ddml_epliv_fit <- ddml_epliv(dat$y, dat$D,
+                               as(dat$Z, "sparseMatrix"),
                                as(dat$X, "sparseMatrix"),
                                learners,
                                ensemble_type = c("stacking", "stacking_nn",
@@ -144,16 +144,16 @@ test_that("ddml_epliv computes with different sets of learners", {
   ncol_Z <- ncol(dat$Z)
   # Define arguments
   learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = ols))
+                   list(fun = ols),
+                   list(fun = ols))
   learners_DXZ <- list(list(fun = mdl_glmnet,
-                      args = list(alpha = 0.5)),
-                 list(fun = mdl_glmnet,
-                      args = list(alpha = 1)))
+                            args = list(alpha = 0.5)),
+                       list(fun = mdl_glmnet,
+                            args = list(alpha = 1)))
   learners_DX <- list(list(fun = ols),
-                    list(fun = mdl_glmnet,
-                         args = list(alpha = 0.5)),
-                    list(fun = ols))
+                      list(fun = mdl_glmnet,
+                           args = list(alpha = 0.5)),
+                      list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_epliv_fit <- ddml_epliv(dat$y, dat$D, dat$Z, dat$X,
                                learners,

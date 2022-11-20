@@ -12,7 +12,9 @@ ensemble_weights(
   learners,
   cv_folds = 5,
   cv_subsamples = NULL,
-  silent = F
+  cv_results = NULL,
+  silent = F,
+  progress = NULL
 )
 }
 \arguments{
@@ -39,11 +41,11 @@ passed in form of a vector of strings.}
 
 \item{cv_folds}{The number for cross-validation folds.}
 
-\item{silent}{A boolean indicating whether current learners and folds should be
-printed to the console.}
-
 \item{cv_results}{Optional output from \code{\link{crossval}}. If availbale, this
 avoids unnecessary computation.}
+
+\item{silent}{A boolean indicating whether current learners and folds should be
+printed to the console.}
 
 \item{setup_parallel}{An list containing two named elements:
 \itemize{

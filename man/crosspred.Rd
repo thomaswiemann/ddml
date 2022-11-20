@@ -15,7 +15,8 @@ crosspred(
   compute_insample_predictions = FALSE,
   subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = F
+  silent = F,
+  progress = NULL
 )
 }
 \arguments{

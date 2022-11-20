@@ -17,6 +17,7 @@ ddml_epliv(
   cv_folds = 5,
   enforce_LIE = TRUE,
   subsamples = NULL,
+  cv_subsamples_list = NULL,
   silent = F
 )
 }
