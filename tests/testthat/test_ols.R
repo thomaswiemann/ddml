@@ -31,11 +31,15 @@ test_that("summary.ols returns numerical se, t-stats, and p-values", {
   mdl_fit <- ols(y, X, const = T)
   sum_res_const <- summary(mdl_fit, type = "const")
   sum_res_HC1 <- summary(mdl_fit, type = "HC1")
+  sum_res_cluster <- summary(mdl_fit, type = "cluster",
+                             cluster = sample(c(1:50), 100, replace = TRUE))
   # Check in- and out-of-sample fitted values
   expect_is(sum_res_const$res, "matrix")
   expect_is(sum_res_HC1$res, "matrix")
+  expect_is(sum_res_cluster$res, "matrix")
   expect_equal(dim(sum_res_const$res), c(1+ncol(X), 4))
   expect_equal(dim(sum_res_HC1$res), c(1+ncol(X), 4))
+  expect_equal(dim(sum_res_cluster$res), c(1+ncol(X), 4))
 })#TEST_THAT
 
 test_that("summary.ols returns numerical se w/ sparse matrices", {

@@ -4,7 +4,7 @@
 \alias{summary.ols}
 \title{Inference for ols fits.}
 \usage{
-\method{summary}{ols}(obj, type = "const")
+\method{summary}{ols}(obj, type = "const", cluster = NULL)
 }
 \description{
 Inference for ols fits.

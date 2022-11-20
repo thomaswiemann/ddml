@@ -84,7 +84,8 @@ predict.ols <- function(obj, newdata = NULL){
 #' @export summary.ols
 #' @export
 summary.ols <- function(obj,
-                        type = "const") {
+                        type = "const",
+                        cluster = NULL) {
   # Data parameters
   nobs <- length(obj$y); ncol_X <- ncol(obj$X)
   calc_wls <- !is.null(obj$w)
@@ -98,6 +99,19 @@ summary.ols <- function(obj,
       XuuX <- Matrix::crossprod(obj$X *(resid^2), obj$X)
       S1 <- XX_inv %*% XuuX * (nobs/(nobs - ncol_X))
       se <- sqrt(Matrix::diag(S1 %*% XX_inv))
+    } else if (type == "cluster" && !is.null(cluster)) {
+      cl <- unique(cluster)
+      ncl <- length(cl)
+      Xu_m <- t(sapply(cl, function(x, cluster, Xu){
+        if(sum(cluster==x)<2){
+          Xu[cluster==x,]
+        } else {
+          colSums(Xu[cluster==x,])
+        }#IFELSE
+      }, cluster = cluster, Xu = obj$X * resid))
+      XuuX <- crossprod(Xu_m) * ((nobs-1)/(nobs-ncol_X)) * (ncl/(ncl-1))
+      S1 <- XX_inv %*% (XuuX)
+      se <- sqrt(diag(S1%*%XX_inv))
     }#IFELSE
   }#IF
   t_stat <- obj$coef / se
