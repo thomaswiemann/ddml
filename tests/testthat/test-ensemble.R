@@ -1,6 +1,3 @@
-library(ddml)
-context("Testing ensemble objects.")
-
 test_that("ensemble_weights returns a weight matrix", {
   # Simulate small dataset
   X <- cbind(1, matrix(rnorm(100*39), 100, 39))

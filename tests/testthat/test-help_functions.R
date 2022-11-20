@@ -1,6 +1,3 @@
-library(ddml)
-context("Testing supplementary helper functions.")
-
 test_that("csolve returns a (generalized) inverse", {
   # Simulate small matrices, one of them singular
   X <- matrix(rnorm(30*30), 30, 30)

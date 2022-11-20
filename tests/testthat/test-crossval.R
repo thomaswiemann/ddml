@@ -1,6 +1,3 @@
-library(ddml)
-context("Testing crossval.")
-
 test_that("crossval_compute returns residuals (w/o instruments)", {
   # Simulate small dataset
   X <- matrix(rnorm(100*100), 100, 100) # Simulate features

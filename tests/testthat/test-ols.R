@@ -1,6 +1,3 @@
-library(ddml)
-context("Testing ols objects.")
-
 # ols ==========================================================================
 test_that("ols returns output of correct types", {
   # Simulate small dataset and fit ols
@@ -8,10 +5,7 @@ test_that("ols returns output of correct types", {
   y <- 1 + X %*% c(-1, 1, 0) + rnorm(100)
   mdl_fit <- ols(y, X, const = T)
   # Check output with expectations
-  expect_is(mdl_fit, "ols")
-  expect_is(mdl_fit$coef, "matrix") # Return of type double
   expect_equal(dim(mdl_fit$coef), c(1+ncol(X), 1)) # Return a vector
-  expect_is(mdl_fit$w, "NULL") # Return NULL weights
 })#TEST_THAT
 
 test_that("predict.ols returns fitted values", {
@@ -34,9 +28,6 @@ test_that("summary.ols returns numerical se, t-stats, and p-values", {
   sum_res_cluster <- summary(mdl_fit, type = "cluster",
                              cluster = sample(c(1:50), 100, replace = TRUE))
   # Check in- and out-of-sample fitted values
-  expect_is(sum_res_const$res, "matrix")
-  expect_is(sum_res_HC1$res, "matrix")
-  expect_is(sum_res_cluster$res, "matrix")
   expect_equal(dim(sum_res_const$res), c(1+ncol(X), 4))
   expect_equal(dim(sum_res_HC1$res), c(1+ncol(X), 4))
   expect_equal(dim(sum_res_cluster$res), c(1+ncol(X), 4))
@@ -50,8 +41,6 @@ test_that("summary.ols returns numerical se w/ sparse matrices", {
   sum_res_const <- summary(mdl_fit, type = "const")
   sum_res_HC1 <- summary(mdl_fit, type = "HC1")
   # Check in- and out-of-sample fitted values
-  expect_is(sum_res_const$res, "matrix")
-  expect_is(sum_res_HC1$res, "matrix")
   expect_equal(dim(sum_res_const$res), c(1+ncol(X), 4))
   expect_equal(dim(sum_res_HC1$res), c(1+ncol(X), 4))
 })#TEST_THAT
@@ -63,8 +52,5 @@ test_that("wls returns output of correct types", {
   y <- 1 + X %*% c(-1, 1, 0) + rnorm(100)
   mdl_fit <- ols(y, X, const = T, w = runif(100))
   # Check output with expectations
-  expect_is(mdl_fit, "ols")
-  expect_is(mdl_fit$coef, "matrix") # Return of type double
   expect_equal(dim(mdl_fit$coef), c(1+ncol(X), 1)) # Return a vector
-  expect_is(mdl_fit$w, "numeric") # Return passthrough weights
 })#TEST_THAT
