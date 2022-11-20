@@ -3,4 +3,5 @@
 #' @docType package
 #' @name ddml
 #'
+#'@description Double/debiased machine learning.
 NULL

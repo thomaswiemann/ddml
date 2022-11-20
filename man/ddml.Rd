@@ -4,3 +4,6 @@
 \name{ddml}
 \alias{ddml}
 \title{ddml: An implementation of Double/Debiased Machine Learning}
+\description{
+Double/debiased machine learning.
+}

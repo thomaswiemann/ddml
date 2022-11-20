@@ -1,28 +1,15 @@
-#' Compute (weighted) least squares estimator.
+#' Title
 #'
-#' Compute (weighted) least squares estimator.
+#' @param y abc
+#' @param X abc
+#' @param const abc
+#' @param w abc
 #'
-#' @param y A response vector.
-#' @param X A feature matrix.
-#' @param const A boolean indicating inclusion of a constant.
-#' @param w An optional weights vector.
+#' @return output
+#' @export
 #'
-#' @return \code{ols} returns an object of S3 class "\code{ols}".
-#'
-#' The function \code{predict} computes fitted values for a trained model of
-#'     this class. The function \code{summary} computes the corresponding
-#'     standard errors, t-statistics, and p-values.
-#'
-#' An object of class "\code{ols}" is a list containig the following components:
-#' \describe{
-#' \item{\code{coef}}{A vector of least squares coefficients.}
-#' \item{\code{y}}{A response vector.}
-#' \item{\code{X}}{A feature matrix.}
-#' \item{\code{const}}{A boolean indicating inclusion of a constant.}
-#' \item{\code{w}}{An optional weights vector.}
-#' }
-#'
-#' @export ols
+#' @examples
+#' ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
 ols <- function(y, X,
                 const = FALSE,
                 w = NULL) {
@@ -51,12 +38,21 @@ ols <- function(y, X,
 }#OLS
 
 # Complementary methods ========================================================
-#' Predict method for ols fits.
+
+
+#' Title
 #'
-#' Predict method for ols fits.
+#' @param object abc
+#' @param newdata abc
+#' @param ... abc
 #'
+#' @return output
 #' @export predict.ols
 #' @export
+#'
+#' @examples
+#' ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
+#' predict(ols_fit, cbind(rnorm(100), rnorm(100)))
 predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix
   if (is.null(newdata)) {

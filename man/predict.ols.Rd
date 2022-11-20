@@ -2,10 +2,24 @@
 % Please edit documentation in R/ols.R
 \name{predict.ols}
 \alias{predict.ols}
-\title{Predict method for ols fits.}
+\title{Title}
 \usage{
 \method{predict}{ols}(object, newdata = NULL, ...)
 }
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{...}{abc}
+}
+\value{
+output
+}
 \description{
-Predict method for ols fits.
+Title
+}
+\examples{
+ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
+predict(ols_fit, cbind(rnorm(100), rnorm(100)))
 }

@@ -24,14 +24,14 @@ crossval(
 
 \item{learners}{A list of lists, each containing three named elements:
 \itemize{
-    \item{\code{fun} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{assign_X} A vector of indices corresponding to features
-        in \code{X} that should be used for training.}
-    \item{\code{assign_Z} An optional vector of indices corresponding to
-        instruments in \code{Z} that should be used for training.}
-    \item{\code{args} Optional arguments to be passed to \code{what}}
+\item{\code{fun} The function used to trained the model. The
+function must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{assign_X} A vector of indices corresponding to features
+in \code{X} that should be used for training.}
+\item{\code{assign_Z} An optional vector of indices corresponding to
+instruments in \code{Z} that should be used for training.}
+\item{\code{args} Optional arguments to be passed to \code{what}}
 }}
 
 \item{cv_folds}{The number for cross-validation folds.}
@@ -45,22 +45,22 @@ printed to the console.}
 
 \item{setup_parallel}{An list containing two named elements:
 \itemize{
-    \item{\code{type} A string of value \code{"static"} or
-        \code{"dynamic"}, indicating whether job scheduling should be
-        static (via \code{parSapply}) or dynamic (via \code{foreach}).}
-    \item{\code{cores} The number of processor units utilized. Note that
-        if \code{cores == 1}, \code{crossval} will not be computed in
-        parallel.
-    }
+\item{\code{type} A string of value \code{"static"} or
+\code{"dynamic"}, indicating whether job scheduling should be
+static (via \code{parSapply}) or dynamic (via \code{foreach}).}
+\item{\code{cores} The number of processor units utilized. Note that
+if \code{cores == 1}, \code{crossval} will not be computed in
+parallel.
+}
 }}
 }
 \value{
 \code{crossval} a list containig the following components:
 \describe{
 \item{\code{oos_resid}}{A matrix of out-of-sample residuals, each column
-    corresponding to a model in \code{learners}.}
+corresponding to a model in \code{learners}.}
 \item{\code{cv_Z}}{A vector of model indices corresponding to learners that
-    selected at least one instrument in each cross-validation fold.}
+selected at least one instrument in each cross-validation fold.}
 }
 }
 \description{

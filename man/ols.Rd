@@ -2,35 +2,25 @@
 % Please edit documentation in R/ols.R
 \name{ols}
 \alias{ols}
-\title{Compute (weighted) least squares estimator.}
+\title{Title}
 \usage{
 ols(y, X, const = FALSE, w = NULL)
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{X}{A feature matrix.}
+\item{X}{abc}
 
-\item{const}{A boolean indicating inclusion of a constant.}
+\item{const}{abc}
 
-\item{w}{An optional weights vector.}
+\item{w}{abc}
 }
 \value{
-\code{ols} returns an object of S3 class "\code{ols}".
-
-The function \code{predict} computes fitted values for a trained model of
-    this class. The function \code{summary} computes the corresponding
-    standard errors, t-statistics, and p-values.
-
-An object of class "\code{ols}" is a list containig the following components:
-\describe{
-\item{\code{coef}}{A vector of least squares coefficients.}
-\item{\code{y}}{A response vector.}
-\item{\code{X}}{A feature matrix.}
-\item{\code{const}}{A boolean indicating inclusion of a constant.}
-\item{\code{w}}{An optional weights vector.}
-}
+output
 }
 \description{
-Compute (weighted) least squares estimator.
+Title
+}
+\examples{
+ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
 }

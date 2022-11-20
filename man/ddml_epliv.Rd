@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_epliv.R
 \name{ddml_epliv}
 \alias{ddml_epliv}
-\title{DDML estimator for the Extended Partially Linear IV model.}
+\title{Title}
 \usage{
 ddml_epliv(
   y,
@@ -22,71 +22,40 @@ ddml_epliv(
 )
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{D}{An endogeneous variable vector.}
+\item{D}{abc}
 
-\item{Z}{An instrumental variable vector or matrix.}
+\item{Z}{abc}
 
-\item{X}{A control matrix.}
+\item{X}{abc}
 
-\item{sample_folds}{The number of split sample folds used for calculation of
-the out-of-sample predictions.}
+\item{learners}{abc}
 
-\item{ensemble_type}{A string indicating the type of ensemble. Multiple types may
-be passed in form of a vector of strings.}
+\item{learners_DXZ}{abc}
 
-\item{cv_folds}{The number for cross-validation folds.}
+\item{learners_DX}{abc}
 
-\item{subsamples}{An optional list of vectors, each containing indices of
-a test-sample. If not used-provided, the split sample folds are randomly
-drawn.}
+\item{sample_folds}{abc}
 
-\item{silent}{A boolean indicating whether current models and folds should be
-printed to the console.}
+\item{ensemble_type}{abc}
 
-\item{models}{May take one of two forms, depending on whether a single model
-should be used for residualization, or whether an ensemble procedure
-should be employed.
-If a single model should be used, \code{models} is a list with two named
-elements:
-\itemize{
-    \item{\code{what} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{args} Optional arguments to be passed to \code{what}.}
-}
-If an ensemble should be used, \code{models} is a list of lists, each
-containing four named elements:
-\itemize{
-    \item{\code{fun} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{assign_X} A vector of indices corresponding to features
-        in \code{X} that should be used for training.}
-    \item{\code{assign_Z} An optional vector of indices corresponding to
-        instruments in \code{Z} that should be used for training.}
-    \item{\code{args} Optional arguments to be passed to \code{fun}}
-}}
+\item{cv_folds}{abc}
 
-\item{models_FS}{Same as \code{models}. May be used to consider an seperate
-set of models to be used for the estimation of E[D|X,Z] (first stage).}
+\item{enforce_LIE}{abc}
 
-\item{setup_parallel}{An list containing details on the parallelization of
-\code{crossval}.}
+\item{subsamples}{abc}
+
+\item{cv_subsamples_list}{abc}
+
+\item{silent}{abc}
 }
 \value{
-\code{ddml_epliv} returns an object of S3 class
-    \code{ddml_epliv}.
-
-An object of class \code{ddml_epliv}is a list containig the
-    following components:
-\describe{
-\item{\code{coef}}{A vector with the LIE-conform DDML IV coefficent in the
-    first entry.}
-    \item{\code{...}}{...}
-}
+object
 }
 \description{
-DDML estimator for the Extended Partially Linear IV model.
+Title
+}
+\examples{
+1 + 1
 }

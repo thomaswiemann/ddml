@@ -31,22 +31,22 @@ should be employed.
 If a single model should be used, \code{learners} is a list with two named
 elements:
 \itemize{
-    \item{\code{what} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The function used to trained the model. The
+function must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 }
 If an ensemble should be used, \code{learners} is a list of lists, each
 containing four named elements:
 \itemize{
-    \item{\code{fun} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{assign_X} A vector of indices corresponding to features
-        in \code{X} that should be used for training.}
-    \item{\code{assign_Z} An optional vector of indices corresponding to
-        instruments in \code{Z} that should be used for training.}
-    \item{\code{args} Optional arguments to be passed to \code{fun}}
+\item{\code{fun} The function used to trained the model. The
+function must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{assign_X} A vector of indices corresponding to features
+in \code{X} that should be used for training.}
+\item{\code{assign_Z} An optional vector of indices corresponding to
+instruments in \code{Z} that should be used for training.}
+\item{\code{args} Optional arguments to be passed to \code{fun}}
 }}
 
 \item{sample_folds}{The number of split sample folds used for calculation of
@@ -69,14 +69,14 @@ printed to the console.}
 }
 \value{
 \code{ddml_plm} returns an object of S3 class
-    \code{ddml_plm}.
+\code{ddml_plm}.
 
 An object of class \code{ddml_plm}is a list containig the
-    following components:
+following components:
 \describe{
 \item{\code{coef}}{A vector with the DDML PLM coefficent in the
-    first entry.}
-    \item{\code{...}}{...}
+first entry.}
+\item{\code{...}}{...}
 }
 }
 \description{
