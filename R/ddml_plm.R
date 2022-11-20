@@ -109,11 +109,11 @@ ddml_plm <- function(y, D, X,
     y_r <- y - y_X_res$oos_fitted
     D_r <- D - D_X_res$oos_fitted
 
-    # Compute IV estimate with constructed variables
-    ols_fit <- ols(y_r, D_r)
+    # Compute OLS estimate with constructed variables
+    ols_fit <- stats::lm(y_r ~ D_r)
 
     # Organize complementary ensemble output
-    coef <- ols_fit$coef[1]
+    coef <- stats::coef(ols_fit)[2]
     weights <- list(y_X = y_X_res$weights,
                     D_X = D_X_res$weights)
   }#IF
@@ -142,11 +142,11 @@ ddml_plm <- function(y, D, X,
       # Residualize y
       y_r <- y - y_X_res$oos_fitted[, j]
 
-      # Compute IV estimate with constructed variables
-      ols_fit_j <- ols(y_r, D_r)
+      # Compute OLS estimate with constructed variables
+      ols_fit_j <- stats::lm(y_r ~ D_r)
 
       # Organize complementary ensemble output
-      coef[j] <- ols_fit_j$coef[1]
+      coef[j] <- stats::coef(ols_fit_j)[2]
       ols_fit[[j]] <- ols_fit_j
       weights[[2]][, j, ] <- D_X_res$weights[, j, ]
     }#FOR
@@ -165,8 +165,7 @@ ddml_plm <- function(y, D, X,
                    ols_fit = ols_fit,
                    subsamples = subsamples,
                    cv_subsamples_list = cv_subsamples_list,
-                   ensemble_type = ensemble_type,
-                   nobs = nobs, y = y, D = D)
+                   ensemble_type = ensemble_type)
 
   # Print estimation progress
   if (!silent) cat("DDML estimation completed. \n")

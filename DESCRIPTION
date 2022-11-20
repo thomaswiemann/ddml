@@ -12,6 +12,7 @@ LazyData: true
 Imports: 
     methods,
     stats,
+    AER,
     MASS,
     Matrix,
     nnls,
@@ -20,12 +21,11 @@ Imports:
     randomForest,
     grf,
     xgboost
-Suggest:
-    testthat
 RoxygenNote: 7.2.2
 Depends: 
     R (>= 4.2)
 Suggests: 
+    sandwich,
     covr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

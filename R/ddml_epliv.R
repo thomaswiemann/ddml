@@ -144,10 +144,10 @@ ddml_epliv <- function(y, D, Z, X,
     V_r <- D_XZ_res$oos_fitted - D_X_res$oos_fitted
 
     # Compute IV estimate with constructed variables
-    iv_fit <- tsls(y_r, D_r, V_r)
+    iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
 
     # Organize complementary ensemble output
-    coef <- iv_fit$coef[1]
+    coef <- stats::coef(iv_fit)[2]
     weights <- list(y_X = y_X_res$weights,
                     D_X = D_X_res$weights,
                     D_XZ = D_XZ_res$weights)
@@ -201,10 +201,10 @@ ddml_epliv <- function(y, D, Z, X,
       y_r <- y - y_X_res$oos_fitted[, j]
 
       # Compute IV estimate with constructed variables
-      iv_fit_j <- tsls(y_r, D_r, V_r)
+      iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r)
 
       # Organize complementary ensemble output
-      coef[j] <- iv_fit_j$coef[1]
+      coef[j] <- stats::coef(iv_fit_j)[2]
       iv_fit[[j]] <- iv_fit_j
       if (enforce_LIE) {
         weights[[2]][, j, ] <- D_X_res$weights

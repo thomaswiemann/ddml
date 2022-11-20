@@ -18,33 +18,6 @@ test_that("predict.ols returns fitted values", {
   expect_equal(predict(mdl_fit, newdata = X2), cbind(1, X2) %*% mdl_fit$coef)
 })#TEST_THAT
 
-test_that("summary.ols returns numerical se, t-stats, and p-values", {
-  # Simulate small dataset and fit ols
-  X <- matrix(rnorm(100*3), 100, 3)
-  y <- 1 + X %*% c(-1, 1, 0) + rnorm(100)
-  mdl_fit <- ols(y, X, const = T)
-  sum_res_const <- summary(mdl_fit, type = "const")
-  sum_res_HC1 <- summary(mdl_fit, type = "HC1")
-  sum_res_cluster <- summary(mdl_fit, type = "cluster",
-                             cluster = sample(c(1:50), 100, replace = TRUE))
-  # Check in- and out-of-sample fitted values
-  expect_equal(dim(sum_res_const$res), c(1+ncol(X), 4))
-  expect_equal(dim(sum_res_HC1$res), c(1+ncol(X), 4))
-  expect_equal(dim(sum_res_cluster$res), c(1+ncol(X), 4))
-})#TEST_THAT
-
-test_that("summary.ols returns numerical se w/ sparse matrices", {
-  # Simulate small dataset and fit ols
-  X <- matrix(rnorm(100*3), 100, 3)
-  y <- 1 + X %*% c(-1, 1, 0) + rnorm(100)
-  mdl_fit <- ols(y, as(X, "sparseMatrix"), const = T)
-  sum_res_const <- summary(mdl_fit, type = "const")
-  sum_res_HC1 <- summary(mdl_fit, type = "HC1")
-  # Check in- and out-of-sample fitted values
-  expect_equal(dim(sum_res_const$res), c(1+ncol(X), 4))
-  expect_equal(dim(sum_res_HC1$res), c(1+ncol(X), 4))
-})#TEST_THAT
-
 # wls ==========================================================================
 test_that("wls returns output of correct types", {
   # Simulate small dataset and fit ols
