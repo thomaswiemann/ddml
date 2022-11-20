@@ -13,6 +13,9 @@ coverage:
         threshold: 1%
         informational: true
 
+codecov:
+ token: 37db0a82-88ab-4ecf-bae5-02c29ca67245
+
 language: R
 
 sudo: false
