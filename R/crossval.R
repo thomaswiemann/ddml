@@ -1,47 +1,19 @@
-#' Compute out-of-sample residuals via cross-validation.
+#' Title
 #'
-#' Compute out-of-sample residuals via cross-validation.
+#' @param y abc
+#' @param X abc
+#' @param Z abc
+#' @param learners abc
+#' @param cv_folds abc
+#' @param cv_subsamples abc
+#' @param silent abc
+#' @param progress abc
 #'
-#' @param y A response vector.
-#' @param X A feature matrix.
-#' @param Z An optional instrument matrix.
-#' @param learners A list of lists, each containing three named elements:
-#'     \itemize{
-#'         \item{\code{fun} The function used to trained the model. The
-#'             function must be such that it predicts a named input \code{y}
-#'             using a named input \code{X}.}
-#'         \item{\code{assign_X} A vector of indices corresponding to features
-#'             in \code{X} that should be used for training.}
-#'         \item{\code{assign_Z} An optional vector of indices corresponding to
-#'             instruments in \code{Z} that should be used for training.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}}
-#'     }
-#' @param cv_folds The number for cross-validation folds.
-#' @param cv_subsamples An optional list of vectors, each containing indices of
-#'     a test-sample. If not used-provided, the split sample folds are randomly
-#'     drawn.
-#' @param setup_parallel An list containing two named elements:
-#'     \itemize{
-#'         \item{\code{type} A string of value \code{"static"} or
-#'             \code{"dynamic"}, indicating whether job scheduling should be
-#'             static (via \code{parSapply}) or dynamic (via \code{foreach}).}
-#'         \item{\code{cores} The number of processor units utilized. Note that
-#'             if \code{cores == 1}, \code{crossval} will not be computed in
-#'             parallel.
-#'         }
-#'     }
-#' @param silent A boolean indicating whether current learners and folds should be
-#'     printed to the console.
+#' @return object
+#' @export
 #'
-#' @return \code{crossval} a list containig the following components:
-#' \describe{
-#' \item{\code{oos_resid}}{A matrix of out-of-sample residuals, each column
-#'     corresponding to a model in \code{learners}.}
-#' \item{\code{cv_Z}}{A vector of model indices corresponding to learners that
-#'     selected at least one instrument in each cross-validation fold.}
-#' }
-#'
-#' @export crossval
+#' @examples
+#' 1 + 1
 crossval <- function(y, X, Z = NULL,
                      learners,
                      cv_folds = 5,
@@ -86,11 +58,6 @@ crossval <- function(y, X, Z = NULL,
 }#CROSSVAL
 
 # Complementary functions ======================================================
-#' Compute results for a single cross-validation instance.
-#'
-#' Compute results for a single cross-validation instance.
-#'
-#' @export crossval_compute
 crossval_compute <- function(test_sample, learner,
                              y, X, Z = NULL) {
   # Check whether X, Z assignment has been specified. If not, include all.
@@ -110,8 +77,9 @@ crossval_compute <- function(test_sample, learner,
   mdl_fit <- do.call(do.call, mdl_fun)
 
   # Compute out of sample residuals
-  oos_fitted <- stats::predict(mdl_fit, cbind(X[test_sample, assign_X, drop = F],
-                                       Z[test_sample, assign_Z, drop = F]))
+  oos_fitted <- stats::predict(mdl_fit,
+                               cbind(X[test_sample, assign_X, drop = F],
+                                     Z[test_sample, assign_Z, drop = F]))
   oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
 
   # Return residuals and cv_Z

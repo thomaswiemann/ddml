@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_plm.R
 \name{ddml_plm}
 \alias{ddml_plm}
-\title{Compute DDML PLM estimators.}
+\title{Title}
 \usage{
 ddml_plm(
   y,
@@ -19,66 +19,34 @@ ddml_plm(
 )
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{D}{An endogeneous variable vector.}
+\item{D}{abc}
 
-\item{X}{A control matrix.}
+\item{X}{abc}
 
-\item{learners}{May take one of two forms, depending on whether a single model
-should be used for residualization, or whether an ensemble procedure
-should be employed.
-If a single model should be used, \code{learners} is a list with two named
-elements:
-\itemize{
-\item{\code{what} The function used to trained the model. The
-function must be such that it predicts a named input \code{y}
-using a named input \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
-}
-If an ensemble should be used, \code{learners} is a list of lists, each
-containing four named elements:
-\itemize{
-\item{\code{fun} The function used to trained the model. The
-function must be such that it predicts a named input \code{y}
-using a named input \code{X}.}
-\item{\code{assign_X} A vector of indices corresponding to features
-in \code{X} that should be used for training.}
-\item{\code{assign_Z} An optional vector of indices corresponding to
-instruments in \code{Z} that should be used for training.}
-\item{\code{args} Optional arguments to be passed to \code{fun}}
-}}
+\item{learners}{abc}
 
-\item{sample_folds}{The number of split sample folds used for calculation of
-the out-of-sample predictions.}
+\item{learners_DX}{abc}
 
-\item{ensemble_type}{A string indicating the type of ensemble. Multiple types may
-be passed in form of a vector of strings.}
+\item{sample_folds}{abc}
 
-\item{cv_folds}{The number for cross-validation folds.}
+\item{ensemble_type}{abc}
 
-\item{subsamples}{An optional list of vectors, each containing indices of
-a test-sample. If not used-provided, the split sample folds are randomly
-drawn.}
+\item{cv_folds}{abc}
 
-\item{silent}{A boolean indicating whether current learners and folds should be
-printed to the console.}
+\item{subsamples}{abc}
 
-\item{setup_parallel}{An list containing details on the parallelization of
-\code{crossval}.}
+\item{cv_subsamples_list}{abc}
+
+\item{silent}{abc}
 }
 \value{
-\code{ddml_plm} returns an object of S3 class
-\code{ddml_plm}.
-
-An object of class \code{ddml_plm}is a list containig the
-following components:
-\describe{
-\item{\code{coef}}{A vector with the DDML PLM coefficent in the
-first entry.}
-\item{\code{...}}{...}
-}
+abc
 }
 \description{
-Compute DDML PLM estimators.
+Title
+}
+\examples{
+1 + 1
 }

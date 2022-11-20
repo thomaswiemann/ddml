@@ -2,10 +2,23 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{predict.mdl_glmnet}
 \alias{predict.mdl_glmnet}
-\title{Predict method for mdl_glmnet fits.}
+\title{Title}
 \usage{
 \method{predict}{mdl_glmnet}(object, newdata = NULL, ...)
 }
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Predict method for mdl_glmnet fits.
+Title
+}
+\examples{
+1 + 1
 }

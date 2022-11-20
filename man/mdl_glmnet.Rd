@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{mdl_glmnet}
 \alias{mdl_glmnet}
-\title{Wrapper function for \code{glmnet}.}
+\title{Title}
 \usage{
 mdl_glmnet(
   y,
@@ -18,6 +18,35 @@ mdl_glmnet(
   ...
 )
 }
+\arguments{
+\item{y}{abc}
+
+\item{X}{abc}
+
+\item{alpha}{abc}
+
+\item{lambda}{abc}
+
+\item{standardize}{abc}
+
+\item{intercept}{abc}
+
+\item{family}{abc}
+
+\item{cv}{abc}
+
+\item{nfolds}{abc}
+
+\item{thres}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Wrapper function for \code{glmnet}.
+Title
+}
+\examples{
+1 + 1
 }

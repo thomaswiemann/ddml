@@ -1,9 +1,25 @@
 # glmnet =======================================================================
-#' Wrapper function for \code{glmnet}.
+
+
+#' Title
 #'
-#' Wrapper function for \code{glmnet}.
+#' @param y abc
+#' @param X abc
+#' @param alpha abc
+#' @param lambda abc
+#' @param standardize abc
+#' @param intercept abc
+#' @param family abc
+#' @param cv abc
+#' @param nfolds abc
+#' @param thres abc
+#' @param ... abc
 #'
-#' @export mdl_glmnet
+#' @return abc
+#' @export
+#'
+#' @examples
+#' 1 + 1
 mdl_glmnet <- function(y, X,
                        alpha = 1, lambda = NULL,
                        standardize = TRUE, intercept = TRUE,
@@ -33,12 +49,18 @@ mdl_glmnet <- function(y, X,
   return(mdl_fit)
 }#MDL_GLMNET
 
-#' Predict method for mdl_glmnet fits.
+#' Title
 #'
-#' Predict method for mdl_glmnet fits.
+#' @param object abc
+#' @param newdata abc
+#' @param ... abc
 #'
+#' @return abc
 #' @export predict.mdl_glmnet
 #' @export
+#'
+#' @examples
+#' 1 + 1
 predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
   cv <- "cv.glmnet" %in% class(object)
@@ -61,11 +83,32 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 }#PREDICT.MDL_GLMNET
 
 # xgboost ======================================================================
-#' Wrapper function for \code{xgboost}.
+
+
+#' Title
 #'
-#' Wrapper function for \code{xgboost}.
+#' @param y abc
+#' @param X abc
+#' @param num_parallel_tree abc
+#' @param min_child_weight abc
+#' @param colsample_bytree abc
+#' @param subsample abc
+#' @param colsample_bylevel abc
+#' @param colsample_bynode abc
+#' @param max.depth abc
+#' @param eta abc
+#' @param gamma abc
+#' @param nrounds abc
+#' @param objective abc
+#' @param interaction_constraints abc
+#' @param verbose abc
+#' @param ... abc
 #'
-#' @export mdl_xgboost
+#' @return abc
+#' @export
+#'
+#' @examples
+#' 1 + 1
 mdl_xgboost <- function(y, X,
                         num_parallel_tree = 1, min_child_weight = 1,
                         colsample_bytree = 0.7, subsample = 0.7,
@@ -92,12 +135,18 @@ mdl_xgboost <- function(y, X,
   return(mdl_fit)
 }#MDL_XGBOOST
 
-#' Predict method for mdl_xgboost fits.
+#' Title
 #'
-#' Predict method for mdl_xgboost fits.
+#' @param object abc
+#' @param newdata abc
+#' @param ... abc
 #'
+#' @return abc
 #' @export predict.mdl_xgboost
 #' @export
+#'
+#' @examples
+#' 1 + 1
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that 'predict.xgb.Booster'
   #     is not an exported object from 'namespace:xgboost', hence the less ideal
@@ -107,11 +156,24 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
 }#PREDICT.MDL_XGBOOST
 
 # randomForest =================================================================
-#' Wrapper function for \code{randomForest}.
+
+#' Title
 #'
-#' Wrapper function for \code{randomForest}.
+#' @param y abc
+#' @param X abc
+#' @param ntree abc
+#' @param nodesize abc
+#' @param maxnodes abc
+#' @param colsample_bytree abc
+#' @param subsample abc
+#' @param replace abc
+#' @param ... abc
 #'
-#' @export mdl_randomForest
+#' @return abc
+#' @export
+#'
+#' @examples
+#' 1 + 1
 mdl_randomForest <- function(y, X,
                              ntree = 100, nodesize = 1, maxnodes = NULL,
                              colsample_bytree = 0.6, subsample = 0.7,
@@ -131,12 +193,18 @@ mdl_randomForest <- function(y, X,
   return(mdl_fit)
 }#MDL_RANDOMFOREST
 
-#' Predict method for mdl_randomForest fits.
+#' Title
 #'
-#' Predict method for mdl_randomForest fits.
+#' @param object abc
+#' @param newdata abc
+#' @param ... abc
 #'
+#' @return abc
 #' @export predict.mdl_randomForest
 #' @export
+#'
+#' @examples
+#' 1 + 1
 predict.mdl_randomForest <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that
   #     'predict.randomForest' is not an exported object from
@@ -147,11 +215,23 @@ predict.mdl_randomForest <- function(object, newdata = NULL, ...){
 }#PREDICT.MDL_RANDOMFOREST
 
 # grf ==========================================================================
-#' Wrapper function for \code{grf}'s \code{regression_forest}.
+
+#' Title
 #'
-#' Wrapper function for \code{grf}'s \code{regression_forest}.
+#' @param y abc
+#' @param X abc
+#' @param num.trees abc
+#' @param colsample_bytree abc
+#' @param sample.fraction abc
+#' @param min.node.size abc
+#' @param honesty abc
+#' @param ... abc
 #'
-#' @export mdl_grf
+#' @return abc
+#' @export
+#'
+#' @examples
+#' 1 + 1
 mdl_grf <- function(y, X,
                     num.trees = 100,
                     colsample_bytree = 0.6,
@@ -173,12 +253,18 @@ mdl_grf <- function(y, X,
   return(mdl_fit)
 }#MDL_GRF
 
-#' Predict method for mdl_grf fits.
+#' Title
 #'
-#' Predict method for mdl_grf fits.
+#' @param object abc
+#' @param newdata abc
+#' @param ... abc
 #'
+#' @return abc
 #' @export predict.mdl_grf
 #' @export
+#'
+#' @examples
+#' 1 + 1
 predict.mdl_grf <- function(object, newdata = NULL, ...){
   # Check for new data
   #if(is.null(newdata)) newdata <- object$X

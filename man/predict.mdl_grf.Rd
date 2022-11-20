@@ -2,10 +2,23 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{predict.mdl_grf}
 \alias{predict.mdl_grf}
-\title{Predict method for mdl_grf fits.}
+\title{Title}
 \usage{
 \method{predict}{mdl_grf}(object, newdata = NULL, ...)
 }
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Predict method for mdl_grf fits.
+Title
+}
+\examples{
+1 + 1
 }

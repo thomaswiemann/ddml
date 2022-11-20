@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{mdl_grf}
 \alias{mdl_grf}
-\title{Wrapper function for \code{grf}'s \code{regression_forest}.}
+\title{Title}
 \usage{
 mdl_grf(
   y,
@@ -15,6 +15,29 @@ mdl_grf(
   ...
 )
 }
+\arguments{
+\item{y}{abc}
+
+\item{X}{abc}
+
+\item{num.trees}{abc}
+
+\item{colsample_bytree}{abc}
+
+\item{sample.fraction}{abc}
+
+\item{min.node.size}{abc}
+
+\item{honesty}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Wrapper function for \code{grf}'s \code{regression_forest}.
+Title
+}
+\examples{
+1 + 1
 }

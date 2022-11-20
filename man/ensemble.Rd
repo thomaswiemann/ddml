@@ -2,7 +2,7 @@
 % Please edit documentation in R/ensemble.R
 \name{ensemble}
 \alias{ensemble}
-\title{Compute ensemble learners.}
+\title{Title}
 \usage{
 ensemble(
   y,
@@ -18,65 +18,32 @@ ensemble(
 )
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{X}{A feature matrix.}
+\item{X}{abc}
 
-\item{Z}{An optional instrument matrix.}
+\item{Z}{abc}
 
-\item{type}{A string indicating the type of ensemble. Multiple types may be
-passed in form of a vector of strings.}
+\item{type}{abc}
 
-\item{learners}{A list of lists, each containing four named elements:
-\itemize{
-\item{\code{fun} The function used to trained the model. The
-function must be such that it predicts a named input \code{y}
-using a named input \code{X}.}
-\item{\code{assign_X} A vector of indices corresponding to features
-in \code{X} that should be used for training.}
-\item{\code{assign_Z} An optional vector of indices corresponding to
-instruments in \code{Z} that should be used for training.}
-\item{\code{args} Optional arguments to be passed to \code{what}}
-}}
+\item{learners}{abc}
 
-\item{cv_folds}{The number for cross-validation folds.}
+\item{cv_folds}{abc}
 
-\item{cv_results}{Optional output from \code{\link{crossval}}. If availbale, this
-avoids unnecessary computation.}
+\item{cv_subsamples}{abc}
 
-\item{silent}{A boolean indicating whether current learners and folds should be
-printed to the console.}
+\item{cv_results}{abc}
 
-\item{setup_parallel}{An list containing two named elements:
-\itemize{
-\item{\code{type} A string of value \code{"static"} or
-\code{"dynamic"}, indicating whether job scheduling should be
-static (via \code{parSapply}) or dynamic (via \code{foreach}).}
-\item{\code{cores} The number of processor units utilized. Note that
-if \code{cores == 1}, \code{crossval} will not be computed in
-parallel.
-}
-}}
+\item{silent}{abc}
+
+\item{progress}{abc}
 }
 \value{
-\code{ensemble} returns an object of S3 class "\code{ensemble}".
-
-The function \code{predict} computes fitted values for a trained model of
-this class.
-
-An object of class "\code{ensemble}" is a list containig the following
-components:
-\describe{
-\item{\code{mdl_fits}}{A list containing the fitted model objects
-corresponding to the estimators passed via \code{learners}.}
-\item{\code{weights}}{A matrix where each column gives the ensemble weights
-for the corresponding ensemble as specified in \code{type}.}
-\item{\code{learners}}{Passthrough of the input \code{learners}.}
-\item{\code{cv_results}}{Passed output from \code{\link{crossval}}.}
-\item{\code{mdl_w_iv}}{A vector of model indices corresponding to learners that
-selected at least one instrument. }
-}
+abc
 }
 \description{
-Compute ensemble learners.
+Title
+}
+\examples{
+1 + 1
 }

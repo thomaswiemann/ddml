@@ -2,10 +2,23 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{predict.mdl_randomForest}
 \alias{predict.mdl_randomForest}
-\title{Predict method for mdl_randomForest fits.}
+\title{Title}
 \usage{
 \method{predict}{mdl_randomForest}(object, newdata = NULL, ...)
 }
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Predict method for mdl_randomForest fits.
+Title
+}
+\examples{
+1 + 1
 }

@@ -1,58 +1,22 @@
-#' Compute DDML PLM estimators.
+#' Title
 #'
-#' Compute DDML PLM estimators.
+#' @param y abc
+#' @param D abc
+#' @param X abc
+#' @param learners abc
+#' @param learners_DX abc
+#' @param sample_folds abc
+#' @param ensemble_type abc
+#' @param cv_folds abc
+#' @param subsamples abc
+#' @param cv_subsamples_list abc
+#' @param silent abc
 #'
-#' @param y A response vector.
-#' @param D An endogeneous variable vector.
-#' @param X A control matrix.
-#' @param learners May take one of two forms, depending on whether a single model
-#'     should be used for residualization, or whether an ensemble procedure
-#'     should be employed.
-#'     If a single model should be used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The function used to trained the model. The
-#'             function must be such that it predicts a named input \code{y}
-#'             using a named input \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If an ensemble should be used, \code{learners} is a list of lists, each
-#'     containing four named elements:
-#'     \itemize{
-#'         \item{\code{fun} The function used to trained the model. The
-#'             function must be such that it predicts a named input \code{y}
-#'             using a named input \code{X}.}
-#'         \item{\code{assign_X} A vector of indices corresponding to features
-#'             in \code{X} that should be used for training.}
-#'         \item{\code{assign_Z} An optional vector of indices corresponding to
-#'             instruments in \code{Z} that should be used for training.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}}
-#'     }
-#' @param ensemble_type A string indicating the type of ensemble. Multiple types may
-#'     be passed in form of a vector of strings.
-#' @param cv_folds The number for cross-validation folds.
-#' @param sample_folds The number of split sample folds used for calculation of
-#'     the out-of-sample predictions.
-#' @param subsamples An optional list of vectors, each containing indices of
-#'     a test-sample. If not used-provided, the split sample folds are randomly
-#'     drawn.
-#' @param setup_parallel An list containing details on the parallelization of
-#'    \code{crossval}.
-#' @param silent A boolean indicating whether current learners and folds should be
-#'     printed to the console.
+#' @return abc
+#' @export
 #'
-#' @return \code{ddml_plm} returns an object of S3 class
-#'     \code{ddml_plm}.
-#'
-#' An object of class \code{ddml_plm}is a list containig the
-#'     following components:
-#' \describe{
-#' \item{\code{coef}}{A vector with the DDML PLM coefficent in the
-#'     first entry.}
-#'     \item{\code{...}}{...}
-#' }
-#'
-#' @export ddml_plm
+#' @examples
+#' 1 + 1
 ddml_plm <- function(y, D, X,
                     learners,
                     learners_DX = learners,

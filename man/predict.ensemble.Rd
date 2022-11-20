@@ -2,10 +2,25 @@
 % Please edit documentation in R/ensemble.R
 \name{predict.ensemble}
 \alias{predict.ensemble}
-\title{Predict method for ensemble learners.}
+\title{Title}
 \usage{
 \method{predict}{ensemble}(object, newdata, newZ = NULL, ...)
 }
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{newZ}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Predict method for ensemble learners.
+Title
+}
+\examples{
+1 + 1
 }

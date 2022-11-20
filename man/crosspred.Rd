@@ -2,7 +2,7 @@
 % Please edit documentation in R/crosspred.R
 \name{crosspred}
 \alias{crosspred}
-\title{Compute cross-sample predictions.}
+\title{Title}
 \usage{
 crosspred(
   y,
@@ -20,68 +20,36 @@ crosspred(
 )
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{X}{A feature matrix.}
+\item{X}{abc}
 
-\item{Z}{An optional instrument matrix.}
+\item{Z}{abc}
 
-\item{learners}{May take one of two forms, depending on whether a single model
-should be used for prediction, or whether an ensemble procedure should be
-employed.
-If a single model should be used, \code{learners} is a list with two named
-elements:
-\itemize{
-\item{\code{what} The function used to trained the model. The
-function must be such that it predicts a named input \code{y}
-using a named input \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
-}
-If an ensemble should be used, \code{learners} is a list of lists, each
-containing four named elements:
-\itemize{
-\item{\code{fun} The function used to trained the model. The
-function must be such that it predicts a named input \code{y}
-using a named input \code{X}.}
-\item{\code{assign_X} A vector of indices corresponding to features
-in \code{X} that should be used for training.}
-\item{\code{assign_Z} An optional vector of indices corresponding to
-instruments in \code{Z} that should be used for training.}
-\item{\code{args} Optional arguments to be passed to \code{fun}}
-}}
+\item{learners}{abc}
 
-\item{sample_folds}{The number of split sample folds used for calculation of
-the out-of-sample predictions.}
+\item{sample_folds}{abc}
 
-\item{ensemble_type}{A string indicating the type of ensemble. Multiple types may
-be passed in form of a vector of strings.}
+\item{ensemble_type}{abc}
 
-\item{cv_folds}{The number for cross-validation folds.}
+\item{cv_folds}{abc}
 
-\item{compute_insample_predictions}{A boolean for whether in-sample predictions
-should be calculated.}
+\item{compute_insample_predictions}{abc}
 
-\item{subsamples}{An optional list of vectors, each containing indices of
-a test-sample. If not used-provided, the split sample folds are randomly
-drawn.}
+\item{subsamples}{abc}
 
-\item{silent}{A boolean indicating whether current learners and folds should be
-printed to the console.}
+\item{cv_subsamples_list}{abc}
 
-\item{setup_parallel}{An list containing details on the parallelization of
-\code{crossval}.}
+\item{silent}{abc}
+
+\item{progress}{abc}
 }
 \value{
-\code{crosspred} returns a list containig the following
-components:
-\describe{
-\item{\code{oos_fitted}}{A matrix of out-of-sample predictions, each column
-corresponding to an ensemble as passed via \code{ensemble_type}.}
-\item{\code{is_fitted}}{A list of matrices of out-of-sample predictions, each
-list element corresponding to a training sample, each column
-corresponding to an ensemble as passed via \code{ensemble_type}.}
-}
+object
 }
 \description{
-Compute cross-sample predictions.
+Title
+}
+\examples{
+1 + 1
 }
