@@ -72,7 +72,7 @@ summary.tsls <- function(object, type = "const", ...) {
   nobs <- length(object$y)
   ncol_X <- ncol(object$X_); ncol_Z <- ncol(object$Z_)
   # Calculate residuals
-  resid <- (object$y - predict(object))[, 1]
+  resid <- (object$y - predict.tsls(object))[, 1]
   # Calculate matrix products
   PZ <- object$Z_ %*% object$FS
   PZZP_inv <- csolve(as.matrix(Matrix::crossprod(object$X_, object$Z_) %*% object$FS))

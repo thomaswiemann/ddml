@@ -103,7 +103,7 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   #     is not an exported object from 'namespace:xgboost', hence the less ideal
   #     fix.
   class(object) <- class(object)[2] #
-  predict(object, newdata, ...)
+  stats::predict(object, newdata, ...)
 }#PREDICT.MDL_XGBOOST
 
 # randomForest =================================================================
@@ -143,7 +143,7 @@ predict.mdl_randomForest <- function(object, newdata = NULL, ...){
   #     'namespace:randomForest', hence the less ideal fix.
   class(object) <- class(object)[2]
   # Predict using randomForest prediction method
-  predict(object, newdata, ...)
+  stats::predict(object, newdata, ...)
 }#PREDICT.MDL_RANDOMFOREST
 
 # grf ==========================================================================
@@ -184,5 +184,5 @@ predict.mdl_grf <- function(object, newdata = NULL, ...){
   #if(is.null(newdata)) newdata <- object$X
   class(object) <- class(object)[2]
   # Predict data and output as matrix
-  as.numeric(predict(object, newdata, ...)$predictions)
+  as.numeric(stats::predict(object, newdata, ...)$predictions)
 }#PREDICT.MDL_GRF

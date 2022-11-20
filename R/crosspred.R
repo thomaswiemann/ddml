@@ -111,7 +111,7 @@ crosspred <- function(y, X, Z = NULL,
       mdl_fit <- do.call(do.call, learners)
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
-        as.numeric(predict(mdl_fit, cbind(X[subsamples[[k]], ],
+        as.numeric(stats::predict(mdl_fit, cbind(X[subsamples[[k]], ],
                                           Z[subsamples[[k]], ])))
       # Print progress
       if (!silent) {
@@ -146,7 +146,7 @@ crosspred <- function(y, X, Z = NULL,
                           progress = paste0(progress_k, ", "))
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
-        as.numeric(predict(mdl_fit,
+        as.numeric(predict.ensemble(mdl_fit,
                            newdata = X[subsamples[[k]], ,
                                     drop = F],
                            newZ = Z[subsamples[[k]], ,
@@ -161,10 +161,10 @@ crosspred <- function(y, X, Z = NULL,
     # Compute in-sample predictions (optional)
     if (compute_insample_predictions) {
       if (!calc_ensemble) {
-        is_fitted[[k]] <- predict(mdl_fit, cbind(X[-subsamples[[k]], ],
+        is_fitted[[k]] <- stats::predict(mdl_fit, cbind(X[-subsamples[[k]], ],
                                                  Z[-subsamples[[k]], ]))
       } else if (calc_ensemble) {
-        is_fitted[[k]] <- predict(mdl_fit,
+        is_fitted[[k]] <- predict.ensemble(mdl_fit,
                                   newdata = X[-subsamples[[k]], ,drop = F],
                                   newZ = Z[-subsamples[[k]], , drop = F])
       }#IFELSE

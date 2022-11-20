@@ -83,7 +83,7 @@ summary.ols <- function(object, type = "const", cluster = NULL, ...) {
   nobs <- length(object$y); ncol_X <- ncol(object$X)
   calc_wls <- !is.null(object$w)
   # Calculate standard errors, t-statistic, and p-value
-  resid <- as.numeric(object$y - predict(object))
+  resid <- as.numeric(object$y - stats::predict(object))
   if (!calc_wls) { # OLS
     XX_inv <- csolve(as.matrix(Matrix::crossprod(object$X)))
     if (type == "const") {
@@ -108,7 +108,7 @@ summary.ols <- function(object, type = "const", cluster = NULL, ...) {
     }#IFELSE
   }#IF
   t_stat <- object$coef / se
-  p_val <- 2 * pnorm(-abs(t_stat))
+  p_val <- 2 * stats::pnorm(-abs(t_stat))
   # Compile estimate and se
   res <- cbind(object$coef, se, t_stat, p_val)
   rownames(res) <- rownames(object$coef)

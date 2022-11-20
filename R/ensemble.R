@@ -122,16 +122,16 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
     assign_X <- object$learners[[m]]$assign_X
     assign_Z <- object$learners[[m]]$assign_Z
     # Compute predictions
-    fitted <- predict(object$mdl_fits[[m]],
-                      newdata = cbind(newdata[, assign_X],
-                                      newZ[, assign_Z]))
+    fitted <- stats::predict(object$mdl_fits[[m]],
+                             newdata = cbind(newdata[, assign_X],
+                                             newZ[, assign_Z]))
 
     # Initialize matrix of fitted values
     if (first_fit) {
       fitted_mat <- matrix(0, length(fitted), nlearners)
       first_fit <- F
     }#IF
-    fitted_mat[, m] <- as(fitted, "matrix")
+    fitted_mat[, m] <- methods::as(fitted, "matrix")
   }#FOR
   # Compute matrix of fitted values by ensemble type and return
   fitted_ens <- fitted_mat %*% object$weights

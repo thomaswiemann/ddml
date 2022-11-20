@@ -110,9 +110,9 @@ crossval_compute <- function(test_sample, learner,
   mdl_fit <- do.call(do.call, mdl_fun)
 
   # Compute out of sample residuals
-  oos_fitted <- predict(mdl_fit, cbind(X[test_sample, assign_X, drop = F],
+  oos_fitted <- stats::predict(mdl_fit, cbind(X[test_sample, assign_X, drop = F],
                                        Z[test_sample, assign_Z, drop = F]))
-  oos_resid <- y[test_sample] - as(oos_fitted, "matrix")
+  oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
 
   # Return residuals and cv_Z
   return(oos_resid)
