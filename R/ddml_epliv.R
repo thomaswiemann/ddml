@@ -68,7 +68,7 @@ ddml_epliv <- function(y, D, Z, X,
                        cv_folds = 5,
                        enforce_LIE = TRUE,
                        subsamples = NULL,
-                       cv_subsample_list = NULL,
+                       cv_subsamples_list = NULL,
                        silent = F) {
   # Data parameters
   nobs <- length(y)
@@ -80,11 +80,11 @@ ddml_epliv <- function(y, D, Z, X,
   sample_folds <- length(subsamples)
 
   # Create cv-subsamples tuple
-  if (is.null(cv_subsample_list)) {
-    cv_subsample_list <- rep(list(NULL), sample_folds)
+  if (is.null(cv_subsamples_list)) {
+    cv_subsamples_list <- rep(list(NULL), sample_folds)
     for (k in 1:sample_folds) {
       nobs_k <- length(subsamples[[k]])
-      cv_subsample_list[[k]] <- generate_subsamples(nobs, cv_folds)
+      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
     }# FOR
   }#IF
 
@@ -238,7 +238,7 @@ ddml_epliv <- function(y, D, Z, X,
                    learners_DX = learners_DX,
                    iv_fit = iv_fit,
                    subsamples = subsamples,
-                   cv_subsample_list = cv_subsample_list,
+                   cv_subsamples_list = cv_subsamples_list,
                    ensemble_type = ensemble_type,
                    enforce_LIE = enforce_LIE,
                    nobs = nobs, y = y, D = D)

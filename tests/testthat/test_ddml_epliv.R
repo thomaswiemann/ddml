@@ -164,7 +164,7 @@ test_that("ddml_epliv computes with different sets of learners", {
                                                  "stacking_best", "average"),
                                cv_folds = 2,
                                sample_folds = 2,
-                               silent = F)
+                               silent = T)
 
   # Check output with expectations
   expect_equal(length(ddml_epliv_fit$coef), 5)

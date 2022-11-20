@@ -67,9 +67,11 @@ ensemble <- function(y, X, Z = NULL,
   nlearners <- length(learners)
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(y, X, Z,
-                                type, learners,
-                                cv_folds, cv_subsamples, cv_results,
-                                silent, progress = progress)
+                                type = type, learners = learners,
+                                cv_folds = cv_folds,
+                                cv_subsamples = cv_subsamples,
+                                cv_results = cv_results,
+                                silent = silent, progress = progress)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
   # Check for excluded learners
