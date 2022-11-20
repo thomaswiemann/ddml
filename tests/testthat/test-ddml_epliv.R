@@ -171,8 +171,7 @@ test_that("ddml_epliv computes with different sets of learners", {
                        list(fun = mdl_glmnet,
                             args = list(alpha = 1)))
   learners_DX <- list(list(fun = ols),
-                      list(fun = mdl_glmnet,
-                           args = list(alpha = 0.5)),
+                      list(fun = mdl_glmnet),
                       list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_epliv_fit <- ddml_epliv(y, D, Z, X,

@@ -4,7 +4,7 @@
 \alias{predict.tsls}
 \title{Predict method for tsls fits.}
 \usage{
-\method{predict}{tsls}(obj, newdata = NULL)
+\method{predict}{tsls}(object, newdata = NULL, ...)
 }
 \description{
 Predict method for tsls fits.
