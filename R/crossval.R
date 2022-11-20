@@ -71,19 +71,16 @@ crossval <- function(y, X, Z = NULL,
                      learners,
                      cv_folds = 5,
                      cv_subsamples = NULL,
-                     silent = F) {
+                     silent = F, progress = NULL) {
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)
 
-  # Create CV fold tuple
+  # Create cv sample fold tuple
   if (is.null(cv_subsamples)) {
-    sampleframe <- rep(1:cv_folds, ceiling(nobs/cv_folds))
-    cv_groups <- sample(sampleframe, size=nobs, replace=FALSE)
-    cv_subsamples <- sapply(c(1:cv_folds), function(x) {which(cv_groups == x)})
+    cv_subsamples <- generate_subsamples(nobs, cv_folds)
   }#IF
-  # In case subsamples are user-provided
-  cv_folds <- length(cv_subsamples) #
+  cv_folds <- length(cv_subsamples)
   nobs <- length(unlist(cv_subsamples)) # In case subsamples are user-provided
 
   # Compute out-of-sample errors
@@ -92,8 +89,12 @@ crossval <- function(y, X, Z = NULL,
     j <- ceiling(x / cv_folds) # jth model
     i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
     fold_x <- cv_subsamples[[i]]
-    # Print fold and lambda
-    if(!silent) print(paste0(paste0("model = ", j, paste0(": Fold ", i))))
+    # Print progress
+    if (!silent) {
+      cat(paste0("\r", progress,
+                 ", learner ", j, "/", nlearners,
+                 ", cv fold ", i, "/", cv_folds))
+    }#IF
     # Compute model for this fold
     crossval_compute(test_sample = fold_x,
                      learner = learners[[j]],

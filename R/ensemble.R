@@ -62,14 +62,14 @@ ensemble <- function(y, X, Z = NULL,
                      cv_folds = 5,
                      cv_subsamples = NULL,
                      cv_results = NULL,
-                     silent = F) {
+                     silent = F, progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(y, X, Z,
                                 type, learners,
                                 cv_folds, cv_subsamples, cv_results,
-                                silent)
+                                silent, progress = progress)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
   # Check for excluded learners
@@ -194,7 +194,7 @@ ensemble_weights <- function(y, X, Z = NULL,
                              cv_folds = 5,
                              cv_subsamples = NULL,
                              cv_results = NULL,
-                             silent = F) {
+                             silent = F, progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
   ntype <- length(type)
@@ -204,10 +204,10 @@ ensemble_weights <- function(y, X, Z = NULL,
   if (any(cv_stacking %in% type) & is.null(cv_results)) {
     # Run crossvalidation procedure
     cv_results <- crossval(y, X, Z,
-                       learners = learners,
-                       cv_folds = cv_folds,
-                       cv_subsamples = cv_subsamples,
-                       silent = silent)
+                           learners = learners,
+                           cv_folds = cv_folds,
+                           cv_subsamples = cv_subsamples,
+                           silent = silent, progress = progress)
   }#IF
   # Compute weights for each ensemble type
   weights <- matrix(0, length(learners), length(type))
@@ -225,12 +225,12 @@ ensemble_weights <- function(y, X, Z = NULL,
       sink(file=nullfile())
       # Calculate solution
       r <- LowRankQP::LowRankQP(Vmat = sq_resid,
-                                  dvec = rep(0, nlearners),
-                                  Amat = A,
-                                  bvec = 1,
-                                  uvec = rep(1, nlearners),
-                                  method = 'LU',
-                                  verbose = F)
+                                dvec = rep(0, nlearners),
+                                Amat = A,
+                                bvec = 1,
+                                uvec = rep(1, nlearners),
+                                method = 'LU',
+                                verbose = F)
       weights[, k] <- r$alpha
       # Remove sink so output is no longer surpressed
       sink()

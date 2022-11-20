@@ -65,20 +65,15 @@ crosspred <- function(y, X, Z = NULL,
                       compute_insample_predictions = FALSE,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
-                      silent = F) {
+                      silent = F, progress = NULL) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
   calc_ensemble <- !("what" %in% names(learners))
   # Create sample fold tuple
   if (is.null(subsamples)) {
-    sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
-    sample_groups <- sample(sampleframe, size=nobs, replace=F)
-    subsamples <- sapply(c(1:sample_folds),
-                         function(x) {which(sample_groups == x)},
-                         simplify=F)
+    subsamples <- generate_subsamples(nobs, sample_folds)
   }#IF
-  # In case subsamples are user-provided
   sample_folds <- length(subsamples)
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
@@ -86,7 +81,8 @@ crosspred <- function(y, X, Z = NULL,
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
   colnames(mspe) <- paste("sample fold ", c(1:sample_folds))
   weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
-  dimnames(weights) <- list(NULL, NULL, paste("sample fold ", c(1:sample_folds)))
+  dimnames(weights) <- list(NULL, NULL,
+                            paste("sample fold ", c(1:sample_folds)))
   # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble
@@ -109,6 +105,11 @@ crosspred <- function(y, X, Z = NULL,
       oos_fitted[subsamples[[k]], ] <-
         as.numeric(predict(mdl_fit, cbind(X[subsamples[[k]], ],
                                           Z[subsamples[[k]], ])))
+      # Print progress
+      if (!silent) {
+        cat(paste0("\r", progress, " sample fold ", k, "/", sample_folds))
+      }#IF
+
     } else if (calc_ensemble) {
       # When multiple learners are passed, fit an ensemble on the training data.
       if ("list" %in% class(y)) {
@@ -116,11 +117,25 @@ crosspred <- function(y, X, Z = NULL,
       } else {
         y_ <- y[-subsamples[[k]]]
       }#IFELSE
+
+      # Compile progress-preamble
+      if (!silent) {
+        progress_k = paste0(progress,
+                            " sample fold ", k,
+                            "/", sample_folds)
+        # Print immediately if no cv is needed
+        cv_stacking <- c("stacking", "stacking_nn",
+                         "stacking_01", "stacking_best")
+        if (!any(cv_stacking %in% ensemble_type)) cat(paste0("\r", progress_k))
+
+      }#IF
+
+      # Compute ensemble
       mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = F],
                           Z[-subsamples[[k]], , drop = F],
                           ensemble_type, learners,
                           cv_folds, cv_subsamples_list[[k]],
-                          silent = silent)
+                          silent = silent, progress = progress_k)
       # Compute out-of-sample predictions
       oos_fitted[subsamples[[k]], ] <-
         as.numeric(predict(mdl_fit,

@@ -1,3 +1,19 @@
+# Generate a list of subsample indices
+#' @export generate_subsamples
+generate_subsamples <- function(nobs, sample_folds) {
+  sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
+  sample_groups <- sample(sampleframe, size=nobs, replace=F)
+  subsamples <- sapply(c(1:sample_folds),
+                       function(x) {which(sample_groups == x)},
+                       simplify = F)
+  return(subsamples)
+}#GENERATE_SUBSAMPLES
+
+# Utility to print progress ot console
+update_progress <- function(silent) {
+  if (!silent) cat(" -- Done! \n")
+}#UPDATE_PROGRESS
+
 #' Compute (generalized) inverse of a square matrix.
 #'
 #' @param X A square matrix.
