@@ -195,8 +195,7 @@ ddml_epliv <- function(y, D, Z, X,
                    subsamples = subsamples,
                    cv_subsamples_list = cv_subsamples_list,
                    ensemble_type = ensemble_type,
-                   enforce_LIE = enforce_LIE,
-                   nobs = nobs, y = y, D = D)
+                   enforce_LIE = enforce_LIE)
 
   # Print estimation progress
   if (!silent) cat("DDML estimation completed. \n")

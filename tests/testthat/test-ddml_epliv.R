@@ -2,7 +2,7 @@ test_that("ddml_epliv computes with a single model", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -21,7 +21,7 @@ test_that("ddml_epliv computes with an ensemble procedure", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -44,7 +44,7 @@ test_that("ddml_epliv computes with stacking w/o enforcing the LIE", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -68,7 +68,7 @@ test_that("ddml_epliv computes with multiple ensemble procedures", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -94,7 +94,7 @@ test_that("ddml_epliv computes with multiple ensembles w/o the LIE", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -120,7 +120,7 @@ test_that("ddml_epliv computes with multiple ensembles and sparse matrices", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
@@ -147,7 +147,7 @@ test_that("ddml_epliv computes with different sets of learners", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
   UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
