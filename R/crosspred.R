@@ -12,6 +12,7 @@
 #' @param cv_subsamples_list abc
 #' @param silent abc
 #' @param progress abc
+#' @param auxilliary_X abc
 #'
 #' @return object
 #' @export
@@ -26,7 +27,9 @@ crosspred <- function(y, X, Z = NULL,
                       compute_insample_predictions = FALSE,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
-                      silent = F, progress = NULL) {
+                      silent = F,
+                      progress = NULL,
+                      auxilliary_X = NULL) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
@@ -50,6 +53,7 @@ crosspred <- function(y, X, Z = NULL,
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
   is_fitted <- rep(list(NULL), sample_folds)
+  auxilliary_fitted <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
   colnames(mspe) <- paste("sample fold ", c(1:sample_folds))
   weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
@@ -133,6 +137,11 @@ crosspred <- function(y, X, Z = NULL,
                                   newZ = Z[-subsamples[[k]], , drop = F])
       }#IFELSE
     }#IF
+    # Compute auxilliary predictions (optional)
+    if (!is.null(auxilliary_X)) {
+      auxilliary_fitted[[k]] <- stats::predict(mdl_fit,
+                                               auxilliary_X[[k]])
+    }#if
   }#FOR
   # When multiple ensembles are computed, need to reorganize is_fitted
   nensb <- length(ensemble_type)
@@ -148,7 +157,8 @@ crosspred <- function(y, X, Z = NULL,
   }#IF
   # Organize and return output
   if (!calc_ensemble) weights <- mspe <- NULL
-  output <- list(oos_fitted = oos_fitted, is_fitted = is_fitted,
-                 weights = weights, mspe = mspe)
+  output <- list(oos_fitted = oos_fitted,
+                 weights = weights, mspe = mspe,
+                 is_fitted = is_fitted, auxilliary_fitted = auxilliary_fitted)
   return(output)
 }#CROSSPRED

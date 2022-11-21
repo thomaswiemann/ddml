@@ -16,7 +16,8 @@ crosspred(
   subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = F,
-  progress = NULL
+  progress = NULL,
+  auxilliary_X = NULL
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ crosspred(
 \item{silent}{abc}
 
 \item{progress}{abc}
+
+\item{auxilliary_X}{abc}
 }
 \value{
 object

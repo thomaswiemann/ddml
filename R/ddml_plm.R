@@ -112,15 +112,14 @@ ddml_plm <- function(y, D, X,
       # Organize complementary ensemble output
       coef[j] <- stats::coef(ols_fit_j)[2]
       ols_fit[[j]] <- ols_fit_j
-      weights[[2]][, j, ] <- D_X_res$weights[, j, ]
     }#FOR
     # Name output appropriately by ensemble type
     names(ols_fit) <- ensemble_type
   }#IF
 
   # Store complementary ensemble output
-  mspe <- list(D_X = D_X_res$mspe,
-               y_X = y_X_res$mspe)
+  mspe <- list(y_X = y_X_res$mspe,
+               D_X = D_X_res$mspe)
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
