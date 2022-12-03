@@ -20,7 +20,7 @@
 #'
 #' @examples
 #' 1 + 1
-ddml_epliv <- function(y, D, Z, X,
+ddml_fpliv <- function(y, D, Z, X,
                        learners,
                        learners_DXZ = learners,
                        learners_DX = learners,
@@ -203,4 +203,4 @@ ddml_epliv <- function(y, D, Z, X,
   # Amend class and return
   class(ddml_fit) <- c("ddml_epliv")
   return(ddml_fit)
-}#ddml_epliv
+}#DDML_FPLIV
