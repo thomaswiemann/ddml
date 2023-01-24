@@ -2,10 +2,23 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{predict.mdl_xgboost}
 \alias{predict.mdl_xgboost}
-\title{Predict method for mdl_xgboost fits.}
+\title{Title}
 \usage{
-\method{predict}{mdl_xgboost}(obj, newdata = NULL)
+\method{predict}{mdl_xgboost}(object, newdata = NULL, ...)
+}
+\arguments{
+\item{object}{abc}
+
+\item{newdata}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
 }
 \description{
-Predict method for mdl_xgboost fits.
+Title
+}
+\examples{
+1 + 1
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{mdl_randomForest}
 \alias{mdl_randomForest}
-\title{Wrapper function for \code{randomForest}.}
+\title{Title}
 \usage{
 mdl_randomForest(
   y,
@@ -12,9 +12,35 @@ mdl_randomForest(
   maxnodes = NULL,
   colsample_bytree = 0.6,
   subsample = 0.7,
-  replace = FALSE
+  replace = FALSE,
+  ...
 )
 }
+\arguments{
+\item{y}{abc}
+
+\item{X}{abc}
+
+\item{ntree}{abc}
+
+\item{nodesize}{abc}
+
+\item{maxnodes}{abc}
+
+\item{colsample_bytree}{abc}
+
+\item{subsample}{abc}
+
+\item{replace}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Wrapper function for \code{randomForest}.
+Title
+}
+\examples{
+1 + 1
 }

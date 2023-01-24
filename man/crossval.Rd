@@ -2,93 +2,42 @@
 % Please edit documentation in R/crossval.R
 \name{crossval}
 \alias{crossval}
-\title{Compute out-of-sample residuals via cross-validation.}
+\title{Title}
 \usage{
 crossval(
   y,
   X,
   Z = NULL,
-  models,
+  learners,
   cv_folds = 5,
   cv_subsamples = NULL,
-  setup_parallel = list(type = "dynamic", cores = 1),
-  silent = F
+  silent = F,
+  progress = NULL
 )
 }
 \arguments{
-\item{y}{A response vector.}
+\item{y}{abc}
 
-\item{X}{A feature matrix.}
+\item{X}{abc}
 
-\item{Z}{An optional instrument matrix.}
+\item{Z}{abc}
 
-\item{models}{A list of lists, each containing three named elements:
-\itemize{
-    \item{\code{fun} The function used to trained the model. The
-        function must be such that it predicts a named input \code{y}
-        using a named input \code{X}.}
-    \item{\code{assign_X} A vector of indices corresponding to features
-        in \code{X} that should be used for training.}
-    \item{\code{assign_Z} An optional vector of indices corresponding to
-        instruments in \code{Z} that should be used for training.}
-    \item{\code{args} Optional arguments to be passed to \code{what}}
-}}
+\item{learners}{abc}
 
-\item{cv_folds}{The number for cross-validation folds.}
+\item{cv_folds}{abc}
 
-\item{cv_subsamples}{An optional list of vectors, each containing indices of
-a test-sample. If not used-provided, the split sample folds are randomly
-drawn.}
+\item{cv_subsamples}{abc}
 
-\item{setup_parallel}{An list containing two named elements:
-\itemize{
-    \item{\code{type} A string of value \code{"static"} or
-        \code{"dynamic"}, indicating whether job scheduling should be
-        static (via \code{parSapply}) or dynamic (via \code{foreach}).}
-    \item{\code{cores} The number of processor units utilized. Note that
-        if \code{cores == 1}, \code{crossval} will not be computed in
-        parallel.
-    }
-}}
+\item{silent}{abc}
 
-\item{silent}{A boolean indicating whether current models and folds should be
-printed to the console.}
+\item{progress}{abc}
 }
 \value{
-\code{crossval} a list containig the following components:
-\describe{
-\item{\code{oos_resid}}{A matrix of out-of-sample residuals, each column
-    corresponding to a model in \code{models}.}
-\item{\code{cv_Z}}{A vector of model indices corresponding to models that
-    selected at least one instrument in each cross-validation fold.}
-}
+object
 }
 \description{
-Compute out-of-sample residuals via cross-validation.
+Title
 }
 \examples{
-
-# Simple example w/o instruments ============================================
-# Simulate small dataset
-X <- cbind(1, matrix(rnorm(100*99), 100, 99)) # Simulate features
-y <- X \%*\% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
-# Define arguments
-models <- list(list(fun = rlasso,
-                    args = list(include = NULL,
-                                iter_resid = 1, d = 5),
-                    assign_X = c(1:ncol(X))), # rlasso
-               list(fun = ols,
-                    args = list(),
-                    assign_X = c(1:ncol(X))), # ols w/ all features
-               list(fun = ols,
-                    args = list(),
-                    assign_X = c(1:50)) # ols w/ some arbitrary features
-# Compute cross-validation residuals
-cv_res <- crossval(y, X,
-                   models = models,
-                   cv_folds = 3,
-                   silent = T)
-# Compute MSPE by model
-colMeans(cv_res$oos_resid)
-
+1 + 1
 }

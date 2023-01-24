@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{mdl_xgboost}
 \alias{mdl_xgboost}
-\title{Wrapper function for \code{xgboost}.}
+\title{Title}
 \usage{
 mdl_xgboost(
   y,
@@ -19,9 +19,49 @@ mdl_xgboost(
   nrounds = 500,
   objective = "reg:squarederror",
   interaction_constraints = list(),
-  verbose = 0
+  verbose = 0,
+  ...
 )
 }
+\arguments{
+\item{y}{abc}
+
+\item{X}{abc}
+
+\item{num_parallel_tree}{abc}
+
+\item{min_child_weight}{abc}
+
+\item{colsample_bytree}{abc}
+
+\item{subsample}{abc}
+
+\item{colsample_bylevel}{abc}
+
+\item{colsample_bynode}{abc}
+
+\item{max.depth}{abc}
+
+\item{eta}{abc}
+
+\item{gamma}{abc}
+
+\item{nrounds}{abc}
+
+\item{objective}{abc}
+
+\item{interaction_constraints}{abc}
+
+\item{verbose}{abc}
+
+\item{...}{abc}
+}
+\value{
+abc
+}
 \description{
-Wrapper function for \code{xgboost}.
+Title
+}
+\examples{
+1 + 1
 }
