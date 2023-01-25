@@ -32,7 +32,7 @@ test_that("ddml_fpliv computes with an ensemble procedure", {
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
-                               ensemble_type = c("stacking"),
+                               ensemble_type = c("ols"),
                                cv_folds = 2,
                                sample_folds = 2,
                                silent = T)
@@ -55,7 +55,7 @@ test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
-                               ensemble_type = c("stacking"),
+                               ensemble_type = c("ols"),
                                sample_folds = 2,
                                cv_folds = 2,
                                enforce_LIE = FALSE,
@@ -79,9 +79,9 @@ test_that("ddml_fpliv computes with multiple ensemble procedures", {
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
-                               ensemble_type = c("stacking", "stacking_nn",
-                                                 "stacking_01",
-                                                 "stacking_best", "average"),
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
                                cv_folds = 2,
                                sample_folds = 2,
                                silent = T)
@@ -105,9 +105,9 @@ test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
-                               ensemble_type = c("stacking", "stacking_nn",
-                                                 "stacking_01",
-                                                 "stacking_best", "average"),
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
                                cv_folds = 2,
                                sample_folds = 2,
                                enforce_LIE = FALSE,
@@ -133,9 +133,9 @@ test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
                                as(Z, "sparseMatrix"),
                                as(X, "sparseMatrix"),
                                learners,
-                               ensemble_type = c("stacking", "stacking_nn",
-                                                 "stacking_01",
-                                                 "stacking_best", "average"),
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
                                cv_folds = 2,
                                sample_folds = 2,
                                silent = T)
@@ -167,9 +167,9 @@ test_that("ddml_fpliv computes with different sets of learners", {
                                learners,
                                learners_DXZ = learners_DXZ,
                                learners_DX = learners_DX,
-                               ensemble_type = c("stacking", "stacking_nn",
-                                                 "stacking_01",
-                                                 "stacking_best", "average"),
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
                                cv_folds = 2,
                                sample_folds = 2,
                                silent = T)

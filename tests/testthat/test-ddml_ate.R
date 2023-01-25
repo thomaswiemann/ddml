@@ -31,7 +31,7 @@ test_that("ddml_plm computes with an ensemble procedure", {
   # Compute DDML PLM estimator
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners = learners,
-                           ensemble_type = c("stacking"),
+                           ensemble_type = c("ols"),
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
@@ -53,9 +53,9 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
   # Compute DDML PLM estimator
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners,
-                           ensemble_type = c("stacking", "stacking_nn",
-                                             "stacking_01",
-                                             "stacking_best", "average"),
+                           ensemble_type = c("ols", "nnls",
+                                             "nnls1",
+                                             "singlebest", "average"),
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
