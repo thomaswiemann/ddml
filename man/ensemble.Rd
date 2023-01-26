@@ -8,7 +8,7 @@ ensemble(
   y,
   X,
   Z = NULL,
-  type = c("average"),
+  type = "average",
   learners,
   cv_folds = 5,
   cv_subsamples = NULL,

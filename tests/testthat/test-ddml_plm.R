@@ -30,7 +30,7 @@ test_that("ddml_plm computes with an ensemble procedure", {
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                          learners = learners,
-                         ensemble_type = c("ols"),
+                         ensemble_type = "ols",
                          shortstack = FALSE,
                          cv_folds = 3,
                          sample_folds = 3,

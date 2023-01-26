@@ -7,6 +7,7 @@
 #' @param learners_DX abc
 #' @param sample_folds abc
 #' @param ensemble_type abc
+#' @param shortstack abc
 #' @param cv_folds abc
 #' @param subsamples abc
 #' @param cv_subsamples_list abc
@@ -21,12 +22,12 @@ ddml_plm <- function(y, D, X,
                     learners,
                     learners_DX = learners,
                     sample_folds = 2,
-                    ensemble_type = c("average"),
+                    ensemble_type = "average",
                     shortstack = FALSE,
                     cv_folds = 5,
                     subsamples = NULL,
                     cv_subsamples_list = NULL,
-                    silent = F) {
+                    silent = FALSE) {
   # Data parameters
   nobs <- length(y)
 

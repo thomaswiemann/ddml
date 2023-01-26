@@ -11,7 +11,7 @@ ddml_ate(
   learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
   cv_folds = 5,
   subsamples_D0 = NULL,
   subsamples_D1 = NULL,

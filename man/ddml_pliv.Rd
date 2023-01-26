@@ -13,7 +13,7 @@ ddml_pliv(
   learners_ZX = learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
   cv_folds = 5,
   subsamples = NULL,
   cv_subsamples_list = NULL,

@@ -8,6 +8,7 @@
 #' @param ensemble_type abc
 #' @param cv_folds abc
 #' @param compute_insample_predictions abc
+#' @param compute_predictions_bylearner abc
 #' @param subsamples abc
 #' @param cv_subsamples_list abc
 #' @param silent abc
@@ -22,13 +23,13 @@
 crosspred <- function(y, X, Z = NULL,
                       learners,
                       sample_folds = 2,
-                      ensemble_type = c("average"),
+                      ensemble_type = "average",
                       cv_folds = 5,
                       compute_insample_predictions = FALSE,
                       compute_predictions_bylearner = FALSE,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
-                      silent = F,
+                      silent = FALSE,
                       progress = NULL,
                       auxilliary_X = NULL) {
   # Data parameters

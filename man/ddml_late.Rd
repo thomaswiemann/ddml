@@ -13,7 +13,7 @@ ddml_late(
   learners_DXZ = learners,
   learners_ZX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
   cv_folds = 5,
   subsamples_Z0 = NULL,
   subsamples_Z1 = NULL,

@@ -17,7 +17,7 @@
 #' @examples
 #' 1 + 1
 ensemble <- function(y, X, Z = NULL,
-                     type = c("average"),
+                     type = "average",
                      learners,
                      cv_folds = 5,
                      cv_subsamples = NULL,
@@ -110,7 +110,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 
 # Complementary functions ======================================================
 ensemble_weights <- function(y, X, Z = NULL,
-                             type = c("average"),
+                             type = "average",
                              learners,
                              cv_folds = 5,
                              cv_subsamples = NULL,

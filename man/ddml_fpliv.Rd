@@ -13,7 +13,7 @@ ddml_fpliv(
   learners_DXZ = learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
   cv_folds = 5,
   enforce_LIE = TRUE,
   subsamples = NULL,
