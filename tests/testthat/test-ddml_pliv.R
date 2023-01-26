@@ -33,7 +33,7 @@ test_that("ddml_pliv computes with an ensemble procedure", {
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
-                             ensemble_type = c("stacking"),
+                             ensemble_type = c("ols"),
                              cv_folds = 2,
                              sample_folds = 2,
                              silent = T)
@@ -56,9 +56,9 @@ test_that("ddml_pliv computes with multiple ensemble procedures", {
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
-                             ensemble_type = c("stacking", "stacking_nn",
-                                               "stacking_01",
-                                               "stacking_best", "average"),
+                             ensemble_type = c("ols", "nnls",
+                                               "nnls1",
+                                               "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
@@ -92,9 +92,45 @@ test_that("ddml_pliv computes with different sets of learners", {
                              learners,
                              learners_ZX = learners_ZX,
                              learners_DX = learners_DX,
-                             ensemble_type = c("stacking", "stacking_nn",
-                                               "stacking_01",
-                                               "stacking_best", "average"),
+                             ensemble_type = c("ols", "nnls",
+                                               "nnls1",
+                                               "singlebest", "average"),
+                             cv_folds = 2,
+                             sample_folds = 2,
+                             silent = T)
+  # Check output with expectations
+  expect_equal(length(ddml_pliv_fit$coef), 5)
+})#TEST_THAT
+
+test_that("ddml_pliv computes with different sets of learners & shortstack", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  Z <- matrix(rnorm(nobs), nobs, 1)
+  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
+  y <- D + X %*% runif(40) + UV[, 2]
+  # Define arguments
+  learners <- list(list(fun = ols),
+                   list(fun = ols),
+                   list(fun = ols))
+  learners_ZX <- list(list(fun = mdl_glmnet,
+                           args = list(alpha = 0.5)),
+                      list(fun = mdl_glmnet,
+                           args = list(alpha = 1)))
+  learners_DX <- list(list(fun = ols),
+                      list(fun = mdl_glmnet,
+                           args = list(alpha = 0.5)),
+                      list(fun = ols))
+  # Compute LIE-conform DDML IV estimator
+  ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
+                             learners,
+                             learners_ZX = learners_ZX,
+                             learners_DX = learners_DX,
+                             ensemble_type = c("ols", "nnls",
+                                               "nnls1",
+                                               "singlebest", "average"),
+                             shortstack = T,
                              cv_folds = 2,
                              sample_folds = 2,
                              silent = T)

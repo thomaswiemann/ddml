@@ -13,7 +13,8 @@ ddml_pliv(
   learners_ZX = learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
+  shortstack = FALSE,
   cv_folds = 5,
   subsamples = NULL,
   cv_subsamples_list = NULL,
@@ -38,6 +39,8 @@ ddml_pliv(
 \item{sample_folds}{abc}
 
 \item{ensemble_type}{abc}
+
+\item{shortstack}{abc}
 
 \item{cv_folds}{abc}
 

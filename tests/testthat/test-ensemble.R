@@ -7,7 +7,7 @@ test_that("ensemble_weights returns a weight matrix", {
   learners <- list(list(fun = mdl_glmnet),
                    list(fun = ols))
   # Compute ensemble weights with and without passthrough
-  ensemble_types = c("average", "cv", "stacking", "stacking_nn", "stacking_10")
+  ensemble_types = c("average", "singlebest", "ols", "nnls", "nnls1")
   ens_w_res <- ensemble_weights(D, X, Z,
                                 type = ensemble_types,
                                 learners,
@@ -34,7 +34,7 @@ test_that("ensemble returns a list of fitted learners", {
                    list(fun = ols))
   # Compute ensemble
   ens_fit <- ensemble(D, X, Z,
-                      type = c("average", "stacking", "cv"),
+                      type = c("average", "ols", "singlebest"),
                       learners,
                       cv_folds = 3,
                       silent = T)
@@ -52,7 +52,7 @@ test_that("prediction with ensemble learners returns fitted values", {
                    list(fun = ols))
   # Compute ensemble
   ens_fit <- ensemble(D, X, Z,
-                      type = c("average", "stacking", "cv"),
+                      type = c("average", "ols", "singlebest"),
                       learners,
                       cv_folds = 3,
                       silent = T)

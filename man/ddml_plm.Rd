@@ -11,11 +11,12 @@ ddml_plm(
   learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
+  shortstack = FALSE,
   cv_folds = 5,
   subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ ddml_plm(
 \item{sample_folds}{abc}
 
 \item{ensemble_type}{abc}
+
+\item{shortstack}{abc}
 
 \item{cv_folds}{abc}
 

@@ -13,7 +13,8 @@ ddml_late(
   learners_DXZ = learners,
   learners_ZX = learners,
   sample_folds = 2,
-  ensemble_type = c("average"),
+  ensemble_type = "average",
+  shortstack = FALSE,
   cv_folds = 5,
   subsamples_Z0 = NULL,
   subsamples_Z1 = NULL,
@@ -40,6 +41,8 @@ ddml_late(
 \item{sample_folds}{abc}
 
 \item{ensemble_type}{abc}
+
+\item{shortstack}{abc}
 
 \item{cv_folds}{abc}
 

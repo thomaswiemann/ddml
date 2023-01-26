@@ -17,7 +17,7 @@
 #' @examples
 #' 1 + 1
 ensemble <- function(y, X, Z = NULL,
-                     type = c("average"),
+                     type = "average",
                      learners,
                      cv_folds = 5,
                      cv_subsamples = NULL,
@@ -110,7 +110,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 
 # Complementary functions ======================================================
 ensemble_weights <- function(y, X, Z = NULL,
-                             type = c("average"),
+                             type = "average",
                              learners,
                              cv_folds = 5,
                              cv_subsamples = NULL,
@@ -119,9 +119,10 @@ ensemble_weights <- function(y, X, Z = NULL,
   # Data parameters
   nlearners <- length(learners)
   ntype <- length(type)
+
   # Check whether out-of-sample residuals should be calculated to inform the
   #     ensemble weights, and whether previous results are available.
-  cv_stacking <- c("stacking", "stacking_nn", "stacking_01", "stacking_best")
+  cv_stacking <- c("ols", "nnls", "nnls1", "singlebest")
   if (any(cv_stacking %in% type) & is.null(cv_results)) {
     # Run crossvalidation procedure
     cv_results <- crossval(y, X, Z,
@@ -137,7 +138,7 @@ ensemble_weights <- function(y, X, Z = NULL,
       # Assign 1 to all included learners and normalize
       weights[, k] <- 1
       weights[, k] <- weights[, k] / sum(weights[, k])
-    } else if (type[k] == "stacking_01") {
+    } else if (type[k] == "nnls1") {
       # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
       # the quadratic programming problem.
       sq_resid <- Matrix::crossprod(cv_results$oos_resid)
@@ -155,17 +156,17 @@ ensemble_weights <- function(y, X, Z = NULL,
       weights[, k] <- r$alpha
       # Remove sink so output is no longer surpressed
       sink()
-    } else if (type[k] == "stacking_nn") {
+    } else if (type[k] == "nnls") {
       # Reconstruct out of sample fitted values
       oos_fitted <- as.numeric(y) - cv_results$oos_resid
       # For non-negative stacking, calculate the non-negatuve ols coefficients
       weights[, k] <- nnls::nnls(oos_fitted, y)$x
-    } else if (type[k] == "stacking") {
+    } else if (type[k] == "ols") {
       # Reconstruct out of sample fitted values
       oos_fitted <- as.numeric(y) - cv_results$oos_resid
       # For unconstrained stacking, simply calculate the ols coefficients
       weights[, k] <- ols(y, oos_fitted)$coef
-    } else if (type[k] == "stacking_best") {
+    } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
       mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = F])
       mdl_min <- c(1:nlearners)[mdl_min]
