@@ -56,11 +56,13 @@ crosspred <- function(y, X, Z = NULL,
   oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
   oos_fitted_bylearner <- matrix(0, nobs, nlearners)
   is_fitted <- rep(list(NULL), sample_folds)
+  is_fitted_bylearner <- rep(list(NULL), sample_folds)
   auxilliary_fitted <- rep(list(NULL), sample_folds)
+  auxilliary_fitted_bylearner <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
   colnames(mspe) <- paste("sample fold ", c(1:sample_folds))
   weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
-  dimnames(weights) <- list(NULL, NULL,
+  dimnames(weights) <- list(NULL, ensemble_type,
                             paste("sample fold ", c(1:sample_folds)))
   # Loop over training samples
   for (k in 1:sample_folds) {
@@ -152,10 +154,19 @@ crosspred <- function(y, X, Z = NULL,
       mdl_fit$weights <- diag(1, nlearners)
       oos_fitted_bylearner[subsamples[[k]], ] <-
         as.numeric(predict.ensemble(mdl_fit,
-                                    newdata = X[subsamples[[k]], ,
-                                                drop = F],
-                                    newZ = Z[subsamples[[k]], ,
-                                             drop = F]))
+                                    newdata = X[subsamples[[k]], , drop = F],
+                                    newZ = Z[subsamples[[k]], , drop = F]))
+      # Compute in-sample predictions (optional)
+      if (compute_insample_predictions) {
+        is_fitted_bylearner[[k]] <-
+          predict.ensemble(mdl_fit, newdata = X[-subsamples[[k]], ,drop = F],
+                           newZ = Z[-subsamples[[k]], , drop = F])
+      }#IF
+      # Compute auxilliary predictions by learner (optional)
+      if (!is.null(auxilliary_X)) {
+        auxilliary_fitted_bylearner[[k]] <- stats::predict(mdl_fit,
+                                                           auxilliary_X[[k]])
+      }#if
     }#IF
   }#FOR
   # When multiple ensembles are computed, need to reorganize is_fitted
@@ -176,6 +187,8 @@ crosspred <- function(y, X, Z = NULL,
                  weights = weights, mspe = mspe,
                  is_fitted = is_fitted,
                  auxilliary_fitted = auxilliary_fitted,
-                 oos_fitted_bylearner = oos_fitted_bylearner)
+                 oos_fitted_bylearner = oos_fitted_bylearner,
+                 is_fitted_bylearner = is_fitted_bylearner,
+                 auxilliary_fitted_bylearner = auxilliary_fitted_bylearner)
   return(output)
 }#CROSSPRED

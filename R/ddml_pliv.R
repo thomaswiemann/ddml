@@ -9,6 +9,7 @@
 #' @param learners_DX abc
 #' @param sample_folds abc
 #' @param ensemble_type abc
+#' @param shortstack abc
 #' @param cv_folds abc
 #' @param subsamples abc
 #' @param cv_subsamples_list abc
@@ -25,6 +26,7 @@ ddml_pliv <- function(y, D, Z, X,
                       learners_DX = learners,
                       sample_folds = 2,
                       ensemble_type = "average",
+                      shortstack = FALSE,
                       cv_folds = 5,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
@@ -42,31 +44,28 @@ ddml_pliv <- function(y, D, Z, X,
   sample_folds <- length(subsamples)
 
   # Compute estimates of E[y|X]
-  y_X_res <- crosspred(y, X,
-                       learners = learners, ensemble_type = ensemble_type,
-                       cv_subsamples_list = cv_subsamples_list,
-                       subsamples = subsamples,
-                       compute_insample_predictions = F,
-                       silent = silent, progress = "E[Y|X]: ")
-  update_progress(silent)
+  y_X_res <- get_CEF(y, X,
+                     learners = learners, ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[Z|X].
-  Z_X_res <- crosspred(Z, X,
-                       learners = learners_ZX, ensemble_type = ensemble_type,
-                       cv_subsamples_list = cv_subsamples_list,
-                       subsamples = subsamples,
-                       compute_insample_predictions = F,
-                       silent = silent, progress = "E[Z|X]: ")
-  update_progress(silent)
+  Z_X_res <- get_CEF(y, X,
+                     learners = learners_ZX, ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     silent = silent, progress = "E[Z|X]: ")
 
   # Compute estimates of E[D|X].
-  D_X_res <- crosspred(D, X,
-                       learners = learners_DX, ensemble_type = ensemble_type,
-                       cv_subsamples_list = cv_subsamples_list,
-                       subsamples = subsamples,
-                       compute_insample_predictions = F,
-                       silent = silent, progress = "E[D|X]: ")
-  update_progress(silent)
+  D_X_res <- get_CEF(D, X,
+                     learners = learners_DX, ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     silent = silent, progress = "E[D|X]: ")
 
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- length(ensemble_type) > 1
@@ -94,19 +93,16 @@ ddml_pliv <- function(y, D, Z, X,
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     nensb <- length(ensemble_type)
     coef <- matrix(0, 1, nensb)
-    mspe <- iv_fit <- rep(list(1), nensb)
+    iv_fit <- rep(list(1), nensb)
     nlearners <- length(learners)
     nlearners_DX <- length(learners_DX); nlearners_ZX <- length(learners_ZX)
-    weights <- list(array(0, dim = c(nlearners, nensb, sample_folds)),
-                    array(0, dim = c(nlearners_DX, nensb, sample_folds)),
-                    array(0, dim = c(nlearners_ZX, nensb, sample_folds)))
-    weights[[1]] <- y_X_res$weights; weights[[3]] <- Z_X_res$weights
+    # Initialize weights
+    weights <- list()
+    weights[[1]] <- y_X_res$weights; weights[[2]] <- D_X_res$weights
+    weights[[3]] <- Z_X_res$weights
     # Assign names for more legible output
-    colnames(coef) <- names(mspe) <- names(iv_fit) <- ensemble_type
+    colnames(coef) <- names(iv_fit) <- ensemble_type
     names(weights) <- c("y_X", "D_X", "Z_X")
-    for (j in 1:3) {
-      dimnames(weights[[j]]) <- list(NULL, ensemble_type, NULL)
-    }#FOR
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # Residualize

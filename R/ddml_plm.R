@@ -50,38 +50,22 @@ ddml_plm <- function(y, D, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|X]
-  if (shortstack) {
-    y_X_res <- shortstacking(y, X,
-                             learners = learners,
-                             ensemble_type = ensemble_type,
-                             subsamples = subsamples,
-                             silent = silent, progress = "E[Y|X]: ")
-  } else {
-    y_X_res <- crosspred(y, X,
-                         learners = learners,
-                         ensemble_type = ensemble_type,
-                         cv_subsamples_list = cv_subsamples_list,
-                         subsamples = subsamples,
-                         silent = silent, progress = "E[Y|X]: ")
-  }#IFELSE
-  update_progress(silent)
+  y_X_res <- get_CEF(y, X,
+                     learners = learners,
+                     ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X].
-  if (shortstack) {
-    D_X_res <- shortstacking(D, X, Z = NULL,
-                             learners = learners_DX,
-                             ensemble_type = ensemble_type,
-                             subsamples = subsamples,
-                             silent = silent, progress = "E[D|X]: ")
-  } else {
-    D_X_res <- crosspred(D, X, Z = NULL,
-                         learners = learners_DX,
-                         ensemble_type = ensemble_type,
-                         cv_subsamples_list = cv_subsamples_list,
-                         subsamples = subsamples,
-                         silent = silent, progress = "E[D|X]: ")
-  }#IFELSE
-  update_progress(silent)
+  D_X_res <- get_CEF(D, X,
+                     learners = learners_DX,
+                     ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     silent = silent, progress = "E[D|X]: ")
 
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- length(ensemble_type) > 1
@@ -109,25 +93,12 @@ ddml_plm <- function(y, D, X,
     coef <- matrix(0, 1, nensb)
     mspe <- ols_fit <- rep(list(1), nensb)
     nlearners <- length(learners); nlearners_DX <- length(learners_DX)
-    # Initialize weights
-    if (shortstack) {
-      weights <- list(array(0, dim = c(nlearners, nensb)),
-                      array(0, dim = c(nlearners_DX, nensb)))
-    } else {
-      weights <- list(array(0, dim = c(nlearners, nensb, sample_folds)),
-                      array(0, dim = c(nlearners_DX, nensb, sample_folds)))
-    }#IFELSE
+    # Ensemble weights
+    weights <- list()
     weights[[1]] <- y_X_res$weights; weights[[2]] <- D_X_res$weights
     # Assign names for more legible output
     colnames(coef) <- names(mspe) <- names(ols_fit) <- ensemble_type
     names(weights) <- c("y_X", "D_X")
-    for (j in 1:2) {
-      if (shortstack) {
-        dimnames(weights[[j]]) <- list(NULL, ensemble_type)
-      } else {
-        dimnames(weights[[j]]) <- list(NULL, ensemble_type, NULL)
-      }#IFELSE
-    }#FOR
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # Residualize

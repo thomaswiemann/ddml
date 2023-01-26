@@ -9,6 +9,7 @@
 #' @param learners_DX abc
 #' @param sample_folds abc
 #' @param ensemble_type abc
+#' @param shortstack abc
 #' @param cv_folds abc
 #' @param enforce_LIE abc
 #' @param subsamples abc
@@ -26,6 +27,7 @@ ddml_fpliv <- function(y, D, Z, X,
                        learners_DX = learners,
                        sample_folds = 2,
                        ensemble_type = "average",
+                       shortstack = FALSE,
                        cv_folds = 5,
                        enforce_LIE = TRUE,
                        subsamples = NULL,
@@ -53,33 +55,34 @@ ddml_fpliv <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|X]
-  y_X_res <- crosspred(y, X, Z = NULL,
-                       learners = learners, ensemble_type = ensemble_type,
-                       cv_subsamples_list = cv_subsamples_list,
-                       subsamples = subsamples,
-                       compute_insample_predictions = F,
-                       silent = silent, progress = "E[Y|X]: ")
-  update_progress(silent)
+  y_X_res <- get_CEF(y, X, Z = NULL,
+                     learners = learners, ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     subsamples = subsamples,
+                     cv_subsamples_list = cv_subsamples_list,
+                     compute_insample_predictions = F,
+                     silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
-  D_XZ_res <- crosspred(D, X, Z,
-                        learners = learners_DXZ, ensemble_type = ensemble_type,
-                        cv_subsamples_list = cv_subsamples_list,
-                        subsamples = subsamples,
-                        compute_insample_predictions = enforce_LIE,
-                        silent = silent, progress = "E[D|Z,X]: ")
+  D_XZ_res <- get_CEF(D, X, Z,
+                      learners = learners_DXZ, ensemble_type = ensemble_type,
+                      shortstack = shortstack,
+                      subsamples = subsamples,
+                      cv_subsamples_list = cv_subsamples_list,
+                      compute_insample_predictions = enforce_LIE,
+                      silent = silent, progress = "E[D|Z,X]: ")
   update_progress(silent)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {
-    D_X_res <- crosspred(D, X, Z = NULL,
-                         learners = learners_DX, ensemble_type = ensemble_type,
-                         cv_subsamples_list = cv_subsamples_list,
-                         subsamples = subsamples,
-                         compute_insample_predictions = F,
-                         silent = silent, progress = "E[D|X]: ")
-    update_progress(silent)
+    D_X_res <- get_CEF(D, X, Z = NULL,
+                       learners = learners_DX, ensemble_type = ensemble_type,
+                       shortstack = shortstack,
+                       subsamples = subsamples,
+                       cv_subsamples_list = cv_subsamples_list,
+                       compute_insample_predictions = F,
+                       silent = silent, progress = "E[D|X]: ")
   }#IF
 
   # Check whether multiple ensembles are computed simultaneously.
@@ -92,14 +95,15 @@ ddml_fpliv <- function(y, D, Z, X,
     #     used for the calculation of the estimates of E[D|X].
     if (enforce_LIE) {
       # Compute LIE-conform estimates of E[D|X]
-      D_X_res <- crosspred(D_XZ_res$is_fitted, X, Z = NULL,
-                           learners = learners_DX,
-                           ensemble_type = ensemble_type,
-                           cv_subsamples_list = cv_subsamples_list,
-                           subsamples = subsamples,
-                           compute_insample_predictions = F,
-                           silent = silent, progress = "E[D|X]: ")
-      update_progress(silent)
+      D_X_res <- get_CEF(D_XZ_res$is_fitted, X, Z = NULL,
+                         learners = learners_DX,
+                         ensemble_type = ensemble_type,
+                         shortstack = shortstack,
+                         cv_subsamples_list = cv_subsamples_list,
+                         subsamples = subsamples,
+                         compute_insample_predictions = F,
+                         silent = silent, progress = "E[D|X]: ",
+                         shortstack_y = D_XZ_res$oos_fitted)
     }#IFELSE
 
     # Residualize
@@ -122,7 +126,7 @@ ddml_fpliv <- function(y, D, Z, X,
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     nensb <- length(ensemble_type)
     coef <- matrix(0, 1, nensb)
-    mspe <- iv_fit <- rep(list(1), nensb)
+    iv_fit <- rep(list(1), nensb)
     nlearners <- length(learners)
     nlearners_DX <- length(learners_DX); nlearners_DXZ <- length(learners_DXZ)
     weights <- list(array(0, dim = c(nlearners, nensb, sample_folds)),
@@ -130,26 +134,24 @@ ddml_fpliv <- function(y, D, Z, X,
                     array(0, dim = c(nlearners_DXZ, nensb, sample_folds)))
     weights[[1]] <- y_X_res$weights; weights[[3]] <- D_XZ_res$weights
     # Assign names for more legible output
-    colnames(coef) <- names(mspe) <- names(iv_fit) <- ensemble_type
+    colnames(coef) <- names(iv_fit) <- ensemble_type
     names(weights) <- c("y_X", "D_X", "D_XZ")
-    for (j in 1:3) {
-      dimnames(weights[[j]]) <- list(NULL, ensemble_type, NULL)
-    }#FOR
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # When the LIE is enforced, compute LIE-conform estimates of E[D|X].
       #     Otherwise use the previously calculated estimates of E[D|X].
       if (enforce_LIE) {
         progress_j <- paste0("E[D|X] (", ensemble_type[j], "): ")
-        D_X_res <- crosspred(D_XZ_res$is_fitted[[j]], X, Z = NULL,
-                             learners = learners_DX,
-                             ensemble_type = ensemble_type[j],
-                             cv_subsamples_list = cv_subsamples_list,
-                             subsamples = subsamples,
-                             compute_insample_predictions = F,
-                             silent = silent,
-                             progress = progress_j)
-        update_progress(silent)
+        D_X_res <- get_CEF(D_XZ_res$is_fitted[[j]], X, Z = NULL,
+                           learners = learners_DX,
+                           ensemble_type = ensemble_type[j],
+                           shortstack = shortstack,
+                           cv_subsamples_list = cv_subsamples_list,
+                           subsamples = subsamples,
+                           compute_insample_predictions = F,
+                           silent = silent,
+                           progress = progress_j,
+                           shortstack_y = D_XZ_res$oos_fitted[, j])
       }#IF
 
       # Residualize

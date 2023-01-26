@@ -9,6 +9,7 @@
 #' @param learners_ZX abc
 #' @param sample_folds abc
 #' @param ensemble_type abc
+#' @param shortstack abc
 #' @param cv_folds abc
 #' @param subsamples_Z0 abc
 #' @param subsamples_Z1 abc
@@ -27,6 +28,7 @@ ddml_late <- function(y, D, Z, X,
                      learners_ZX = learners,
                      sample_folds = 2,
                      ensemble_type = "average",
+                     shortstack = FALSE,
                      cv_folds = 5,
                      subsamples_Z0 = NULL,
                      subsamples_Z1 = NULL,
@@ -87,51 +89,51 @@ ddml_late <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|Z=0,X]
-  y_X_Z0_res <- crosspred(y[is_Z0], X[is_Z0, , drop = F],
-                          learners = learners, ensemble_type = ensemble_type,
-                          cv_subsamples_list = cv_subsamples_list_Z0,
-                          subsamples = subsamples_Z0,
-                          silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxilliary_X = auxilliary_X_Z1)
-  update_progress(silent)
+  y_X_Z0_res <- get_CEF(y[is_Z0], X[is_Z0, , drop = F],
+                        learners = learners, ensemble_type = ensemble_type,
+                        shortstack = shortstack,
+                        cv_subsamples_list = cv_subsamples_list_Z0,
+                        subsamples = subsamples_Z0,
+                        silent = silent, progress = "E[Y|Z=0,X]: ",
+                        auxilliary_X = auxilliary_X_Z1)
 
   # Compute estimates of E[y|Z=1,X]
-  y_X_Z1_res <- crosspred(y[-is_Z0], X[-is_Z0, , drop = F],
-                          learners = learners, ensemble_type = ensemble_type,
-                          cv_subsamples_list = cv_subsamples_list_Z1,
-                          subsamples = subsamples_Z1,
-                          silent = silent, progress = "E[Y|Z=1,X]: ",
-                          auxilliary_X = auxilliary_X_Z0)
-  update_progress(silent)
+  y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
+                        learners = learners, ensemble_type = ensemble_type,
+                        shortstack = shortstack,
+                        cv_subsamples_list = cv_subsamples_list_Z1,
+                        subsamples = subsamples_Z1,
+                        silent = silent, progress = "E[Y|Z=1,X]: ",
+                        auxilliary_X = auxilliary_X_Z0)
 
   # Compute estimates of E[D|Z=0,X]
-  D_X_Z0_res <- crosspred(D[is_Z0], X[is_Z0, , drop = F],
-                          learners = learners_DXZ,
-                          ensemble_type = ensemble_type,
-                          cv_subsamples_list = cv_subsamples_list_Z0,
-                          subsamples = subsamples_Z0,
-                          silent = silent, progress = "E[D|Z=0,X]: ",
-                          auxilliary_X = auxilliary_X_Z1)
-  update_progress(silent)
+  D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = F],
+                        learners = learners_DXZ,
+                        ensemble_type = ensemble_type,
+                        shortstack = shortstack,
+                        cv_subsamples_list = cv_subsamples_list_Z0,
+                        subsamples = subsamples_Z0,
+                        silent = silent, progress = "E[D|Z=0,X]: ",
+                        auxilliary_X = auxilliary_X_Z1)
 
   # Compute estimates of E[D|Z=1,X]
-  D_X_Z1_res <- crosspred(D[-is_Z0], X[-is_Z0, , drop = F],
-                          learners = learners_DXZ,
-                          ensemble_type = ensemble_type,
-                          cv_subsamples_list = cv_subsamples_list_Z1,
-                          subsamples = subsamples_Z1,
-                          silent = silent, progress = "E[D|Z=1,X]: ",
-                          auxilliary_X = auxilliary_X_Z0)
-  update_progress(silent)
+  D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = F],
+                        learners = learners_DXZ,
+                        ensemble_type = ensemble_type,
+                        shortstack = shortstack,
+                        cv_subsamples_list = cv_subsamples_list_Z1,
+                        subsamples = subsamples_Z1,
+                        silent = silent, progress = "E[D|Z=1,X]: ",
+                        auxilliary_X = auxilliary_X_Z0)
 
   # Compute estimates of E[Z|X]
-  Z_X_res <- crosspred(Z, X,
-                       learners = learners_ZX, ensemble_type = ensemble_type,
-                       cv_subsamples_list = cv_subsamples_list,
-                       subsamples = subsamples,
-                       compute_insample_predictions = F,
-                       silent = silent, progress = "E[Z|X]: ")
-  update_progress(silent)
+  Z_X_res <- get_CEF(Z, X,
+                     learners = learners_ZX, ensemble_type = ensemble_type,
+                     shortstack = shortstack,
+                     cv_subsamples_list = cv_subsamples_list,
+                     subsamples = subsamples,
+                     compute_insample_predictions = F,
+                     silent = silent, progress = "E[Z|X]: ")
 
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- nensb > 1
@@ -178,11 +180,6 @@ ddml_late <- function(y, D, Z, X,
                   D_X_Z0 = D_X_Z0_res$weights,
                   D_X_Z1 = D_X_Z1_res$weights,
                   Z_X = Z_X_res$weights)
-  if (multiple_ensembles) {
-    for (j in 1:3) {
-      dimnames(weights[[j]]) <- list(NULL, ensemble_type, NULL)
-    }#FOR
-  }#IF
 
   # Store complementary ensemble output
   mspe <- list(y_X_Z0 = y_X_Z0_res$mspe,

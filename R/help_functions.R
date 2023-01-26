@@ -17,12 +17,6 @@ generate_subsamples <- function(nobs, sample_folds) {
   return(subsamples)
 }#GENERATE_SUBSAMPLES
 
-# Utility to print progress ot console
-update_progress <- function(silent) {
-  if (!silent) cat(" -- Done! \n")
-}#UPDATE_PROGRESS
-
-
 # Simple generalized inverse wrapper.
 csolve <- function(X) {
   # Attmept inversion

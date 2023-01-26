@@ -12,6 +12,7 @@ ddml_ate(
   learners_DX = learners,
   sample_folds = 2,
   ensemble_type = "average",
+  shortstack = FALSE,
   cv_folds = 5,
   subsamples_D0 = NULL,
   subsamples_D1 = NULL,
@@ -34,6 +35,8 @@ ddml_ate(
 \item{sample_folds}{abc}
 
 \item{ensemble_type}{abc}
+
+\item{shortstack}{abc}
 
 \item{cv_folds}{abc}
 
