@@ -31,6 +31,7 @@ test_that("ddml_plm computes with an ensemble procedure", {
   ddml_plm_fit <- ddml_plm(y, D, X,
                          learners = learners,
                          ensemble_type = c("ols"),
+                         shortstack = FALSE,
                          cv_folds = 3,
                          sample_folds = 3,
                          silent = T)
@@ -54,6 +55,53 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
                            ensemble_type = c("ols", "nnls",
                                              "nnls1",
                                         "singlebest", "average"),
+                           shortstack = FALSE,
+                           cv_folds = 3,
+                           sample_folds = 3,
+                           silent = T)
+  # Check output with expectations
+  expect_equal(length(ddml_plm_fit$coef), 5)
+})#TEST_THAT
+
+test_that("ddml_plm computes w/ an ensemble procedure & shortstacking", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  D <-  X %*% runif(40) + rnorm(nobs)
+  y <- D + X %*% runif(40) + rnorm(nobs)
+  # Define arguments
+  learners <- list(list(fun = mdl_glmnet,
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
+  # Compute DDML PLM estimator
+  ddml_plm_fit <- ddml_plm(y, D, X,
+                           learners = learners,
+                           ensemble_type = c("ols"),
+                           shortstack = TRUE,
+                           cv_folds = 3,
+                           sample_folds = 3,
+                           silent = T)
+  # Check output with expectations
+  expect_equal(length(ddml_plm_fit$coef), 1)
+})#TEST_THAT
+
+test_that("ddml_plm computes w/ multiple ensemble procedures & shortstacking", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  D <-  X %*% runif(40) + rnorm(nobs)
+  y <- D + X %*% runif(40) + rnorm(nobs)
+  # Define arguments
+  learners <- list(list(fun = mdl_glmnet,
+                        args = list(alpha = 0.5)),
+                   list(fun = ols))
+  # Compute DDML PLM estimator
+  ddml_plm_fit <- ddml_plm(y, D, X,
+                           learners,
+                           ensemble_type = c("ols", "nnls",
+                                             "nnls1",
+                                             "singlebest", "average"),
+                           shortstack = TRUE,
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)

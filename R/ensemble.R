@@ -119,6 +119,7 @@ ensemble_weights <- function(y, X, Z = NULL,
   # Data parameters
   nlearners <- length(learners)
   ntype <- length(type)
+
   # Check whether out-of-sample residuals should be calculated to inform the
   #     ensemble weights, and whether previous results are available.
   cv_stacking <- c("ols", "nnls", "nnls1", "singlebest")
