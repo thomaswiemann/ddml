@@ -35,13 +35,20 @@ ddml_pliv <- function(y, D, Z, X,
   nobs <- length(y)
   nlearners <- length(learners)
 
-  # Draw samples if not user-supplied
+  # Create sample fold tuple
   if (is.null(subsamples)) {
-    subsamples <- split(c(1:nobs),
-                        sample(rep(c(1:sample_folds),
-                                   ceiling(nobs / sample_folds)))[1:nobs])
+    subsamples <- generate_subsamples(nobs, sample_folds)
   }#IF
   sample_folds <- length(subsamples)
+
+  # Create cv-subsamples tuple
+  if (is.null(cv_subsamples_list) & !shortstack) {
+    cv_subsamples_list <- rep(list(NULL), sample_folds)
+    for (k in 1:sample_folds) {
+      nobs_k <- nobs - length(subsamples[[k]])
+      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
+    }# FOR
+  }#IF
 
   # Compute estimates of E[y|X]
   y_X_res <- get_CEF(y, X,
