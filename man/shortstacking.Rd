@@ -28,6 +28,8 @@ shortstacking(
 
 \item{learners}{abc}
 
+\item{sample_folds}{abc}
+
 \item{ensemble_type}{abc}
 
 \item{compute_insample_predictions}{abc}

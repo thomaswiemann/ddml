@@ -4,6 +4,7 @@
 #' @param X abc
 #' @param Z abc
 #' @param learners abc
+#' @param sample_folds abc
 #' @param ensemble_type abc
 #' @param compute_insample_predictions abc
 #' @param subsamples abc

@@ -6,6 +6,7 @@
 #' @param learners abc
 #' @param ensemble_type abc
 #' @param shortstack abc
+#' @param compute_insample_predictions abc
 #' @param subsamples abc
 #' @param cv_subsamples_list abc
 #' @param silent abc

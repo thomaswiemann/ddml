@@ -33,6 +33,8 @@ get_CEF(
 
 \item{shortstack}{abc}
 
+\item{compute_insample_predictions}{abc}
+
 \item{subsamples}{abc}
 
 \item{cv_subsamples_list}{abc}
