@@ -1,13 +1,4 @@
-#' Title
-#'
-#' @param nobs abc
-#' @param sample_folds abc
-#'
-#' @return object
-#' @export
-#'
-#' @examples
-#' generate_subsamples(1000, 3)
+# Simple function to generate subsamples.
 generate_subsamples <- function(nobs, sample_folds) {
   sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
   sample_groups <- sample(sampleframe, size=nobs, replace=F)

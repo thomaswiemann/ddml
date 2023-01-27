@@ -1,0 +1,180 @@
+---
+title: "Example using Berry, Levinson, Pakes (1995)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example using Berry, Levinson, Pakes (1995)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+We revisits the empirical example of Chernozhukov, Hansen, and Spindler (2015)
+(CHS2015, hereafter), which extends the instruments of Berry, Levinson,
+and Pakes (1995) (BLP1995, hereafter) and applies an instrument selection
+procedure based on the Lasso. We consider the same instrument extension
+and apply a selection of ensemble procedures that combines conventional
+linear estimators with computational alternatives including Lasso-based
+approaches and random forests.
+
+```{r setup}
+library(ddml)
+```
+
+# Data construction
+
+The BLP1995 data is included as an exemplary dataset with the ddml package
+under the name `BLP_1995`.
+
+```{r}
+nobs <- length(BLP_1995$model.id)
+y <- as.matrix(log(BLP_1995$share) -  log(BLP_1995$outshr))
+D <- as.matrix(BLP_1995$price)
+x1 <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air", "mpd", "space", "price")]))
+colnames(y) <- "share"
+colnames(D) <- "price"
+```
+
+We now construct the BLP1995 instruments, which are sums of product
+characteristics (excluding price and other potentially endogenous
+variables) of other products offered by the firm as well as over
+competing firms. The exact instrument specification here follows the
+approach of CHS2015.
+
+```{r}
+X_ <- x1[, 1:5]; ncol_X <- ncol(X_) # exclude price
+sum_other <- sum_rival <- matrix(0, nobs, 5)
+for (i in 1:nobs) {
+  other_ind <- (BLP_1995$firmid == BLP_1995$firmid[i]) &
+    (BLP_1995$cdid == BLP_1995$cdid[i]) & (BLP_1995$id != BLP_1995$id[i])
+  rival_ind <- (BLP_1995$firmid != BLP_1995$firmid[i]) &
+    (BLP_1995$cdid == BLP_1995$cdid[i])
+  sum_other[i, ] <- colSums(X_[other_ind, , drop = FALSE])
+  sum_rival[i, ] <- colSums(X_[rival_ind, , drop = FALSE])
+}#FOR
+Z_ <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z_)
+```
+
+In addition, we may be interested in extending the list of instruments. The below 
+constructs the additional instruments considered in CHS2015.
+
+```{r}
+tu = BLP_1995$trend/19;
+mpdu = BLP_1995$mpd/7;
+spaceu = BLP_1995$space/2;
+XL_ <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air")], mpdu, spaceu, tu,
+                       BLP_1995$hpwt^2, BLP_1995$hpwt^3, mpdu^2, mpdu^3,
+                       spaceu^2, spaceu^3, tu^2, tu^3, BLP_1995$hpwt *
+                         BLP_1995$air,  mpdu * BLP_1995$air, spaceu *
+                         BLP_1995$air, tu * BLP_1995$air, BLP_1995$hpwt *
+                         mpdu, BLP_1995$hpwt * spaceu, BLP_1995$hpwt * tu,
+                       mpdu * spaceu,  mpdu * tu, spaceu * tu))
+ncol_XL <- ncol(XL_)
+sum_otherL <- sum_rivalL <- matrix(0, nobs, 24)
+for (i in 1:nobs) {
+  other_ind <- (BLP_1995$firmid == BLP_1995$firmid[i]) &
+    (BLP_1995$cdid == BLP_1995$cdid[i]) & (BLP_1995$id != BLP_1995$id[i])
+  rival_ind <- (BLP_1995$firmid != BLP_1995$firmid[i]) &
+    (BLP_1995$cdid == BLP_1995$cdid[i])
+  sum_otherL[i, ] <- colSums(XL_[other_ind, , drop = FALSE])
+  sum_rivalL[i, ] <- colSums(XL_[rival_ind, , drop = FALSE])
+}#FOR
+ZL_ <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL_)
+```
+
+# Estimating the Flexible Partially Linear IV Model with CV-Lasso
+
+```{r}
+# Base learner
+learner <- list(what = mdl_glmnet)
+
+# DDML IV. We consider cross-residiualization across 10 sample folds here.
+lasso_fit <- ddml_fpliv(y, D = D,
+                           Z = ZL_, X = XL_,
+                           learners = learner,
+                           sample_folds = 5,
+                           silent = T)
+lasso_fit$coef
+```
+# Estimating the Flexible Partially Linear V Model with Stacking
+
+
+#' A more ambitious approach may consider a variety of computational models for
+#'     the estimation of the first and second stage. Here, we consider a
+#'     combination of linear models, including unpenalized, Lasso and Ridge
+#'     regression, random forests, generalized random forests
+#'     (Athey et al., 2019), and boosted trees, using either the inital set of
+#'     instruments as in BLP1995 or the extended set as in CHS2015. As before,
+#'     we specify  seperate first and second stage model sets (although this is
+#'     not strictly necessary).
+
+#' Combine the data. It's convinient to specify sets of indices for easier
+#'     column selection in the model specification. When using random forests,
+#'     it's important that variables have columnames.
+```{r}
+X_c <- cbind(X_, XL_); colnames(X_c) <- c(1:ncol(X_c))
+Z_c <- cbind(Z_, ZL_); colnames(Z_c) <- c(1:ncol(Z_c))
+set_X <- 1:ncol(X_); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
+set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
+```
+
+
+
+```{r}
+# Base learners
+learners <- list(list(fun = ols,
+                       assign_X = set_X,
+                       assign_Z = set_Z),
+                  list(fun = mdl_glmnet,
+                       args = list(alpha = 1),
+                       assign_X = set_XL,
+                       assign_Z = set_ZL),
+                  list(fun = mdl_glmnet,
+                       args = list(alpha = 0),
+                       assign_X = set_XL,
+                       assign_Z = set_ZL))
+
+# DDML IV. We consider cross-residiualization across 10 sample folds here.
+stacking_fit <- ddml_fpliv(y, D = D,
+                           Z = Z_c, X = X_c,
+                           learners = learners,
+                           ensemble_type = c("ols", "nnls", "nnls1",
+                                             "singlebest", "average"),
+                           sample_folds = 3,
+                           silent = T)
+stacking_fit$coef
+```
+
+# Estimating the Flexible Partially Linear V Model with Short-Stacking
+
+```{r}
+# Base learners
+learners <- list(list(fun = ols,
+                       assign_X = set_X,
+                       assign_Z = set_Z),
+                  list(fun = mdl_glmnet,
+                       args = list(alpha = 1),
+                       assign_X = set_XL,
+                       assign_Z = set_ZL),
+                  list(fun = mdl_glmnet,
+                       args = list(alpha = 0),
+                       assign_X = set_XL,
+                       assign_Z = set_ZL))
+
+# DDML IV. We consider cross-residiualization across 10 sample folds here.
+stacking_fit <- ddml_fpliv(y, D = D,
+                           Z = Z_c, X = X_c,
+                           learners = learners,
+                           ensemble_type = c("ols", "nnls", "nnls1",
+                                             "singlebest", "average"),
+                           shortstack = T,
+                           sample_folds = 3,
+                           silent = T)
+stacking_fit$coef
+```

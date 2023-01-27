@@ -15,7 +15,6 @@
 #' @param shortstack_y abc
 #'
 #' @return object
-#' @export
 #'
 #' @examples
 #' 1 + 1

@@ -12,7 +12,6 @@
 #' @param progress abc
 #'
 #' @return abc
-#' @export
 #'
 #' @examples
 #' 1 + 1
