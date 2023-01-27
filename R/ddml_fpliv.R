@@ -43,10 +43,10 @@ ddml_fpliv <- function(y, D, Z, X,
   sample_folds <- length(subsamples)
 
   # Create cv-subsamples tuple
-  if (is.null(cv_subsamples_list)) {
+  if (is.null(cv_subsamples_list) & !shortstack) {
     cv_subsamples_list <- rep(list(NULL), sample_folds)
     for (k in 1:sample_folds) {
-      nobs_k <- length(subsamples[[k]])
+      nobs_k <- nobs - length(subsamples[[k]])
       cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
     }# FOR
   }#IF
@@ -72,7 +72,6 @@ ddml_fpliv <- function(y, D, Z, X,
                       cv_subsamples_list = cv_subsamples_list,
                       compute_insample_predictions = enforce_LIE,
                       silent = silent, progress = "E[D|Z,X]: ")
-  update_progress(silent)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {

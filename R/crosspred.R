@@ -16,7 +16,6 @@
 #' @param auxilliary_X abc
 #'
 #' @return object
-#' @export
 #'
 #' @examples
 #' 1 + 1

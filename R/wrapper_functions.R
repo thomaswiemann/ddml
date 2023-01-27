@@ -56,8 +56,6 @@ mdl_glmnet <- function(y, X,
 #' @param ... abc
 #'
 #' @return abc
-#' @export predict.mdl_glmnet
-#' @export
 #'
 #' @examples
 #' 1 + 1
@@ -142,8 +140,6 @@ mdl_xgboost <- function(y, X,
 #' @param ... abc
 #'
 #' @return abc
-#' @export predict.mdl_xgboost
-#' @export
 #'
 #' @examples
 #' 1 + 1
@@ -200,8 +196,6 @@ mdl_randomForest <- function(y, X,
 #' @param ... abc
 #'
 #' @return abc
-#' @export predict.mdl_randomForest
-#' @export
 #'
 #' @examples
 #' 1 + 1
@@ -260,8 +254,6 @@ mdl_grf <- function(y, X,
 #' @param ... abc
 #'
 #' @return abc
-#' @export predict.mdl_grf
-#' @export
 #'
 #' @examples
 #' 1 + 1

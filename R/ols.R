@@ -39,20 +39,7 @@ ols <- function(y, X,
 
 # Complementary methods ========================================================
 
-
-#' Title
-#'
-#' @param object abc
-#' @param newdata abc
-#' @param ... abc
-#'
-#' @return output
-#' @export predict.ols
-#' @export
-#'
-#' @examples
-#' ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
-#' predict(ols_fit, cbind(rnorm(100), rnorm(100)))
+# Constructed fitted values
 predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix
   if (is.null(newdata)) {

@@ -11,7 +11,7 @@ test_that("ddml_fpliv computes with a single model", {
                    args = list(alpha = 0.5))
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
-                               sample_folds = 2,
+                               sample_folds = 3,
                                silent = T)
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 1)
@@ -33,8 +33,8 @@ test_that("ddml_fpliv computes with an ensemble procedure", {
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                silent = T)
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 1)
@@ -56,8 +56,8 @@ test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols"),
-                               sample_folds = 2,
-                               cv_folds = 2,
+                               sample_folds = 3,
+                               cv_folds = 3,
                                enforce_LIE = FALSE,
                                silent = T)
   # Check output with expectations
@@ -82,8 +82,8 @@ test_that("ddml_fpliv computes with multiple ensemble procedures", {
                                ensemble_type = c("ols", "nnls",
                                                  "nnls1",
                                                  "singlebest", "average"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                silent = T)
 
   # Check output with expectations
@@ -108,8 +108,8 @@ test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
                                ensemble_type = c("ols", "nnls",
                                                  "nnls1",
                                                  "singlebest", "average"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                enforce_LIE = FALSE,
                                silent = T)
   # Check output with expectations
@@ -130,14 +130,14 @@ test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
                    list(fun = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D,
-                               as(Z, "sparseMatrix"),
-                               as(X, "sparseMatrix"),
-                               learners,
+                               Z = as(Z, "sparseMatrix"),
+                               X = as(X, "sparseMatrix"),
+                               learners = learners,
                                ensemble_type = c("ols", "nnls",
                                                  "nnls1",
                                                  "singlebest", "average"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                silent = T)
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 5)
@@ -170,8 +170,8 @@ test_that("ddml_fpliv computes with different sets of learners", {
                                ensemble_type = c("ols", "nnls",
                                                  "nnls1",
                                                  "singlebest", "average"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                silent = T)
 
   # Check output with expectations
@@ -197,8 +197,8 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack", {
                                                  "nnls1",
                                                  "singlebest", "average"),
                                shortstack = T,
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                silent = T)
 
   # Check output with expectations
@@ -223,8 +223,8 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
                                ensemble_type = c("ols", "nnls",
                                                  "nnls1",
                                                  "singlebest", "average"),
-                               cv_folds = 2,
-                               sample_folds = 2,
+                               cv_folds = 3,
+                               sample_folds = 3,
                                enforce_LIE = FALSE,
                                silent = T)
   # Check output with expectations

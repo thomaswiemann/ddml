@@ -12,7 +12,7 @@ test_that("ddml_pliv computes with a single model", {
   # Compute DDML PLIV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
-                             sample_folds = 2,
+                             sample_folds = 3,
                              silent = T)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 1)
@@ -34,8 +34,8 @@ test_that("ddml_pliv computes with an ensemble procedure", {
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
                              ensemble_type = c("ols"),
-                             cv_folds = 2,
-                             sample_folds = 2,
+                             cv_folds = 3,
+                             sample_folds = 3,
                              silent = T)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 1)
@@ -95,8 +95,8 @@ test_that("ddml_pliv computes with different sets of learners", {
                              ensemble_type = c("ols", "nnls",
                                                "nnls1",
                                                "singlebest", "average"),
-                             cv_folds = 2,
-                             sample_folds = 2,
+                             cv_folds = 3,
+                             sample_folds = 3,
                              silent = T)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 5)
@@ -131,8 +131,8 @@ test_that("ddml_pliv computes with different sets of learners & shortstack", {
                                                "nnls1",
                                                "singlebest", "average"),
                              shortstack = T,
-                             cv_folds = 2,
-                             sample_folds = 2,
+                             cv_folds = 3,
+                             sample_folds = 3,
                              silent = T)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 5)
