@@ -126,31 +126,6 @@ set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 
 
-```{r}
-# Base learners
-learners <- list(list(fun = ols,
-                       assign_X = set_X,
-                       assign_Z = set_Z),
-                  list(fun = mdl_glmnet,
-                       args = list(alpha = 1),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL),
-                  list(fun = mdl_glmnet,
-                       args = list(alpha = 0),
-                       assign_X = set_XL,
-                       assign_Z = set_ZL))
-
-# DDML IV. We consider cross-residiualization across 10 sample folds here.
-stacking_fit <- ddml_fpliv(y, D = D,
-                           Z = Z_c, X = X_c,
-                           learners = learners,
-                           ensemble_type = c("ols", "nnls", "nnls1",
-                                             "singlebest", "average"),
-                           sample_folds = 3,
-                           silent = T)
-stacking_fit$coef
-```
-
 # Estimating the Flexible Partially Linear V Model with Short-Stacking
 
 ```{r}

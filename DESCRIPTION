@@ -9,7 +9,8 @@ Authors@R: c(
     person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
 Description: Double/Debiased Machine Learning in R.
 License: GPL (>= 3)
-URL: https://github.com/thomaswiemann/ddml
+URL: https://github.com/thomaswiemann/ddml,
+    https://thomaswiemann.com/ddml/
 BugReports: https://github.com/thomaswiemann/ddml/issues
 Encoding: UTF-8
 LazyData: true

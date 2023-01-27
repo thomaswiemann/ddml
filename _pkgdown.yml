@@ -1,44 +1,53 @@
-url: https://thomaswiemann.com/ddml
+url: https://thomaswiemann.com/ddml/
 template:
   bootstrap: 5
-
 navbar:
   structure:
-    left:  [intro, reference, articles, tutorials, news]
-    right: [search, github]
-
+    left:
+    - intro
+    - reference
+    - articles
+    - tutorials
+    - news
+    right:
+    - search
+    - github
 home:
   sidebar:
-    structure: [links, license, citation, authors, dev]
-
+    structure:
+    - links
+    - license
+    - citation
+    - authors
+    - dev
 reference:
-  - title: Supported Models
-    contents:
-      - ddml_plm
-      - ddml_ate
-      - ddml_pliv
-      - ddml_fpliv
-      - ddml_late
-  - title: Wrappers for Common Machine Learners
-    contents:
-      - ols
-      - mdl_glmnet
-      - mdl_randomForest
-      - mdl_grf
-      - mdl_xgboost
-  - title: Dataset
-    contents:
-      - BLP_1995
-  - title: internal
-    contents:
-      - crosspred
-      - crossval
-      - ddml
-      - ensemble
-      - get_CEF
-      - predict.ensemble
-      - predict.mdl_glmnet
-      - predict.mdl_grf
-      - predict.mdl_randomForest
-      - predict.mdl_xgboost
-      - shortstacking
+- title: Supported Models
+  contents:
+  - ddml_plm
+  - ddml_ate
+  - ddml_pliv
+  - ddml_fpliv
+  - ddml_late
+- title: Wrappers for Common Machine Learners
+  contents:
+  - ols
+  - mdl_glmnet
+  - mdl_randomForest
+  - mdl_grf
+  - mdl_xgboost
+- title: Dataset
+  contents: BLP_1995
+- title: internal
+  contents:
+  - crosspred
+  - crossval
+  - ddml
+  - ensemble
+  - get_CEF
+  - predict.ensemble
+  - predict.mdl_glmnet
+  - predict.mdl_grf
+  - predict.mdl_randomForest
+  - predict.mdl_xgboost
+  - shortstacking
+
