@@ -1,15 +1,29 @@
-#' Title
+#' Ordinary least squares.
 #'
-#' @param y abc
-#' @param X abc
-#' @param const abc
-#' @param w abc
+#' @family ml_wrapper
 #'
-#' @return output
+#' @description Simple implementation of ordinary least squares that computes
+#'     with sparse feature matrices.
+#'
+#' @param y The outcome variable.
+#' @param X The feature matrix.
+#' @param const Boolean equal to \code{TRUE} if a constant should be included.
+#'     The default is \code{FALSE}
+#' @param w A vector of weights for weighted least squares.
+#'
+#' @return \code{ols} returns an object of S3 class
+#'     \code{ols}. An object of class \code{ols} is a list containing
+#'     the following components:
+#'     \describe{
+#'         \item{\code{coef}}{A vector with the regression coefficents.}
+#'         \item{\code{y}, \code{X}, \code{const}, \code{w}}{Pass-through of the
+#'             user-provided arguments. See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
+#' ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)), const = TRUE)
+#' ols_fit$coef
 ols <- function(y, X,
                 const = FALSE,
                 w = NULL) {

@@ -65,18 +65,7 @@ ensemble <- function(y, X, Z = NULL,
 
 # Complementary methods ========================================================
 
-#' Title
-#'
-#' @param object abc
-#' @param newdata abc
-#' @param newZ abc
-#' @param ... abc
-#'
-#' @return abc
-#' @export
-#'
-#' @examples
-#' 1 + 1
+# Prediction method for ensemble
 predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   # Data parameters
   nlearners <- length(object$mdl_fits)

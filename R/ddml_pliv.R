@@ -1,5 +1,11 @@
 #' Title
 #'
+#' @family ddml
+#'
+#' @description abc
+#'
+#' @details abc
+#'
 #' @param y abc
 #' @param D abc
 #' @param Z abc

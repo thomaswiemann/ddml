@@ -37,27 +37,14 @@ test_that("mdl_xgboost is working", {
   expect_equal(length(fitted), 100)
 })#TEST_THAT
 
-test_that("mdl_randomForest is working", {
+test_that("mdl_ranger is working", {
   # Simulate a small dataset
   nobs <- 100
   X <- matrix(rnorm(nobs*50), nobs, 50) # Simulate features
   y <- 1 + X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(nobs)
   # Estimate the learner
-  mdl_fit <- mdl_randomForest(as.vector(y), X)
+  mdl_fit <- mdl_ranger(y, X)
   # Check methods predict()
-  fitted <- predict(mdl_fit, newdata = X)
-  # Check output with expectations
-  expect_equal(length(fitted), 100)
-})#TEST_THAT
-
-test_that("mdl_grf is working", {
-  # Simulate a small dataset
-  nobs <- 100
-  X <- matrix(rnorm(nobs*50), nobs, 50) # Simulate features
-  y <- 1 + X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(nobs)
-  # Estimate the learner
-  mdl_fit <- mdl_grf(y, X)
-    # Check methods predict()
   fitted <- predict(mdl_fit, newdata = X)
   # Check output with expectations
   expect_equal(length(fitted), 100)

@@ -33,7 +33,7 @@ The BLP1995 data is included as an exemplary dataset with the ddml package
 under the name `BLP_1995`.
 
 ```{r}
-nobs <- length(BLP_1995$model.id)
+nobs <- length(BLP_1995$id)
 y <- as.matrix(log(BLP_1995$share) -  log(BLP_1995$outshr))
 D <- as.matrix(BLP_1995$price)
 x1 <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air", "mpd", "space", "price")]))
@@ -98,7 +98,7 @@ learner <- list(what = mdl_glmnet)
 lasso_fit <- ddml_fpliv(y, D = D,
                            Z = ZL_, X = XL_,
                            learners = learner,
-                           sample_folds = 5,
+                           sample_folds = 3,
                            silent = T)
 lasso_fit$coef
 ```

@@ -2,25 +2,42 @@
 % Please edit documentation in R/ols.R
 \name{ols}
 \alias{ols}
-\title{Title}
+\title{Ordinary least squares.}
 \usage{
 ols(y, X, const = FALSE, w = NULL)
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{X}{abc}
+\item{X}{The feature matrix.}
 
-\item{const}{abc}
+\item{const}{Boolean equal to \code{TRUE} if a constant should be included.
+The default is \code{FALSE}}
 
-\item{w}{abc}
+\item{w}{A vector of weights for weighted least squares.}
 }
 \value{
-output
+\code{ols} returns an object of S3 class
+\code{ols}. An object of class \code{ols} is a list containing
+the following components:
+\describe{
+\item{\code{coef}}{A vector with the regression coefficents.}
+\item{\code{y}, \code{X}, \code{const}, \code{w}}{Pass-through of the
+user-provided arguments. See above.}
+}
 }
 \description{
-Title
+Simple implementation of ordinary least squares that computes
+with sparse feature matrices.
 }
 \examples{
-ols(rnorm(100), cbind(rnorm(100), rnorm(100)))
+ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)), const = TRUE)
+ols_fit$coef
 }
+\seealso{
+Other ml_wrapper: 
+\code{\link{mdl_glmnet}()},
+\code{\link{mdl_ranger}()},
+\code{\link{mdl_xgboost}()}
+}
+\concept{ml_wrapper}

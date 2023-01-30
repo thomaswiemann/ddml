@@ -1,28 +1,94 @@
-#' Title
+#' Estimator for the Partially Linear Model.
 #'
-#' @param y abc
-#' @param D abc
-#' @param X abc
-#' @param learners abc
-#' @param learners_DX abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param cv_folds abc
-#' @param subsamples abc
-#' @param cv_subsamples_list abc
-#' @param silent abc
+#' @family ddml
 #'
-#' @return abc
+#' @description descripton goes here.
+#'
+#' @details details go here.
+#'
+#' @param y The outcome variable.
+#' @param D The endogeneous variable.
+#' @param X A (sparse) matrix of control variables.
+#' @param learners May take one of two forms, depending on whether a single
+#'     learner or stacking with multiple learners is used for estimation of the
+#'     conditional expectation function(s) \eqn{E[Y|X]} (and \eqn{E[D|X]} if
+#'     \code{learners_DX} is not specified).
+#'     If a single learner is used, \code{learners} is a list with two named
+#'     elements:
+#'     \itemize{
+#'         \item{\code{what} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
+#'     }
+#'     If stacking with multiple learners is used, \code{learners} is a list of
+#'     lists, each containing four named elements:
+#'     \itemize{
+#'         \item{\code{fun} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{assign_X} An optional vector of indices corresponding to
+#'             features in \code{X} that are passed to the corresponding base
+#'             learner.}
+#'     }
+#' @param learners_DX Optional argument to allow for different estimators of
+#'     \eqn{E[D|X]}. Setup is identical to \code{learners}.
+#' @param sample_folds Number of cross-fitting folds.
+#' @param ensemble_type Ensemble method to combine base learners into final
+#'     estimate of the conditional expectation functions. Possible values are:
+#'     \itemize{
+#'         \item{\code{"nnls"} Non-negative least squares.}
+#'         \item{\code{"nnls1"} Non-negative least squares with the constraint
+#'             that all weights sum to one.}
+#'         \item{\code{"singlebest"} Select base learner with minimum MSPE.}
+#'         \item{\code{"ols"} Ordinary least squares.}
+#'         \item{\code{"average"} Simple average over base learners.}
+#'     }
+#'     Multiple ensemble types may be passed as a vector of strings.
+#' @param shortstack Boolean to use short-stacking.
+#' @param cv_folds Number of folds used for cross-validation in ensemble
+#'     construction.
+#' @param subsamples List of vectors with sample indices for cross-fitting.
+#' @param cv_subsamples_list List of lists, each corresponding to a subsample
+#'     containing vectors with vectors subsample indices for cross-validation.
+#' @param silent Boolean to silence estimation updates.
+#'
+#' @return \code{ddml_plm} returns an object of S3 class
+#'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
+#'     the following components:
+#'     \describe{
+#'         \item{\code{coef}}{A vector with the PLM coefficents.}
+#'         \item{\code{weights}}{A list of matrices, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedure.}
+#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
+#'             base learner (in chronological order) computed by the
+#'             cross-validation step in the ensemble construction.}
+#'         \item{\code{ols_fit}}{Object of class \code{lm} from the second
+#'             stage regression of \eqn{Y - E[Y|X]} on \eqn{D - E[D|X]}.}
+#'         \item{\code{learners},\code{learners_DX},\code{subsamples},
+#'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
+#'             selected user-provided arguments. See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct data from the included BLP_1995 data
+#' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
+#' D <- BLP_1995$price
+#' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
+#' # Estimate the partially linear model using a single base learners: lasso.
+#' plm_fit <- ddml_plm(y, D, X,
+#'                     learners = list(what = mdl_glmnet),
+#'                     sample_folds = 5,
+#'                     silent = TRUE)
+#' plm_fit$coef
 ddml_plm <- function(y, D, X,
                     learners,
                     learners_DX = learners,
                     sample_folds = 2,
-                    ensemble_type = "average",
+                    ensemble_type = "nnls",
                     shortstack = FALSE,
                     cv_folds = 5,
                     subsamples = NULL,
