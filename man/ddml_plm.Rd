@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_plm.R
 \name{ddml_plm}
 \alias{ddml_plm}
-\title{Estimator for the Partially Linear Model}
+\title{Estimator for the Partially Linear Model.}
 \usage{
 ddml_plm(
   y,
@@ -91,17 +91,18 @@ ensemble procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
-\item{\code{learners}}{See above.}
-\item{\code{learners_DX}}{See above.}
 \item{\code{ols_fit}}{Object of class \code{lm} from the second
 stage regression of \eqn{Y - E[Y|X]} on \eqn{D - E[D|X]}.}
-\item{\code{subsamples}}{See above.}
-\item{\code{cv_subsamples_list}}{See above.}
-\item{\code{ensemble_type}}{See above.}
+\item{\code{learners},\code{learners_DX},\code{subsamples},
+\code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
+selected user-provided arguments. See above.}
 }
 }
 \description{
-Estimator for the Partially Linear Model
+descripton goes here.
+}
+\details{
+details go here.
 }
 \examples{
 # Construct data from the included BLP_1995 data
@@ -115,3 +116,11 @@ plm_fit <- ddml_plm(y, D, X,
                     silent = TRUE)
 plm_fit$coef
 }
+\seealso{
+Other ddml: 
+\code{\link{ddml_ate}()},
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_pliv}()}
+}
+\concept{ddml}

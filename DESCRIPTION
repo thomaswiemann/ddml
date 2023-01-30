@@ -27,8 +27,7 @@ Imports:
     nnls,
     LowRankQP,
     glmnet,
-    randomForest,
-    grf,
+    ranger,
     xgboost
 Suggests: 
     sandwich,

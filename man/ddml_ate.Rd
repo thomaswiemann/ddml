@@ -22,40 +22,59 @@ ddml_ate(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
 \item{D}{abc}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of control variables.}
 
 \item{learners}{abc}
 
-\item{learners_DX}{abc}
+\item{learners_DX}{Optional argument to allow for different estimators of
+\eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{shortstack}{abc}
+\item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation in ensemble
+construction.}
 
-\item{subsamples_D0}{abc}
+\item{subsamples_D0, subsamples_D1}{abc}
 
-\item{subsamples_D1}{abc}
+\item{cv_subsamples_list_D0, cv_subsamples_list_D1}{abc}
 
-\item{cv_subsamples_list_D0}{abc}
-
-\item{cv_subsamples_list_D1}{abc}
-
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 }
 \value{
 abc
 }
 \description{
-Title
+abc
+}
+\details{
+abc
 }
 \examples{
 1 + 1
 }
+\seealso{
+Other ddml: 
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_pliv}()},
+\code{\link{ddml_plm}()}
+}
+\concept{ddml}

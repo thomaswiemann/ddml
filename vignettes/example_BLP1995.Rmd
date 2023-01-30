@@ -98,7 +98,7 @@ learner <- list(what = mdl_glmnet)
 lasso_fit <- ddml_fpliv(y, D = D,
                            Z = ZL_, X = XL_,
                            learners = learner,
-                           sample_folds = 5,
+                           sample_folds = 3,
                            silent = T)
 lasso_fit$coef
 ```

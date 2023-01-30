@@ -1,19 +1,16 @@
 #' Title
 #'
-#' @param y abc
+#' @family ddml
+#'
+#' @description abc
+#'
+#' @details abc
+#'
+#' @inheritParams ddml_plm
 #' @param D abc
-#' @param X abc
 #' @param learners abc
-#' @param learners_DX abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param cv_folds abc
-#' @param subsamples_D0 abc
-#' @param subsamples_D1 abc
-#' @param cv_subsamples_list_D0 abc
-#' @param cv_subsamples_list_D1 abc
-#' @param silent abc
+#' @param subsamples_D0,subsamples_D1 abc
+#' @param cv_subsamples_list_D0,cv_subsamples_list_D1 abc
 #'
 #' @return abc
 #' @export

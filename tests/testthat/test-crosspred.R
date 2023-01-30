@@ -36,7 +36,7 @@ test_that("crosspred computes with ensemble procedures", {
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet),
-                 list(fun = mdl_randomForest),
+                 list(fun = mdl_ranger),
                  list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, X, Z,
@@ -85,7 +85,7 @@ test_that("crosspred computes auxilliary predictions", {
   y <-  X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(list(fun = mdl_glmnet),
-                   list(fun = mdl_randomForest),
+                   list(fun = mdl_ranger),
                    list(fun = ols))
   # Compute cross-sample and auxilliary predictions
   crosspred_res <- crosspred(y, X,

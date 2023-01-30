@@ -4,7 +4,7 @@
 #' retrived from the reproduction excercise in Chernozhukov, Hansen, and
 #' Spindler (2015).
 #'
-#' @format A data frame with 2217 rows and 17 variables.
+#' @format A data frame with 2217 rows and 13 variables.
 #' \describe{
 #'   \item{air}{Indicator equal to 1 if the vehicle has air conditioning}
 #'   \item{cdid}{Index of competing firms}

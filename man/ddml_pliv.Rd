@@ -54,8 +54,19 @@ ddml_pliv(
 abc
 }
 \description{
-Title
+abc
+}
+\details{
+abc
 }
 \examples{
 1 + 1
 }
+\seealso{
+Other ddml: 
+\code{\link{ddml_ate}()},
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_plm}()}
+}
+\concept{ddml}

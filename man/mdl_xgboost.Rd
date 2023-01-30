@@ -2,66 +2,48 @@
 % Please edit documentation in R/wrapper_functions.R
 \name{mdl_xgboost}
 \alias{mdl_xgboost}
-\title{Title}
+\title{Wrapper for \code{\link[xgboost:xgb.train]{xgboost::xgboost()}}.}
 \usage{
-mdl_xgboost(
-  y,
-  X,
-  num_parallel_tree = 1,
-  min_child_weight = 1,
-  colsample_bytree = 0.7,
-  subsample = 0.7,
-  colsample_bylevel = 1,
-  colsample_bynode = 1,
-  max.depth = .Machine$integer.max,
-  eta = 0.3,
-  gamma = 0,
-  nrounds = 500,
-  objective = "reg:squarederror",
-  interaction_constraints = list(),
-  verbose = 0,
-  ...
-)
+mdl_xgboost(y, X, nrounds = 500, verbose = 0, ...)
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{X}{abc}
+\item{X}{The (sparse) feature matrix.}
 
-\item{num_parallel_tree}{abc}
+\item{nrounds}{max number of boosting iterations.}
 
-\item{min_child_weight}{abc}
+\item{verbose}{If 0, xgboost will stay silent. If 1, it will print information about performance.
+If 2, some additional information will be printed out.
+Note that setting \code{verbose > 0} automatically engages the
+\code{cb.print.evaluation(period=1)} callback function.}
 
-\item{colsample_bytree}{abc}
-
-\item{subsample}{abc}
-
-\item{colsample_bylevel}{abc}
-
-\item{colsample_bynode}{abc}
-
-\item{max.depth}{abc}
-
-\item{eta}{abc}
-
-\item{gamma}{abc}
-
-\item{nrounds}{abc}
-
-\item{objective}{abc}
-
-\item{interaction_constraints}{abc}
-
-\item{verbose}{abc}
-
-\item{...}{abc}
+\item{...}{Additional arguments passed to \code{xgboost}. See
+\code{\link[xgboost:xgb.train]{xgboost::xgboost()}} for a complete list of arguments.}
 }
 \value{
-abc
+\code{mdl_xgboost} returns an object of S3 class \code{mdl_xgboost}
+as a simple mask to the return object of \code{\link[xgboost:xgb.train]{xgboost::xgboost()}}.
 }
 \description{
-Title
+Simple wrapper for \code{\link[xgboost:xgb.train]{xgboost::xgboost()}} with some changes to the
+default arguments.
 }
 \examples{
-1 + 1
+xgboost_fit <- mdl_xgboost(rnorm(100), matrix(rnorm(1000), 100, 10))
+class(xgboost_fit)
 }
+\references{
+Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
+Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
+Discovery and Data Mining, 785–794.
+}
+\seealso{
+\code{\link[xgboost:xgb.train]{xgboost::xgboost()}}
+
+Other ml_wrapper: 
+\code{\link{mdl_glmnet}()},
+\code{\link{mdl_ranger}()},
+\code{\link{ols}()}
+}
+\concept{ml_wrapper}
