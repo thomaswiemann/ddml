@@ -32,7 +32,7 @@ with sparse feature matrices.
 }
 \examples{
 ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)), const = TRUE)
-ols$coef
+ols_fit$coef
 }
 \seealso{
 Other ml_wrapper: 

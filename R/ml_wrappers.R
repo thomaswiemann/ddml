@@ -150,7 +150,7 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
 mdl_ranger <- function(y, X, ...){
   # Assign columnames to X if none are given
   if (is.null(colnames(X))) {
-    colnames(X) <- sapply(1:dim(X)[2], toString)
+    colnames(X) <- seq(dim(X)[2])
   }#IF
   # Compute ranger
   mdl_fit <- ranger::ranger(y = y, x = X, ...)
@@ -163,7 +163,7 @@ mdl_ranger <- function(y, X, ...){
 predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Assign columnames to newdata if none are given
   if (is.null(colnames(newdata))) {
-    colnames(newdata) <- 1:dim(newdata)[2]
+    colnames(newdata) <- seq(dim(newdata)[2])
   }#IF
   class(object) <- class(object)[2]
   # Predict using randomForest prediction method
