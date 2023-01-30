@@ -99,7 +99,7 @@ including Lasso-based approaches and random forests.</p>
 <p>The BLP1995 data is included as an exemplary dataset with the ddml
 package under the name <code>BLP_1995</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">model.id</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">id</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">share</span><span class="op">)</span> <span class="op">-</span>  <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">outshr</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">price</span><span class="op">)</span></span>
 <span><span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">BLP_1995</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hpwt"</span>, <span class="st">"air"</span>, <span class="st">"mpd"</span>, <span class="st">"space"</span>, <span class="st">"price"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
@@ -159,11 +159,11 @@ in CHS2015.</p>
 <span><span class="va">lasso_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
 <span>                           Z <span class="op">=</span> <span class="va">ZL_</span>, X <span class="op">=</span> <span class="va">XL_</span>,</span>
 <span>                           learners <span class="op">=</span> <span class="va">learner</span>,</span>
-<span>                           sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span></span>
 <span><span class="co">#&gt;        D_r </span></span>
-<span><span class="co">#&gt; -0.1506215</span></span></code></pre></div>
+<span><span class="co">#&gt; -0.1502067</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimating-the-flexible-partially-linear-v-model-with-stacking">Estimating the Flexible Partially Linear V Model with Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-v-model-with-stacking"></a>
@@ -214,7 +214,7 @@ Short-Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexib
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span></span>
 <span><span class="co">#&gt;             ols       nnls      nnls1 singlebest    average</span></span>
-<span><span class="co">#&gt; [1,] -0.1519409 -0.1490188 -0.1490025 -0.1482837 -0.1389955</span></span></code></pre></div>
+<span><span class="co">#&gt; [1,] -0.1494301 -0.1492119 -0.1491453 -0.1489788 -0.1308965</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
