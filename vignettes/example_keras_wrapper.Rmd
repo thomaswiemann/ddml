@@ -16,16 +16,15 @@ knitr::opts_chunk$set(
 
 # Introduction
 
+Load ``keras`` package.
 
 ```{r setup}
 library(ddml)
-```
 
-Load ``keras`` package.
-
-```{r}
+install_keras()
 library(keras)
 ```
+
 
 Construct keras wrapper. The prediction methods for keras already outputs a numerical vector. It is thus not necessary to also construct a wrapper for the prediction method.
 
@@ -76,10 +75,26 @@ mdl_keras <- function(y, X,
                        callbacks = callbacks,
                        steps_per_epoch = steps_per_epoch,
                        verbose = verbose)
+  
+  # Amend class
+  class(nnet) <- c("mdl_keras", class(nnet))
+  
   # Return fit
   return(nnet)
 }#MDL_KERAS
 ```
+
+
+```{r}
+predict.mdl_keras <- function(obj, newdata = NULL){
+  # Check for new data
+  #if(is.null(newdata)) newdata <- obj$X
+  # Predict data and output as matrix
+  class(obj) <- class(obj)[-1] # Not a pretty solution...
+  as.numeric(predict(obj, newdata))
+}#PREDICT.MDL_KERAS
+```
+
 
 Let's test this on a simple empirical example. I consider the BLP_1995 data and, for simplicity, estimate a partially linear model (rather than a partially linear iv model).
 
@@ -121,6 +136,29 @@ We can now run the ddml estimator. Note that because we have set verbose to TRUE
 
 ```{r}
 plm_fit <- ddml_plm(y, D, X, learners = learners)
+plm_fit$coef
+```
+
+```{r}
+
+learners = list(list(fun = mdl_keras, 
+                      args = list(units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
+                                  epochs = 50,
+                                  batch_size = 500, 
+                                  verbose = F,
+                                  validation_split = 0.1,
+                                  callbacks = callbacks_list,
+                                  optimizer = optimizer_rmsprop(learning_rate = 0.1))),
+list(fun = mdl_keras, 
+                      args = list(units = 5, nhidden = 2, lambda1 = 0, lambda2 = 0,
+                                  epochs = 50,
+                                  batch_size = 500, 
+                                  verbose = F,
+                                  validation_split = 0.1,
+                                  callbacks = callbacks_list,
+                                  optimizer = optimizer_rmsprop(learning_rate = 0.1))))
+
+plm_fit <- ddml_plm(y, D, X, learners = learners, cv_folds = 2)
 plm_fit$coef
 ```
 
