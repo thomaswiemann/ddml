@@ -130,20 +130,16 @@ ensemble_weights <- function(y, X, Z = NULL,
       # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
       # the quadratic programming problem.
       sq_resid <- Matrix::crossprod(cv_results$oos_resid)
-      A <- matrix(1, 1, nlearners) # |w|_1 = 1 constraint
-      # Define sink so LowRankQP output is not printed
-      sink(file=nullfile())
+      A <- matrix(1, nlearners, 1) # |w|_1 = 1 constraint
       # Calculate solution
-      r <- LowRankQP::LowRankQP(Vmat = sq_resid,
-                                dvec = rep(0, nlearners),
-                                Amat = A,
-                                bvec = 1,
-                                uvec = rep(1, nlearners),
-                                method = 'LU',
-                                verbose = F)
-      weights[, k] <- r$alpha
-      # Remove sink so output is no longer surpressed
-      sink()
+      # Note: quadprog only solves for pos.def matrices. nearPD finds nearest
+      #     pos.def matrix as a workaround.
+      r <- quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
+                             dvec = matrix(0, nlearners, 1),
+                             Amat = A,
+                             bvec = 1,
+                             meq = 0)
+      weights[, k] <- r$solution
     } else if (type[k] == "nnls") {
       # Reconstruct out of sample fitted values
       oos_fitted <- as.numeric(y) - cv_results$oos_resid
