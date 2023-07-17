@@ -15,7 +15,7 @@ BugReports: https://github.com/thomaswiemann/ddml/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 Depends: 
     R (>= 3.6)
 Imports: 
@@ -34,7 +34,6 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown,
-    keras
+    rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
