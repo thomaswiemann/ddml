@@ -45,6 +45,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/example_BLP1995.html">Example using Berry, Levinson, Pakes (1995)</a>
+    <a class="dropdown-item" href="../articles/example_keras_wrapper.html">Constructing a new ML Wrapper</a>
   </div>
 </li>
       </ul>
@@ -74,7 +75,7 @@
       <img src="" class="logo" alt=""><h1>Example using Berry, Levinson, Pakes (1995)</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/vignettes/example_BLP1995.Rmd" class="external-link"><code>vignettes/example_BLP1995.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/vignettes/articles/example_BLP1995.Rmd" class="external-link"><code>vignettes/articles/example_BLP1995.Rmd</code></a></small>
       <div class="d-none name"><code>example_BLP1995.Rmd</code></div>
     </div>
 
@@ -161,12 +162,10 @@ in CHS2015.</p>
 <span>                           learners <span class="op">=</span> <span class="va">learner</span>,</span>
 <span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span></span>
-<span><span class="co">#&gt;        D_r </span></span>
-<span><span class="co">#&gt; -0.1502067</span></span></code></pre></div>
+<span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="estimating-the-flexible-partially-linear-v-model-with-stacking">Estimating the Flexible Partially Linear V Model with Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-v-model-with-stacking"></a>
+<h2 id="estimating-the-flexible-partially-linear-iv-model-with-stacking">Estimating the Flexible Partially Linear IV Model with Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-stacking"></a>
 </h2>
 <p>#’ A more ambitious approach may consider a variety of computational
 models for #’ the estimation of the first and second stage. Here, we
@@ -186,8 +185,8 @@ forests, #’ it’s important that variables have columnames.</p>
 <span><span class="va">set_Z</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_</span><span class="op">)</span>; <span class="va">set_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span><span class="op">)</span>, <span class="va">set_Z</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="estimating-the-flexible-partially-linear-v-model-with-short-stacking">Estimating the Flexible Partially Linear V Model with
-Short-Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-v-model-with-short-stacking"></a>
+<h2 id="estimating-the-flexible-partially-linear-iv-model-with-short-stacking">Estimating the Flexible Partially Linear IV Model with
+Short-Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-short-stacking"></a>
 </h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Base learners</span></span>
@@ -212,9 +211,7 @@ Short-Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexib
 <span>                           shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span></span>
-<span><span class="co">#&gt;             ols       nnls      nnls1 singlebest    average</span></span>
-<span><span class="co">#&gt; [1,] -0.1494301 -0.1492119 -0.1491453 -0.1489788 -0.1308965</span></span></code></pre></div>
+<span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>
