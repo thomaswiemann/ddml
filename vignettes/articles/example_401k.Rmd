@@ -1,0 +1,47 @@
+---
+title: "Example on the Effect of 401k Participation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example on the Effect of 401k Participation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = requireNamespace("readstata13")
+)
+```
+
+# Introduction
+
+
+```{r setup}
+library(ddml)
+```
+
+# Data construction
+
+401K data from the Survey of Income and Program Participation (SIPP) from the 
+year 1991. Data taken from thereproduction exercise in 
+Chernozhukov et al. (2018). [link](https://academic.oup.com/ectj/article/21/1/C1/5056401s})
+
+```{r}
+library(readstata13)
+SIPP91 <- read.dta13("data/sipp1991.dta")
+```
+
+The BLP1995 data is included as an exemplary dataset with the ddml package
+under the name `BLP95`.
+
+```{r}
+nobs <- nrow(SIPP91)
+y <- as.matrix(SIPP91$net_tfa)
+D <- as.matrix(SIPP91$e401)
+X <- as.matrix(SIPP91[, c("age", "inc", "educ", "fsize", 
+                      "marr", "twoearn", "db", "pira", "hown")])
+
+nobs
+```

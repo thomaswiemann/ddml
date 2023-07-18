@@ -28,8 +28,7 @@ ddml_plm(
 
 \item{learners}{May take one of two forms, depending on whether a single
 learner or stacking with multiple learners is used for estimation of the
-conditional expectation function(s) \eqn{E[Y|X]} (and \eqn{E[D|X]} if
-\code{learners_DX} is not specified).
+conditional expectation functions.
 If a single learner is used, \code{learners} is a list with two named
 elements:
 \itemize{
@@ -75,7 +74,7 @@ construction.}
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
 \item{cv_subsamples_list}{List of lists, each corresponding to a subsample
-containing vectors with vectors subsample indices for cross-validation.}
+containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 }
@@ -114,15 +113,29 @@ where \eqn{(Y, D, X, U)} is a random vector such that
 \eqn{g_0} is an unknown nuisance function.
 }
 \examples{
-# Construct data from the included BLP_1995 data
-y <- log(BLP_1995$share) - log(BLP_1995$outshr)
-D <- BLP_1995$price
-X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
-# Estimate the partially linear model using a single base learners: ridge.
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the partially linear model using a single base learner, ridge.
 plm_fit <- ddml_plm(y, D, X,
                     learners = list(what = mdl_glmnet,
                                     args = list(alpha = 0)),
-                    sample_folds = 5,
+                    sample_folds = 2,
+                    silent = TRUE)
+plm_fit$coef
+
+# Estimate the partially linear model using short-stacking with base learners
+#     ols, rlasso, and xgboost.
+plm_fit <- ddml_plm(y, D, X,
+                    learners = list(list(fun = ols),
+                                    list(fun = mdl_glmnet),
+                                    list(fun = mdl_glmnet,
+                                         args = list(alpha = 0))),
+                    ensemble_type = 'nnls',
+                    shortstack = TRUE,
+                    sample_folds = 2,
                     silent = TRUE)
 plm_fit$coef
 }

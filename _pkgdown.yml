@@ -1,4 +1,4 @@
-url: https://thomaswiemann.com/ddml/
+url: https://ddml.github.io/
 template:
   bootstrap: 5
 navbar:
@@ -34,10 +34,9 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
-- title: Datasets
+- title: Dataset
   contents:
-  - SIPP_1991
-  - BLP_1995
+  - AE98
 - title: internal
   contents:
   - crosspred

@@ -2,6 +2,8 @@
 #'
 #' @family ddml
 #'
+#' @seealso [AER::ivreg()]
+#'
 #' @description Estimator for the partially linear IV model.
 #'
 #' @details \code{ddml_pliv} provides a double/debiased machine learning
@@ -17,7 +19,7 @@
 #' @inheritParams ddml_plm
 #' @param Z The instrumental variable.
 #' @param learners_ZX Optional argument to allow for different estimators of
-#'     \eqn{E[Z|X]}. Setup is identical to \code{learners}.
+#'     \eqn{E[Z\vert X]}. Setup is identical to \code{learners}.
 #'
 #' @return \code{ddml_pliv} returns an object of S3 class
 #'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
@@ -30,9 +32,9 @@
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
-#'         \item{\code{iv_fit}}{Object of class \code{lm} from the IV
-#'             regression of \eqn{Y - \hat{E}[Y|X]} on
-#'             \eqn{D - \hat{E}[D|X]} using \eqn{Z - \hat{E}[Z|X]} as the
+#'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
+#'             regression of \eqn{Y - \hat{E}[Y\vert X]} on
+#'             \eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as the
 #'             instrument.}
 #'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
 #'             \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
@@ -41,17 +43,32 @@
 #' @export
 #'
 #' @examples
-#' # Construct data from the included BLP_1995 data
-#' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
-#' D <- BLP_1995$price
-#' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
-#' # Estimate the partially linear model using a single base learners: ridge.
-#' plm_fit <- ddml_plm(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 5,
-#'                     silent = TRUE)
-#' plm_fit$coef
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' Z = AE98[, "samesex"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the partially linear IV model using a single base learner, ridge.
+#' pliv_fit <- ddml_pliv(y, D, Z, X,
+#'                       learners = list(what = mdl_glmnet,
+#'                                       args = list(alpha = 0)),
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' pliv_fit$coef
+#'
+#' # Estimate the partially linear IV model using short-stacking with base
+#' #     ols, lasso, and ridge.
+#' pliv_fit <- ddml_pliv(y, D, Z, X,
+#'                       learners = list(list(fun = ols),
+#'                                       list(fun = mdl_glmnet),
+#'                                       list(fun = mdl_glmnet,
+#'                                            args = list(alpha = 0))),
+#'                       ensemble_type = 'nnls',
+#'                       shortstack = TRUE,
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' pliv_fit$coef
 ddml_pliv <- function(y, D, Z, X,
                       learners,
                       learners_DX = learners,
