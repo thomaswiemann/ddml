@@ -27,6 +27,7 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
+    <a class="dropdown-item" href="../articles/example_401k.html">Example on the Effect of 401k Participation</a>
     <a class="dropdown-item" href="../articles/example_BLP1995.html">Example using Berry, Levinson, Pakes (1995)</a>
     <a class="dropdown-item" href="../articles/example_keras_wrapper.html">Constructing a new ML Wrapper</a>
   </div>
@@ -91,8 +92,7 @@
 <dt>learners</dt>
 <dd><p>May take one of two forms, depending on whether a single
 learner or stacking with multiple learners is used for estimation of the
-conditional expectation function(s) \(E[Y|X]\) (and \(E[D|X]\) if
-<code>learners_DX</code> is not specified).
+conditional expectation functions.
 If a single learner is used, <code>learners</code> is a list with two named
 elements:</p><ul><li><p><code>what</code> The base learner function. The function must be
 such that it predicts a named input <code>y</code> using a named input
@@ -144,7 +144,7 @@ construction.</p></dd>
 
 <dt>cv_subsamples_list</dt>
 <dd><p>List of lists, each corresponding to a subsample
-containing vectors with vectors subsample indices for cross-validation.</p></dd>
+containing vectors with subsample indices for cross-validation.</p></dd>
 
 
 <dt>silent</dt>
@@ -203,19 +203,35 @@ linear model given by</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Construct data from the included BLP_1995 data</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">share</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP_1995</span><span class="op">$</span><span class="va">outshr</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">D</span> <span class="op">&lt;-</span> <span class="va">BLP_1995</span><span class="op">$</span><span class="va">price</span></span></span>
-<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">BLP_1995</span>, select <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">air</span>, <span class="va">hpwt</span>, <span class="va">mpd</span>, <span class="va">mpg</span>, <span class="va">space</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Estimate the partially linear model using a single base learners: ridge.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Construct variables from the included Angrist &amp; Evans (1998) data</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"worked"</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">D</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"morekids"</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>,<span class="st">"agefst"</span>,<span class="st">"black"</span>,<span class="st">"hisp"</span>,<span class="st">"othrace"</span>,<span class="st">"educ"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Estimate the partially linear model using a single base learner, ridge.</span></span></span>
 <span class="r-in"><span><span class="va">plm_fit</span> <span class="op">&lt;-</span> <span class="fu">ddml_plm</span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">X</span>,</span></span>
 <span class="r-in"><span>                    learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span></span>
 <span class="r-in"><span>                                    args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                    sample_folds <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>                    sample_folds <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plm_fit</span><span class="op">$</span><span class="va">coef</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         D_r </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.08840934 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        D_r </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1472638 </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Estimate the partially linear model using short-stacking with base learners</span></span></span>
+<span class="r-in"><span><span class="co">#     ols, rlasso, and xgboost.</span></span></span>
+<span class="r-in"><span><span class="va">plm_fit</span> <span class="op">&lt;-</span> <span class="fu">ddml_plm</span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">X</span>,</span></span>
+<span class="r-in"><span>                    learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span></span>
+<span class="r-in"><span>                                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                    ensemble_type <span class="op">=</span> <span class="st">'nnls'</span>,</span></span>
+<span class="r-in"><span>                    shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>                    sample_folds <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">plm_fit</span><span class="op">$</span><span class="va">coef</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        D_r </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1437228 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

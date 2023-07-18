@@ -1,81 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://thomaswiemann.com/ddml/404.html</loc>
+    <loc>https://ddml.github.io/404.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/LICENSE.html</loc>
+    <loc>https://ddml.github.io/LICENSE.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/ddml.html</loc>
+    <loc>https://ddml.github.io/articles/ddml.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_BLP1995.html</loc>
+    <loc>https://ddml.github.io/articles/example_401k.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_keras_wrapper.html</loc>
+    <loc>https://ddml.github.io/articles/example_BLP1995.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/index.html</loc>
+    <loc>https://ddml.github.io/articles/example_keras_wrapper.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/authors.html</loc>
+    <loc>https://ddml.github.io/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/index.html</loc>
+    <loc>https://ddml.github.io/authors.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/BLP_1995.html</loc>
+    <loc>https://ddml.github.io/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/SIPP_1991.html</loc>
+    <loc>https://ddml.github.io/reference/AE98.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/crosspred.html</loc>
+    <loc>https://ddml.github.io/reference/crosspred.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/crossval.html</loc>
+    <loc>https://ddml.github.io/reference/crossval.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml.html</loc>
+    <loc>https://ddml.github.io/reference/ddml.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_ate.html</loc>
+    <loc>https://ddml.github.io/reference/ddml_ate.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_fpliv.html</loc>
+    <loc>https://ddml.github.io/reference/ddml_fpliv.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_late.html</loc>
+    <loc>https://ddml.github.io/reference/ddml_late.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_pliv.html</loc>
+    <loc>https://ddml.github.io/reference/ddml_pliv.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_plm.html</loc>
+    <loc>https://ddml.github.io/reference/ddml_plm.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ensemble.html</loc>
+    <loc>https://ddml.github.io/reference/ensemble.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/get_CEF.html</loc>
+    <loc>https://ddml.github.io/reference/get_CEF.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/index.html</loc>
+    <loc>https://ddml.github.io/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_glmnet.html</loc>
+    <loc>https://ddml.github.io/reference/mdl_glmnet.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_ranger.html</loc>
+    <loc>https://ddml.github.io/reference/mdl_ranger.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_xgboost.html</loc>
+    <loc>https://ddml.github.io/reference/mdl_xgboost.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ols.html</loc>
+    <loc>https://ddml.github.io/reference/ols.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/shortstacking.html</loc>
+    <loc>https://ddml.github.io/reference/shortstacking.html</loc>
   </url>
 </urlset>
