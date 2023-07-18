@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_fpliv.R
 \name{ddml_fpliv}
 \alias{ddml_fpliv}
-\title{Title}
+\title{Estimator for the Flexible Partially Linear IV Model.}
 \usage{
 ddml_fpliv(
   y,
@@ -23,49 +23,125 @@ ddml_fpliv(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{D}{abc}
+\item{D}{The endogenous variable.}
 
-\item{Z}{abc}
+\item{Z}{A (sparse) matrix of instruments.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{abc}
+\item{learners}{May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+conditional expectation functions.
+If a single learner is used, \code{learners} is a list with two named
+elements:
+\itemize{
+\item{\code{what} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
+}
+If stacking with multiple learners is used, \code{learners} is a list of
+lists, each containing four named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of indices corresponding to
+features in \code{X} that are passed to the corresponding base
+learner.}
+}}
 
-\item{learners_DXZ}{abc}
+\item{learners_DXZ}{Optional argument to allow for different estimators of
+\eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.}
 
-\item{learners_DX}{abc}
+\item{learners_DX}{Optional argument to allow for different estimators of
+\eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{shortstack}{abc}
+\item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation in ensemble
+construction.}
 
-\item{enforce_LIE}{abc}
+\item{enforce_LIE}{Indicator equal to 1 if the law of iterated expectations
+is enforced in the first stage.}
 
-\item{subsamples}{abc}
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{cv_subsamples_list}{abc}
+\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
+containing vectors with vectors subsample indices for cross-validation.}
 
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 }
 \value{
-object
+\code{ddml_fpliv} returns an object of S3 class
+\code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
+containing the following components:
+\describe{
+\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
+\item{\code{weights}}{A list of matrices, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedure.}
+\item{\code{mspe}}{A list of matrices, providing the MSPE of each
+base learner (in chronological order) computed by the
+cross-validation step in the ensemble construction.}
+\item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
+regression of \eqn{Y - \hat{E}[Y\vert X]} on
+\eqn{D - \hat{E}[D\vert X]} using
+\eqn{\hat{E}[D\vert X,Z] - \hat{E}[D\vert X]} as the instrument.}
+\item{\code{learners},\code{learners_DX},\code{learners_DXZ},
+\code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
+}{Pass-through of selected user-provided arguments. See above.}
+}
 }
 \description{
-abc
+Estimator for the flexible partially linear IV model.
 }
 \details{
-abc
+\code{ddml_fpliv} provides a double/debiased machine learning
+estimator for the parameter of interest \eqn{\theta_0} in the partially
+linear IV model given by
+
+\eqn{Y = \theta_0D + g_0(X) + U,}
+
+where \eqn{(Y, D, X, Z, U)} is a random vector such that
+\eqn{E[U\vert X, Z] = 0} and \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
+and \eqn{g_0} is an unknown nuisance function.
 }
 \examples{
-1 + 1
+# Construct data from the included SIPP_1991 data
+y = as.matrix(SIPP_1991$net_tfa)
+D = as.matrix(SIPP_1991$p401)
+Z = as.matrix(SIPP_1991$e401)
+X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
+                            "marr", "twoearn", "db", "pira", "hown")])
+# Estimate the partially linear IV model using a single base learner: Ridge.
+fpliv_fit <- ddml_fpliv(y, D, Z, X,
+                      learners = list(what = mdl_glmnet,
+                                      args = list(alpha = 0)),
+                      sample_folds = 2,
+                      silent = TRUE)
+fpliv_fit$coef
 }
 \seealso{
+\code{\link[AER:ivreg]{AER::ivreg()}}
+
 Other ddml: 
 \code{\link{ddml_ate}()},
 \code{\link{ddml_late}()},

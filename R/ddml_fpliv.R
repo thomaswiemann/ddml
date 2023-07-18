@@ -1,32 +1,63 @@
-#' Title
+#' Estimator for the Flexible Partially Linear IV Model.
 #'
 #' @family ddml
 #'
-#' @description abc
+#' @seealso [AER::ivreg()]
 #'
-#' @details abc
+#' @description Estimator for the flexible partially linear IV model.
 #'
-#' @param y abc
-#' @param D abc
-#' @param Z abc
-#' @param X abc
-#' @param learners abc
-#' @param learners_DXZ abc
-#' @param learners_DX abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param cv_folds abc
-#' @param enforce_LIE abc
-#' @param subsamples abc
-#' @param cv_subsamples_list abc
-#' @param silent abc
+#' @details \code{ddml_fpliv} provides a double/debiased machine learning
+#'     estimator for the parameter of interest \eqn{\theta_0} in the partially
+#'     linear IV model given by
 #'
-#' @return object
+#' \eqn{Y = \theta_0D + g_0(X) + U,}
+#'
+#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
+#'     \eqn{E[U\vert X, Z] = 0} and \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
+#'     and \eqn{g_0} is an unknown nuisance function.
+#'
+#' @inheritParams ddml_pliv
+#' @param Z A (sparse) matrix of instruments.
+#' @param learners_DXZ Optional argument to allow for different estimators of
+#'     \eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.
+#' @param enforce_LIE Indicator equal to 1 if the law of iterated expectations
+#'     is enforced in the first stage.
+#'
+#' @return \code{ddml_fpliv} returns an object of S3 class
+#'     \code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
+#'     containing the following components:
+#'     \describe{
+#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
+#'         \item{\code{weights}}{A list of matrices, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedure.}
+#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
+#'             base learner (in chronological order) computed by the
+#'             cross-validation step in the ensemble construction.}
+#'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
+#'             regression of \eqn{Y - \hat{E}[Y\vert X]} on
+#'             \eqn{D - \hat{E}[D\vert X]} using
+#'             \eqn{\hat{E}[D\vert X,Z] - \hat{E}[D\vert X]} as the instrument.}
+#'         \item{\code{learners},\code{learners_DX},\code{learners_DXZ},
+#'             \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
+#'             }{Pass-through of selected user-provided arguments. See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct data from the included SIPP_1991 data
+#' y = as.matrix(SIPP_1991$net_tfa)
+#' D = as.matrix(SIPP_1991$p401)
+#' Z = as.matrix(SIPP_1991$e401)
+#' X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
+#'                             "marr", "twoearn", "db", "pira", "hown")])
+#' # Estimate the partially linear IV model using a single base learner: Ridge.
+#' fpliv_fit <- ddml_fpliv(y, D, Z, X,
+#'                       learners = list(what = mdl_glmnet,
+#'                                       args = list(alpha = 0)),
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' fpliv_fit$coef
 ddml_fpliv <- function(y, D, Z, X,
                        learners,
                        learners_DXZ = learners,

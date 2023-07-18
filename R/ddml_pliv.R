@@ -2,6 +2,8 @@
 #'
 #' @family ddml
 #'
+#' @seealso [AER::ivreg()]
+#'
 #' @description Estimator for the partially linear IV model.
 #'
 #' @details \code{ddml_pliv} provides a double/debiased machine learning
@@ -30,7 +32,7 @@
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
-#'         \item{\code{iv_fit}}{Object of class \code{lm} from the IV
+#'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
 #'             regression of \eqn{Y - \hat{E}[Y|X]} on
 #'             \eqn{D - \hat{E}[D|X]} using \eqn{Z - \hat{E}[Z|X]} as the
 #'             instrument.}
@@ -41,17 +43,19 @@
 #' @export
 #'
 #' @examples
-#' # Construct data from the included BLP_1995 data
-#' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
-#' D <- BLP_1995$price
-#' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
-#' # Estimate the partially linear model using a single base learners: ridge.
-#' plm_fit <- ddml_plm(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 5,
-#'                     silent = TRUE)
-#' plm_fit$coef
+#' # Construct data from the included SIPP_1991 data
+#' y = as.matrix(SIPP_1991$net_tfa)
+#' D = as.matrix(SIPP_1991$p401)
+#' Z = as.matrix(SIPP_1991$e401)
+#' X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
+#'                             "marr", "twoearn", "db", "pira", "hown")])
+#' # Estimate the partially linear IV model using a single base learner: Ridge.
+#' pliv_fit <- ddml_pliv(y, D, Z, X,
+#'                       learners = list(what = mdl_glmnet,
+#'                                       args = list(alpha = 0)),
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' pliv_fit$coef
 ddml_pliv <- function(y, D, Z, X,
                       learners,
                       learners_DX = learners,

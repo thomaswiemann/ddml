@@ -19,8 +19,7 @@
 #' @param X A (sparse) matrix of control variables.
 #' @param learners May take one of two forms, depending on whether a single
 #'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation function(s) \eqn{E[Y|X]} (and \eqn{E[D|X]} if
-#'     \code{learners_DX} is not specified).
+#'     conditional expectation functions.
 #'     If a single learner is used, \code{learners} is a list with two named
 #'     elements:
 #'     \itemize{
@@ -83,15 +82,31 @@
 #' @export
 #'
 #' @examples
-#' # Construct data from the included BLP_1995 data
-#' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
-#' D <- BLP_1995$price
-#' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
-#' # Estimate the partially linear model using a single base learners: ridge.
+#' # Construct data from the included SIPP_1991 data
+#' y = as.matrix(SIPP_1991$net_tfa)
+#' D = as.matrix(SIPP_1991$p401)
+#' X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
+#'                             "marr", "twoearn", "db", "pira", "hown")])
+#'
+#' # Estimate the partially linear model using a single base learner: Ridge.
 #' plm_fit <- ddml_plm(y, D, X,
 #'                     learners = list(what = mdl_glmnet,
 #'                                     args = list(alpha = 0)),
-#'                     sample_folds = 5,
+#'                     sample_folds = 2,
+#'                     silent = TRUE)
+#' plm_fit$coef
+#'
+#' # Estimate the partially linear model using short-stacking with base learners
+#' #     ols, rlasso, and xgboost.
+#' plm_fit <- ddml_plm(y, D, X,
+#'                     learners = list(list(fun = ols),
+#'                                     list(fun = mdl_glmnet),
+#'                                     list(fun = mdl_xgboost,
+#'                                          args = list(nrounds = 300,
+#'                                                      max_depth = 3))),
+#'                     ensemble_type = 'nnls',
+#'                     shortstack = TRUE,
+#'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' plm_fit$coef
 ddml_plm <- function(y, D, X,
