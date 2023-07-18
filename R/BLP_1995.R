@@ -1,4 +1,4 @@
-#' Automobile market data from Berry, Levinsohn, Pakes (1995)
+#' Automobile market data from Berry, Levinsohn, Pakes (1995).
 #'
 #' @description Automobile market data from Berry, Levinsohn, Pakes (1995) as
 #' retrived from the reproduction excercise in Chernozhukov, Hansen, and
@@ -20,5 +20,5 @@
 #'   \item{space}{Vehicle size}
 #'   \item{trend}{Time trend}
 #' }
-#' @source \url{/https://www.aeaweb.org/articles?id=10.1257/aer.p20151022/}
+#' @source \url{https://www.aeaweb.org/articles?id=10.1257/aer.p20151022}
 "BLP_1995"

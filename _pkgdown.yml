@@ -34,8 +34,10 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
-- title: Dataset
-  contents: BLP_1995
+- title: Datasets
+  contents:
+  - SIPP_1991
+  - BLP_1995
 - title: internal
   contents:
   - crosspred

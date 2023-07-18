@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_pliv.R
 \name{ddml_pliv}
 \alias{ddml_pliv}
-\title{Title}
+\title{Estimator for the Partially Linear IV Model.}
 \usage{
 ddml_pliv(
   y,
@@ -10,8 +10,8 @@ ddml_pliv(
   Z,
   X,
   learners,
-  learners_ZX = learners,
   learners_DX = learners,
+  learners_ZX = learners,
   sample_folds = 2,
   ensemble_type = "average",
   shortstack = FALSE,
@@ -22,45 +22,117 @@ ddml_pliv(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{D}{abc}
+\item{D}{The endogenous variable.}
 
-\item{Z}{abc}
+\item{Z}{The instrumental variable.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{abc}
+\item{learners}{May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+conditional expectation function(s) \eqn{E[Y|X]} (and \eqn{E[D|X]} if
+\code{learners_DX} is not specified).
+If a single learner is used, \code{learners} is a list with two named
+elements:
+\itemize{
+\item{\code{what} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
+}
+If stacking with multiple learners is used, \code{learners} is a list of
+lists, each containing four named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of indices corresponding to
+features in \code{X} that are passed to the corresponding base
+learner.}
+}}
 
-\item{learners_ZX}{abc}
+\item{learners_DX}{Optional argument to allow for different estimators of
+\eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
-\item{learners_DX}{abc}
+\item{learners_ZX}{Optional argument to allow for different estimators of
+\eqn{E[Z|X]}. Setup is identical to \code{learners}.}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{shortstack}{abc}
+\item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation in ensemble
+construction.}
 
-\item{subsamples}{abc}
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{cv_subsamples_list}{abc}
+\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
+containing vectors with vectors subsample indices for cross-validation.}
 
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 }
 \value{
-abc
+\code{ddml_pliv} returns an object of S3 class
+\code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
+containing the following components:
+\describe{
+\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
+\item{\code{weights}}{A list of matrices, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedure.}
+\item{\code{mspe}}{A list of matrices, providing the MSPE of each
+base learner (in chronological order) computed by the
+cross-validation step in the ensemble construction.}
+\item{\code{iv_fit}}{Object of class \code{lm} from the IV
+regression of \eqn{Y - \hat{E}[Y|X]} on
+\eqn{D - \hat{E}[D|X]} using \eqn{Z - \hat{E}[Z|X]} as the
+instrument.}
+\item{\code{learners},\code{learners_DX},\code{learners_ZX},
+\code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
+}{Pass-through of selected user-provided arguments. See above.}
+}
 }
 \description{
-abc
+Estimator for the partially linear IV model.
 }
 \details{
-abc
+\code{ddml_pliv} provides a double/debiased machine learning
+estimator for the parameter of interest \eqn{\theta_0} in the partially
+linear IV model given by
+
+\eqn{Y = \theta_0D + g_0(X) + U,}
+
+where \eqn{(Y, D, X, Z, U)} is a random vector such that
+\eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
+\eqn{g_0} is an unknown nuisance function.
 }
 \examples{
-1 + 1
+# Construct data from the included BLP_1995 data
+y <- log(BLP_1995$share) - log(BLP_1995$outshr)
+D <- BLP_1995$price
+X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
+# Estimate the partially linear model using a single base learners: ridge.
+plm_fit <- ddml_plm(y, D, X,
+                    learners = list(what = mdl_glmnet,
+                                    args = list(alpha = 0)),
+                    sample_folds = 5,
+                    silent = TRUE)
+plm_fit$coef
 }
 \seealso{
 Other ddml: 

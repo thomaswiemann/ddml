@@ -3,7 +3,7 @@
 \docType{data}
 \name{BLP_1995}
 \alias{BLP_1995}
-\title{Automobile market data from Berry, Levinsohn, Pakes (1995)}
+\title{Automobile market data from Berry, Levinsohn, Pakes (1995).}
 \format{
 A data frame with 2217 rows and 13 variables.
 \describe{
@@ -23,7 +23,7 @@ A data frame with 2217 rows and 13 variables.
 }
 }
 \source{
-\url{/https://www.aeaweb.org/articles?id=10.1257/aer.p20151022/}
+\url{https://www.aeaweb.org/articles?id=10.1257/aer.p20151022}
 }
 \usage{
 BLP_1995

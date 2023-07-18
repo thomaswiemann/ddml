@@ -2,12 +2,20 @@
 #'
 #' @family ddml
 #'
-#' @description descripton goes here.
+#' @description Estimator for the partially linear model.
 #'
-#' @details details go here.
+#' @details \code{ddml_plm} provides a double/debiased machine learning
+#'     estimator for the parameter of interest \eqn{\theta_0} in the partially
+#'     linear model given by
+#'
+#' \eqn{Y = \theta_0D + g_0(X) + U,}
+#'
+#' where \eqn{(Y, D, X, U)} is a random vector such that
+#'     \eqn{E[Cov(U, D\vert X)] = 0} and \eqn{E[Var(D\vert X)] \neq 0}, and
+#'     \eqn{g_0} is an unknown nuisance function.
 #'
 #' @param y The outcome variable.
-#' @param D The endogeneous variable.
+#' @param D The endogenous variable.
 #' @param X A (sparse) matrix of control variables.
 #' @param learners May take one of two forms, depending on whether a single
 #'     learner or stacking with multiple learners is used for estimation of the
@@ -58,7 +66,7 @@
 #'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
 #'     the following components:
 #'     \describe{
-#'         \item{\code{coef}}{A vector with the PLM coefficents.}
+#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
 #'         \item{\code{weights}}{A list of matrices, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedure.}
@@ -66,7 +74,8 @@
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{ols_fit}}{Object of class \code{lm} from the second
-#'             stage regression of \eqn{Y - E[Y|X]} on \eqn{D - E[D|X]}.}
+#'             stage regression of \eqn{Y - \hat{E}[Y|X]} on
+#'             \eqn{D - \hat{E}[D|X]}.}
 #'         \item{\code{learners},\code{learners_DX},\code{subsamples},
 #'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
@@ -78,9 +87,10 @@
 #' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
 #' D <- BLP_1995$price
 #' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
-#' # Estimate the partially linear model using a single base learners: lasso.
+#' # Estimate the partially linear model using a single base learners: ridge.
 #' plm_fit <- ddml_plm(y, D, X,
-#'                     learners = list(what = mdl_glmnet),
+#'                     learners = list(what = mdl_glmnet,
+#'                                     args = list(alpha = 0)),
 #'                     sample_folds = 5,
 #'                     silent = TRUE)
 #' plm_fit$coef
