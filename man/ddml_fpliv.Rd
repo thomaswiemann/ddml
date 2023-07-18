@@ -85,7 +85,7 @@ is enforced in the first stage.}
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
 \item{cv_subsamples_list}{List of lists, each corresponding to a subsample
-containing vectors with vectors subsample indices for cross-validation.}
+containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 }
@@ -125,18 +125,31 @@ where \eqn{(Y, D, X, Z, U)} is a random vector such that
 and \eqn{g_0} is an unknown nuisance function.
 }
 \examples{
-# Construct data from the included SIPP_1991 data
-y = as.matrix(SIPP_1991$net_tfa)
-D = as.matrix(SIPP_1991$p401)
-Z = as.matrix(SIPP_1991$e401)
-X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
-                            "marr", "twoearn", "db", "pira", "hown")])
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex", drop = FALSE]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
 # Estimate the partially linear IV model using a single base learner: Ridge.
 fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                      learners = list(what = mdl_glmnet,
-                                      args = list(alpha = 0)),
-                      sample_folds = 2,
-                      silent = TRUE)
+                        learners = list(what = mdl_glmnet,
+                                        args = list(alpha = 0)),
+                        sample_folds = 2,
+                        silent = TRUE)
+fpliv_fit$coef
+
+# Estimate the partially linear IV model using short-stacking with base
+#     ols, rlasso, and xgboost.
+fpliv_fit <- ddml_fpliv(y, D, Z, X,
+                        learners = list(list(fun = ols),
+                                        list(fun = mdl_glmnet),
+                                        list(fun = mdl_glmnet,
+                                             args = list(alpha = 0))),
+                        ensemble_type = 'nnls',
+                        shortstack = TRUE,
+                        sample_folds = 2,
+                        silent = TRUE)
 fpliv_fit$coef
 }
 \seealso{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_late.R
 \name{ddml_late}
 \alias{ddml_late}
-\title{Title}
+\title{Estimator of the Local Average Treatment Effect.}
 \usage{
 ddml_late(
   y,
@@ -24,49 +24,123 @@ ddml_late(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{D}{abc}
+\item{D}{Binary endogenous variable of interest.}
 
-\item{Z}{abc}
+\item{Z}{Binary instrumental variable.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of control variables.}
 
 \item{learners}{abc}
 
-\item{learners_DXZ}{abc}
+\item{learners_DXZ}{Optional argument to allow for different estimators of
+\eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.}
 
-\item{learners_ZX}{abc}
+\item{learners_ZX}{Optional argument to allow for different estimators of
+\eqn{E[Z\vert X]}. Setup is identical to \code{learners}.}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{shortstack}{abc}
+\item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation in ensemble
+construction.}
 
-\item{subsamples_Z0}{abc}
+\item{subsamples_Z0, subsamples_Z1}{List of vectors with sample indices for
+cross-fitting, corresponding to observations with \eqn{Z=0} and
+\eqn{Z=1}, respectively.}
 
-\item{subsamples_Z1}{abc}
+\item{cv_subsamples_list_Z0, cv_subsamples_list_Z1}{List of lists, each
+corresponding to a subsample containing vectors with subsample indices
+for cross-validation. Arguments are separated for observations with
+\eqn{Z=0} and \eqn{Z=1}, respectively.}
 
-\item{cv_subsamples_list_Z0}{abc}
-
-\item{cv_subsamples_list_Z1}{abc}
-
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 }
 \value{
-abc
+\code{ddml_late} returns an object of S3 class
+\code{ddml_late}. An object of class \code{ddml_late} is a list
+containing the following components:
+\describe{
+\item{\code{late}}{A vector with the average treatment effect
+estimates.}
+\item{\code{weights}}{A list of matrices, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedure.}
+\item{\code{mspe}}{A list of matrices, providing the MSPE of each
+base learner (in chronological order) computed by the
+cross-validation step in the ensemble construction.}
+\item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
+\code{subsamples_Z0},\code{subsamples_Z1},
+\code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
+\code{ensemble_type}}{Pass-through of
+selected user-provided arguments. See above.}
+}
 }
 \description{
-abc
+Estimator of the local average treatment effect.
 }
 \details{
-abc
+\code{ddml_late} provides a double/debiased machine learning
+estimator for the local average treatment effect in the interactive model
+given by
+
+\eqn{Y = g_0(D, X) + U,}
+
+where \eqn{(Y, D, X, Z, U)} is a random vector such that
+\eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
+\eqn{E[U\vert X, Z] = 0}, \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
+\eqn{\Pr(Z=1\vert X) \in (0, 1)} with probability 1,
+\eqn{p_0(1, X) \geq p_0(0, X)} with probability 1 where
+\eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
+\eqn{g_0} is an unknown nuisance function.
+
+In this model, the local average treatment effect is defined as
+
+\eqn{\theta_0^{\textrm{LATE}} \equiv
+    E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)]}.
 }
 \examples{
-1 + 1
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the local average treatment effect using a single base learner,
+#     ridge.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = list(what = mdl_glmnet,
+                                      args = list(alpha = 0)),
+                      sample_folds = 2,
+                      silent = TRUE)
+late_fit$late
+
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, rlasso, and xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = list(list(fun = ols),
+                                      list(fun = mdl_glmnet),
+                                      list(fun = mdl_glmnet,
+                                           args = list(alpha = 0))),
+                      ensemble_type = 'nnls',
+                      shortstack = TRUE,
+                      sample_folds = 2,
+                      silent = TRUE)
+late_fit$late
 }
 \seealso{
 Other ddml: 

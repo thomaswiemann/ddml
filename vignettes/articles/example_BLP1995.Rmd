@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = requireNamespace("R.matlab")
 )
 ```
 
@@ -30,14 +30,30 @@ library(ddml)
 
 # Data construction
 
-The BLP1995 data is included as an exemplary dataset with the ddml package
-under the name `BLP_1995`.
+Automobile market data from Berry, Levinsohn, Pakes (1995) as retrived from
+the reproduction excercise in Chernozhukov, Hansen, and Spindler (2015). 
+[link](https://www.aeaweb.org/articles?id=10.1257/aer.p20151022)
 
 ```{r}
-nobs <- length(BLP_1995$id)
-y <- as.matrix(log(BLP_1995$share) -  log(BLP_1995$outshr))
-D <- as.matrix(BLP_1995$price)
-x1 <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air", "mpd", "space", "price")]))
+library(R.matlab)
+df <- readMat("data/BLP_data.mat")
+
+# Create a single dataframe containing all variables
+df$cdindex <- df$own.dummies <- NULL
+BLP95 <- data.frame(matrix(unlist(df), nrow=2217, byrow=F))
+colnames(BLP95) <- names(df)
+BLP95$model.name <- readMat("data/BLP_data_str.mat")$model.name
+BLP95 <- subset(BLP95, select = -c(const, model.id, product))
+```
+
+The BLP1995 data is included as an exemplary dataset with the ddml package
+under the name `BLP95`.
+
+```{r}
+nobs <- length(BLP95$id)
+y <- as.matrix(log(BLP95$share) -  log(BLP95$outshr))
+D <- as.matrix(BLP95$price)
+x1 <- as.matrix(cbind(1, BLP95[, c("hpwt", "air", "mpd", "space", "price")]))
 colnames(y) <- "share"
 colnames(D) <- "price"
 ```
@@ -52,10 +68,10 @@ approach of CHS2015.
 X_ <- x1[, 1:5]; ncol_X <- ncol(X_) # exclude price
 sum_other <- sum_rival <- matrix(0, nobs, 5)
 for (i in 1:nobs) {
-  other_ind <- (BLP_1995$firmid == BLP_1995$firmid[i]) &
-    (BLP_1995$cdid == BLP_1995$cdid[i]) & (BLP_1995$id != BLP_1995$id[i])
-  rival_ind <- (BLP_1995$firmid != BLP_1995$firmid[i]) &
-    (BLP_1995$cdid == BLP_1995$cdid[i])
+  other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
+  rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i])
   sum_other[i, ] <- colSums(X_[other_ind, , drop = FALSE])
   sum_rival[i, ] <- colSums(X_[rival_ind, , drop = FALSE])
 }#FOR
@@ -66,23 +82,23 @@ In addition, we may be interested in extending the list of instruments. The belo
 constructs the additional instruments considered in CHS2015.
 
 ```{r}
-tu = BLP_1995$trend/19;
-mpdu = BLP_1995$mpd/7;
-spaceu = BLP_1995$space/2;
-XL_ <- as.matrix(cbind(1, BLP_1995[, c("hpwt", "air")], mpdu, spaceu, tu,
-                       BLP_1995$hpwt^2, BLP_1995$hpwt^3, mpdu^2, mpdu^3,
-                       spaceu^2, spaceu^3, tu^2, tu^3, BLP_1995$hpwt *
-                         BLP_1995$air,  mpdu * BLP_1995$air, spaceu *
-                         BLP_1995$air, tu * BLP_1995$air, BLP_1995$hpwt *
-                         mpdu, BLP_1995$hpwt * spaceu, BLP_1995$hpwt * tu,
+tu = BLP95$trend/19;
+mpdu = BLP95$mpd/7;
+spaceu = BLP95$space/2;
+XL_ <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
+                       BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
+                       spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
+                         BLP95$air,  mpdu * BLP95$air, spaceu *
+                         BLP95$air, tu * BLP95$air, BLP95$hpwt *
+                         mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
                        mpdu * spaceu,  mpdu * tu, spaceu * tu))
 ncol_XL <- ncol(XL_)
 sum_otherL <- sum_rivalL <- matrix(0, nobs, 24)
 for (i in 1:nobs) {
-  other_ind <- (BLP_1995$firmid == BLP_1995$firmid[i]) &
-    (BLP_1995$cdid == BLP_1995$cdid[i]) & (BLP_1995$id != BLP_1995$id[i])
-  rival_ind <- (BLP_1995$firmid != BLP_1995$firmid[i]) &
-    (BLP_1995$cdid == BLP_1995$cdid[i])
+  other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
+  rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i])
   sum_otherL[i, ] <- colSums(XL_[other_ind, , drop = FALSE])
   sum_rivalL[i, ] <- colSums(XL_[rival_ind, , drop = FALSE])
 }#FOR

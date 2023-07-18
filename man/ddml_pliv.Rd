@@ -57,7 +57,7 @@ learner.}
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
 \item{learners_ZX}{Optional argument to allow for different estimators of
-\eqn{E[Z|X]}. Setup is identical to \code{learners}.}
+\eqn{E[Z\vert X]}. Setup is identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
@@ -81,7 +81,7 @@ construction.}
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
 \item{cv_subsamples_list}{List of lists, each corresponding to a subsample
-containing vectors with vectors subsample indices for cross-validation.}
+containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 }
@@ -98,8 +98,8 @@ ensemble procedure.}
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
 \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
-regression of \eqn{Y - \hat{E}[Y|X]} on
-\eqn{D - \hat{E}[D|X]} using \eqn{Z - \hat{E}[Z|X]} as the
+regression of \eqn{Y - \hat{E}[Y\vert X]} on
+\eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as the
 instrument.}
 \item{\code{learners},\code{learners_DX},\code{learners_ZX},
 \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
@@ -121,16 +121,29 @@ where \eqn{(Y, D, X, Z, U)} is a random vector such that
 \eqn{g_0} is an unknown nuisance function.
 }
 \examples{
-# Construct data from the included SIPP_1991 data
-y = as.matrix(SIPP_1991$net_tfa)
-D = as.matrix(SIPP_1991$p401)
-Z = as.matrix(SIPP_1991$e401)
-X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
-                            "marr", "twoearn", "db", "pira", "hown")])
-# Estimate the partially linear IV model using a single base learner: Ridge.
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the partially linear IV model using a single base learner, ridge.
 pliv_fit <- ddml_pliv(y, D, Z, X,
                       learners = list(what = mdl_glmnet,
                                       args = list(alpha = 0)),
+                      sample_folds = 2,
+                      silent = TRUE)
+pliv_fit$coef
+
+# Estimate the partially linear IV model using short-stacking with base
+#     ols, lasso, and ridge.
+pliv_fit <- ddml_pliv(y, D, Z, X,
+                      learners = list(list(fun = ols),
+                                      list(fun = mdl_glmnet),
+                                      list(fun = mdl_glmnet,
+                                           args = list(alpha = 0))),
+                      ensemble_type = 'nnls',
+                      shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)
 pliv_fit$coef

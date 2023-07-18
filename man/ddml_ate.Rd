@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_ate.R
 \name{ddml_ate}
 \alias{ddml_ate}
-\title{Title}
+\title{Estimator of the Average Treatment Effect.}
 \usage{
 ddml_ate(
   y,
@@ -24,11 +24,32 @@ ddml_ate(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{abc}
+\item{D}{Binary endogenous variable of interest.}
 
 \item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{abc}
+\item{learners}{May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+conditional expectation functions.
+If a single learner is used, \code{learners} is a list with two named
+elements:
+\itemize{
+\item{\code{what} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
+}
+If stacking with multiple learners is used, \code{learners} is a list of
+lists, each containing four named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of indices corresponding to
+features in \code{X} that are passed to the corresponding base
+learner.}
+}}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}
@@ -52,23 +73,83 @@ Multiple ensemble types may be passed as a vector of strings.}
 \item{cv_folds}{Number of folds used for cross-validation in ensemble
 construction.}
 
-\item{subsamples_D0, subsamples_D1}{abc}
+\item{subsamples_D0, subsamples_D1}{List of vectors with sample indices for
+cross-fitting, corresponding to untreated and treated observations,
+respectively.}
 
-\item{cv_subsamples_list_D0, cv_subsamples_list_D1}{abc}
+\item{cv_subsamples_list_D0, cv_subsamples_list_D1}{List of lists, each
+corresponding to a subsample containing vectors with subsample indices
+for cross-validation. Arguments are separated for untreated and treated
+observations, respectively.}
 
 \item{silent}{Boolean to silence estimation updates.}
 }
 \value{
-abc
+\code{ddml_ate} returns an object of S3 class
+\code{ddml_ate}. An object of class \code{ddml_ate} is a list containing
+the following components:
+\describe{
+\item{\code{ate}}{A vector with the average treatment effect
+estimates.}
+\item{\code{weights}}{A list of matrices, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedure.}
+\item{\code{mspe}}{A list of matrices, providing the MSPE of each
+base learner (in chronological order) computed by the
+cross-validation step in the ensemble construction.}
+\item{\code{learners},\code{learners_DX},
+\code{subsamples_D0},\code{subsamples_D1},
+\code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
+\code{ensemble_type}}{Pass-through of
+selected user-provided arguments. See above.}
+}
 }
 \description{
-abc
+Estimator of the average treatment effect.
 }
 \details{
-abc
+\code{ddml_ate} provides a double/debiased machine learning
+estimator for the average treatment effect in the interactive model
+given by
+
+\eqn{Y = g_0(D, X) + U,}
+
+where \eqn{(Y, D, X, U)} is a random vector such that
+\eqn{\operatorname{supp} D = \{0,1\}}, \eqn{E[U\vert D, X] = 0}, and
+\eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
+and \eqn{g_0} is an unknown nuisance function.
+
+In this model, the average treatment effect is defined as
+
+\eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
 }
 \examples{
-1 + 1
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the average treatment effect using a single base learner, ridge.
+ate_fit <- ddml_ate(y, D, X,
+                    learners = list(what = mdl_glmnet,
+                                    args = list(alpha = 0)),
+                    sample_folds = 2,
+                    silent = TRUE)
+ate_fit$ate
+
+# Estimate the average treatment effect using short-stacking with base
+#     learners ols, rlasso, and xgboost.
+ate_fit <- ddml_ate(y, D, X,
+                    learners = list(list(fun = ols),
+                                    list(fun = mdl_glmnet),
+                                    list(fun = mdl_xgboost,
+                                         args = list(nrounds = 300,
+                                                     max_depth = 3))),
+                    ensemble_type = 'nnls',
+                    shortstack = TRUE,
+                    sample_folds = 2,
+                    silent = TRUE)
+ate_fit$ate
 }
 \seealso{
 Other ddml: 

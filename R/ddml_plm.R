@@ -58,7 +58,7 @@
 #'     construction.
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples_list List of lists, each corresponding to a subsample
-#'     containing vectors with vectors subsample indices for cross-validation.
+#'     containing vectors with subsample indices for cross-validation.
 #' @param silent Boolean to silence estimation updates.
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
@@ -82,13 +82,12 @@
 #' @export
 #'
 #' @examples
-#' # Construct data from the included SIPP_1991 data
-#' y = as.matrix(SIPP_1991$net_tfa)
-#' D = as.matrix(SIPP_1991$p401)
-#' X = as.matrix(SIPP_1991[, c("age", "inc", "educ", "fsize",
-#'                             "marr", "twoearn", "db", "pira", "hown")])
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 #'
-#' # Estimate the partially linear model using a single base learner: Ridge.
+#' # Estimate the partially linear model using a single base learner, ridge.
 #' plm_fit <- ddml_plm(y, D, X,
 #'                     learners = list(what = mdl_glmnet,
 #'                                     args = list(alpha = 0)),
@@ -101,9 +100,8 @@
 #' plm_fit <- ddml_plm(y, D, X,
 #'                     learners = list(list(fun = ols),
 #'                                     list(fun = mdl_glmnet),
-#'                                     list(fun = mdl_xgboost,
-#'                                          args = list(nrounds = 300,
-#'                                                      max_depth = 3))),
+#'                                     list(fun = mdl_glmnet,
+#'                                          args = list(alpha = 0))),
 #'                     ensemble_type = 'nnls',
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,

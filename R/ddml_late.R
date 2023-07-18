@@ -1,33 +1,91 @@
-#' Title
+#' Estimator of the Local Average Treatment Effect.
 #'
 #' @family ddml
 #'
-#' @description abc
+#' @description Estimator of the local average treatment effect.
 #'
-#' @details abc
+#' @details \code{ddml_late} provides a double/debiased machine learning
+#'     estimator for the local average treatment effect in the interactive model
+#'     given by
 #'
-#' @param y abc
-#' @param D abc
-#' @param Z abc
-#' @param X abc
+#' \eqn{Y = g_0(D, X) + U,}
+#'
+#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
+#'     \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
+#'     \eqn{E[U\vert X, Z] = 0}, \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
+#'     \eqn{\Pr(Z=1\vert X) \in (0, 1)} with probability 1,
+#'     \eqn{p_0(1, X) \geq p_0(0, X)} with probability 1 where
+#'     \eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
+#'     \eqn{g_0} is an unknown nuisance function.
+#'
+#' In this model, the local average treatment effect is defined as
+#'
+#' \eqn{\theta_0^{\textrm{LATE}} \equiv
+#'     E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)]}.
+#'
+#' @inheritParams ddml_ate
+#' @param Z Binary instrumental variable.
 #' @param learners abc
-#' @param learners_DXZ abc
-#' @param learners_ZX abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param cv_folds abc
-#' @param subsamples_Z0 abc
-#' @param subsamples_Z1 abc
-#' @param cv_subsamples_list_Z0 abc
-#' @param cv_subsamples_list_Z1 abc
-#' @param silent abc
+#' @param learners_DXZ Optional argument to allow for different estimators of
+#'     \eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.
+#' @param learners_ZX Optional argument to allow for different estimators of
+#'     \eqn{E[Z\vert X]}. Setup is identical to \code{learners}.
+#' @param subsamples_Z0,subsamples_Z1 List of vectors with sample indices for
+#'     cross-fitting, corresponding to observations with \eqn{Z=0} and
+#'     \eqn{Z=1}, respectively.
+#' @param cv_subsamples_list_Z0,cv_subsamples_list_Z1 List of lists, each
+#'     corresponding to a subsample containing vectors with subsample indices
+#'     for cross-validation. Arguments are separated for observations with
+#'     \eqn{Z=0} and \eqn{Z=1}, respectively.
 #'
-#' @return abc
+#' @return \code{ddml_late} returns an object of S3 class
+#'     \code{ddml_late}. An object of class \code{ddml_late} is a list
+#'     containing the following components:
+#'     \describe{
+#'         \item{\code{late}}{A vector with the average treatment effect
+#'             estimates.}
+#'         \item{\code{weights}}{A list of matrices, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedure.}
+#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
+#'             base learner (in chronological order) computed by the
+#'             cross-validation step in the ensemble construction.}
+#'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
+#'             \code{subsamples_Z0},\code{subsamples_Z1},
+#'             \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
+#'             \code{ensemble_type}}{Pass-through of
+#'             selected user-provided arguments. See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' Z = AE98[, "samesex"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the local average treatment effect using a single base learner,
+#' #     ridge.
+#' late_fit <- ddml_late(y, D, Z, X,
+#'                       learners = list(what = mdl_glmnet,
+#'                                       args = list(alpha = 0)),
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' late_fit$late
+#'
+#' # Estimate the local average treatment effect using short-stacking with base
+#' #     learners ols, rlasso, and xgboost.
+#' late_fit <- ddml_late(y, D, Z, X,
+#'                       learners = list(list(fun = ols),
+#'                                       list(fun = mdl_glmnet),
+#'                                       list(fun = mdl_glmnet,
+#'                                            args = list(alpha = 0))),
+#'                       ensemble_type = 'nnls',
+#'                       shortstack = TRUE,
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' late_fit$late
 ddml_late <- function(y, D, Z, X,
                      learners,
                      learners_DXZ = learners,
