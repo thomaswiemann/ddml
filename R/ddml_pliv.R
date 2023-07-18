@@ -1,35 +1,61 @@
-#' Title
+#' Estimator for the Partially Linear IV Model.
 #'
 #' @family ddml
 #'
-#' @description abc
+#' @description Estimator for the partially linear IV model.
 #'
-#' @details abc
+#' @details \code{ddml_pliv} provides a double/debiased machine learning
+#'     estimator for the parameter of interest \eqn{\theta_0} in the partially
+#'     linear IV model given by
 #'
-#' @param y abc
-#' @param D abc
-#' @param Z abc
-#' @param X abc
-#' @param learners abc
-#' @param learners_ZX abc
-#' @param learners_DX abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param cv_folds abc
-#' @param subsamples abc
-#' @param cv_subsamples_list abc
-#' @param silent abc
+#' \eqn{Y = \theta_0D + g_0(X) + U,}
 #'
-#' @return abc
+#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
+#'     \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
+#'     \eqn{g_0} is an unknown nuisance function.
+#'
+#' @inheritParams ddml_plm
+#' @param Z The instrumental variable.
+#' @param learners_ZX Optional argument to allow for different estimators of
+#'     \eqn{E[Z|X]}. Setup is identical to \code{learners}.
+#'
+#' @return \code{ddml_pliv} returns an object of S3 class
+#'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
+#'     containing the following components:
+#'     \describe{
+#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
+#'         \item{\code{weights}}{A list of matrices, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedure.}
+#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
+#'             base learner (in chronological order) computed by the
+#'             cross-validation step in the ensemble construction.}
+#'         \item{\code{iv_fit}}{Object of class \code{lm} from the IV
+#'             regression of \eqn{Y - \hat{E}[Y|X]} on
+#'             \eqn{D - \hat{E}[D|X]} using \eqn{Z - \hat{E}[Z|X]} as the
+#'             instrument.}
+#'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
+#'             \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
+#'             }{Pass-through of selected user-provided arguments. See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct data from the included BLP_1995 data
+#' y <- log(BLP_1995$share) - log(BLP_1995$outshr)
+#' D <- BLP_1995$price
+#' X <- as.matrix(subset(BLP_1995, select = c(air, hpwt, mpd, mpg, space)))
+#' # Estimate the partially linear model using a single base learners: ridge.
+#' plm_fit <- ddml_plm(y, D, X,
+#'                     learners = list(what = mdl_glmnet,
+#'                                     args = list(alpha = 0)),
+#'                     sample_folds = 5,
+#'                     silent = TRUE)
+#' plm_fit$coef
 ddml_pliv <- function(y, D, Z, X,
                       learners,
-                      learners_ZX = learners,
                       learners_DX = learners,
+                      learners_ZX = learners,
                       sample_folds = 2,
                       ensemble_type = "average",
                       shortstack = FALSE,

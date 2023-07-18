@@ -10,7 +10,8 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = FALSE
 )
 ```
 
@@ -102,7 +103,7 @@ lasso_fit <- ddml_fpliv(y, D = D,
                            silent = T)
 lasso_fit$coef
 ```
-# Estimating the Flexible Partially Linear V Model with Stacking
+# Estimating the Flexible Partially Linear IV Model with Stacking
 
 
 #' A more ambitious approach may consider a variety of computational models for
@@ -126,7 +127,7 @@ set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 
 
-# Estimating the Flexible Partially Linear V Model with Short-Stacking
+# Estimating the Flexible Partially Linear IV Model with Short-Stacking
 
 ```{r}
 # Base learners

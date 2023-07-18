@@ -34,7 +34,6 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown,
-    keras
+    rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
