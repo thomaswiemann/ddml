@@ -18,6 +18,34 @@
 #'
 #' @inheritParams ddml_plm
 #' @param Z The instrumental variable.
+#' @param learners May take one of two forms, depending on whether a single
+#'     learner or stacking with multiple learners is used for estimation of the
+#'     conditional expectation functions.
+#'     If a single learner is used, \code{learners} is a list with two named
+#'     elements:
+#'     \itemize{
+#'         \item{\code{what} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
+#'     }
+#'     If stacking with multiple learners is used, \code{learners} is a list of
+#'     lists, each containing four named elements:
+#'     \itemize{
+#'         \item{\code{fun} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{assign_X} An optional vector of column indices
+#'             corresponding to control variables in \code{X} that are passed to
+#'             the base learner.}
+#'         \item{\code{assign_Z} An optional vector of column indices
+#'             corresponding to instruments in \code{Z} that are passed to the
+#'             base learner.}
+#'     }
+#'     Omission of the \code{args} element results in default arguments being
+#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
 #' @param learners_ZX Optional argument to allow for different estimators of
 #'     \eqn{E[Z\vert X]}. Setup is identical to \code{learners}.
 #'

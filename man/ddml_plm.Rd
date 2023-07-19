@@ -44,10 +44,13 @@ lists, each containing four named elements:
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
 \item{\code{args} Optional arguments to be passed to \code{fun}.}
-\item{\code{assign_X} An optional vector of indices corresponding to
-features in \code{X} that are passed to the corresponding base
-learner.}
-}}
+\item{\code{assign_X} An optional vector of column indices
+corresponding to control variables in \code{X} that are passed to
+the base learner.}
+}
+Omission of the \code{args} element results in default arguments being
+used in \code{fun}. Omission of \code{assign_X} results in inclusion of
+all variables in \code{X}.}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}

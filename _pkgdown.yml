@@ -1,4 +1,4 @@
-url: https://ddml.github.io/
+url: https://thomaswiemann.com/ddml
 template:
   bootstrap: 5
 navbar:
@@ -34,15 +34,17 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
+- title: Utilities
+  contents:
+  - crossval
+  - crosspred
+  - shortstacking
+  - get_CEF
+  - ensemble
 - title: Dataset
   contents:
   - AE98
 - title: internal
   contents:
-  - crosspred
-  - crossval
   - ddml
-  - ensemble
-  - get_CEF
-  - shortstacking
 

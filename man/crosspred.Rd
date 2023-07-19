@@ -2,7 +2,7 @@
 % Please edit documentation in R/crosspred.R
 \name{crosspred}
 \alias{crosspred}
-\title{Title}
+\title{Cross-Prediction Calculation.}
 \usage{
 crosspred(
   y,
@@ -22,40 +22,89 @@ crosspred(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of predictive variables.}
 
-\item{Z}{abc}
+\item{Z}{Optional additional (sparse) matrix of predictive variables.}
 
-\item{learners}{abc}
+\item{learners}{May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+predictor.
+If a single learner is used, \code{learners} is a list with two named
+elements:
+\itemize{
+\item{\code{what} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
+}
+If stacking with multiple learners is used, \code{learners} is a list of
+lists, each containing four named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of column indices
+corresponding to predictive variables in \code{X} that are passed to
+the base learner.}
+\item{\code{assign_Z} An optional vector of column indices
+corresponding to predictive in \code{Z} that are passed to the
+base learner.}
+}
+Omission of the \code{args} element results in default arguments being
+used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation in ensemble
+construction.}
 
-\item{compute_insample_predictions}{abc}
+\item{compute_insample_predictions}{Indicator equal to 1 if in-sample
+predictions should also be computed.}
 
-\item{compute_predictions_bylearner}{abc}
+\item{compute_predictions_bylearner}{Indicator equal to 1 if in-sample
+predictions should also be computed for each learner (rather than the
+entire ensemble).}
 
-\item{subsamples}{abc}
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{cv_subsamples_list}{abc}
+\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
+containing vectors with subsample indices for cross-validation.}
 
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{abc}
+\item{progress}{String to print before learner and cv fold progress.}
 
-\item{auxilliary_X}{abc}
+\item{auxilliary_X}{An optional list of matrices of length
+\code{sample_folds}, each containing additional observations to calculate
+predictions for.}
 }
 \value{
 object
 }
 \description{
-Title
+Cross-prediction calculation.
 }
 \examples{
 1 + 1
 }
+\seealso{
+Other utilities: 
+\code{\link{crossval}()}
+}
+\concept{utilities}

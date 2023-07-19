@@ -55,7 +55,7 @@ get_CEF <- function(y, X, Z = NULL,
   return(res)
 }#GET_CEF
 
-# Utility to print progress ot console
+# Utility to print progress to console
 update_progress <- function(silent) {
   if (!silent) cat(" -- Done! \n")
 }#UPDATE_PROGRESS
