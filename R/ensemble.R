@@ -114,15 +114,14 @@ ensemble_weights <- function(y, X, Z = NULL,
       # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
       # the quadratic programming problem.
       sq_resid <- Matrix::crossprod(cv_results$oos_resid)
-      A <- matrix(1, nlearners, 1) # |w|_1 = 1 constraint
+      A <- cbind(matrix(1, nlearners, 1), diag(1, nlearners))
       # Calculate solution
       # Note: quadprog only solves for pos.def matrices. nearPD finds nearest
       #     pos.def matrix as a workaround.
       r <- quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
                              dvec = matrix(0, nlearners, 1),
                              Amat = A,
-                             bvec = 1,
-                             meq = 0)
+                             bvec = c(1, rep(0, nlearners)))
       weights[, k] <- r$solution
     } else if (type[k] == "nnls") {
       # Reconstruct out of sample fitted values
