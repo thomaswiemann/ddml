@@ -1,24 +1,118 @@
-#' Title
+#' Cross-Predictions using Stacking.
 #'
-#' @param y abc
-#' @param X abc
-#' @param Z abc
-#' @param learners abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param cv_folds abc
-#' @param compute_insample_predictions abc
-#' @param compute_predictions_bylearner abc
-#' @param subsamples abc
-#' @param cv_subsamples_list abc
-#' @param silent abc
-#' @param progress abc
-#' @param auxilliary_X abc
+#' @family utilities
 #'
-#' @return object
+#' @description Cross-predictions using stacking.
+#'
+#' @inheritParams crossval
+#' @param learners May take one of two forms, depending on whether a single
+#'     learner or stacking with multiple learners is used for estimation of the
+#'     predictor.
+#'     If a single learner is used, \code{learners} is a list with two named
+#'     elements:
+#'     \itemize{
+#'         \item{\code{what} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
+#'     }
+#'     If stacking with multiple learners is used, \code{learners} is a list of
+#'     lists, each containing four named elements:
+#'     \itemize{
+#'         \item{\code{fun} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{assign_X} An optional vector of column indices
+#'             corresponding to predictive variables in \code{X} that are passed to
+#'             the base learner.}
+#'         \item{\code{assign_Z} An optional vector of column indices
+#'             corresponding to predictive in \code{Z} that are passed to the
+#'             base learner.}
+#'     }
+#'     Omission of the \code{args} element results in default arguments being
+#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
+#' @param sample_folds Number of cross-fitting folds.
+#' @param ensemble_type Ensemble method to combine base learners into final
+#'     estimate of the conditional expectation functions. Possible values are:
+#'     \itemize{
+#'         \item{\code{"nnls"} Non-negative least squares.}
+#'         \item{\code{"nnls1"} Non-negative least squares with the constraint
+#'             that all weights sum to one.}
+#'         \item{\code{"singlebest"} Select base learner with minimum MSPE.}
+#'         \item{\code{"ols"} Ordinary least squares.}
+#'         \item{\code{"average"} Simple average over base learners.}
+#'     }
+#'     Multiple ensemble types may be passed as a vector of strings.
+#' @param cv_folds Number of folds used for cross-validation in ensemble
+#'     construction.
+#' @param compute_insample_predictions Indicator equal to 1 if in-sample
+#'     predictions should also be computed.
+#' @param compute_predictions_bylearner Indicator equal to 1 if in-sample
+#'     predictions should also be computed for each learner (rather than the
+#'     entire ensemble).
+#' @param subsamples List of vectors with sample indices for cross-fitting.
+#' @param cv_subsamples_list List of lists, each corresponding to a subsample
+#'     containing vectors with subsample indices for cross-validation.
+#' @param auxilliary_X An optional list of matrices of length
+#'     \code{sample_folds}, each containing additional observations to calculate
+#'     predictions for.
+#'
+#' @return \code{crosspred} returns a list containing the following components:
+#'     \describe{
+#'         \item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+#'             each column corresponding to an ensemble type (in chronological
+#'             order).}
+#'         \item{\code{weights}}{An array, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedures.}
+#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+#'             a list of matrices with in-sample predictions by sample fold.}
+#'         \item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+#'             \code{NULL}, a list of matrices with additional predictions.}
+#'         \item{\code{oos_fitted_bylearner}}{When
+#'             \code{compute_predictions_bylearner = T}, a matrix of
+#'             out-of-sample predictions, each column corresponding to a base
+#'             learner (in chronological order).}
+#'         \item{\code{is_fitted_bylearner}}{When
+#'             \code{compute_insample_predictions = T} and
+#'             \code{compute_predictions_bylearner = T}, a list of matrices with
+#'             in-sample predictions by sample fold.}
+#'         \item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+#'             not \code{NULL} and \code{compute_predictions_bylearner = T}, a
+#'             list of matrices with additional predictions for each learner.}
+#'     }
+#' @export
+#'
+#' @references
+#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+#'     machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+#'
+#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
-#' 1 + 1
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Compute cross-predictions using stacking with base learners ols and lasso.
+#' #     Two stacking approaches are simultaneously computed: Equally
+#' #     weighted (ensemble_type = "average") and MSPE-minimizing with weights
+#' #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
+#' #     learner are also calculated.
+#' crosspred_res <- crosspred(y, X,
+#'                            learners = list(list(fun = ols),
+#'                                            list(fun = mdl_glmnet)),
+#'                            ensemble_type = c("average",
+#'                                              "nnls1",
+#'                                              "singlebest"),
+#'                            compute_predictions_bylearner = TRUE,
+#'                            sample_folds = 2,
+#'                            cv_folds = 2,
+#'                            silent = TRUE)
+#' dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
+#' dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
 crosspred <- function(y, X, Z = NULL,
                       learners,
                       sample_folds = 2,
@@ -128,7 +222,7 @@ crosspred <- function(y, X, Z = NULL,
       weights[, , k] <- mdl_fit$weights
       # Record model MSPEs when weights were computed via cross validation
       if (!is.null(mdl_fit$cv_res)) {
-        mspe[,k] <- colMeans(mdl_fit$cv_res$oos_resid^2)
+        mspe[,k] <- mdl_fit$cv_res$mspe
       }#IF
     }#IFELSE
     # Compute in-sample predictions (optional)

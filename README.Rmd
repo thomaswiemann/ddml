@@ -1,18 +1,47 @@
 ---
-title: "Get Started"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Get Started}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: github_document
 ---
 
-```{r, include = FALSE}
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
+
+# ddml
+
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml)
+  [![codecov](https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S)](https://codecov.io/gh/thomaswiemann/ddml)
+  [![CodeFactor](https://www.codefactor.io/repository/github/thomaswiemann/ddml/badge)](https://www.codefactor.io/repository/github/thomaswiemann/ddml)
+<!-- badges: end -->
+
+``ddml`` is an implementation of double/debiased machine learning estimators
+    targeting common causal parameters such as the average treatment effect. The
+    key benefit of the package is the straightforward estimation of nuisance 
+    parameters using stacking, which simultaneously leverages multiple base 
+    learners to increase robustness to the underlying data generating process.
+    
+``ddml`` is the sister R package to our [Stata](https://github.com/aahrens1/ddml/) 
+    package, mirroring its key features while also leveraging R to simplify 
+    estimation with user-provided learners and/or sparse matrices 
+    (see [Matrix](https://cran.r-project.org/web/packages/Matrix/index.html)).
+
+
+## Installation
+
+Install latest development version from GitHub (requires [devtools](https://github.com/hadley/devtools) package):
+
+```{r, eval = FALSE}
+if (!require("devtools")) {
+  install.packages("devtools")
+}
+devtools::install_github("thomaswiemann/ddml", dependencies = TRUE)
+```
+
 
 ## Example using the Data from Angrist & Evans (1998)
 
@@ -90,5 +119,4 @@ Angrist J, Evans W, (1998). "Children and Their Parents' Labor Supply: Evidence
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W, Robins J (2018). "Double/debiased machine learning for treatment and structural parameters." The Econometrics Journal, 21(1), C1-C68.
 
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
-
 

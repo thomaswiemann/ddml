@@ -10,13 +10,12 @@ generate_subsamples <- function(nobs, sample_folds) {
 
 # Simple generalized inverse wrapper.
 csolve <- function(X) {
-  # Attmept inversion
+  # Attempt inversion
   X_inv <- tryCatch(solve(X), error = function(e) NA)
   # If inversion failed, calculate generalized inverse
   if (any(is.na(X_inv))) {
     X_inv <- MASS::ginv(X)
-    #warning("Inversion failed. The generalized inverse was calulated instead.")
   }#IF
-  #Return (generalized) inverse
+  # Return (generalized) inverse
   return(X_inv)
 }#CSOLVE

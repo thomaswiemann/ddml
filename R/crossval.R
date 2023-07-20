@@ -1,19 +1,63 @@
-#' Title
+#' Estimator of the Mean Squared Prediction Error using Cross-Validation.
 #'
-#' @param y abc
-#' @param X abc
-#' @param Z abc
-#' @param learners abc
-#' @param cv_folds abc
-#' @param cv_subsamples abc
-#' @param silent abc
-#' @param progress abc
+#' @family utilities
 #'
-#' @return object
+#' @description Estimator of the mean squared prediction error of
+#'     different learners using cross-validation.
+#'
+#' @inheritParams ddml_plm
+#' @param y The outcome variable.
+#' @param X A (sparse) matrix of predictive variables.
+#' @param Z Optional additional (sparse) matrix of predictive variables.
+#' @param learners \code{learners} is a list of lists, each containing four
+#'     named elements:
+#'     \itemize{
+#'         \item{\code{fun} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{assign_X} An optional vector of column indices
+#'             corresponding to variables in \code{X} that are passed to
+#'             the base learner.}
+#'         \item{\code{assign_Z} An optional vector of column indices
+#'             corresponding to variables in \code{Z} that are passed to the
+#'             base learner.}
+#'     }
+#'     Omission of the \code{args} element results in default arguments being
+#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     results in inclusion of all predictive variables in \code{X} (and/or
+#'     \code{Z}).
+#' @param cv_folds Number of folds used for cross-validation.
+#' @param cv_subsamples List of vectors with sample indices for
+#'     cross-validation.
+#' @param progress String to print before learner and cv fold progress.
+#'
+#' @return \code{crossval} returns a list containing the following components:
+#'     \describe{
+#'         \item{\code{mspe}}{A vector of MSPE estimates,
+#'             each corresponding to a base learners (in chronological order).}
+#'         \item{\code{oos_resid}}{A matrix of out-of-sample prediction errors,
+#'             each column corresponding to a base learners (in chronological
+#'             order).}
+#'         \item{\code{cv_subsamples}}{Pass-through of \code{cv_subsamples}.
+#'             See above.}
+#'     }
 #' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Compare ols, lasso, and ridge using 4-fold cross-validation
+#' cv_res <- crossval(y, X,
+#'                    learners = list(list(fun = ols),
+#'                                    list(fun = mdl_glmnet),
+#'                                    list(fun = mdl_glmnet,
+#'                                         args = list(alpha = 0))),
+#'                    cv_folds = 4,
+#'                    silent = TRUE)
+#' cv_res$mspe
 crossval <- function(y, X, Z = NULL,
                      learners,
                      cv_folds = 5,
@@ -52,8 +96,13 @@ crossval <- function(y, X, Z = NULL,
   oos_resid <- unlist(cv_res)
   oos_resid <- matrix(oos_resid, nobs, nlearners)
 
+  # Compute MSPE by learner
+  mspe <- colMeans(oos_resid^2)
+
   # Organize and return output
-  output <- list(oos_resid = oos_resid)
+  output <- list(mspe = mspe,
+                 oos_resid = oos_resid,
+                 cv_subsamples = cv_subsamples)
   return(output)
 }#CROSSVAL
 

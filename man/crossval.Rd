@@ -2,7 +2,7 @@
 % Please edit documentation in R/crossval.R
 \name{crossval}
 \alias{crossval}
-\title{Title}
+\title{Estimator of the Mean Squared Prediction Error using Cross-Validation.}
 \usage{
 crossval(
   y,
@@ -16,28 +16,74 @@ crossval(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of predictive variables.}
 
-\item{Z}{abc}
+\item{Z}{Optional additional (sparse) matrix of predictive variables.}
 
-\item{learners}{abc}
+\item{learners}{\code{learners} is a list of lists, each containing four
+named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of column indices
+corresponding to variables in \code{X} that are passed to
+the base learner.}
+\item{\code{assign_Z} An optional vector of column indices
+corresponding to variables in \code{Z} that are passed to the
+base learner.}
+}
+Omission of the \code{args} element results in default arguments being
+used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+results in inclusion of all predictive variables in \code{X} (and/or
+\code{Z}).}
 
-\item{cv_folds}{abc}
+\item{cv_folds}{Number of folds used for cross-validation.}
 
-\item{cv_subsamples}{abc}
+\item{cv_subsamples}{List of vectors with sample indices for
+cross-validation.}
 
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{abc}
+\item{progress}{String to print before learner and cv fold progress.}
 }
 \value{
-object
+\code{crossval} returns a list containing the following components:
+\describe{
+\item{\code{mspe}}{A vector of MSPE estimates,
+each corresponding to a base learners (in chronological order).}
+\item{\code{oos_resid}}{A matrix of out-of-sample prediction errors,
+each column corresponding to a base learners (in chronological
+order).}
+\item{\code{cv_subsamples}}{Pass-through of \code{cv_subsamples}.
+See above.}
+}
 }
 \description{
-Title
+Estimator of the mean squared prediction error of
+different learners using cross-validation.
 }
 \examples{
-1 + 1
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+
+# Compare ols, lasso, and ridge using 4-fold cross-validation
+cv_res <- crossval(y, X,
+                   learners = list(list(fun = ols),
+                                   list(fun = mdl_glmnet),
+                                   list(fun = mdl_glmnet,
+                                        args = list(alpha = 0))),
+                   cv_folds = 4,
+                   silent = TRUE)
+cv_res$mspe
 }
+\seealso{
+Other utilities: 
+\code{\link{crosspred}()},
+\code{\link{shortstacking}()}
+}
+\concept{utilities}

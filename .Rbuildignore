@@ -10,3 +10,4 @@
 ^doc$
 ^Meta$
 ^vignettes/articles$
+^README.Rmd$

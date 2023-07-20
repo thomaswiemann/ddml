@@ -25,7 +25,34 @@
 #'
 #' @inheritParams ddml_ate
 #' @param Z Binary instrumental variable.
-#' @param learners abc
+#' @param learners May take one of two forms, depending on whether a single
+#'     learner or stacking with multiple learners is used for estimation of the
+#'     conditional expectation functions.
+#'     If a single learner is used, \code{learners} is a list with two named
+#'     elements:
+#'     \itemize{
+#'         \item{\code{what} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
+#'     }
+#'     If stacking with multiple learners is used, \code{learners} is a list of
+#'     lists, each containing four named elements:
+#'     \itemize{
+#'         \item{\code{fun} The base learner function. The function must be
+#'             such that it predicts a named input \code{y} using a named input
+#'             \code{X}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{assign_X} An optional vector of column indices
+#'             corresponding to control variables in \code{X} that are passed to
+#'             the base learner.}
+#'         \item{\code{assign_Z} An optional vector of column indices
+#'             corresponding to instruments in \code{Z} that are passed to the
+#'             base learner.}
+#'     }
+#'     Omission of the \code{args} element results in default arguments being
+#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
 #' @param learners_DXZ Optional argument to allow for different estimators of
 #'     \eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.
 #' @param learners_ZX Optional argument to allow for different estimators of
@@ -57,6 +84,16 @@
 #'             selected user-provided arguments. See above.}
 #'     }
 #' @export
+#'
+#' @references
+#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+#'     machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+#'
+#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+#'     Robins J (2018). "Double/debiased machine learning for treatment and
+#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
+#'
+#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data

@@ -1,28 +1,10 @@
-#' Title
-#'
-#' @param y abc
-#' @param X abc
-#' @param Z abc
-#' @param learners abc
-#' @param ensemble_type abc
-#' @param shortstack abc
-#' @param compute_insample_predictions abc
-#' @param subsamples abc
-#' @param cv_subsamples_list abc
-#' @param silent abc
-#' @param progress abc
-#' @param auxilliary_X abc
-#' @param shortstack_y abc
-#'
-#' @return object
-#'
-#' @examples
-#' 1 + 1
+# Wrapper for [ddml::crosspred()] and [ddml::shortstacking()].
 get_CEF <- function(y, X, Z = NULL,
                     learners,
                     ensemble_type,
                     shortstack,
                     compute_insample_predictions = FALSE,
+                    compute_predictions_bylearner = FALSE,
                     subsamples,
                     cv_subsamples_list,
                     silent = FALSE,
@@ -34,7 +16,8 @@ get_CEF <- function(y, X, Z = NULL,
     res <- shortstacking(y, X, Z,
                          learners = learners,
                          ensemble_type = ensemble_type,
-                         compute_insample_predictions = compute_insample_predictions,
+                         compute_insample_predictions =
+                           compute_insample_predictions,
                          subsamples = subsamples,
                          silent = silent, progress = progress,
                          auxilliary_X = auxilliary_X,
@@ -43,7 +26,10 @@ get_CEF <- function(y, X, Z = NULL,
     res <- crosspred(y, X, Z,
                      learners = learners,
                      ensemble_type = ensemble_type,
-                     compute_insample_predictions = compute_insample_predictions,
+                     compute_insample_predictions =
+                       compute_insample_predictions,
+                     compute_predictions_bylearner =
+                       compute_predictions_bylearner,
                      subsamples = subsamples,
                      cv_subsamples_list = cv_subsamples_list,
                      silent = silent, progress = progress,
@@ -55,7 +41,7 @@ get_CEF <- function(y, X, Z = NULL,
   return(res)
 }#GET_CEF
 
-# Utility to print progress ot console
+# Utility to print progress to console
 update_progress <- function(silent) {
   if (!silent) cat(" -- Done! \n")
 }#UPDATE_PROGRESS

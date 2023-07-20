@@ -33,4 +33,9 @@ AE98
 \description{
 Random subsample from the data of Angrist & Evans (1991).
 }
+\references{
+Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply:
+Evidence from Exogenous Variation in Family Size." American Economic
+Review, 88(3), 450-477.
+}
 \keyword{datasets}

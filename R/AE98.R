@@ -20,5 +20,11 @@
 #'   \item{boy1st}{Indicator equal to 1 if the first child is male.}
 #'   \item{boy2nd}{Indicator equal to 1 if the second child is male.}
 #' }
+#'
+#' @references
+#' Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply:
+#'     Evidence from Exogenous Variation in Family Size." American Economic
+#'     Review, 88(3), 450-477.
+#'
 #' @source \url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/11288}
 "AE98"

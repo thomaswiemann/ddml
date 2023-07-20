@@ -48,10 +48,16 @@ lists, each containing four named elements:
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
 \item{\code{args} Optional arguments to be passed to \code{fun}.}
-\item{\code{assign_X} An optional vector of indices corresponding to
-features in \code{X} that are passed to the corresponding base
-learner.}
-}}
+\item{\code{assign_X} An optional vector of column indices
+corresponding to control variables in \code{X} that are passed to
+the base learner.}
+\item{\code{assign_Z} An optional vector of column indices
+corresponding to instruments in \code{Z} that are passed to the
+base learner.}
+}
+Omission of the \code{args} element results in default arguments being
+used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}
@@ -147,6 +153,16 @@ pliv_fit <- ddml_pliv(y, D, Z, X,
                       sample_folds = 2,
                       silent = TRUE)
 pliv_fit$coef
+}
+\references{
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+
+Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+Robins J (2018). "Double/debiased machine learning for treatment and
+structural parameters." The Econometrics Journal, 21(1), C1-C68.
+
+Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
 \code{\link[AER:ivreg]{AER::ivreg()}}
