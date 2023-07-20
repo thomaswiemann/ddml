@@ -8,7 +8,7 @@ Authors@R: c(
     person("Mark E", "Schaffer", role = "aut"),
     person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
 Description: Estimate common causal parameters using double/debiased machine 
-    learning. 'ddml' simplifies estimation based on stacking, which 
+    learning. 'ddml' simplifies estimation based on (short-)stacking, which 
     simultaneously leverages multiple base learners to increase robustness to
     the underlying data generating process.
 License: GPL (>= 3)
