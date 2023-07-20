@@ -103,10 +103,12 @@ lists, each containing four named elements:</p><ul><li><p><code>fun</code> The b
 such that it predicts a named input <code>y</code> using a named input
 <code>X</code>.</p></li>
 <li><p><code>args</code> Optional arguments to be passed to <code>fun</code>.</p></li>
-<li><p><code>assign_X</code> An optional vector of indices corresponding to
-features in <code>X</code> that are passed to the corresponding base
-learner.</p></li>
-</ul></dd>
+<li><p><code>assign_X</code> An optional vector of column indices
+corresponding to control variables in <code>X</code> that are passed to
+the base learner.</p></li>
+</ul><p>Omission of the <code>args</code> element results in default arguments being
+used in <code>fun</code>. Omission of <code>assign_X</code> results in inclusion of
+all variables in <code>X</code>.</p></dd>
 
 
 <dt>learners_DX</dt>
@@ -193,6 +195,15 @@ linear model given by</p>
 \(g_0\) is an unknown nuisance function.</p>
     </div>
     <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." <a href="https://arxiv.org/abs/2301.09397" class="external-link">https://arxiv.org/abs/2301.09397</a></p>
+<p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+Robins J (2018). "Double/debiased machine learning for treatment and
+structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
+<p>Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other ddml: 
 <code><a href="ddml_ate.html">ddml_ate</a>()</code>,
@@ -216,7 +227,7 @@ linear model given by</p>
 <span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plm_fit</span><span class="op">$</span><span class="va">coef</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        D_r </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1472638 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1460799 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the partially linear model using short-stacking with base learners</span></span></span>
 <span class="r-in"><span><span class="co">#     ols, rlasso, and xgboost.</span></span></span>
@@ -231,7 +242,7 @@ linear model given by</p>
 <span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">plm_fit</span><span class="op">$</span><span class="va">coef</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        D_r </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1437228 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1486979 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

@@ -82,9 +82,91 @@
 
     
     
+<div class="section level2">
+<h2 id="example-using-the-data-from-angrist-evans-1998">Example using the Data from Angrist &amp; Evans (1998)<a class="anchor" aria-label="anchor" href="#example-using-the-data-from-angrist-evans-1998"></a>
+</h2>
+<p>To illustrate <code>ddml</code> on a simple example, we can use the
+included random subsample of 5,000 observations from the data of Angrist
+&amp; Evans (1998). The data contains information on the labor supply of
+mothers, their children, as well as demographic data. See
+<code><a href="../reference/AE98.html">?AE98</a></code> for details.</p>
+<p>The goal of the exercise is to understand how an increase in the
+number of children causes a change in the employment status of mothers
+(<code>worked</code>). For this purpose, we consider the strategy of
+Angrist &amp; Evans (1998): To instrument for having more than two
+children (<code>morekids</code>), the authors use the
+<code>samesex</code> variable that indicates whether the first two
+children are either both male or female. The idea is that families with
+two same-sex children are more likely to have preferences for a third
+child (of the opposite sex). Additional controls, including the age and
+years of education of the mother, are included to address concerns about
+endogeneity of the instrument.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span></code></pre></div>
-  </main>
+<code class="sourceCode R"><span><span class="co"># Load ddml</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Construct variables from the included Angrist &amp; Evans (1998) data</span></span>
+<span><span class="va">y</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"worked"</span><span class="op">]</span></span>
+<span><span class="va">D</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"morekids"</span><span class="op">]</span></span>
+<span><span class="va">Z</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"samesex"</span><span class="op">]</span></span>
+<span><span class="va">X</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>,<span class="st">"agefst"</span>,<span class="st">"black"</span>,<span class="st">"hisp"</span>,<span class="st">"othrace"</span>,<span class="st">"educ"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p>The causal model under consideration is the interactive model in
+which <span class="math display">\[Y = g_0(D, X) + U,\]</span> where
+<span class="math inline">\((Y, D, X, Z, U)\)</span> is a random vector
+with <span class="math inline">\(Y\)</span> denoting the outcome, <span class="math inline">\(D\)</span> denoting the binary variable of
+interest, <span class="math inline">\(Z\)</span> denoting the binary
+instrument, <span class="math inline">\(X\)</span> denoting the vector
+of controls, and <span class="math inline">\(U\)</span> denoting all
+other determinants of <span class="math inline">\(Y\)</span> other than
+<span class="math inline">\((D, X, Z)\)</span>. In this model, the local
+average treatment effect (LATE) is defined as <span class="math display">\[\theta_0^{\textrm{LATE}} \equiv  E[g_0(1, X) -
+g_0(0, X)\vert p_0(1, X) &gt; p(0, X)],\]</span> where <span class="math inline">\(p_0(Z, X) \equiv \Pr(D=1\vert Z, X)\)</span>
+denotes the propensity score.</p>
+<p><code>ddml_late</code> estimates the LATE using double/debiased
+machine learning under the LATE assumptions of Imbens &amp; Angrist
+(1994). Double/debiased machine learning uses generic machine learners
+for the high dimensional nuisance parameters that arise in estimation of
+the LATE. <code>ddml</code> allows for combination of multiple machine
+learners using stacking to to increase robustness to the underlying data
+generating process.</p>
+<p>Below, <code>ddml_late</code> estimates the LATE with shortstacking
+(a computationally convenient variant of stacking) based on three base
+learners: linear regression (<code>ols</code>), lasso
+(<code>mdl_glmnet</code>), and gradient boosting
+(<code>mdl_xgboost</code>).</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span>
+<span><span class="co">#     learners ols, rlasso, and xgboost.</span></span>
+<span><span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
+<span>                      learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                                      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                                      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>                                                     max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                      ensemble_type <span class="op">=</span> <span class="st">'nnls'</span>,</span>
+<span>                      shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                      sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">late_fit</span><span class="op">$</span><span class="va">late</span></span>
+<span><span class="co">#&gt;       nnls </span></span>
+<span><span class="co">#&gt; -0.1568172</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
+Double/debiased machine learning in Stata.” <a href="https://arxiv.org/abs/2301.09397" class="external-link uri">https://arxiv.org/abs/2301.09397</a></p>
+<p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor
+Supply: Evidence from Exogenous Variation in Family Size.” American
+Economic Review, 88(3), 450-477.</p>
+<p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey
+W, Robins J (2018). “Double/debiased machine learning for treatment and
+structural parameters.” The Econometrics Journal, 21(1), C1-C68.</p>
+<p>Wolpert D H (1992). “Stacked generalization.” Neural Networks, 5(2),
+241-259.</p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
