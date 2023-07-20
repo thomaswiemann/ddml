@@ -93,6 +93,9 @@
 #'     Robins J (2018). "Double/debiased machine learning for treatment and
 #'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
 #'
+#' Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+#'     Treatment Effects." Econometrica, 62(2), 467-475.
+#'
 #' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
