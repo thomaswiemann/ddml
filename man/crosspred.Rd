@@ -2,7 +2,7 @@
 % Please edit documentation in R/crosspred.R
 \name{crosspred}
 \alias{crosspred}
-\title{Cross-Prediction Calculation.}
+\title{Cross-Predictions using Stacking.}
 \usage{
 crosspred(
   y,
@@ -95,16 +95,61 @@ containing vectors with subsample indices for cross-validation.}
 predictions for.}
 }
 \value{
-object
+\code{crosspred} returns a list containing the following components:
+\describe{
+\item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+each column corresponding to an ensemble type (in chronological
+order).}
+\item{\code{weights}}{An array, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedures.}
+\item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+a list of matrices with in-sample predictions by sample fold.}
+\item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+\code{NULL}, a list of matrices with additional predictions.}
+\item{\code{oos_fitted_bylearner}}{When
+\code{compute_predictions_bylearner = T}, a matrix of
+out-of-sample predictions, each column corresponding to a base
+learner (in chronological order).}
+\item{\code{is_fitted_bylearner}}{When
+\code{compute_insample_predictions = T} and
+\code{compute_predictions_bylearner = T}, a list of matrices with
+in-sample predictions by sample fold.}
+\item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+not \code{NULL} and \code{compute_predictions_bylearner = T}, a
+list of matrices with additional predictions for each learner.}
+}
 }
 \description{
-Cross-prediction calculation.
+Cross-predictions using stacking.
 }
 \examples{
-1 + 1
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+
+# Compute cross-predictions using stacking with base learners ols and lasso.
+#     Two stacking approaches are simultaneously computed: Equally
+#     weighted (ensemble_type = "average") and MSPE-minimizing with weights
+#     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
+#     learner are also calculated.
+crosspred_res <- crosspred(y, X,
+                           learners = list(list(fun = ols),
+                                           list(fun = mdl_glmnet)),
+                           ensemble_type = c("average",
+                                             "nnls1",
+                                             "singlebest"),
+                           compute_predictions_bylearner = TRUE,
+                           sample_folds = 2,
+                           cv_folds = 2,
+                           silent = TRUE)
+dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
+dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
 }
 \seealso{
 Other utilities: 
-\code{\link{crossval}()}
+\code{\link{crossval}()},
+\code{\link{get_CEF}()},
+\code{\link{shortstacking}()}
 }
 \concept{utilities}

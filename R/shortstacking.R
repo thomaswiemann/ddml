@@ -1,22 +1,61 @@
-#' Title
+#' Predictions using Short-Stacking.
 #'
-#' @param y abc
-#' @param X abc
-#' @param Z abc
-#' @param learners abc
-#' @param sample_folds abc
-#' @param ensemble_type abc
-#' @param compute_insample_predictions abc
-#' @param subsamples abc
-#' @param silent abc
-#' @param progress abc
-#' @param auxilliary_X abc
-#' @param shortstack_y abc
+#' @family utilities
 #'
-#' @return object
+#' @description Predictions using short-stacking.
+#'
+#' @inheritParams crosspred
+#' @param shortstack_y Optional vector of the outcome variable to form
+#'     short-stacking predictions for. Base learners are always trained on
+#'     \code{y}.
+#'
+#' @return \code{shortstack} returns a list containing the following components:
+#'     \describe{
+#'         \item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+#'             each column corresponding to an ensemble type (in chronological
+#'             order).}
+#'         \item{\code{weights}}{An array, providing the weight
+#'             assigned to each base learner (in chronological order) by the
+#'             ensemble procedures.}
+#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+#'             a list of matrices with in-sample predictions by sample fold.}
+#'         \item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+#'             \code{NULL}, a list of matrices with additional predictions.}
+#'         \item{\code{oos_fitted_bylearner}}{A matrix of
+#'             out-of-sample predictions, each column corresponding to a base
+#'             learner (in chronological order).}
+#'         \item{\code{is_fitted_bylearner}}{When
+#'             \code{compute_insample_predictions = T}, a list of matrices with
+#'             in-sample predictions by sample fold.}
+#'         \item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+#'             not \code{NULL}, a
+#'             list of matrices with additional predictions for each learner.}
+#'     }
+#'     Note that unlike \code{crosspred}, \code{shortstack} always computes
+#'        out-of-sample predictions for each base learner (at no additional
+#'        computational cost).
+#' @export
 #'
 #' @examples
-#' 1 + 1
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Compute predictions using shortstacking with base learners ols and lasso.
+#' #     Two stacking approaches are simultaneously computed: Equally
+#' #     weighted (ensemble_type = "average") and MSPE-minimizing with weights
+#' #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
+#' #     learner are also calculated.
+#' shortstack_res <- shortstacking(y, X,
+#'                                 learners = list(list(fun = ols),
+#'                                                 list(fun = mdl_glmnet)),
+#'                                 ensemble_type = c("average",
+#'                                                   "nnls1",
+#'                                                   "singlebest"),
+#'                                 sample_folds = 2,
+#'                                 silent = TRUE)
+#' dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
+#' dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
 shortstacking <- function (y, X, Z = NULL,
                            learners,
                            sample_folds = 2,
@@ -104,7 +143,12 @@ shortstacking <- function (y, X, Z = NULL,
   colnames(weights) <- names(mspe) <- ensemble_type
 
   # return shortstacking output
-  output <- list(oos_fitted = oos_fitted, weights = weights, mspe = mspe,
-                 is_fitted = is_fitted, auxilliary_fitted = auxilliary_fitted)
+  output <- list(oos_fitted = oos_fitted,
+                 weights = weights, mspe = mspe,
+                 is_fitted = is_fitted,
+                 auxilliary_fitted = auxilliary_fitted,
+                 oos_fitted_bylearner = res$oos_fitted_bylearner,
+                 is_fitted_bylearner = res$is_fitted_bylearner,
+                 auxilliary_fitted_bylearner = res$auxilliary_fitted_bylearner)
   return(output)
 }#SHORTSTACKING

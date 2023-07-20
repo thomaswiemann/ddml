@@ -7,14 +7,19 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE #requireNamespace("keras")
+)
+```
 
 # Introduction
 
 Load ``keras`` package.
 
-
-```r
+```{r setup}
 library(ddml)
 library(keras)
 ```
@@ -25,8 +30,7 @@ Construct keras wrapper. The prediction methods for keras already outputs a nume
 The first part of the wrapper constructs a neural network architecture. Below is a simple
 example using the relu activation function and potential ell_1 regularization in the hidden or output layers. This part of the wrapper should be adjusted for more complicated architectures.
 
-
-```r
+```{r}
 mdl_keras <- function(y, X,
                       units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
                       optimizer_fun = "rmsprop",
@@ -80,8 +84,7 @@ mdl_keras <- function(y, X,
 ```
 
 
-
-```r
+```{r}
 predict.mdl_keras <- function(obj, newdata = NULL){
   # Check for new data
   #if(is.null(newdata)) newdata <- obj$X
@@ -94,8 +97,7 @@ predict.mdl_keras <- function(obj, newdata = NULL){
 
 Let's test this on a simple empirical example. I consider the BLP_1995 data and, for simplicity, estimate a partially linear model (rather than a partially linear iv model).
 
-
-```r
+```{r}
 y <- log(BLP_1995$share) / log(BLP_1995$outshr)
 D <- BLP_1995$price
 X <- cbind(BLP_1995$space, BLP_1995$hpwt)
@@ -103,8 +105,7 @@ X <- cbind(BLP_1995$space, BLP_1995$hpwt)
 
 Next, we need to specify the particular neural network learner we want to use. In addition to the architecture, it's important to properly tune the optimization algorithm. callback_list below helps with specifying learning rate adjustments and defines the early stopping rule.
 
-
-```r
+```{r}
 
 callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                                             patience = 15,
@@ -130,24 +131,12 @@ learners = list(what = mdl_keras,
 We can now run the ddml estimator. Note that because we have set verbose to TRUE in the above list of arguments, live training output is automatically plotted. This is very helpful for assessing whether the defined training parameters are sensible. Since it substantially slows down the training process, however, verbose should be set to FALSE whenever you're not planning to actively monitor the output.
 
 
-
-```r
+```{r}
 plm_fit <- ddml_plm(y, D, X, learners = learners)
-#> DDML estimation in progress. 
-#> 
-E[Y|X]:  sample fold 1/2
-E[Y|X]:  sample fold 2/2 -- Done! 
-#> 
-E[D|X]:  sample fold 1/2
-E[D|X]:  sample fold 2/2 -- Done! 
-#> DDML estimation completed.
 plm_fit$coef
-#>      D_r 
-#> 1.632659
 ```
 
-
-```r
+```{r}
 
 learners = list(list(fun = mdl_keras,
                       args = list(units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
@@ -163,15 +152,5 @@ learners = list(list(fun = mdl_keras,
                                   callbacks = callbacks_list)))
 
 plm_fit <- ddml_plm(y, D, X, learners = learners, shortstack = TRUE)
-#> DDML estimation in progress. 
-#> 
-E[Y|X]: sample fold 1/2
-E[Y|X]: sample fold 2/2 -- Done! 
-#> 
-E[D|X]: sample fold 1/2
-E[D|X]: sample fold 2/2 -- Done! 
-#> DDML estimation completed.
 plm_fit$coef
-#>       D_r 
-#> 0.8318073
 ```

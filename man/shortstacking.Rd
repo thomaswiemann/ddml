@@ -2,7 +2,7 @@
 % Please edit documentation in R/shortstacking.R
 \name{shortstacking}
 \alias{shortstacking}
-\title{Title}
+\title{Predictions using Short-Stacking.}
 \usage{
 shortstacking(
   y,
@@ -20,36 +20,127 @@ shortstacking(
 )
 }
 \arguments{
-\item{y}{abc}
+\item{y}{The outcome variable.}
 
-\item{X}{abc}
+\item{X}{A (sparse) matrix of predictive variables.}
 
-\item{Z}{abc}
+\item{Z}{Optional additional (sparse) matrix of predictive variables.}
 
-\item{learners}{abc}
+\item{learners}{May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+predictor.
+If a single learner is used, \code{learners} is a list with two named
+elements:
+\itemize{
+\item{\code{what} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
+}
+If stacking with multiple learners is used, \code{learners} is a list of
+lists, each containing four named elements:
+\itemize{
+\item{\code{fun} The base learner function. The function must be
+such that it predicts a named input \code{y} using a named input
+\code{X}.}
+\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{assign_X} An optional vector of column indices
+corresponding to predictive variables in \code{X} that are passed to
+the base learner.}
+\item{\code{assign_Z} An optional vector of column indices
+corresponding to predictive in \code{Z} that are passed to the
+base learner.}
+}
+Omission of the \code{args} element results in default arguments being
+used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
-\item{sample_folds}{abc}
+\item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{abc}
+\item{ensemble_type}{Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+\itemize{
+\item{\code{"nnls"} Non-negative least squares.}
+\item{\code{"nnls1"} Non-negative least squares with the constraint
+that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"ols"} Ordinary least squares.}
+\item{\code{"average"} Simple average over base learners.}
+}
+Multiple ensemble types may be passed as a vector of strings.}
 
-\item{compute_insample_predictions}{abc}
+\item{compute_insample_predictions}{Indicator equal to 1 if in-sample
+predictions should also be computed.}
 
-\item{subsamples}{abc}
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{silent}{abc}
+\item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{abc}
+\item{progress}{String to print before learner and cv fold progress.}
 
-\item{auxilliary_X}{abc}
+\item{auxilliary_X}{An optional list of matrices of length
+\code{sample_folds}, each containing additional observations to calculate
+predictions for.}
 
-\item{shortstack_y}{abc}
+\item{shortstack_y}{Optional vector of the outcome variable to form
+short-stacking predictions for. Base learners are always trained on
+\code{y}.}
 }
 \value{
-object
+\code{shortstack} returns a list containing the following components:
+\describe{
+\item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+each column corresponding to an ensemble type (in chronological
+order).}
+\item{\code{weights}}{An array, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedures.}
+\item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+a list of matrices with in-sample predictions by sample fold.}
+\item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+\code{NULL}, a list of matrices with additional predictions.}
+\item{\code{oos_fitted_bylearner}}{A matrix of
+out-of-sample predictions, each column corresponding to a base
+learner (in chronological order).}
+\item{\code{is_fitted_bylearner}}{When
+\code{compute_insample_predictions = T}, a list of matrices with
+in-sample predictions by sample fold.}
+\item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+not \code{NULL}, a
+list of matrices with additional predictions for each learner.}
+}
+Note that unlike \code{crosspred}, \code{shortstack} always computes
+out-of-sample predictions for each base learner (at no additional
+computational cost).
 }
 \description{
-Title
+Predictions using short-stacking.
 }
 \examples{
-1 + 1
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+
+# Compute predictions using shortstacking with base learners ols and lasso.
+#     Two stacking approaches are simultaneously computed: Equally
+#     weighted (ensemble_type = "average") and MSPE-minimizing with weights
+#     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
+#     learner are also calculated.
+shortstack_res <- shortstacking(y, X,
+                                learners = list(list(fun = ols),
+                                                list(fun = mdl_glmnet)),
+                                ensemble_type = c("average",
+                                                  "nnls1",
+                                                  "singlebest"),
+                                sample_folds = 2,
+                                silent = TRUE)
+dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
+dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
 }
+\seealso{
+Other utilities: 
+\code{\link{crosspred}()},
+\code{\link{crossval}()},
+\code{\link{get_CEF}()}
+}
+\concept{utilities}

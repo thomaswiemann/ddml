@@ -39,12 +39,11 @@ reference:
   - crossval
   - crosspred
   - shortstacking
-  - get_CEF
-  - ensemble
 - title: Dataset
   contents:
   - AE98
 - title: internal
   contents:
   - ddml
+  - get_CEF
 

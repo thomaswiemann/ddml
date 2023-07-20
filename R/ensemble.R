@@ -1,20 +1,4 @@
-#' Title
-#'
-#' @param y abc
-#' @param X abc
-#' @param Z abc
-#' @param type abc
-#' @param learners abc
-#' @param cv_folds abc
-#' @param cv_subsamples abc
-#' @param cv_results abc
-#' @param silent abc
-#' @param progress abc
-#'
-#' @return abc
-#'
-#' @examples
-#' 1 + 1
+# Stacking estimator using combinations of base learners.
 ensemble <- function(y, X, Z = NULL,
                      type = "average",
                      learners,

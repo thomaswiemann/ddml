@@ -83,6 +83,8 @@ cv_res$mspe
 }
 \seealso{
 Other utilities: 
-\code{\link{crosspred}()}
+\code{\link{crosspred}()},
+\code{\link{get_CEF}()},
+\code{\link{shortstacking}()}
 }
 \concept{utilities}
