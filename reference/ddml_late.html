@@ -226,6 +226,8 @@ machine learning in Stata." <a href="https://arxiv.org/abs/2301.09397" class="ex
 <p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
 structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
+<p>Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <p>Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.</p>
     </div>
     <div class="section level2">
@@ -254,7 +256,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">late_fit</span><span class="op">$</span><span class="va">late</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    average </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.2192488 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.2706744 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, rlasso, and xgboost.</span></span></span>
@@ -269,7 +271,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">late_fit</span><span class="op">$</span><span class="va">late</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       nnls </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> -0.1859029 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -0.2210534 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
