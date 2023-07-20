@@ -137,10 +137,15 @@ shortstack_res <- shortstacking(y, X,
 dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
 dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
 }
+\references{
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+
+Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
+}
 \seealso{
 Other utilities: 
 \code{\link{crosspred}()},
-\code{\link{crossval}()},
-\code{\link{get_CEF}()}
+\code{\link{crossval}()}
 }
 \concept{utilities}

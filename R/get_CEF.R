@@ -1,36 +1,4 @@
-#' Wrapper for [ddml::crosspred()] and [ddml::shortstacking()].
-#'
-#' @family utilities
-#'
-#' @description Wrapper for [ddml::crosspred()] and [ddml::shortstacking()].
-#'
-#' @inheritParams shortstacking
-#' @param shortstack Boolean to use short-stacking.
-#'
-#' @return \code{get_CEF} returns a list containing the following components:
-#'     \describe{
-#'         \item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
-#'             each column corresponding to an ensemble type (in chronological
-#'             order).}
-#'         \item{\code{weights}}{An array, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedures.}
-#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
-#'             a list of matrices with in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
-#'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{oos_fitted_bylearner}}{When
-#'             \code{compute_predictions_bylearner = T}, a matrix of
-#'             out-of-sample predictions, each column corresponding to a base
-#'             learner (in chronological order).}
-#'         \item{\code{is_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = T} and
-#'             \code{compute_predictions_bylearner = T}, a list of matrices with
-#'             in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
-#'             not \code{NULL} and \code{compute_predictions_bylearner = T}, a
-#'             list of matrices with additional predictions for each learner.}
-#'     }
+# Wrapper for [ddml::crosspred()] and [ddml::shortstacking()].
 get_CEF <- function(y, X, Z = NULL,
                     learners,
                     ensemble_type,

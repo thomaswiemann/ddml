@@ -36,6 +36,12 @@
 #'        computational cost).
 #' @export
 #'
+#' @references
+#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+#'     machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+#'
+#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
+#'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
 #' y = AE98[, "worked"]

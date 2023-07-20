@@ -154,6 +154,16 @@ ate_fit <- ddml_ate(y, D, X,
                     silent = TRUE)
 ate_fit$ate
 }
+\references{
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+
+Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+Robins J (2018). "Double/debiased machine learning for treatment and
+structural parameters." The Econometrics Journal, 21(1), C1-C68.
+
+Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
+}
 \seealso{
 Other ddml: 
 \code{\link{ddml_fpliv}()},
