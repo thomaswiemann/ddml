@@ -2,6 +2,8 @@
 #'
 #' @family ddml
 #'
+#' @seealso [ddml::summary.ddml_plm()]
+#'
 #' @description Estimator for the partially linear model.
 #'
 #' @details \code{ddml_plm} provides a double/debiased machine learning
@@ -109,7 +111,7 @@
 #' summary(plm_fit)
 #'
 #' # Estimate the partially linear model using short-stacking with base learners
-#' #     ols, rlasso, and xgboost.
+#' #     ols, lasso, and ridge
 #' plm_fit <- ddml_plm(y, D, X,
 #'                     learners = list(list(fun = ols),
 #'                                     list(fun = mdl_glmnet),
@@ -268,6 +270,20 @@ ddml_plm <- function(y, D, X,
 #'     Statistical Software, 95(1), 1-36.
 #'
 #' @export
+#'
+#' @examples
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the partially linear model using a single base learner, ridge.
+#' plm_fit <- ddml_plm(y, D, X,
+#'                     learners = list(what = mdl_glmnet,
+#'                                     args = list(alpha = 0)),
+#'                     sample_folds = 2,
+#'                     silent = TRUE)
+#' summary(plm_fit)
 summary.ddml_plm <- function(object, ...) {
   # Check whether stacking was used, replace ensemble type if TRUE
   single_learner <- ("what" %in% names(object$learners))

@@ -2,6 +2,8 @@
 #'
 #' @family ddml
 #'
+#' @seealso [ddml::summary.ddml_late()]
+#'
 #' @description Estimator of the local average treatment effect.
 #'
 #' @details \code{ddml_late} provides a double/debiased machine learning
@@ -117,7 +119,7 @@
 #' summary(late_fit)
 #'
 #' # Estimate the local average treatment effect using short-stacking with base
-#' #     learners ols, rlasso, and xgboost.
+#' #     learners ols, lasso, and ridge.
 #' late_fit <- ddml_late(y, D, Z, X,
 #'                       learners = list(list(fun = ols),
 #'                                       list(fun = mdl_glmnet),

@@ -27,6 +27,20 @@ An array with inference results for each \code{ensemble_type}.
 Inference methods for partially linear estimators. Simple
 wrapper for \code{\link[sandwich:vcovHC]{sandwich::vcovHC()}}.
 }
+\examples{
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the partially linear model using a single base learner, ridge.
+plm_fit <- ddml_plm(y, D, X,
+                    learners = list(what = mdl_glmnet,
+                                    args = list(alpha = 0)),
+                    sample_folds = 2,
+                    silent = TRUE)
+summary(plm_fit)
+}
 \references{
 Zeileis A (2004). "Econometric Computing with HC and HAC Covariance Matrix
 Estimators.” Journal of Statistical Software, 11(10), 1-17.

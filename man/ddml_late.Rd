@@ -159,7 +159,7 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 
 # Estimate the local average treatment effect using short-stacking with base
-#     learners ols, rlasso, and xgboost.
+#     learners ols, lasso, and ridge.
 late_fit <- ddml_late(y, D, Z, X,
                       learners = list(list(fun = ols),
                                       list(fun = mdl_glmnet),
@@ -185,6 +185,8 @@ Treatment Effects." Econometrica, 62(2), 467-475.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
+\code{\link[=summary.ddml_late]{summary.ddml_late()}}
+
 Other ddml: 
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},

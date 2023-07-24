@@ -2,7 +2,7 @@
 #'
 #' @family ddml
 #'
-#' @seealso [AER::ivreg()]
+#' @seealso [ddml::summary.ddml_fpliv()], [AER::ivreg()]
 #'
 #' @description Estimator for the flexible partially linear IV model.
 #'
@@ -70,7 +70,7 @@
 #' summary(fpliv_fit)
 #'
 #' # Estimate the partially linear IV model using short-stacking with base
-#' #     ols, rlasso, and xgboost.
+#' #     ols, lasso, and ridge.
 #' fpliv_fit <- ddml_fpliv(y, D, Z, X,
 #'                         learners = list(list(fun = ols),
 #'                                         list(fun = mdl_glmnet),

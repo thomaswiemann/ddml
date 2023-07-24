@@ -2,6 +2,8 @@
 #'
 #' @family ddml
 #'
+#' @seealso [ddml::summary.ddml_ate()]
+#'
 #' @description Estimator of the average treatment effect.
 #'
 #' @details \code{ddml_ate} provides a double/debiased machine learning
@@ -76,13 +78,12 @@
 #' summary(ate_fit)
 #'
 #' # Estimate the average treatment effect using short-stacking with base
-#' #     learners ols, rlasso, and xgboost.
+#' #     learners ols, lasso, and ridge.
 #' ate_fit <- ddml_ate(y, D, X,
 #'                     learners = list(list(fun = ols),
 #'                                     list(fun = mdl_glmnet),
-#'                                     list(fun = mdl_xgboost,
-#'                                          args = list(nrounds = 300,
-#'                                                      max_depth = 3))),
+#'                                     list(fun = mdl_glmnet,
+#'                                          args = list(alpha = 0))),
 #'                     ensemble_type = 'nnls',
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,
@@ -247,9 +248,23 @@ ddml_ate <- function(y, D, X,
 #'     fitted by [ddml::ddml_ate()] and [ddml::ddml_late()], respectively.
 #' @param ... Currently unused.
 #'
-#' @return An array with inference results.
+#' @return A matrix with inference results.
 #'
 #' @export
+#'
+#' @examples
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the average treatment effect using a single base learner, ridge.
+#' ate_fit <- ddml_ate(y, D, X,
+#'                     learners = list(what = mdl_glmnet,
+#'                                     args = list(alpha = 0)),
+#'                     sample_folds = 2,
+#'                     silent = TRUE)
+#' summary(ate_fit)
 summary.ddml_ate <- function(object, ...) {
   # Check whether stacking was used, replace ensemble type if TRUE
   single_learner <- ("what" %in% names(object$learners))

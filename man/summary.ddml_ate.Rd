@@ -16,8 +16,22 @@ fitted by \code{\link[=ddml_ate]{ddml_ate()}} and \code{\link[=ddml_late]{ddml_l
 \item{...}{Currently unused.}
 }
 \value{
-An array with inference results.
+A matrix with inference results.
 }
 \description{
 Inference methods for treatment effect estimators.
+}
+\examples{
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the average treatment effect using a single base learner, ridge.
+ate_fit <- ddml_ate(y, D, X,
+                    learners = list(what = mdl_glmnet,
+                                    args = list(alpha = 0)),
+                    sample_folds = 2,
+                    silent = TRUE)
+summary(ate_fit)
 }

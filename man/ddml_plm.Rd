@@ -130,7 +130,7 @@ plm_fit <- ddml_plm(y, D, X,
 summary(plm_fit)
 
 # Estimate the partially linear model using short-stacking with base learners
-#     ols, rlasso, and xgboost.
+#     ols, lasso, and ridge
 plm_fit <- ddml_plm(y, D, X,
                     learners = list(list(fun = ols),
                                     list(fun = mdl_glmnet),
@@ -153,6 +153,8 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
+\code{\link[=summary.ddml_plm]{summary.ddml_plm()}}
+
 Other ddml: 
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},

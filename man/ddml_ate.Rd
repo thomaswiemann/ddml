@@ -143,13 +143,12 @@ ate_fit <- ddml_ate(y, D, X,
 summary(ate_fit)
 
 # Estimate the average treatment effect using short-stacking with base
-#     learners ols, rlasso, and xgboost.
+#     learners ols, lasso, and ridge.
 ate_fit <- ddml_ate(y, D, X,
                     learners = list(list(fun = ols),
                                     list(fun = mdl_glmnet),
-                                    list(fun = mdl_xgboost,
-                                         args = list(nrounds = 300,
-                                                     max_depth = 3))),
+                                    list(fun = mdl_glmnet,
+                                         args = list(alpha = 0))),
                     ensemble_type = 'nnls',
                     shortstack = TRUE,
                     sample_folds = 2,
@@ -167,6 +166,8 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
+\code{\link[=summary.ddml_ate]{summary.ddml_ate()}}
+
 Other ddml: 
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
