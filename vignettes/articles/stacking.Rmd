@@ -1,0 +1,12 @@
+---
+title: "Computational Benefits of Short-Stacking"
+description: "Comparison of computational time between short-stacking and traditional stacking."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Computational Benefits of Short-Stacking}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+Work in progress. Check back soon!

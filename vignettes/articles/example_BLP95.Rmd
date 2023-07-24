@@ -16,6 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
+Work in progress. Check back soon!
+
+
 # Introduction
 We revisits the empirical example of Chernozhukov, Hansen, and Spindler (2015)
 (CHS2015, hereafter), which extends the instruments of Berry, Levinson,

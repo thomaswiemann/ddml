@@ -1,11 +1,14 @@
 ---
 title: "Get Started"
+description: "A brief introduction to double/debiased machine learning using (short-)stacking in R."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get Started}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+Work in progress. Check back soon!
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -15,25 +18,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Example using the Data from Angrist & Evans (1998)
 
-To illustrate ``ddml`` on a simple example, we can use the included random 
-    subsample of 5,000 observations from the data of Angrist & Evans (1998). The
-    data contains information on the labor supply of mothers, their children, as
-    well as demographic data. See ``?AE98`` for details.
+1. DDML estimation with a single learner
+2. DDML estimation with multiple learners & stacking
+3. Computational benefits of short-stacking
 
-The goal of the exercise is to understand how an increase in the number of 
-    children causes a change in the employment status of mothers (``worked``). 
-    For this purpose, we consider the strategy of Angrist & Evans (1998): To 
-    instrument for having more than two children (``morekids``), the authors use 
-    the ``samesex`` variable that indicates whether the first two  children are 
-    either both male or female. The idea is that families with two same-sex 
-    children are more likely to have preferences for a third child (of the 
-    opposite sex). Additional controls, including the age and years of education
-    of the mother, are included to address concerns about endogeneity of the 
-    instrument.
 
-```{r, eval = TRUE}
+```{r}
 # Load ddml
 library(ddml)
 
@@ -44,41 +35,94 @@ Z = AE98[, "samesex"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
-
-The causal model under consideration is the interactive model in which 
-$$Y = g_0(D, X) + U,$$
-where $(Y, D, X, Z, U)$ is a random vector with $Y$ denoting the outcome, $D$ 
-denoting the binary variable of interest, $Z$ denoting the binary instrument, 
-$X$ denoting the vector of controls, and $U$ denoting all other determinants of 
-$Y$ other than $(D, X, Z)$. In this model, the local average treatment effect (LATE) is defined as
-$$\theta_0^{\textrm{LATE}} \equiv  E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)],$$
-where $p_0(Z, X) \equiv \Pr(D=1\vert Z, X)$ denotes the propensity score.
-
-``ddml_late`` estimates the LATE using double/debiased
-machine learning under the LATE assumptions of Imbens & Angrist (1994). Double/debiased
-machine learning uses generic machine learners for the high
-dimensional nuisance parameters that arise in estimation of the LATE. ``ddml`` allows for combination of 
-multiple machine learners using stacking to to increase robustness to the underlying data generating process.
-
-Below, ``ddml_late`` estimates the LATE with shortstacking (a computationally convenient variant of stacking) based on three base learners: linear regression (``ols``), 
-lasso (``mdl_glmnet``), and gradient boosting (``mdl_xgboost``). 
+```{r}
+learners_single <- list(what = mdl_xgboost,
+                        args = list(nrounds = 100,
+                                    max_depth = 1))
+```
 
 
-```{r, eval = TRUE}
+```{r}
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, rlasso, and xgboost.
 late_fit <- ddml_late(y, D, Z, X,
-                      learners = list(list(fun = ols),
-                                      list(fun = mdl_glmnet),
-                                      list(fun = mdl_xgboost,
-                                         args = list(nrounds = 500,
-                                                     max_depth = 3))),
+                      learners = learners_single,
+                      sample_folds = 5,
+                      silent = TRUE)
+summary(late_fit)
+```
+```{r}
+learners_multiple <- list(list(fun = ols),
+                          list(fun = mdl_glmnet),
+                          list(fun = mdl_xgboost,
+                               args = list(nrounds = 100,
+                                           max_depth = 1)))
+```
+
+```{r}
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, rlasso, and xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
                       ensemble_type = 'nnls',
                       shortstack = TRUE,
                       sample_folds = 5,
                       silent = TRUE)
-late_fit$late
+summary(late_fit)
 ```
+
+```{r}
+cat(" Stacking weights for E[Y|Z=0, X]: \n")
+t(late_fit$weights$y_X_Z0)
+
+cat("\n Stacking weights for E[Y|Z=1, X]: \n")
+t(late_fit$weights$y_X_Z1)
+```
+
+
+```{r}
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, rlasso, and xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
+                      ensemble_type = c('singlebest', 'average'),
+                      shortstack = TRUE,
+                      sample_folds = 5,
+                      silent = TRUE)
+summary(late_fit)
+```
+
+
+```{r}
+time_singlelearner <- system.time({late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_single,
+                      sample_folds = 5,
+                      silent = TRUE)})
+
+time_shortstacking <- system.time({late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
+                      ensemble_type = 'nnls',
+                      shortstack = TRUE,
+                      sample_folds = 5,
+                      silent = TRUE)})
+
+time_stacking <- system.time({late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
+                      ensemble_type = 'nnls',
+                      shortstack = FALSE,
+                      sample_folds = 5,
+                      silent = TRUE)})
+
+
+```
+
+```{r}
+cat("Time single learner:", time_singlelearner[1], "\n")
+cat("Time short-stacking:", time_shortstacking[1], "\n")
+cat("Time stacking:      ", time_stacking[1])
+
+```
+
 
 ## References
 

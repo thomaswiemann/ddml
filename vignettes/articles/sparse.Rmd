@@ -1,0 +1,11 @@
+---
+title: "Estimation with Sparse Matrices"
+description: "Illustration of sparse matrix support."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Estimation with Sparse Matrices}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Work in progress. Check back soon!

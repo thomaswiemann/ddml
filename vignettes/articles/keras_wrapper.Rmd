@@ -1,27 +1,24 @@
 ---
-title: "Constructing a new ML Wrapper"
+title: "Constructing a User-Provided Base Learner"
+description: "Tutorial on writing a simple wrapper for new user-provided base learner."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Constructing a new ML Wrapper}
+  %\VignetteIndexEntry{Constructing a User-Provided Base Learner}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  eval = TRUE #requireNamespace("keras")
-)
-```
+Work in progress. Check back soon!
 
 # Introduction
 
 Load ``keras`` package.
 
-```{r setup}
+
+```r
 library(ddml)
 library(keras)
+#> Error in library(keras): there is no package called 'keras'
 ```
 
 
@@ -30,7 +27,8 @@ Construct keras wrapper. The prediction methods for keras already outputs a nume
 The first part of the wrapper constructs a neural network architecture. Below is a simple
 example using the relu activation function and potential ell_1 regularization in the hidden or output layers. This part of the wrapper should be adjusted for more complicated architectures.
 
-```{r}
+
+```r
 mdl_keras <- function(y, X,
                       units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
                       optimizer_fun = "rmsprop",
@@ -84,7 +82,8 @@ mdl_keras <- function(y, X,
 ```
 
 
-```{r}
+
+```r
 predict.mdl_keras <- function(obj, newdata = NULL){
   # Check for new data
   #if(is.null(newdata)) newdata <- obj$X
@@ -97,15 +96,20 @@ predict.mdl_keras <- function(obj, newdata = NULL){
 
 Let's test this on a simple empirical example. I consider the BLP_1995 data and, for simplicity, estimate a partially linear model (rather than a partially linear iv model).
 
-```{r}
+
+```r
 y <- log(BLP_1995$share) / log(BLP_1995$outshr)
+#> Error in eval(expr, envir, enclos): object 'BLP_1995' not found
 D <- BLP_1995$price
+#> Error in eval(expr, envir, enclos): object 'BLP_1995' not found
 X <- cbind(BLP_1995$space, BLP_1995$hpwt)
+#> Error in eval(expr, envir, enclos): object 'BLP_1995' not found
 ```
 
 Next, we need to specify the particular neural network learner we want to use. In addition to the architecture, it's important to properly tune the optimization algorithm. callback_list below helps with specifying learning rate adjustments and defines the early stopping rule.
 
-```{r}
+
+```r
 
 callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                                             patience = 15,
@@ -119,6 +123,7 @@ callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                         if(epoch == 0) learning_rate <- 0.1
                                         return(learning_rate)
                                       }))
+#> Error in callback_early_stopping(monitor = "val_loss", patience = 15, : could not find function "callback_early_stopping"
 
 learners = list(what = mdl_keras,
                       args = list(units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
@@ -126,17 +131,22 @@ learners = list(what = mdl_keras,
                                   verbose = F,
                                   validation_split = 0.1,
                                   callbacks = callbacks_list))
+#> Error in eval(expr, envir, enclos): object 'callbacks_list' not found
 ```
 
 We can now run the ddml estimator. Note that because we have set verbose to TRUE in the above list of arguments, live training output is automatically plotted. This is very helpful for assessing whether the defined training parameters are sensible. Since it substantially slows down the training process, however, verbose should be set to FALSE whenever you're not planning to actively monitor the output.
 
 
-```{r}
+
+```r
 plm_fit <- ddml_plm(y, D, X, learners = learners)
+#> Error in eval(expr, envir, enclos): object 'y' not found
 plm_fit$coef
+#> Error in eval(expr, envir, enclos): object 'plm_fit' not found
 ```
 
-```{r}
+
+```r
 
 learners = list(list(fun = mdl_keras,
                       args = list(units = 10, nhidden = 1, lambda1 = 0, lambda2 = 0,
@@ -150,7 +160,10 @@ learners = list(list(fun = mdl_keras,
                                   verbose = F,
                                   validation_split = 0.1,
                                   callbacks = callbacks_list)))
+#> Error in eval(expr, envir, enclos): object 'callbacks_list' not found
 
 plm_fit <- ddml_plm(y, D, X, learners = learners, shortstack = TRUE)
+#> Error in eval(expr, envir, enclos): object 'y' not found
 plm_fit$coef
+#> Error in eval(expr, envir, enclos): object 'plm_fit' not found
 ```
