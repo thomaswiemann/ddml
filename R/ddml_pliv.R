@@ -62,8 +62,8 @@
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
 #'             regression of \eqn{Y - \hat{E}[Y\vert X]} on
-#'             \eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as the
-#'             instrument.}
+#'             \eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as
+#'             the instrument. See also [AER::ivreg()] for details.}
 #'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
 #'             \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
 #'             }{Pass-through of selected user-provided arguments. See above.}
@@ -77,6 +77,9 @@
 #' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 #'     Robins J (2018). "Double/debiased machine learning for treatment and
 #'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
+#'
+#' Kleiber C, Zeileis A (2008). Applied Econometrics with R. Springer-Verlag,
+#'     New York.
 #'
 #' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
@@ -93,7 +96,7 @@
 #'                                       args = list(alpha = 0)),
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
-#' pliv_fit$coef
+#' summary(pliv_fit)
 #'
 #' # Estimate the partially linear IV model using short-stacking with base
 #' #     ols, lasso, and ridge.
@@ -106,13 +109,13 @@
 #'                       shortstack = TRUE,
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
-#' pliv_fit$coef
+#' summary(pliv_fit)
 ddml_pliv <- function(y, D, Z, X,
                       learners,
                       learners_DX = learners,
                       learners_ZX = learners,
                       sample_folds = 2,
-                      ensemble_type = "average",
+                      ensemble_type = "nnls",
                       shortstack = FALSE,
                       cv_folds = 5,
                       subsamples = NULL,
@@ -234,3 +237,17 @@ ddml_pliv <- function(y, D, Z, X,
   class(ddml_fit) <- c("ddml_pliv")
   return(ddml_fit)
 }#DDML_PLIV
+
+#' @rdname summary.ddml_plm
+#'
+#' @export
+summary.ddml_pliv <- function(object, ...) {
+  # Check whether stacking was used, replace ensemble type if TRUE
+  single_learner <- ("what" %in% names(object$learners))
+  if (single_learner) object$ensemble_type <- "single base learner"
+  # Compute and print inference results
+  cat("PLIV estimation results: \n \n")
+  organize_inf_results(fit_obj_list = object$iv_fit,
+                       ensemble_type = object$ensemble_type,
+                       ...)
+}#SUMMARY.DDML_PLIV

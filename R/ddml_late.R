@@ -77,6 +77,8 @@
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
+#'             of scores. Used in [ddml::summary.ddml_late()].}
 #'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
 #'             \code{subsamples_Z0},\code{subsamples_Z1},
 #'             \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
@@ -112,7 +114,7 @@
 #'                                       args = list(alpha = 0)),
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
-#' late_fit$late
+#' summary(late_fit)
 #'
 #' # Estimate the local average treatment effect using short-stacking with base
 #' #     learners ols, rlasso, and xgboost.
@@ -125,13 +127,13 @@
 #'                       shortstack = TRUE,
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
-#' late_fit$late
+#' summary(late_fit)
 ddml_late <- function(y, D, Z, X,
                      learners,
                      learners_DXZ = learners,
                      learners_ZX = learners,
                      sample_folds = 2,
-                     ensemble_type = "average",
+                     ensemble_type = "nnls",
                      shortstack = FALSE,
                      cv_folds = 5,
                      subsamples_Z0 = NULL,
@@ -269,12 +271,14 @@ ddml_late <- function(y, D, Z, X,
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
   Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
-  numerator <- colMeans(Z_copy * (y_copy - l_Z1) / r_X +
-                          (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X) +
-                          l_Z1 - l_Z0)
-  denominator <- colMeans(Z_copy * (D_copy - p_Z1) / r_X +
-                            (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X) +
-                            p_Z1 - p_Z0)
+  psi_b <- Z_copy * (y_copy - l_Z1) / r_X +
+    (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X) +
+    l_Z1 - l_Z0
+  psi_a <- Z_copy * (D_copy - p_Z1) / r_X +
+    (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X) +
+    p_Z1 - p_Z0
+  numerator <- colMeans(psi_b)
+  denominator <- colMeans(psi_a)
   late <- numerator / denominator
   names(late) <- ensemble_type
 
@@ -294,6 +298,7 @@ ddml_late <- function(y, D, Z, X,
 
   # Organize output
   ddml_fit <- list(late = late, weights = weights, mspe = mspe,
+                   psi_a = psi_a, psi_b = psi_b,
                    learners = learners,
                    learners_DXZ = learners_DXZ,
                    learners_ZX = learners_ZX,
@@ -310,3 +315,19 @@ ddml_late <- function(y, D, Z, X,
   class(ddml_fit) <- c("ddml_late")
   return(ddml_fit)
 }#DDML_LATE
+
+#' @rdname summary.ddml_ate
+#'
+#' @export
+summary.ddml_late <- function(object, ...) {
+  # Check whether stacking was used, replace ensemble type if TRUE
+  single_learner <- ("what" %in% names(object$learners))
+  if (single_learner) object$ensemble_type <- " "
+  # Compute and print inference results
+  cat("LATE estimation results: \n \n")
+  organize_interactive_inf_results(coef = object$late,
+                                   psi_a = object$psi_a,
+                                   psi_b = object$psi_b,
+                                   ensemble_type = object$ensemble_type)
+}#SUMMARY.DDML_LATE
+

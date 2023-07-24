@@ -13,7 +13,7 @@ ddml_late(
   learners_DXZ = learners,
   learners_ZX = learners,
   sample_folds = 2,
-  ensemble_type = "average",
+  ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
   subsamples_Z0 = NULL,
@@ -110,6 +110,8 @@ ensemble procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
+\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
+of scores. Used in \code{\link[=summary.ddml_late]{summary.ddml_late()}}.}
 \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
 \code{subsamples_Z0},\code{subsamples_Z1},
 \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
@@ -154,7 +156,7 @@ late_fit <- ddml_late(y, D, Z, X,
                                       args = list(alpha = 0)),
                       sample_folds = 2,
                       silent = TRUE)
-late_fit$late
+summary(late_fit)
 
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, rlasso, and xgboost.
@@ -167,7 +169,7 @@ late_fit <- ddml_late(y, D, Z, X,
                       shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)
-late_fit$late
+summary(late_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased

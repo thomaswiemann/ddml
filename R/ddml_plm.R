@@ -106,7 +106,7 @@
 #'                                     args = list(alpha = 0)),
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' plm_fit$coef
+#' summary(plm_fit)
 #'
 #' # Estimate the partially linear model using short-stacking with base learners
 #' #     ols, rlasso, and xgboost.
@@ -119,7 +119,7 @@
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' plm_fit$coef
+#' summary(plm_fit)
 ddml_plm <- function(y, D, X,
                     learners,
                     learners_DX = learners,
@@ -240,3 +240,41 @@ ddml_plm <- function(y, D, X,
   class(ddml_fit) <- c("ddml_plm")
   return(ddml_fit)
 }#DDML_PLM
+
+#' Inference Methods for Partially Linear Estimators.
+#'
+#' @seealso [sandwich::vcovHC()]
+#'
+#' @description Inference methods for partially linear estimators. Simple
+#'     wrapper for [sandwich::vcovHC()].
+#'
+#' @param object An object of class \code{ddml_plm}, \code{ddml_pliv}, or
+#'     \code{ddml_fpliv} as fitted by [ddml::ddml_plm()], [ddml::ddml_pliv()],
+#'     and [ddml::ddml_fpliv()], respectively.
+#' @param ... Additional arguments passed to \code{vcovHC}. See
+#'     [sandwich::vcovHC()] for a complete list of arguments.
+#'
+#' @return An array with inference results for each \code{ensemble_type}.
+#'
+#' @references
+#' Zeileis A (2004). "Econometric Computing with HC and HAC Covariance Matrix
+#'     Estimators.” Journal of Statistical Software, 11(10), 1-17.
+#'
+#' Zeileis A (2006). “Object-Oriented Computation of Sandwich Estimators.”
+#'     Journal of Statistical Software, 16(9), 1-16.
+#'
+#' Zeileis A, Köll S, Graham N (2020). “Various Versatile Variances: An
+#'     Object-Oriented Implementation of Clustered Covariances in R.” Journal of
+#'     Statistical Software, 95(1), 1-36.
+#'
+#' @export
+summary.ddml_plm <- function(object, ...) {
+  # Check whether stacking was used, replace ensemble type if TRUE
+  single_learner <- ("what" %in% names(object$learners))
+  if (single_learner) object$ensemble_type <- "single base learner"
+  # Compute and print inference results
+  cat("PLM estimation results: \n \n")
+  organize_inf_results(fit_obj_list = object$ols_fit,
+                       ensemble_type = object$ensemble_type,
+                       ...)
+}#SUMMARY.DDML_PLM

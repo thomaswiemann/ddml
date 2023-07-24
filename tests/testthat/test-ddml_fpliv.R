@@ -230,3 +230,23 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 5)
 })#TEST_THAT
+
+test_that("summary.ddml_fpliv computes with a single model", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  Z <- matrix(rnorm(nobs*10), nobs, 10)
+  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
+  y <- D + X %*% runif(40) + UV[, 2]
+  # Define arguments
+  learners <- list(what = mdl_glmnet,
+                   args = list(alpha = 0.5))
+  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
+                               learners,
+                               sample_folds = 3,
+                               silent = T)
+  capture_output({inf_res <- summary(ddml_fpliv_fit, type = "HC1")})
+  # Check output with expectations
+  expect_equal(length(inf_res), 8)
+})#TEST_THAT

@@ -13,7 +13,7 @@ ddml_pliv(
   learners_DX = learners,
   learners_ZX = learners,
   sample_folds = 2,
-  ensemble_type = "average",
+  ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
   subsamples = NULL,
@@ -105,8 +105,8 @@ base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
 \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
 regression of \eqn{Y - \hat{E}[Y\vert X]} on
-\eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as the
-instrument.}
+\eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as
+the instrument. See also \code{\link[AER:ivreg]{AER::ivreg()}} for details.}
 \item{\code{learners},\code{learners_DX},\code{learners_ZX},
 \code{subsamples},\code{cv_subsamples_list},\code{ensemble_type}
 }{Pass-through of selected user-provided arguments. See above.}
@@ -139,7 +139,7 @@ pliv_fit <- ddml_pliv(y, D, Z, X,
                                       args = list(alpha = 0)),
                       sample_folds = 2,
                       silent = TRUE)
-pliv_fit$coef
+summary(pliv_fit)
 
 # Estimate the partially linear IV model using short-stacking with base
 #     ols, lasso, and ridge.
@@ -152,7 +152,7 @@ pliv_fit <- ddml_pliv(y, D, Z, X,
                       shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)
-pliv_fit$coef
+summary(pliv_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
@@ -161,6 +161,9 @@ machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
 structural parameters." The Econometrics Journal, 21(1), C1-C68.
+
+Kleiber C, Zeileis A (2008). Applied Econometrics with R. Springer-Verlag,
+New York.
 
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }

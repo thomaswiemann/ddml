@@ -127,7 +127,7 @@ plm_fit <- ddml_plm(y, D, X,
                                     args = list(alpha = 0)),
                     sample_folds = 2,
                     silent = TRUE)
-plm_fit$coef
+summary(plm_fit)
 
 # Estimate the partially linear model using short-stacking with base learners
 #     ols, rlasso, and xgboost.
@@ -140,7 +140,7 @@ plm_fit <- ddml_plm(y, D, X,
                     shortstack = TRUE,
                     sample_folds = 2,
                     silent = TRUE)
-plm_fit$coef
+summary(plm_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased

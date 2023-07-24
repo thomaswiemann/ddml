@@ -28,6 +28,7 @@ reference:
   - ddml_pliv
   - ddml_fpliv
   - ddml_late
+  - matches("summary")
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols

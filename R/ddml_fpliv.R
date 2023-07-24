@@ -67,7 +67,7 @@
 #'                                         args = list(alpha = 0)),
 #'                         sample_folds = 2,
 #'                         silent = TRUE)
-#' fpliv_fit$coef
+#' summary(fpliv_fit)
 #'
 #' # Estimate the partially linear IV model using short-stacking with base
 #' #     ols, rlasso, and xgboost.
@@ -80,13 +80,13 @@
 #'                         shortstack = TRUE,
 #'                         sample_folds = 2,
 #'                         silent = TRUE)
-#' fpliv_fit$coef
+#' summary(fpliv_fit)
 ddml_fpliv <- function(y, D, Z, X,
                        learners,
                        learners_DXZ = learners,
                        learners_DX = learners,
                        sample_folds = 2,
-                       ensemble_type = "average",
+                       ensemble_type = "nnls",
                        shortstack = FALSE,
                        cv_folds = 5,
                        enforce_LIE = TRUE,
@@ -262,6 +262,20 @@ ddml_fpliv <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_epliv")
+  class(ddml_fit) <- c("ddml_fpliv")
   return(ddml_fit)
 }#DDML_FPLIV
+
+#' @rdname summary.ddml_plm
+#'
+#' @export
+summary.ddml_fpliv <- function(object, ...) {
+  # Check whether stacking was used, replace ensemble type if TRUE
+  single_learner <- ("what" %in% names(object$learners))
+  if (single_learner) object$ensemble_type <- "single base learner"
+  # Compute and print inference results
+  cat("FPLIV estimation results: \n \n")
+  organize_inf_results(fit_obj_list = object$iv_fit,
+                       ensemble_type = object$ensemble_type,
+                       ...)
+}#SUMMARY.DDML_FPLIV

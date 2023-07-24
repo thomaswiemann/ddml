@@ -13,7 +13,7 @@ ddml_fpliv(
   learners_DXZ = learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = "average",
+  ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
   enforce_LIE = TRUE,
@@ -143,7 +143,7 @@ fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                         args = list(alpha = 0)),
                         sample_folds = 2,
                         silent = TRUE)
-fpliv_fit$coef
+summary(fpliv_fit)
 
 # Estimate the partially linear IV model using short-stacking with base
 #     ols, rlasso, and xgboost.
@@ -156,7 +156,7 @@ fpliv_fit <- ddml_fpliv(y, D, Z, X,
                         shortstack = TRUE,
                         sample_folds = 2,
                         silent = TRUE)
-fpliv_fit$coef
+summary(fpliv_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased

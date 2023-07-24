@@ -11,7 +11,7 @@ ddml_ate(
   learners,
   learners_DX = learners,
   sample_folds = 2,
-  ensemble_type = "average",
+  ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
   subsamples_D0 = NULL,
@@ -100,6 +100,8 @@ ensemble procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
+\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
+of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}}.}
 \item{\code{learners},\code{learners_DX},
 \code{subsamples_D0},\code{subsamples_D1},
 \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
@@ -138,7 +140,7 @@ ate_fit <- ddml_ate(y, D, X,
                                     args = list(alpha = 0)),
                     sample_folds = 2,
                     silent = TRUE)
-ate_fit$ate
+summary(ate_fit)
 
 # Estimate the average treatment effect using short-stacking with base
 #     learners ols, rlasso, and xgboost.
@@ -152,7 +154,7 @@ ate_fit <- ddml_ate(y, D, X,
                     shortstack = TRUE,
                     sample_folds = 2,
                     silent = TRUE)
-ate_fit$ate
+summary(ate_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased

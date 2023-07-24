@@ -41,6 +41,8 @@
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
+#'             of scores. Used in [ddml::summary.ddml_ate()].}
 #'         \item{\code{learners},\code{learners_DX},
 #'             \code{subsamples_D0},\code{subsamples_D1},
 #'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
@@ -71,7 +73,7 @@
 #'                                     args = list(alpha = 0)),
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' ate_fit$ate
+#' summary(ate_fit)
 #'
 #' # Estimate the average treatment effect using short-stacking with base
 #' #     learners ols, rlasso, and xgboost.
@@ -85,12 +87,12 @@
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' ate_fit$ate
+#' summary(ate_fit)
 ddml_ate <- function(y, D, X,
                      learners,
                      learners_DX = learners,
                      sample_folds = 2,
-                     ensemble_type = "average",
+                     ensemble_type = "nnls",
                      shortstack = FALSE,
                      cv_folds = 5,
                      subsamples_D0 = NULL,
@@ -200,10 +202,13 @@ ddml_ate <- function(y, D, X,
   # Compute the ATE using the constructed variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  ate <- colMeans(D_copy * (y_copy - g_D1) / m_X +
-                    (1 - D_copy) * (y_copy - g_D0) / (1 - m_X) +
-                    g_D1 - g_D0)
+  psi_b <- D_copy * (y_copy - g_D1) / m_X +
+    (1 - D_copy) * (y_copy - g_D0) / (1 - m_X) + g_D1 - g_D0
+  ate <- colMeans(psi_b)
   names(ate) <- ensemble_type
+
+  # Also set psi_a scores for easier computation of summary.ddml_ate
+  psi_a <- matrix(-1, nobs, nensb)
 
   # Organize complementary ensemble output
   weights <- list(y_X_D0 = y_X_D0_res$weights,
@@ -217,6 +222,7 @@ ddml_ate <- function(y, D, X,
 
   # Organize output
   ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
+                   psi_a = psi_a, psi_b = psi_b,
                    learners = learners,
                    learners_DX = learners_DX,
                    subsamples_D0 = subsamples_D0,
@@ -232,3 +238,26 @@ ddml_ate <- function(y, D, X,
   class(ddml_fit) <- c("ddml_ate")
   return(ddml_fit)
 }#DDML_ATE
+
+#' Inference Methods for Treatment Effect Estimators.
+#'
+#' @description Inference methods for treatment effect estimators.
+#'
+#' @param object An object of class \code{ddml_ate} and \code{ddml_late}, as
+#'     fitted by [ddml::ddml_ate()] and [ddml::ddml_late()], respectively.
+#' @param ... Currently unused.
+#'
+#' @return An array with inference results.
+#'
+#' @export
+summary.ddml_ate <- function(object, ...) {
+  # Check whether stacking was used, replace ensemble type if TRUE
+  single_learner <- ("what" %in% names(object$learners))
+  if (single_learner) object$ensemble_type <- " "
+  # Compute and print inference results
+  cat("ATE estimation results: \n \n")
+  organize_interactive_inf_results(coef = object$ate,
+                                   psi_a = object$psi_a,
+                                   psi_b = object$psi_b,
+                                   ensemble_type = object$ensemble_type)
+}#SUMMARY.DDML_ATE

@@ -69,7 +69,7 @@ time_single <- system.time({
                         silent = TRUE)
 })
 
-cat("LATE estimate: ", late_fit$late)
+summary(late_fit)
 ```
 ### LATE Estimation with (Short-)Stacking
 
@@ -91,10 +91,10 @@ time_shortstacking <- system.time({
                               silent = TRUE)
 })
 
-cat("LATE estimate: ", late_fit_short$late)
+summary(late_fit_short)
 ```
 
-Short-stacking combines the considered base learners to minimize the out-of-sample mean squared prediction error in each reduced form equation (e.g., to estimate E[Y|Z=0,X]). Setting ``ensemble_type = 'nnls1`` ensures that the weights associated with each base learner are in the unit simplex. The below snippet shows the weight associated with each of the three base learners (in chronological order) in the reduced form of E[Y|Z=0,X]: ``ols`` gets a weight of 0.132, ``mdl_glmnet`` gets a weight of 0.564, and ``mdl_xgboost`` gets a weight of 0.304.
+Short-stacking combines the considered base learners to minimize the out-of-sample mean squared prediction error in each reduced form equation (e.g., to estimate E[Y|Z=0,X]). Setting ``ensemble_type = 'nnls1'`` ensures that the weights associated with each base learner are in the unit simplex. The below snippet shows the weight associated with each of the three base learners (in chronological order) in the reduced form of E[Y|Z=0,X]: ``ols`` gets a weight of 0.132, ``mdl_glmnet`` gets a weight of 0.564, and ``mdl_xgboost`` gets a weight of 0.304.
 
 ```{r, eval = TRUE}
 t(late_fit_short$weights$y_X_Z0)
@@ -124,7 +124,7 @@ time_stacking <- system.time({
                               silent = TRUE)
 })
 
-cat("LATE estimate: ", late_fit_stack$late)
+summary(late_fit_stack)
 cat("Time using stacking: ", time_stacking[1])
 ```
 

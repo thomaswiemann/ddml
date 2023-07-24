@@ -137,3 +137,24 @@ test_that("ddml_pliv computes with different sets of learners & shortstack", {
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 5)
 })#TEST_THAT
+
+test_that("summary.ddml_pliv computes with a single model", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  Z <- matrix(rnorm(nobs), nobs, 1)
+  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
+  y <- D + X %*% runif(40) + UV[, 2]
+  # Define arguments
+  learners <- list(what = mdl_glmnet,
+                   args = list(alpha = 0.5))
+  # Compute DDML PLIV estimator
+  ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
+                             learners,
+                             sample_folds = 3,
+                             silent = T)
+  capture_output({summary(ddml_pliv_fit, type = "HC1")})
+  # Check output with expectations
+  expect_equal(length(ddml_pliv_fit$coef), 1)
+})#TEST_THAT
