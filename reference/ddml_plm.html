@@ -212,7 +212,8 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Other ddml: 
+    <div class="dont-index"><p><code><a href="summary.ddml_plm.html">summary.ddml_plm()</a></code></p>
+<p>Other ddml: 
 <code><a href="ddml_ate.html">ddml_ate</a>()</code>,
 <code><a href="ddml_fpliv.html">ddml_fpliv</a>()</code>,
 <code><a href="ddml_late.html">ddml_late</a>()</code>,
@@ -237,13 +238,13 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , single base learner</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error      t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -4.925055e-05 0.006875477  -0.00716322 9.942846e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -1.489987e-01 0.014704686 -10.13273857 3.954169e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate Std. Error      t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0001067168 0.00687450   0.01552358 9.876145e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1480906447 0.01470398 -10.07146915 7.386634e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the partially linear model using short-stacking with base learners</span></span></span>
-<span class="r-in"><span><span class="co">#     ols, rlasso, and xgboost.</span></span></span>
+<span class="r-in"><span><span class="co">#     ols, lasso, and ridge</span></span></span>
 <span class="r-in"><span><span class="va">plm_fit</span> <span class="op">&lt;-</span> <span class="fu">ddml_plm</span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">X</span>,</span></span>
 <span class="r-in"><span>                    learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span></span>
@@ -258,9 +259,9 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , nnls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 Estimate  Std. Error     t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.001144706 0.006880414   0.1663717 8.678644e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.149292332 0.014707289 -10.1509079 3.282950e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error     t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0007500811 0.006875371   0.1090968 9.131257e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1483136465 0.014699954 -10.0893954 6.154741e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

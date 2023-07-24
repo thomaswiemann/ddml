@@ -243,7 +243,8 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Other ddml: 
+    <div class="dont-index"><p><code><a href="summary.ddml_ate.html">summary.ddml_late()</a></code></p>
+<p>Other ddml: 
 <code><a href="ddml_ate.html">ddml_ate</a>()</code>,
 <code><a href="ddml_fpliv.html">ddml_fpliv</a>()</code>,
 <code><a href="ddml_pliv.html">ddml_pliv</a>()</code>,
@@ -268,11 +269,11 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1730791  0.1943236 -0.8906749 0.3731036</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2227357  0.1960659 -1.136025 0.2559463</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
-<span class="r-in"><span><span class="co">#     learners ols, rlasso, and xgboost.</span></span></span>
+<span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge.</span></span></span>
 <span class="r-in"><span><span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu">ddml_late</span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span></span>
 <span class="r-in"><span>                      learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span></span>
@@ -285,8 +286,8 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls -0.2098828  0.1918633 -1.093918 0.2739909</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        Estimate Std. Error    t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls -0.1661992  0.1877215 -0.8853499 0.375968</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
