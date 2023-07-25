@@ -1,5 +1,6 @@
 ---
 title: "Get Started"
+description: "A brief introduction to double/debiased machine learning using (short-)stacking in R."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get Started}
@@ -11,31 +12,29 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
-## Example using the Data from Angrist & Evans (1998)
 
-To illustrate ``ddml`` on a simple example, we can use the included random 
-    subsample of 5,000 observations from the data of Angrist & Evans (1998). The
-    data contains information on the labor supply of mothers, their children, as
-    well as demographic data. See ``?AE98`` for details.
+# Introduction
 
-The goal of the exercise is to understand how an increase in the number of 
-    children causes a change in the employment status of mothers (``worked``). 
-    For this purpose, we consider the strategy of Angrist & Evans (1998): To 
-    instrument for having more than two children (``morekids``), the authors use 
-    the ``samesex`` variable that indicates whether the first two  children are 
-    either both male or female. The idea is that families with two same-sex 
-    children are more likely to have preferences for a third child (of the 
-    opposite sex). Additional controls, including the age and years of education
-    of the mother, are included to address concerns about endogeneity of the 
-    instrument.
+This article gives a brief introduction to double/debiased machine learning using short-stacking in R. Topics discussed below include:
 
-```{r, eval = TRUE}
-# Load ddml
+1. Estimation with a single machine learner
+2. Estimation with multiple machine learners & short-stacking
+3. Estimation using different types of short-stacking
+
+See [Articles](index.html) for discussions of more advanced topics.
+
+# Estimation with a Single Machine Learner
+
+For illustration, we apply ``ddml`` to the included random subsample of 5,000 observations from the data of Angrist & Evans (1998). The data contains information on the labor supply of mothers, their children, as well as demographic data. See ``?AE98`` for details.
+
+```{r}
+# Load ddml and set seed
 library(ddml)
+set.seed(35611)
 
 # Construct variables from the included Angrist & Evans (1998) data
 y = AE98[, "worked"]
@@ -44,52 +43,98 @@ Z = AE98[, "samesex"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
+``ddml_late`` estimates the local average treatment effect (LATE) using double/debiased machine learning (see ``?ddml_late``). The high-dimensional nuisance parameters arising in the estimate of the LATE are conditional expectation functions of the control variables $X$. In particular, we require first step estimates of $E[Y|Z=z, X], E[D|Z=z, X]$ for $z=0,1$ and $E[Z|X]$. In the absence of functional form assumptions, these conditional expectations need to be estimated nonparametrically. 
 
-The causal model under consideration is the interactive model in which 
-$$Y = g_0(D, X) + U,$$
-where $(Y, D, X, Z, U)$ is a random vector with $Y$ denoting the outcome, $D$ 
-denoting the binary variable of interest, $Z$ denoting the binary instrument, 
-$X$ denoting the vector of controls, and $U$ denoting all other determinants of 
-$Y$ other than $(D, X, Z)$. In this model, the local average treatment effect (LATE) is defined as
-$$\theta_0^{\textrm{LATE}} \equiv  E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)],$$
-where $p_0(Z, X) \equiv \Pr(D=1\vert Z, X)$ denotes the propensity score.
+Here, we consider gradient boosting form the popular [xgboost](https://rdrr.io/cran/xgboost/) package to estimate the nuisance parameters. The function ``mdl_xgboost`` is a wrapper for ``xgboost``, allowing to specify all parameters of the original function. See ``?mdl_xgboost`` for details and take a look at ``vignette("keras_wrapper")`` to learn how to write a wrapper for a different machine learner yourself (it's super easy!).
 
-``ddml_late`` estimates the LATE using double/debiased
-machine learning under the LATE assumptions of Imbens & Angrist (1994). Double/debiased
-machine learning uses generic machine learners for the high
-dimensional nuisance parameters that arise in estimation of the LATE. ``ddml`` allows for combination of 
-multiple machine learners using stacking to to increase robustness to the underlying data generating process.
-
-Below, ``ddml_late`` estimates the LATE with shortstacking (a computationally convenient variant of stacking) based on three base learners: linear regression (``ols``), 
-lasso (``mdl_glmnet``), and gradient boosting (``mdl_xgboost``). 
-
-
-```{r, eval = TRUE}
-# Estimate the local average treatment effect using short-stacking with base
-#     learners ols, rlasso, and xgboost.
-late_fit <- ddml_late(y, D, Z, X,
-                      learners = list(list(fun = ols),
-                                      list(fun = mdl_glmnet),
-                                      list(fun = mdl_xgboost,
-                                         args = list(nrounds = 500,
-                                                     max_depth = 3))),
-                      ensemble_type = 'nnls',
-                      shortstack = TRUE,
-                      sample_folds = 5,
-                      silent = TRUE)
-late_fit$late
+```{r}
+# Specify a single learner
+learners_single <- list(what = mdl_xgboost,
+                        args = list(nrounds = 100,
+                                    max_depth = 1))
 ```
 
-## References
+Double/debiased machine learning relies on cross-fitting to avoid large bias from overfitting when estimating the nuisance parameters. The argument ``sample_folds = 10`` implies that $9/10=4,500$ observations are used to train the machine learner in each cross-fitting sample fold.   
+```{r}
+# Estimate the local average treatment effect using xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_single,
+                      sample_folds = 10,
+                      silent = TRUE)
+summary(late_fit)
+```
+(Note that estimation here is based on a random subsample of 5,000 observations. The results can thus not readily be compared to those in Angrist & Evans (1998).)
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased machine learning in Stata." <https://arxiv.org/abs/2301.09397>
+# Estimation with Multiple Machine Learners & Short-Stacking
 
-Angrist J, Evans W, (1998). "Children and Their Parents' Labor Supply: Evidence 
-    from Exogenous Variation in Family Size." American Economic
-    Review, 88(3), 450-477.
+Since the statistical properties of machine learners depend heavily on the underlying (unknown!) structure of the data, adaptive combination of multiple machine learners can increase robustness. In the below snippet, ``ddml_late`` estimates the LATE with short-stacking based on four _base_ learners:
 
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W, Robins J (2018). "Double/debiased machine learning for treatment and structural parameters." The Econometrics Journal, 21(1), C1-C68.
+- linear regression (see ``?ols``)
+- lasso (see ``?mdl_glmnet``)
+- ridge 
+- gradient boosting (see ``?mdl_xgboost``)
 
+```{r}
+learners_multiple <- list(list(fun = ols),
+                          list(fun = mdl_glmnet),
+                          list(fun = mdl_glmnet,
+                               args =list(alpha = 0)),
+                          list(fun = mdl_xgboost,
+                               args = list(nrounds = 100,
+                                           max_depth = 1)))
+```
+
+Short-stacking is a computationally convenient variant of stacking originally introduced by Wolpert (1992). Stacking constructs linear combinations of base learners to minimize the out-of-sample mean squared error of a particular reduced form (e.g., $E[Z|X]$). Short-stacking uses the out-of-sample predictions that naturally arise in computation of double/debiased machine learning estimates due to cross-fitting, which substantially reduces the computational burden (see ``vignette("stacking")``).
+
+In finite samples, regularizing the linear combination of base learners as construced via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the four base learners with linear coefficients that are constrained to be non-negative and sum to one.
+
+```{r}
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, lasso, ridge, and xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
+                      ensemble_type = 'nnls1',
+                      shortstack = TRUE,
+                      sample_folds = 10,
+                      silent = TRUE)
+summary(late_fit)
+```
+
+It is often insightful to see which base learners contribute the most to the final reduced form estimates. The below snippet shows the weights for the reduced forms $E[Y|Z=0,X]$ and $E[Y|Z=1,X]$: 
+```{r}
+cat("Stacking weights for E[Y|Z=0, X]: \n")
+t(late_fit$weights$y_X_Z0)
+
+cat("Stacking weights for E[Y|Z=1, X]: \n")
+t(late_fit$weights$y_X_Z1)
+```
+
+# Estimation using Different Types of Short-Stacking
+
+``ddml`` supports multiple schemes for constructing linear combinations of base learners. Since each of them relies on the out-of-sample predictions of the base learners, it is computationally cheap to compute them simultaneously. The below snippet estimates the LATE using the base learners in four different linear combinations:
+
+- ``'nls'`` constraints the coefficients of each base learner to be non-negative
+- ``'singlebest'`` selects the single MSPE-minimizing base learner
+- ``'ols`` constructs unconstrained linear combinations of base learners
+- ``'average'`` computes an unweighted average of base learners
+
+```{r}
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, lasso, ridge, and xgboost.
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learners_multiple,
+                      ensemble_type = c('nnls', 'singlebest', 
+                                        'ols', 'average'),
+                      shortstack = TRUE,
+                      sample_folds = 10,
+                      silent = TRUE)
+summary(late_fit)
+```
+
+# References
+
+Angrist J, Evans W, (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." American Economic Review, 88(3), 450-477.
+    
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 
 

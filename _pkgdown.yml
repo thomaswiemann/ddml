@@ -1,6 +1,22 @@
 url: https://thomaswiemann.com/ddml
+
 template:
   bootstrap: 5
+
+home:
+  title: Double/Debiased Machine Learning in R
+  description: Estimate common causal parameters using double/debiased machine
+    learning. 'ddml' simplifies estimation based on (short-)stacking, which
+    leverages multiple base learners to increase robustness to the underlying
+    data generating process.
+  sidebar:
+    structure:
+    - links
+    - license
+    - citation
+    - authors
+    - dev
+
 navbar:
   structure:
     left:
@@ -12,14 +28,7 @@ navbar:
     right:
     - search
     - github
-home:
-  sidebar:
-    structure:
-    - links
-    - license
-    - citation
-    - authors
-    - dev
+
 reference:
 - title: Supported Models
   contents:
@@ -46,4 +55,16 @@ reference:
 - title: internal
   contents:
   - ddml
+
+articles:
+- title: Key Features
+  navbar: ~
+  contents:
+  - ddml
+  - articles/stacking
+  - articles/keras_wrapper
+  - articles/sparse
+- title: Case Studies
+  contents:
+  - starts_with("articles/example")
 
