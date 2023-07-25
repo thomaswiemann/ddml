@@ -51,9 +51,11 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/example_401k.html">Example on the Effect of 401k Participation</a>
-    <a class="dropdown-item" href="../articles/example_BLP1995.html">Example using Berry, Levinson, Pakes (1995)</a>
-    <a class="dropdown-item" href="../articles/example_keras_wrapper.html">Constructing a new ML Wrapper</a>
+    <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
+    <a class="dropdown-item" href="../articles/keras_wrapper.html">Constructing a User-Provided Base Learner</a>
+    <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" href="../articles/index.html">More articles...</a>
   </div>
 </li>
       </ul>
@@ -89,6 +91,7 @@
 
     
     
+<p>Work in progress. Check back soon!</p>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -104,8 +107,6 @@ Chernozhukov et al. (2018). <a href="https://academic.oup.com/ectj/article/21/1
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/sjewo/readstata13" class="external-link">readstata13</a></span><span class="op">)</span></span>
 <span><span class="va">SIPP91</span> <span class="op">&lt;-</span> <span class="fu">read.dta13</span><span class="op">(</span><span class="st">"data/sipp1991.dta"</span><span class="op">)</span></span></code></pre></div>
-<p>The BLP1995 data is included as an exemplary dataset with the ddml
-package under the name <code>BLP95</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">SIPP91</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">SIPP91</span><span class="op">$</span><span class="va">net_tfa</span><span class="op">)</span></span>

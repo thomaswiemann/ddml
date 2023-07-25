@@ -13,13 +13,19 @@
     <loc>https://thomaswiemann.com/ddml/articles/example_401k.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_BLP1995.html</loc>
-  </url>
-  <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_keras_wrapper.html</loc>
+    <loc>https://thomaswiemann.com/ddml/articles/example_BLP95.html</loc>
   </url>
   <url>
     <loc>https://thomaswiemann.com/ddml/articles/index.html</loc>
+  </url>
+  <url>
+    <loc>https://thomaswiemann.com/ddml/articles/keras_wrapper.html</loc>
+  </url>
+  <url>
+    <loc>https://thomaswiemann.com/ddml/articles/sparse.html</loc>
+  </url>
+  <url>
+    <loc>https://thomaswiemann.com/ddml/articles/stacking.html</loc>
   </url>
   <url>
     <loc>https://thomaswiemann.com/ddml/authors.html</loc>

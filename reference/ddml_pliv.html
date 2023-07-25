@@ -34,9 +34,11 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/example_401k.html">Example on the Effect of 401k Participation</a>
-    <a class="dropdown-item" href="../articles/example_BLP1995.html">Example using Berry, Levinson, Pakes (1995)</a>
-    <a class="dropdown-item" href="../articles/example_keras_wrapper.html">Constructing a new ML Wrapper</a>
+    <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
+    <a class="dropdown-item" href="../articles/keras_wrapper.html">Constructing a User-Provided Base Learner</a>
+    <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item" href="../articles/index.html">More articles...</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -257,8 +259,8 @@ New York.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , single base learner</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error     t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0002742274 0.006898168  0.03975366 0.9682895</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1817278078 0.196623686 -0.92424169 0.3553605</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.0002086548 0.006903703 -0.03022361 0.9758887</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.2193199372 0.202199792 -1.08466945 0.2780681</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the partially linear IV model using short-stacking with base</span></span></span>
@@ -278,8 +280,8 @@ New York.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , nnls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error     t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0004461949 0.006891727  0.06474355 0.9483782</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.2175842909 0.191047939 -1.13889892 0.2547453</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0006103524 0.006892788  0.08854942 0.9294400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.2030271208 0.194402352 -1.04436556 0.2963163</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
