@@ -91,8 +91,104 @@
 
     
     
-<p>Work in progress. Check back soon!</p>
-  </main>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>This article illustrates the computational advantages of
+short-stacking over conventional stacking for estimation using
+double/debiased machine learning. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2023)</a> for
+further discussion short-stacking.</p>
+</div>
+<div class="section level2">
+<h2 id="estimation-with-stacking-and-short-stacking">Estimation with Stacking and Short-Stacking<a class="anchor" aria-label="anchor" href="#estimation-with-stacking-and-short-stacking"></a>
+</h2>
+<p>We apply <code>ddml</code> to the included random subsample of 5,000
+observations from the data of Angrist &amp; Evans (1998). The data
+contains information on the labor supply of mothers, their children, as
+well as demographic data. See <code><a href="../reference/AE98.html">?AE98</a></code> for details.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load ddml and set seed</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">221945</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Construct variables from the included Angrist &amp; Evans (1998) data</span></span>
+<span><span class="va">y</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"worked"</span><span class="op">]</span></span>
+<span><span class="va">D</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"morekids"</span><span class="op">]</span></span>
+<span><span class="va">Z</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"samesex"</span><span class="op">]</span></span>
+<span><span class="va">X</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>,<span class="st">"agefst"</span>,<span class="st">"black"</span>,<span class="st">"hisp"</span>,<span class="st">"othrace"</span>,<span class="st">"educ"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p>For a comparison of run-times, we consider the following three
+estimators for the nuisance parameters arising in estimation of the
+local average treatment effect (LATE):</p>
+<ol style="list-style-type: decimal">
+<li>Gradient boosting as the single base learner (see
+<code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code>)</li>
+<li>Short-stacking with linear regression (see <code><a href="../reference/ols.html">?ols</a></code>), lasso
+(see <code><a href="../reference/mdl_glmnet.html">?mdl_glmnet</a></code>), and gradient boosting</li>
+<li>Stacking with linear regression, lasso, and gradient boosting</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">time_singlelearner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                                        args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                                    max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span><span class="co">#SYSTEM.TIME</span></span>
+<span></span>
+<span><span class="va">time_shortstacking</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                                        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                                        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                                             args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                                         max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                        ensemble_type <span class="op">=</span> <span class="st">'nnls1'</span>,</span>
+<span>                        shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span><span class="co">#SYSTEM.TIME</span></span>
+<span></span>
+<span><span class="va">time_stacking</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                                        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                                        <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                                             args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                                         max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                        ensemble_type <span class="op">=</span> <span class="st">'nnls1'</span>,</span>
+<span>                        shortstack <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        cv_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span><span class="co">#SYSTEM.TIME</span></span></code></pre></div>
+<p>Both stacking and short-stacking construct weighted averages of the
+considered base learners to minimize the out-of-sample mean squared
+prediction error (MSPE). The difference between the two approaches lies
+in the construction of the MSPE: While stacking runs cross-validation in
+each cross-fitting sample fold, short-stacking directly uses the
+out-of-sample predictions arising in the cross-fitting step of
+double/debiased machine learning estimators. As the run-times below
+show, this results in a substantially reduced computational burden:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time single learner:"</span>, <span class="va">time_singlelearner</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Time single learner: 6.682</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time short-stacking:"</span>, <span class="va">time_shortstacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Time short-stacking: 14.32</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time stacking:      "</span>, <span class="va">time_stacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Time stacking:       104.899</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h3>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
+Double/debiased machine learning in Stata.” <a href="https://arxiv.org/abs/2301.09397" class="external-link uri">https://arxiv.org/abs/2301.09397</a></p>
+<p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor
+Supply: Evidence from Exogenous Variation in Family Size.” American
+Economic Review, 88(3), 450-477.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
