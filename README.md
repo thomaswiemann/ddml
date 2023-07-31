@@ -11,18 +11,19 @@
 <!-- badges: end -->
 
 `ddml` is an implementation of double/debiased machine learning
-estimators as proposed by Chernozhukov et al. (2018). The key benefit of
-the package is the straightforward estimation of nuisance parameters
-using (short-)stacking (Wolpert, 1992), which allows for multiple
-machine learners to increase robustness to the underlying data
-generating process.
+estimators as proposed by Chernozhukov et al. (2018). The key feature of
+`ddml` is the straightforward estimation of nuisance parameters using
+(short-)stacking (Wolpert, 1992), which allows for multiple machine
+learners to increase robustness to the underlying data generating
+process.
 
 `ddml` is the sister R package to our
 [Stata](https://github.com/aahrens1/ddml/) package, mirroring its key
 features while also leveraging R to simplify estimation with
-user-provided learners and/or sparse matrices. See also [Ahrens et
-al. (2023)](https://arxiv.org/abs/2301.09397) with additional discussion
-of the supported causal models and benefits of (short)-stacking.
+user-provided machine learners and/or sparse matrices. See also [Ahrens
+et al. (2023)](https://arxiv.org/abs/2301.09397) with additional
+discussion of the supported causal models and benefits of
+(short)-stacking.
 
 ## Installation
 
@@ -94,7 +95,7 @@ Check out our articles to learn more:
 - `vignette("ddml")` is a more detailed introduction to `ddml`
 - `vignette("stacking")` discusses computational benefits of
   short-stacking
-- `vignette("keras_wrapper")` shows how to write user-provided base
+- `vignette("new_ml_wrapper")` shows how to write user-provided base
   learners
 - `vignette("sparse")` illustrates support of sparse matrices (see
   `?Matrix`)
@@ -103,6 +104,20 @@ For additional applied examples, see our case studies:
 
 - `vignette("example_401k")`
 - `vignette("example_BLP95")`
+
+## Other Double/Debiased Machine Learning Packages in R
+
+`ddml` is built to easily (and quickly) estimate common causal
+parameters with multiple machine learners. With its support for
+short-stacking, sparse matrices, and easy-to-learn syntax, we hope
+`ddml` is a useful complement to
+[`DoubleML`](https://docs.doubleml.org/stable/index.html), the expansive
+R and Python package.
+[`DoubleML`](https://docs.doubleml.org/stable/index.html) supports many
+advanced features such as [multiway
+clustering](https://docs.doubleml.org/stable/examples/r_double_ml_multiway_cluster.html)
+and
+[stacking](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html).
 
 ## References
 
