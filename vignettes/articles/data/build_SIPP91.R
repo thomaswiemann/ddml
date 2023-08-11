@@ -3,7 +3,7 @@
 #'     [link](https://academic.oup.com/ectj/article/21/1/C1/5056401s%7D)
 
 library(readstata13)
-SIPP91 = read.dta13("data-raw/sipp1991.dta")
+SIPP91 <- read.dta13("vignettes/articles/data/sipp1991.dta")
 
 # Save
 saveRDS(SIPP91, file = "vignettes/articles/data/SIPP91.rds")

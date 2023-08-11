@@ -1,0 +1,283 @@
+---
+title: "Example based on Berry, Levinson, & Pakes (1995)"
+resource_files: "data/BLP95.rds"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example based on Berry, Levinson, & Pakes (1995)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
+
+
+# Introduction
+
+This article revisits the empirical example of Chernozhukov, Hansen, and Spindler (2015)
+(CHS2015, hereafter), which extends the instruments of Berry, Levinsohn,
+and Pakes (1995) (BLP1995, hereafter) and applies an instrument selection
+procedure based on the lasso. We consider the same instrument extension
+and apply double/debiased machine learning with short-stacking that combines conventional
+linear estimators with computational alternatives including lasso-based
+approaches, random forests, and gradient boosting.
+
+
+```{r setup}
+library(ddml)
+library(AER) # for iv regression
+set.seed(713954)
+```
+
+# Data Construction
+
+We consider the automobile market data from Berry, Levinsohn, Pakes (1995) as retrieved from
+the reproduction exercise in Chernozhukov, Hansen, and Spindler (2015).
+[link](https://www.aeaweb.org/articles?id=10.1257/aer.p20151022)
+
+```{r}
+BLP95 <- readRDS("data/BLP95.rds")
+
+nobs <- length(BLP95$id)
+y <- as.matrix(log(BLP95$share) -  log(BLP95$outshr))
+D <- as.matrix(BLP95$price)
+X <- as.matrix(cbind(1, BLP95[, c("hpwt", "air", "mpd", "space")]))
+colnames(y) <- "share"
+colnames(D) <- "price"
+```
+
+The below snippet constructs the BLP1995 instruments, which are sums of product
+characteristics (excluding price and other potentially endogenous
+variables) of other products offered by the firm as well as over
+competing firms. The exact instrument specification here follows the
+approach of CHS2015.
+
+```{r}
+ncol_X <- ncol(X_)
+sum_other <- sum_rival <- matrix(0, nobs, 5)
+for (i in 1:nobs) {
+  other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
+  rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i])
+  sum_other[i, ] <- colSums(X_[other_ind, , drop = FALSE])
+  sum_rival[i, ] <- colSums(X_[rival_ind, , drop = FALSE])
+}#FOR
+Z_ <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z_)
+cat("Number of baseline controls: ", ncol_X, "\n",
+    "Number of baseline instruments: ", ncol_Z)
+```
+
+In addition, we may be interested in extending the list of instruments. The below
+constructs the additional instruments considered in CHS2015.
+
+```{r}
+tu = BLP95$trend/19;
+mpdu = BLP95$mpd/7;
+spaceu = BLP95$space/2;
+XL_ <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
+                       BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
+                       spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
+                         BLP95$air,  mpdu * BLP95$air, spaceu *
+                         BLP95$air, tu * BLP95$air, BLP95$hpwt *
+                         mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
+                       mpdu * spaceu,  mpdu * tu, spaceu * tu))
+ncol_XL <- ncol(XL_)
+sum_otherL <- sum_rivalL <- matrix(0, nobs, 24)
+for (i in 1:nobs) {
+  other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
+  rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
+    (BLP95$cdid == BLP95$cdid[i])
+  sum_otherL[i, ] <- colSums(XL_[other_ind, , drop = FALSE])
+  sum_rivalL[i, ] <- colSums(XL_[rival_ind, , drop = FALSE])
+}#FOR
+ZL_ <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL_)
+cat("Number of extended controls: ", ncol_XL, "\n",
+    "Number of extended instruments: ", ncol_ZL)
+```
+
+# Baseline Estimates
+
+We begin by computing the OLS and TSLS estimates using the baseline controls and instrumental variables. Note that the TSLS estimates differ from those in CHS2015. This is due to a slight instrument-construction error in the original code of the CHS2015.
+```{r}
+ols_fit <- lm(y ~ D + X_)
+round(summary(ols_fit)$coefficients[2, ], 4)
+
+tsls_fit <- ivreg(y ~ D + X_ | X_ + Z_)
+round(summary(tsls_fit)$coefficients[2, ], 4)
+```
+
+Similarly, we compute estimates using the expanded set of controls and instruments.
+
+```{r}
+ols_L_fit <- lm(y ~ D + XL_)
+round(summary(ols_L_fit)$coefficients[2, ], 4)
+
+tsls_L_fit <- ivreg(y ~ D + XL_ | XL_ + ZL_)
+round(summary(tsls_L_fit)$coefficients[2, ], 4)
+```
+
+# Estimating the Flexible Partially Linear IV Model with CV-Lasso
+
+Given the large set of controls and instruments in the expanded set relative to the moderate sample size, it is reasonable to consider regularized estimators. A frequent choice with many variables are lasso-based estimators. Below, we combine double/debiased machine learning with lasso selection of instruments and controls. (See ``?mdl_glmnet`` and ``?ddml_fpliv`` for details.)
+
+```{r}
+# Base learner
+learner <- list(what = mdl_glmnet)
+
+# Estimate the ddml estimator using a single base learner
+lasso_fit <- ddml_fpliv(y, D = D,
+                        Z = ZL_, X = XL_,
+                        learners = learner,
+                        sample_folds = 10,
+                        silent = T)
+round(summary(lasso_fit)[2, , 1], 4)
+```
+
+# Estimating the Flexible Partially Linear IV Model with Multiple Learners
+
+A more ambitious approach may consider a variety of computational models for the estimation of the first and second stage. Here, we consider a combination of linear models, including unpenalized regression (see ``?ols``), lasso and ridge regression, random forests (see ``?mdl_ranger``), and boosted trees (see ``?mdl_xgboost``).
+
+In addition to allowing for different machine learners, we also consider different sets of instruments and controls: Either the initial set of instruments as in BLP1995 or the extended set as in CHS2015. For this purpose, it is convenient to pre-specify sets of indices corresponding to the initial and extended sets.
+
+```{r}
+# Construct column indices for combined control and instrument sets
+X_c <- cbind(X_, XL_); colnames(X_c) <- c(1:ncol(X_c))
+Z_c <- cbind(Z_, ZL_); colnames(Z_c) <- c(1:ncol(Z_c))
+set_X <- 1:ncol(X_); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
+set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
+
+# Base learners
+learners <- list(list(fun = ols, # ols with the baseline set
+                      assign_X = set_X,
+                      assign_Z = set_Z),
+                 list(fun = ols, # ols with the extended set
+                      assign_X = set_XL,
+                      assign_Z = set_ZL),
+                 list(fun = mdl_glmnet, # lasso with the extended set
+                      args = list(alpha = 1),
+                      assign_X = set_XL,
+                      assign_Z = set_ZL),
+                 list(fun = mdl_glmnet, # ridge with the extended set
+                      args = list(alpha = 0),
+                      assign_X = set_XL,
+                      assign_Z = set_ZL),
+                 list(fun = mdl_ranger, # random forests with the baseline set
+                      args = list(num.trees = 1000,
+                                  min.node.size = 10),
+                      assign_X = set_X,
+                      assign_Z = set_Z),
+                 list(fun = mdl_xgboost, # boosted trees with the baseline set
+                      args = list(nrounds = 300),
+                      assign_X = set_X,
+                      assign_Z = set_Z))
+
+# Compute short-stacked IV estimate
+stacking_fit <- ddml_fpliv(y, D = D,
+                           Z = Z_c, X = X_c,
+                           learners = learners,
+                           ensemble_type = c("nnls1"),
+                           shortstack = T,
+                           sample_folds = 10,
+                           silent = T)
+t(round(summary(stacking_fit), 4)[2, , ])
+```
+Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
+
+To better understand the composition of the final estimator, it is often useful to inspect the stacking weights. These may readily be retrieved from the fitted object. Here, we see that the boosted trees and the random forest learners have been assigned the most weight in the cross validation informed ensemble procedures. The linear methods -- ols, lasso, and ridge -- do not contribute substantially to the final estimates, suggesting that the user-defined expansions of the controls and instruments does little to improve bias and precision.
+
+```{r}
+sapply(stacking_fit$weights, round, 4)
+```
+
+# Elasticities
+
+Equipped with the multiple coefficient estimates, we may recalculate the number of products with inelastic demand as in CHS2015.
+
+```{r}
+compute_inelastic_demand <- function(price_coef) {
+  sum(price_coef * (BLP95$price) * (1 - BLP95$share) > -1)
+}#COMPUTE_INELASTIC_DEMAND
+```
+
+BLP1995's TSLS estimates suggest about 746-896 products with inelastic demand, nearly half of the number of products implied by simple OLS estimates.
+
+```{r}
+# OLS implied number of products with inelastic demand
+compute_inelastic_demand(ols_fit$coef[2])
+compute_inelastic_demand(ols_L_fit$coef[2])
+
+# TSLS implied number of products with inelastic demand
+compute_inelastic_demand(tsls_fit$coef[2])
+compute_inelastic_demand(tsls_L_fit$coef[2])
+```
+Double/debiased machine learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the intial OLS estimates.
+```{r}
+# ddml-lasso implied number of products with inelastic demand
+compute_inelastic_demand(lasso_fit$coef)
+
+# ddml-stacking implied number of products with inelastic demand
+compute_inelastic_demand(stacking_fit$coef)
+```
+
+# Bonus: Post-Lasso Estimates without Sample-Splitting
+
+In addition to ``ddml``, we can also consider estimators from the ``hdm`` package based on rigorous lasso -- i.e., with plug-in penalty parameters and without sample-splitting.
+
+```{r}
+rlassoIV_fit <- rlassoIV(x = XL_, d = D, y = y, z = ZL_,
+                         select.Z = TRUE, select.X = FALSE, post = TRUE)
+summary(rlassoIV_fit)
+```
+
+The coefficient is drastically different from previous estimates, including the double/debaised machine learning estimates that included lasso-based approaches.
+
+To gain some insight into potential causes for these differences, we check which instruments and controls were selected by the lasso procedure. Not surprisingly, lasso with a plug-in penalty selects only very few instruments and controls.
+
+```{r}
+Zr_ <- ZL_[, which(rlassoIV_fit$selected[1:48])]
+dim(Zr_)[2]
+Xr_ <- XL_[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
+dim(Xr_)[2]
+```
+From the stacking weights above, we know that the double/debaised machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
+
+```{r}
+# Base learner
+learner <- list(list(fun = ols),
+                list(fun = mdl_xgboost,
+                     args = list(nrounds = 300)))
+
+# Compute short-stacked IV estimate
+stacking_r_fit <- ddml_fpliv(y, D = D,
+                        Z = Zr_, X = Xr_,
+                        learners = learner,
+                        ensemble_type = c("nnls1"),
+                        shortstack = T,
+                        sample_folds = 10,
+                        silent = T)
+round(summary(stacking_r_fit)[2, , 1], 4)
+```
+
+The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
+
+```{r}
+sapply(stacking_r_fit$weights, round, 4)
+```
+
+The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.
+
+# References
+
+Berry S, Levinshon J, Pakes A (1995). "Automobile Prices in Market Equilibrium." Econometrica, 63(4), 841-890.
+
+Chernozhukov V, Hansen C, Spindler M (2015). "Post-selection and post-regularization inference in linear models with many controls and instruments." American Economic Review, 105(5), 486-490.
+
+
+

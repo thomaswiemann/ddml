@@ -90,10 +90,10 @@ cat("Time stacking:      ", time_stacking[1])
 
 ```
 
-## References
+# References
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased machine learning in Stata." <https://arxiv.org/abs/2301.09397>
 
-Angrist J, Evans W, (1998). "Children and Their Parents' Labor Supply: Evidence 
+Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence 
     from Exogenous Variation in Family Size." American Economic
     Review, 88(3), 450-477.

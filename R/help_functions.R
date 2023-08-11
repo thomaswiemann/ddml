@@ -44,7 +44,7 @@ organize_inf_results <- function(fit_obj_list, ensemble_type, ...) {
                                   "t value", "Pr(>|t|)"),
                                 ensemble_type)
   # Print inference results
-  print(inf_results)
+  return(inf_results)
 }#COMPUTE_INF_RESULTS
 
 # Function to compute std. errors, t-vals, and p-vals for plm, pliv, and fpliv.
