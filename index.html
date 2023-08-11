@@ -52,7 +52,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="articles/stacking.html">Computational Benefits of Short-Stacking</a>
-    <a class="dropdown-item" href="articles/keras_wrapper.html">Constructing a User-Provided Base Learner</a>
+    <a class="dropdown-item" href="articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a>
     <a class="dropdown-item" href="articles/sparse.html">Estimation with Sparse Matrices</a>
     <div class="dropdown-divider"></div>
     <a class="dropdown-item" href="articles/index.html">More articles...</a>
@@ -82,8 +82,8 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><code>ddml</code> is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key benefit of the package is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process.</p>
-<p><code>ddml</code> is the sister R package to our <a href="https://github.com/aahrens1/ddml/" class="external-link">Stata</a> package, mirroring its key features while also leveraging R to simplify estimation with user-provided learners and/or sparse matrices. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2023)</a> with additional discussion of the supported causal models and benefits of (short)-stacking.</p>
+<p><code>ddml</code> is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key feature of <code>ddml</code> is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process.</p>
+<p><code>ddml</code> is the sister R package to our <a href="https://github.com/aahrens1/ddml/" class="external-link">Stata</a> package, mirroring its key features while also leveraging R to simplify estimation with user-provided machine learners and/or sparse matrices. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2023)</a> with additional discussion of the supported causal models and benefits of (short)-stacking.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -145,7 +145,7 @@
 <li>
 <code><a href="articles/stacking.html">vignette("stacking")</a></code> discusses computational benefits of short-stacking</li>
 <li>
-<code><a href="articles/keras_wrapper.html">vignette("keras_wrapper")</a></code> shows how to write user-provided base learners</li>
+<code><a href="articles/new_ml_wrapper.html">vignette("new_ml_wrapper")</a></code> shows how to write user-provided base learners</li>
 <li>
 <code><a href="articles/sparse.html">vignette("sparse")</a></code> illustrates support of sparse matrices (see <code>?Matrix</code>)</li>
 </ul>
@@ -154,6 +154,11 @@
 <li><code><a href="articles/example_401k.html">vignette("example_401k")</a></code></li>
 <li><code><a href="articles/example_BLP95.html">vignette("example_BLP95")</a></code></li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="other-doubledebiased-machine-learning-packages-in-r">Other Double/Debiased Machine Learning Packages in R<a class="anchor" aria-label="anchor" href="#other-doubledebiased-machine-learning-packages-in-r"></a>
+</h2>
+<p><code>ddml</code> is built to easily (and quickly) estimate common causal parameters with multiple machine learners. With its support for short-stacking, sparse matrices, and easy-to-learn syntax, we hope <code>ddml</code> is a useful complement to <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a>, the expansive R and Python package. <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a> supports many advanced features such as <a href="https://docs.doubleml.org/stable/examples/r_double_ml_multiway_cluster.html" class="external-link">multiway clustering</a> and <a href="https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html" class="external-link">stacking</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

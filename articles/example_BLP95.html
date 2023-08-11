@@ -6,12 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="ddml">
-<title>Example using Berry, Levinson, Pakes (1995) • ddml</title>
+<title>Example based on Berry, Levinson, &amp; Pakes (1995) • ddml</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Example using Berry, Levinson, Pakes (1995)">
+<!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Example based on Berry, Levinson, &amp; Pakes (1995)">
 <meta property="og:description" content="ddml">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -52,7 +52,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
-    <a class="dropdown-item" href="../articles/keras_wrapper.html">Constructing a User-Provided Base Learner</a>
+    <a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a>
     <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
     <div class="dropdown-divider"></div>
     <a class="dropdown-item" href="../articles/index.html">More articles...</a>
@@ -82,7 +82,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="" class="logo" alt=""><h1>Example using Berry, Levinson, Pakes (1995)</h1>
+      <img src="" class="logo" alt=""><h1>Example based on Berry, Levinson, &amp; Pakes (1995)</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/vignettes/articles/example_BLP95.Rmd" class="external-link"><code>vignettes/articles/example_BLP95.Rmd</code></a></small>
@@ -91,44 +91,44 @@
 
     
     
-<p>Work in progress. Check back soon!</p>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>We revisits the empirical example of Chernozhukov, Hansen, and
-Spindler (2015) (CHS2015, hereafter), which extends the instruments of
-Berry, Levinson, and Pakes (1995) (BLP1995, hereafter) and applies an
-instrument selection procedure based on the Lasso. We consider the same
-instrument extension and apply a selection of ensemble procedures that
-combines conventional linear estimators with computational alternatives
-including Lasso-based approaches and random forests.</p>
+<p>This article revisits the empirical example of Chernozhukov, Hansen,
+and Spindler (2015) (CHS2015, hereafter), which extends the instruments
+of Berry, Levinsohn, and Pakes (1995) (BLP1995, hereafter) and applies
+an instrument selection procedure based on the lasso. We consider the
+same instrument extension and apply double/debiased machine learning
+with short-stacking that combines conventional linear estimators with
+computational alternatives including lasso-based approaches, random
+forests, and gradient boosting.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">AER</span><span class="op">)</span> <span class="co"># for iv regression</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">713954</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="data-construction">Data construction<a class="anchor" aria-label="anchor" href="#data-construction"></a>
+<h2 id="data-construction">Data Construction<a class="anchor" aria-label="anchor" href="#data-construction"></a>
 </h2>
-<p>Automobile market data from Berry, Levinsohn, Pakes (1995) as
-retrived from the reproduction excercise in Chernozhukov, Hansen, and
-Spindler (2015). <a href="https://www.aeaweb.org/articles?id=10.1257/aer.p20151022" class="external-link">link</a></p>
+<p>We consider the automobile market data from Berry, Levinsohn, Pakes
+(1995) as retrieved from the reproduction exercise in Chernozhukov,
+Hansen, and Spindler (2015). <a href="https://www.aeaweb.org/articles?id=10.1257/aer.p20151022" class="external-link">link</a></p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">BLP95</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"data/BLP95.rds"</span><span class="op">)</span></span></code></pre></div>
-<p>The BLP1995 data is included as an exemplary dataset with the ddml
-package under the name <code>BLP95</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">id</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">BLP95</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"data/BLP95.rds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">id</span><span class="op">)</span></span>
 <span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">share</span><span class="op">)</span> <span class="op">-</span>  <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">outshr</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">D</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">price</span><span class="op">)</span></span>
-<span><span class="va">x1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">BLP95</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hpwt"</span>, <span class="st">"air"</span>, <span class="st">"mpd"</span>, <span class="st">"space"</span>, <span class="st">"price"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">BLP95</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hpwt"</span>, <span class="st">"air"</span>, <span class="st">"mpd"</span>, <span class="st">"space"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"share"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">D</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"price"</span></span></code></pre></div>
-<p>We now construct the BLP1995 instruments, which are sums of product
-characteristics (excluding price and other potentially endogenous
-variables) of other products offered by the firm as well as over
-competing firms. The exact instrument specification here follows the
-approach of CHS2015.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X_</span> <span class="op">&lt;-</span> <span class="va">x1</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>; <span class="va">ncol_X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_</span><span class="op">)</span> <span class="co"># exclude price</span></span>
+<p>The below snippet constructs the BLP1995 instruments, which are sums
+of product characteristics (excluding price and other potentially
+endogenous variables) of other products offered by the firm as well as
+over competing firms. The exact instrument specification here follows
+the approach of CHS2015.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ncol_X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_</span><span class="op">)</span></span>
 <span><span class="va">sum_other</span> <span class="op">&lt;-</span> <span class="va">sum_rival</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">nobs</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">nobs</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">other_ind</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">firmid</span> <span class="op">==</span> <span class="va">BLP95</span><span class="op">$</span><span class="va">firmid</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span> <span class="op">&amp;</span></span>
@@ -138,11 +138,15 @@ approach of CHS2015.</p>
 <span>  <span class="va">sum_other</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">X_</span><span class="op">[</span><span class="va">other_ind</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
 <span>  <span class="va">sum_rival</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">X_</span><span class="op">[</span><span class="va">rival_ind</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="co">#FOR</span></span>
-<span><span class="va">Z_</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sum_other</span>, <span class="va">sum_rival</span><span class="op">)</span>; <span class="va">ncol_Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">Z_</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sum_other</span>, <span class="va">sum_rival</span><span class="op">)</span>; <span class="va">ncol_Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Number of baseline controls: "</span>, <span class="va">ncol_X</span>, <span class="st">"\n"</span>,</span>
+<span>    <span class="st">"Number of baseline instruments: "</span>, <span class="va">ncol_Z</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Number of baseline controls:  5 </span></span>
+<span><span class="co">#&gt;  Number of baseline instruments:  10</span></span></code></pre></div>
 <p>In addition, we may be interested in extending the list of
 instruments. The below constructs the additional instruments considered
 in CHS2015.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tu</span> <span class="op">=</span> <span class="va">BLP95</span><span class="op">$</span><span class="va">trend</span><span class="op">/</span><span class="fl">19</span>;</span>
 <span><span class="va">mpdu</span> <span class="op">=</span> <span class="va">BLP95</span><span class="op">$</span><span class="va">mpd</span><span class="op">/</span><span class="fl">7</span>;</span>
 <span><span class="va">spaceu</span> <span class="op">=</span> <span class="va">BLP95</span><span class="op">$</span><span class="va">space</span><span class="op">/</span><span class="fl">2</span>;</span>
@@ -163,71 +167,266 @@ in CHS2015.</p>
 <span>  <span class="va">sum_otherL</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">XL_</span><span class="op">[</span><span class="va">other_ind</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
 <span>  <span class="va">sum_rivalL</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">XL_</span><span class="op">[</span><span class="va">rival_ind</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="co">#FOR</span></span>
-<span><span class="va">ZL_</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sum_otherL</span>,<span class="va">sum_rivalL</span><span class="op">)</span>; <span class="va">ncol_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ZL_</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">ZL_</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">sum_otherL</span>,<span class="va">sum_rivalL</span><span class="op">)</span>; <span class="va">ncol_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">ZL_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Number of extended controls: "</span>, <span class="va">ncol_XL</span>, <span class="st">"\n"</span>,</span>
+<span>    <span class="st">"Number of extended instruments: "</span>, <span class="va">ncol_ZL</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Number of extended controls:  24 </span></span>
+<span><span class="co">#&gt;  Number of extended instruments:  48</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="baseline-estimates">Baseline Estimates<a class="anchor" aria-label="anchor" href="#baseline-estimates"></a>
+</h2>
+<p>We begin by computing the OLS and TSLS estimates using the baseline
+controls and instrumental variables. Note that the TSLS estimates differ
+from those in CHS2015. This is due to a slight instrument-construction
+error in the original code of the CHS2015.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ols_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">X_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ols_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.0886     0.0040   -22.0145     0.0000</span></span>
+<span></span>
+<span><span class="va">tsls_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/AER/man/ivreg.html" class="external-link">ivreg</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">X_</span> <span class="op">|</span> <span class="va">X_</span> <span class="op">+</span> <span class="va">Z_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tsls_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.1357     0.0108   -12.5993     0.0000</span></span></code></pre></div>
+<p>Similarly, we compute estimates using the expanded set of controls
+and instruments.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ols_L_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">XL_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ols_L_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.0991     0.0044   -22.4630     0.0000</span></span>
+<span></span>
+<span><span class="va">tsls_L_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/AER/man/ivreg.html" class="external-link">ivreg</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">XL_</span> <span class="op">|</span> <span class="va">XL_</span> <span class="op">+</span> <span class="va">ZL_</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">tsls_L_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.1258     0.0070   -17.8691     0.0000</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimating-the-flexible-partially-linear-iv-model-with-cv-lasso">Estimating the Flexible Partially Linear IV Model with CV-Lasso<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-cv-lasso"></a>
 </h2>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>Given the large set of controls and instruments in the expanded set
+relative to the moderate sample size, it is reasonable to consider
+regularized estimators. A frequent choice with many variables are
+lasso-based estimators. Below, we combine double/debiased machine
+learning with lasso selection of instruments and controls. (See
+<code><a href="../reference/mdl_glmnet.html">?mdl_glmnet</a></code> and <code><a href="../reference/ddml_fpliv.html">?ddml_fpliv</a></code> for details.)</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Base learner</span></span>
 <span><span class="va">learner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># DDML IV. We consider cross-residiualization across 10 sample folds here.</span></span>
+<span><span class="co"># Estimate the ddml estimator using a single base learner</span></span>
 <span><span class="va">lasso_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
-<span>                           Z <span class="op">=</span> <span class="va">ZL_</span>, X <span class="op">=</span> <span class="va">XL_</span>,</span>
-<span>                           learners <span class="op">=</span> <span class="va">learner</span>,</span>
-<span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span></span></code></pre></div>
+<span>                        Z <span class="op">=</span> <span class="va">ZL_</span>, X <span class="op">=</span> <span class="va">XL_</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="va">learner</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.1473     0.0090   -16.3142     0.0000</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="estimating-the-flexible-partially-linear-iv-model-with-stacking">Estimating the Flexible Partially Linear IV Model with Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-stacking"></a>
+<h2 id="estimating-the-flexible-partially-linear-iv-model-with-multiple-learners">Estimating the Flexible Partially Linear IV Model with Multiple
+Learners<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-multiple-learners"></a>
 </h2>
-<p>#’ A more ambitious approach may consider a variety of computational
-models for #’ the estimation of the first and second stage. Here, we
-consider a #’ combination of linear models, including unpenalized, Lasso
-and Ridge #’ regression, random forests, generalized random forests #’
-(Athey et al., 2019), and boosted trees, using either the inital set of
-#’ instruments as in BLP1995 or the extended set as in CHS2015. As
-before, #’ we specify seperate first and second stage model sets
-(although this is #’ not strictly necessary).</p>
-<p>#’ Combine the data. It’s convinient to specify sets of indices for
-easier #’ column selection in the model specification. When using random
-forests, #’ it’s important that variables have columnames.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">X_</span>, <span class="va">XL_</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">X_c</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_c</span><span class="op">)</span><span class="op">)</span></span>
+<p>A more ambitious approach may consider a variety of computational
+models for the estimation of the first and second stage. Here, we
+consider a combination of linear models, including unpenalized
+regression (see <code><a href="../reference/ols.html">?ols</a></code>), lasso and ridge regression, random
+forests (see <code><a href="../reference/mdl_ranger.html">?mdl_ranger</a></code>), and boosted trees (see
+<code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code>).</p>
+<p>In addition to allowing for different machine learners, we also
+consider different sets of instruments and controls: Either the initial
+set of instruments as in BLP1995 or the extended set as in CHS2015. For
+this purpose, it is convenient to pre-specify sets of indices
+corresponding to the initial and extended sets.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Construct column indices for combined control and instrument sets</span></span>
+<span><span class="va">X_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">X_</span>, <span class="va">XL_</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">X_c</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_c</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">Z_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Z_</span>, <span class="va">ZL_</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">set_X</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_</span><span class="op">)</span>; <span class="va">set_XL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">X_c</span><span class="op">)</span><span class="op">)</span>, <span class="va">set_X</span><span class="op">)</span></span>
-<span><span class="va">set_Z</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_</span><span class="op">)</span>; <span class="va">set_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span><span class="op">)</span>, <span class="va">set_Z</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="estimating-the-flexible-partially-linear-iv-model-with-short-stacking">Estimating the Flexible Partially Linear IV Model with
-Short-Stacking<a class="anchor" aria-label="anchor" href="#estimating-the-flexible-partially-linear-iv-model-with-short-stacking"></a>
-</h2>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Base learners</span></span>
-<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>,</span>
-<span>                       assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
-<span>                       assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                       assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
-<span>                       assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
-<span>                       assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
-<span>                       assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">set_Z</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_</span><span class="op">)</span>; <span class="va">set_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span><span class="op">)</span>, <span class="va">set_Z</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># DDML IV. We consider cross-residiualization across 10 sample folds here.</span></span>
+<span><span class="co"># Base learners</span></span>
+<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the baseline set</span></span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the extended set</span></span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># lasso with the extended set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># ridge with the extended set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>, <span class="co"># random forests with the baseline set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>                                  min.node.size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>, <span class="co"># boosted trees with the baseline set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
+<span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compute short-stacked IV estimate</span></span>
 <span><span class="va">stacking_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
 <span>                           Z <span class="op">=</span> <span class="va">Z_c</span>, X <span class="op">=</span> <span class="va">X_c</span>,</span>
 <span>                           learners <span class="op">=</span> <span class="va">learners</span>,</span>
-<span>                           ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ols"</span>, <span class="st">"nnls"</span>, <span class="st">"nnls1"</span>,</span>
-<span>                                             <span class="st">"singlebest"</span>, <span class="st">"average"</span><span class="op">)</span>,</span>
+<span>                           ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
 <span>                           shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                           sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error  t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; [1,]  -0.0982     0.0092 -10.7008        0</span></span></code></pre></div>
+<p>Interestingly, the coefficient is closer to the OLS estimates than to
+the TSLS estimates (with or without lasso)!</p>
+<p>To better understand the composition of the final estimator, it is
+often useful to inspect the stacking weights. These may readily be
+retrieved from the fitted object. Here, we see that the boosted trees
+and the random forest learners have been assigned the most weight in the
+cross validation informed ensemble procedures. The linear methods – ols,
+lasso, and ridge – do not contribute substantially to the final
+estimates, suggesting that the user-defined expansions of the controls
+and instruments does little to improve bias and precision.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         y_X  D_X   D_XZ</span></span>
+<span><span class="co">#&gt; [1,] 0.0000 0.00 0.0000</span></span>
+<span><span class="co">#&gt; [2,] 0.0000 0.00 0.0000</span></span>
+<span><span class="co">#&gt; [3,] 0.0000 0.00 0.0000</span></span>
+<span><span class="co">#&gt; [4,] 0.0000 0.00 0.0000</span></span>
+<span><span class="co">#&gt; [5,] 0.4394 0.45 0.3804</span></span>
+<span><span class="co">#&gt; [6,] 0.5606 0.55 0.6196</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="elasticities">Elasticities<a class="anchor" aria-label="anchor" href="#elasticities"></a>
+</h2>
+<p>Equipped with the multiple coefficient estimates, we may recalculate
+the number of products with inelastic demand as in CHS2015.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">compute_inelastic_demand</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">price_coef</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">price_coef</span> <span class="op">*</span> <span class="op">(</span><span class="va">BLP95</span><span class="op">$</span><span class="va">price</span><span class="op">)</span> <span class="op">*</span> <span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">BLP95</span><span class="op">$</span><span class="va">share</span><span class="op">)</span> <span class="op">&gt;</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="co">#COMPUTE_INELASTIC_DEMAND</span></span></code></pre></div>
+<p>BLP1995’s TSLS estimates suggest about 746-896 products with
+inelastic demand, nearly half of the number of products implied by
+simple OLS estimates.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># OLS implied number of products with inelastic demand</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">ols_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1502</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">ols_L_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1405</span></span>
+<span></span>
+<span><span class="co"># TSLS implied number of products with inelastic demand</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">tsls_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 746</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">tsls_L_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 896</span></span></code></pre></div>
+<p>Double/debiased machine learning estimates using only a single lasso
+base learner suggest the smallest number of inelastic products. In stark
+contrast, the estimates based on multiple machine learners suggest a
+number closer to the intial OLS estimates.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># ddml-lasso implied number of products with inelastic demand</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 596</span></span>
+<span></span>
+<span><span class="co"># ddml-stacking implied number of products with inelastic demand</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1417</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="bonus-post-lasso-estimates-without-sample-splitting">Bonus: Post-Lasso Estimates without Sample-Splitting<a class="anchor" aria-label="anchor" href="#bonus-post-lasso-estimates-without-sample-splitting"></a>
+</h2>
+<p>In addition to <code>ddml</code>, we can also consider estimators
+from the <code>hdm</code> package based on rigorous lasso – i.e., with
+plug-in penalty parameters and without sample-splitting.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rlassoIV_fit</span> <span class="op">&lt;-</span> <span class="fu">rlassoIV</span><span class="op">(</span>x <span class="op">=</span> <span class="va">XL_</span>, d <span class="op">=</span> <span class="va">D</span>, y <span class="op">=</span> <span class="va">y</span>, z <span class="op">=</span> <span class="va">ZL_</span>,</span>
+<span>                         select.Z <span class="op">=</span> <span class="cn">TRUE</span>, select.X <span class="op">=</span> <span class="cn">FALSE</span>, post <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Estimates and significance testing of the effect of target variables in the IV regression model"</span></span>
+<span><span class="co">#&gt;        coeff.      se. t-value  p-value    </span></span>
+<span><span class="co">#&gt; [1,] -0.31558  0.05354  -5.894 3.78e-09 ***</span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>The coefficient is drastically different from previous estimates,
+including the double/debaised machine learning estimates that included
+lasso-based approaches.</p>
+<p>To gain some insight into potential causes for these differences, we
+check which instruments and controls were selected by the lasso
+procedure. Not surprisingly, lasso with a plug-in penalty selects only
+very few instruments and controls.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">Zr_</span> <span class="op">&lt;-</span> <span class="va">ZL_</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">$</span><span class="va">selected</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">48</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">Zr_</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="va">Xr_</span> <span class="op">&lt;-</span> <span class="va">XL_</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">$</span><span class="va">selected</span><span class="op">[</span><span class="fl">49</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">$</span><span class="va">selected</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">Xr_</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] 6</span></span></code></pre></div>
+<p>From the stacking weights above, we know that the double/debaised
+machine learning estimator assigns most weight to boosted trees. In
+contrast to lasso-based estimates, boosted trees adaptively create
+interactions from their input variables, allowing for rich
+non-linearities in the final predictions. It thus makes sense to check
+whether the stark differences between the rlasso-based IV estimates
+above and the stacking estimates is primarily due to potential
+non-linearities as opposed to the specific instrument and control
+variables that were selected. The below code snippet re-estimates the
+stacking learner with the pre-selected set of controls and
+instruments.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Base learner</span></span>
+<span><span class="va">learner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                     args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compute short-stacked IV estimate</span></span>
+<span><span class="va">stacking_r_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
+<span>                        Z <span class="op">=</span> <span class="va">Zr_</span>, X <span class="op">=</span> <span class="va">Xr_</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="va">learner</span>,</span>
+<span>                        ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
+<span>                        shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;    -0.1044     0.0128    -8.1682     0.0000</span></span></code></pre></div>
+<p>The similarity of the coefficient estimates to the initial stacking
+estimates suggest seems that adaptively created interactions are indeed
+the key driver between the coefficient differences. This is further
+confirmed by the stacking weights, which again place substantial weight
+on the boosted trees.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       y_X    D_X   D_XZ</span></span>
+<span><span class="co">#&gt; [1,] 0.08 0.1287 0.0439</span></span>
+<span><span class="co">#&gt; [2,] 0.92 0.8713 0.9561</span></span></code></pre></div>
+<p>The example thus highlights the importance of considering multiple
+machine learners for robustness and illustrates the usefulness of
+double/debiased machine learning with stacking as a practical
+solution.</p>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Berry S, Levinshon J, Pakes A (1995). “Automobile Prices in Market
+Equilibrium.” Econometrica, 63(4), 841-890.</p>
+<p>Chernozhukov V, Hansen C, Spindler M (2015). “Post-selection and
+post-regularization inference in linear models with many controls and
+instruments.” American Economic Review, 105(5), 486-490.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

@@ -52,7 +52,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
-    <a class="dropdown-item" href="../articles/keras_wrapper.html">Constructing a User-Provided Base Learner</a>
+    <a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a>
     <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
     <div class="dropdown-divider"></div>
     <a class="dropdown-item" href="../articles/index.html">More articles...</a>
@@ -172,20 +172,20 @@ double/debiased machine learning estimators. As the run-times below
 show, this results in a substantially reduced computational burden:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time single learner:"</span>, <span class="va">time_singlelearner</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time single learner: 6.682</span></span>
+<span><span class="co">#&gt; Time single learner: 6.942</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time short-stacking:"</span>, <span class="va">time_shortstacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time short-stacking: 14.32</span></span>
+<span><span class="co">#&gt; Time short-stacking: 14.547</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time stacking:      "</span>, <span class="va">time_stacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time stacking:       104.899</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
-</h3>
+<span><span class="co">#&gt; Time stacking:       110.889</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
 Double/debiased machine learning in Stata.” <a href="https://arxiv.org/abs/2301.09397" class="external-link uri">https://arxiv.org/abs/2301.09397</a></p>
-<p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor
-Supply: Evidence from Exogenous Variation in Family Size.” American
-Economic Review, 88(3), 450-477.</p>
-</div>
+<p>Angrist J, Evans W (1998). “Children and Their Parents’ Labor Supply:
+Evidence from Exogenous Variation in Family Size.” American Economic
+Review, 88(3), 450-477.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

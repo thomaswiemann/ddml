@@ -4,11 +4,11 @@ pkgdown_sha: ~
 articles:
   example_401k: example_401k.html
   example_BLP95: example_BLP95.html
-  keras_wrapper: keras_wrapper.html
+  new_ml_wrapper: new_ml_wrapper.html
   sparse: sparse.html
   stacking: stacking.html
   ddml: ddml.html
-last_built: 2023-07-26T14:38Z
+last_built: 2023-08-11T20:19Z
 urls:
   reference: https://thomaswiemann.com/ddml/reference
   article: https://thomaswiemann.com/ddml/articles
