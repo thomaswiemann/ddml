@@ -8,3 +8,7 @@ knit("vignettes/articles/new_ml_wrapper.Rmd.lol",
 # depends on AER, hdm
 knit("vignettes/articles/example_BLP95.Rmd.lol",
      "vignettes/articles/example_BLP95.Rmd")
+
+# depends on Matrix
+knit("vignettes/articles/sparse.Rmd.lol",
+     "vignettes/articles/sparse.Rmd")

@@ -1,9 +1,9 @@
 ---
-title: "FPLIV Example based on Berry, Levinson, & Pakes (1995)"
+title: "Example based on Berry, Levinson, & Pakes (1995)"
 resource_files: "data/BLP95.rds"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FPLIV Example based on Berry, Levinson, & Pakes (1995)}
+  %\VignetteIndexEntry{Example based on Berry, Levinson, & Pakes (1995)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
