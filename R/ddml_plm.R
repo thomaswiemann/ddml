@@ -17,7 +17,7 @@
 #'     \eqn{g_0} is an unknown nuisance function.
 #'
 #' @param y The outcome variable.
-#' @param D The endogenous variable.
+#' @param D A matrix of endogenous variables.
 #' @param X A (sparse) matrix of control variables.
 #' @param learners May take one of two forms, depending on whether a single
 #'     learner or stacking with multiple learners is used for estimation of the
@@ -123,17 +123,21 @@
 #'                     silent = TRUE)
 #' summary(plm_fit)
 ddml_plm <- function(y, D, X,
-                    learners,
-                    learners_DX = learners,
-                    sample_folds = 2,
-                    ensemble_type = "nnls",
-                    shortstack = FALSE,
-                    cv_folds = 5,
-                    subsamples = NULL,
-                    cv_subsamples_list = NULL,
-                    silent = FALSE) {
+                     learners,
+                     learners_DX = learners,
+                     sample_folds = 2,
+                     ensemble_type = "nnls",
+                     shortstack = FALSE,
+                     cv_folds = 5,
+                     subsamples = NULL,
+                     cv_subsamples_list = NULL,
+                     silent = FALSE) {
   # Data parameters
   nobs <- length(y)
+
+  # Check for multivariate endogenous variables
+  D <- as.matrix(D)
+  nD <- ncol(D)
 
   # Create sample fold tuple
   if (is.null(subsamples)) {
@@ -162,14 +166,18 @@ ddml_plm <- function(y, D, X,
                      cv_subsamples_list = cv_subsamples_list,
                      silent = silent, progress = "E[Y|X]: ")
 
-  # Compute estimates of E[D|X].
-  D_X_res <- get_CEF(D, X,
-                     learners = learners_DX,
-                     ensemble_type = ensemble_type,
-                     shortstack = shortstack,
-                     subsamples = subsamples,
-                     cv_subsamples_list = cv_subsamples_list,
-                     silent = silent, progress = "E[D|X]: ")
+  # Compute estimates of E[D|X], loop through endogenous variables
+  D_X_res_list <- list()
+  for (k in 1:nD) {
+    D_X_res_list[[k]] <- get_CEF(D[, k, drop = F], X,
+                                 learners = learners_DX,
+                                 ensemble_type = ensemble_type,
+                                 shortstack = shortstack,
+                                 subsamples = subsamples,
+                                 cv_subsamples_list = cv_subsamples_list,
+                                 silent = silent,
+                                 progress = paste0("E[D", k, "|X]: "))
+  }#FOR
 
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- length(ensemble_type) > 1
@@ -179,34 +187,37 @@ ddml_plm <- function(y, D, X,
 
     # Residualize
     y_r <- y - y_X_res$oos_fitted
-    D_r <- D - D_X_res$oos_fitted
+    D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted)
 
     # Compute OLS estimate with constructed variables
     ols_fit <- stats::lm(y_r ~ D_r)
 
     # Organize complementary ensemble output
-    coef <- stats::coef(ols_fit)[2]
-    weights <- list(y_X = y_X_res$weights,
-                    D_X = D_X_res$weights)
+    coef <- stats::coef(ols_fit)[-1]
+    weights <- list(y_X = y_X_res$weights)
+    for (k in 1:nD) weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
   if (multiple_ensembles) {
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     nensb <- length(ensemble_type)
-    coef <- matrix(0, 1, nensb)
+    coef <- matrix(0, nD, nensb)
     mspe <- ols_fit <- rep(list(1), nensb)
     nlearners <- length(learners); nlearners_DX <- length(learners_DX)
     # Ensemble weights
     weights <- list()
-    weights[[1]] <- y_X_res$weights; weights[[2]] <- D_X_res$weights
+    weights[["y_X"]] <- y_X_res$weights
+    for (k in 1:nD) {
+      weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
+    }#FOR
     # Assign names for more legible output
     colnames(coef) <- names(mspe) <- names(ols_fit) <- ensemble_type
-    names(weights) <- c("y_X", "D_X")
+
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # Residualize
-      D_r <- D - D_X_res$oos_fitted[, j]
+      D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted[, j])
 
       # Residualize y
       y_r <- y - y_X_res$oos_fitted[, j]
@@ -215,16 +226,17 @@ ddml_plm <- function(y, D, X,
       ols_fit_j <- stats::lm(y_r ~ D_r)
 
       # Organize complementary ensemble output
-      coef[j] <- stats::coef(ols_fit_j)[2]
+      coef[, j] <- stats::coef(ols_fit_j)[-1]
       ols_fit[[j]] <- ols_fit_j
     }#FOR
-    # Name output appropriately by ensemble type
+    # Name output appropriately by ensemble type & coefficients
     names(ols_fit) <- ensemble_type
+    # rownames(coef) <- names(ols_fit_j$coefficients)[-1]
   }#IF
 
   # Store complementary ensemble output
-  mspe <- list(y_X = y_X_res$mspe,
-               D_X = D_X_res$mspe)
+  mspe <- list(y_X = y_X_res$mspe)
+  for (k in 1:nD) mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
