@@ -187,7 +187,7 @@ ddml_plm <- function(y, D, X,
 
     # Residualize
     y_r <- y - y_X_res$oos_fitted
-    D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted)
+    D_r <- D - get_oosfitted(D_X_res_list)
 
     # Compute OLS estimate with constructed variables
     ols_fit <- stats::lm(y_r ~ D_r)
@@ -207,7 +207,7 @@ ddml_plm <- function(y, D, X,
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
       # Residualize
-      D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted[, j])
+      D_r <- D - get_oosfitted(D_X_res_list, j)
 
       # Residualize y
       y_r <- y - y_X_res$oos_fitted[, j]
@@ -246,7 +246,7 @@ ddml_plm <- function(y, D, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_plm")
+  class(ddml_fit) <- "ddml_plm"
   return(ddml_fit)
 }#DDML_PLM
 

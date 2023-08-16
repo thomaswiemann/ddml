@@ -176,8 +176,8 @@ ddml_late <- function(y, D, Z, X,
   auxilliary_X_Z1 <- rep(list(NULL), sample_folds)
   for (k in 1:sample_folds) {
     # Sample folds
-    subsamples[[k]] <- sort(c(c(1:nobs)[is_Z0][subsamples_Z0[[k]]],
-                              c(1:nobs)[-is_Z0][subsamples_Z1[[k]]]))
+    subsamples[[k]] <- sort(c((1:nobs)[is_Z0][subsamples_Z0[[k]]],
+                              (1:nobs)[-is_Z0][subsamples_Z1[[k]]]))
     # CV folds
     nobs_k <- nobs - length(subsamples[[k]])
     is_Z0_k <- which(Z[-subsamples[[k]]] == 0)
@@ -314,7 +314,7 @@ ddml_late <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_late")
+  class(ddml_fit) <- "ddml_late"
   return(ddml_fit)
 }#DDML_LATE
 

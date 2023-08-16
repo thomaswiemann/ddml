@@ -33,7 +33,7 @@ test_that("ddml_pliv computes with an ensemble procedure", {
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
-                             ensemble_type = c("ols"),
+                             ensemble_type = "ols",
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)

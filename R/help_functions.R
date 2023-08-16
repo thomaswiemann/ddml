@@ -2,7 +2,7 @@
 generate_subsamples <- function(nobs, sample_folds) {
   sampleframe <- rep(1:sample_folds, ceiling(nobs/sample_folds))
   sample_groups <- sample(sampleframe, size=nobs, replace=F)
-  subsamples <- sapply(c(1:sample_folds),
+  subsamples <- sapply(1:sample_folds,
                        function(x) {which(sample_groups == x)},
                        simplify = F)
   return(subsamples)
@@ -19,6 +19,17 @@ csolve <- function(X) {
   # Return (generalized) inverse
   return(X_inv)
 }#CSOLVE
+
+# Function to pull oosresid from get_CEF results
+get_oosfitted <- function(res_list, j = NULL) {
+  if (is.null(j)) {
+    vapply(res_list, function (x) x$oos_fitted,
+           FUN.VALUE = c(res_list[[1]]$oos_fitted))
+  } else {
+    vapply(res_list, function (x) x$oos_fitted[, j],
+           FUN.VALUE = res_list[[1]]$oos_fitted[, 1])
+  }#IFELSE
+}#GET_OOSRESID
 
 # Function to organize inference results for plm, pliv, and fpliv.
 organize_inf_results <- function(fit_obj_list, ensemble_type, ...) {
@@ -55,7 +66,8 @@ compute_inf_results_by_ensemble <- function(fit_obj, ...) {
   Sigma <- sandwich::vcovHC(fit_obj, ...)
   std_errors <- sqrt(diag(Sigma))
   t_values <- fit_obj$coefficients / std_errors
-  p_values <-  2 * sapply(abs(t_values), stats::pnorm, lower.tail = F)
+  p_values <-  2 * vapply(abs(t_values), stats::pnorm,
+                          FUN.VALUE = 1, lower.tail = F)
 
   # Store results in a matrix
   inf_results <- array(0, dim = c(ncoef, 4, 1))
@@ -95,10 +107,11 @@ compute_interactive_inf_results_by_ensemble <- function(coef, psi_a, psi_b) {
   scores <- psi_a * coef + psi_b
   # Compute standard error, t-values, and p-vales
   std_error <- sqrt(mean(scores^2) / nobs) / abs(mean(psi_a))
-  t_value <- coef / std_error
-  p_value <-  2 * sapply(abs(t_value), stats::pnorm, lower.tail = F)
+  t_values <- coef / std_error
+  p_value <-  2 * vapply(abs(t_values), stats::pnorm,
+                         FUN.VALUE = 1, lower.tail = F)
   # Store results in a matrix
-  inf_results <- c(coef, std_error, t_value, p_value)
+  inf_results <- c(coef, std_error, t_values, p_value)
   # Return results
   return(inf_results)
 }#COMPUTE_INTERACTIVE_INF_RESULTS_BY_ENSEMBLE

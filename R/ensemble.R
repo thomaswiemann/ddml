@@ -26,9 +26,9 @@ ensemble <- function(y, X, Z = NULL,
     if (!(m %in% mdl_include)) next
     # Check whether X, Z assignment has been specified. If not, include all.
     if (is.null(learners[[m]]$assign_X))
-      learners[[m]]$assign_X <- c(1:ncol(X))
+      learners[[m]]$assign_X <- 1:ncol(X)
     if (is.null(learners[[m]]$assign_Z) & !is.null(Z))
-      learners[[m]]$assign_Z <- c(1:ncol(Z))
+      learners[[m]]$assign_Z <- 1:ncol(Z)
     # Else fit on data. Begin by selecting the model constructor and the
     #     variable assignment.
     mdl_fun <- list(what = learners[[m]]$fun, args = learners[[m]]$args)
@@ -136,7 +136,7 @@ ensemble_weights <- function(y, X, Z = NULL,
     } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
       mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = F])
-      mdl_min <- c(1:nlearners)[mdl_min]
+      mdl_min <- (1:nlearners)[mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1
     }#IFELSE

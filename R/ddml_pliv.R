@@ -190,8 +190,8 @@ ddml_pliv <- function(y, D, Z, X,
 
     # Residualize
     y_r <- y - y_X_res$oos_fitted
-    D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted)
-    V_r <- Z - sapply(Z_X_res_list, function (x) x$oos_fitted)
+    D_r <- D - get_oosfitted(D_X_res_list)
+    V_r <- Z - get_oosfitted(Z_X_res_list)
 
     # Compute IV estimate with constructed variables
     iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
@@ -213,8 +213,8 @@ ddml_pliv <- function(y, D, Z, X,
     for (j in 1:nensb) {
       # Residualize
       y_r <- y - y_X_res$oos_fitted[, j]
-      D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted[, j])
-      V_r <- Z - sapply(Z_X_res_list, function (x) x$oos_fitted[, j])
+      D_r <- D - get_oosfitted(D_X_res_list, j)
+      V_r <- Z - get_oosfitted(Z_X_res_list, j)
 
       # Compute IV estimate with constructed variables
       iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r)
@@ -251,7 +251,7 @@ ddml_pliv <- function(y, D, Z, X,
                    ensemble_type = ensemble_type)
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_pliv")
+  class(ddml_fit) <- "ddml_pliv"
   return(ddml_fit)
 }#DDML_PLIV
 

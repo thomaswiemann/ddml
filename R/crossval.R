@@ -75,7 +75,7 @@ crossval <- function(y, X, Z = NULL,
   nobs <- length(unlist(cv_subsamples)) # In case subsamples are user-provided
 
   # Compute out-of-sample errors
-  cv_res <- sapply(c(1:(cv_folds * nlearners)), function(x) {
+  cv_res <- sapply(1:(cv_folds * nlearners), function(x) {
     # Select model and cv-fold for this job
     j <- ceiling(x / cv_folds) # jth model
     i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
@@ -110,8 +110,8 @@ crossval <- function(y, X, Z = NULL,
 crossval_compute <- function(test_sample, learner,
                              y, X, Z = NULL) {
   # Check whether X, Z assignment has been specified. If not, include all.
-  if (is.null(learner$assign_X)) learner$assign_X <- c(1:ncol(X))
-  if (is.null(learner$assign_Z) & !is.null(Z)) learner$assign_Z <- c(1:ncol(Z))
+  if (is.null(learner$assign_X)) learner$assign_X <- 1:ncol(X)
+  if (is.null(learner$assign_Z) & !is.null(Z)) learner$assign_Z <- 1:ncol(Z)
 
   # Extract model arguments
   mdl_fun <- list(what = learner$fun, args = learner$args)
@@ -120,7 +120,7 @@ crossval_compute <- function(test_sample, learner,
 
   # Compute model for this fold
   #     Note: this is effectively copying the data -- improvement needed.
-  mdl_fun$args$y <- y[-test_sample];
+  mdl_fun$args$y <- y[-test_sample]
   mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = F],
                           Z[-test_sample, assign_Z, drop = F])
   mdl_fit <- do.call(do.call, mdl_fun)

@@ -3,7 +3,7 @@ test_that("crossval_compute returns residuals (w/o instruments)", {
   X <- matrix(rnorm(100*100), 100, 100) # Simulate features
   y <- 1 + X %*% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
   # Define arguments
-  test_sample <- sample(c(1:length(y)), 33)
+  test_sample <- sample(1:length(y), 33)
   learner <- list(fun = mdl_glmnet)
   # Compute cross-validation instance
   oos_resid <- crossval_compute(test_sample, learner,

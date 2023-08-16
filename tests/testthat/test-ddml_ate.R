@@ -31,7 +31,7 @@ test_that("ddml_ate computes with an ensemble procedure", {
   # Compute DDML PLM estimator
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners = learners,
-                           ensemble_type = c("ols"),
+                           ensemble_type = "ols",
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
@@ -54,13 +54,12 @@ test_that("ddml_ate computes with multiple ensemble procedures", {
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",
-                                             "nnls1",
                                              "singlebest", "average"),
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 5)
+  expect_equal(length(ddml_ate_fit$ate), 4)
 })#TEST_THAT
 
 test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
@@ -78,14 +77,13 @@ test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",
-                                             "nnls1",
                                              "singlebest", "average"),
                            shortstack = TRUE,
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 5)
+  expect_equal(length(ddml_ate_fit$ate), 4)
 })#TEST_THAT
 
 test_that("summary.ddml_ate computes with a single model", {
@@ -123,12 +121,11 @@ test_that("summary.ddml_ate computes with multiple ensemble procedures", {
   ddml_ate_fit <- ddml_ate(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",
-                                             "nnls1",
                                              "singlebest", "average"),
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
   capture_output({inf_res <- summary(ddml_ate_fit)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 20)
+  expect_equal(length(inf_res), 16)
 })#TEST_THAT

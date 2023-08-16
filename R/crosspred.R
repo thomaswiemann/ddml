@@ -153,10 +153,10 @@ crosspred <- function(y, X, Z = NULL,
   auxilliary_fitted <- rep(list(NULL), sample_folds)
   auxilliary_fitted_bylearner <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
-  colnames(mspe) <- paste("sample fold ", c(1:sample_folds))
+  colnames(mspe) <- paste("sample fold ", 1:sample_folds)
   weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
   dimnames(weights) <- list(NULL, ensemble_type,
-                            paste("sample fold ", c(1:sample_folds)))
+                            paste("sample fold ", 1:sample_folds))
   # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble

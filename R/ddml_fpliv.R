@@ -185,9 +185,8 @@ ddml_fpliv <- function(y, D, Z, X,
 
     # Residualize
     y_r <- y - y_X_res$oos_fitted
-    D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted)
-    V_r <- sapply(D_XZ_res_list, function (x) x$oos_fitted) -
-      sapply(D_X_res_list, function (x) x$oos_fitted)
+    D_r <- D - get_oosfitted(D_X_res_list)
+    V_r <- get_oosfitted(D_XZ_res_list) - get_oosfitted(D_X_res_list)
 
     # Compute IV estimate with constructed variables
     iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
@@ -239,13 +238,11 @@ ddml_fpliv <- function(y, D, Z, X,
 
       # Residualize
       if (enforce_LIE) {
-        D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted)
-        V_r <- sapply(D_XZ_res_list, function (x) x$oos_fitted[, j]) -
-          sapply(D_X_res_list, function (x) x$oos_fitted)
+        D_r <- D - get_oosfitted(D_X_res_list)
+        V_r <- get_oosfitted(D_XZ_res_list, j) - get_oosfitted(D_X_res_list)
       } else {
-        D_r <- D - sapply(D_X_res_list, function (x) x$oos_fitted[, j])
-        V_r <- sapply(D_XZ_res_list, function (x) x$oos_fitted[, j]) -
-          sapply(D_X_res_list, function (x) x$oos_fitted[, j])
+        D_r <- D - get_oosfitted(D_X_res_list, j)
+        V_r <- get_oosfitted(D_XZ_res_list, j) - get_oosfitted(D_X_res_list, j)
       }#IFELSE
 
       # Residualize y
@@ -294,7 +291,7 @@ ddml_fpliv <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_fpliv")
+  class(ddml_fit) <- "ddml_fpliv"
   return(ddml_fit)
 }#DDML_FPLIV
 
