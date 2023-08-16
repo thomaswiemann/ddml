@@ -24,9 +24,9 @@ ddml_pliv(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{The endogenous variable.}
+\item{D}{A matrix of endogenous variables.}
 
-\item{Z}{The instrumental variable.}
+\item{Z}{A matrix of instruments.}
 
 \item{X}{A (sparse) matrix of control variables.}
 

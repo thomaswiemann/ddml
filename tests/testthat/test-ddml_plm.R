@@ -199,7 +199,7 @@ test_that("ddml_plm computes with an ensemble procedure and multivariate D", {
   expect_equal(length(ddml_plm_fit$coef), 2)
 })#TEST_THAT
 
-test_that("ddml_plm computes with multiple ensemble procedures", {
+test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))

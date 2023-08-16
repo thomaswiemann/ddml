@@ -194,8 +194,6 @@ ddml_plm <- function(y, D, X,
 
     # Organize complementary ensemble output
     coef <- stats::coef(ols_fit)[-1]
-    weights <- list(y_X = y_X_res$weights)
-    for (k in 1:nD) weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
@@ -205,14 +203,6 @@ ddml_plm <- function(y, D, X,
     coef <- matrix(0, nD, nensb)
     mspe <- ols_fit <- rep(list(1), nensb)
     nlearners <- length(learners); nlearners_DX <- length(learners_DX)
-    # Ensemble weights
-    weights <- list()
-    weights[["y_X"]] <- y_X_res$weights
-    for (k in 1:nD) {
-      weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
-    }#FOR
-    # Assign names for more legible output
-    colnames(coef) <- names(mspe) <- names(ols_fit) <- ensemble_type
 
     # Compute coefficients for each ensemble
     for (j in 1:nensb) {
@@ -229,14 +219,19 @@ ddml_plm <- function(y, D, X,
       coef[, j] <- stats::coef(ols_fit_j)[-1]
       ols_fit[[j]] <- ols_fit_j
     }#FOR
-    # Name output appropriately by ensemble type & coefficients
-    names(ols_fit) <- ensemble_type
-    # rownames(coef) <- names(ols_fit_j$coefficients)[-1]
+
+    # Assign names for more legible output
+    colnames(coef) <- names(ols_fit) <- ensemble_type
+    rownames(coef) <- names(ols_fit_j$coefficients)[-1]
   }#IF
 
   # Store complementary ensemble output
+  weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
-  for (k in 1:nD) mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
+  for (k in 1:nD){
+    weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
+    mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
+  }#FOR
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
