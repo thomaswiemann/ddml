@@ -8,10 +8,10 @@ set.seed(9265001)
 # Load full data
 library(readstata13)
 AE98 <- read.dta13("data-raw/ae98_fulldata.dta")
-AE98 <- AE98[AE98[,c("msample")]==1,]
+AE98 <- AE98[AE98[, "msample"]==1,]
 
 # Select subsample and variables
-subsample <- sample(c(1:nrow(AE98)), 5000)
+subsample <- sample(1:nrow(AE98), 5000)
 AE98 <- AE98[subsample, ]
 AE98 <- AE98[, c("workedm","weeksm1","hourswm", "morekids", "samesex",
                           "agem","agefstm","blackm",

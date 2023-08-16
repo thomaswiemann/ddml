@@ -25,7 +25,7 @@ ddml_fpliv(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{The endogenous variable.}
+\item{D}{A matrix of endogenous variables.}
 
 \item{Z}{A (sparse) matrix of instruments.}
 

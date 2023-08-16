@@ -34,11 +34,11 @@ test_that("ddml_plm computes with an ensemble procedure", {
                    list(fun = ols))
   # Compute DDML PLM estimator
   ddml_late_fit <- ddml_late(y, D, Z, X,
-                           learners = learners,
-                           ensemble_type = c("ols"),
-                           cv_folds = 3,
-                           sample_folds = 3,
-                           silent = T)
+                             learners = learners,
+                             ensemble_type = "ols",
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = T)
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 1)
 })#TEST_THAT
@@ -58,13 +58,13 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
                    list(fun = ols))
   # Compute DDML PLM estimator
   ddml_late_fit <- ddml_late(y, D, Z, X,
-                           learners,
-                           ensemble_type = c("ols", "nnls",
-                                             "nnls1",
-                                             "singlebest", "average"),
-                           cv_folds = 3,
-                           sample_folds = 3,
-                           silent = T)
+                             learners,
+                             ensemble_type = c("ols", "nnls",
+                                               "nnls1",
+                                               "singlebest", "average"),
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = T)
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 5)
 })#TEST_THAT

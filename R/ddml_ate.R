@@ -134,8 +134,8 @@ ddml_ate <- function(y, D, X,
   auxilliary_X_D1 <- rep(list(NULL), sample_folds)
   for (k in 1:sample_folds) {
     # Sample folds
-    subsamples[[k]] <- sort(c(c(1:nobs)[is_D0][subsamples_D0[[k]]],
-                              c(1:nobs)[-is_D0][subsamples_D1[[k]]]))
+    subsamples[[k]] <- sort(c((1:nobs)[is_D0][subsamples_D0[[k]]],
+                              (1:nobs)[-is_D0][subsamples_D1[[k]]]))
     # CV folds
     nobs_k <- nobs - length(subsamples[[k]])
     is_D0_k <- which(D[-subsamples[[k]]] == 0)
@@ -236,7 +236,7 @@ ddml_ate <- function(y, D, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- c("ddml_ate")
+  class(ddml_fit) <- "ddml_ate"
   return(ddml_fit)
 }#DDML_ATE
 

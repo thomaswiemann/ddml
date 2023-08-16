@@ -22,7 +22,7 @@ ddml_plm(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{The endogenous variable.}
+\item{D}{A matrix of endogenous variables.}
 
 \item{X}{A (sparse) matrix of control variables.}
 
