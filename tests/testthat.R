@@ -1,4 +1,4 @@
-#library(testthat)
-#library(ddml)
+library(testthat)
+library(ddml)
 
 test_check("ddml")
