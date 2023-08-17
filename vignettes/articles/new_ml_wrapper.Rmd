@@ -82,7 +82,7 @@ summary(late_fit)
 #>   -0.2323155  0.2009572 -1.156045 0.2476628
 ```
 
-All works well! See ``?stats::glm()`` and ``?stats::predict.glm()`` for additional details.
+All works well!
 
 
 # A Wrapper for Neural Networks based on ``keras``
@@ -107,7 +107,7 @@ The wrapper below allows for custom specification of a feed-forward neural netwo
 
 ```r
 mdl_keras <- function(y, X,
-                      units = 10, nhidden = 1, 
+                      units = 10, nhidden = 1,
                       optimizer_fun = "rmsprop",
                       loss = "mse",
                       epochs = 10,
@@ -196,8 +196,10 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>     Estimate Std. Error    t value Pr(>|t|)
-#>   -0.1902553  0.4335174 -0.4388642  0.66076
+#>   Estimate Std. Error t value
+#>    16.1199   50.22244 0.32097
+#>    Pr(>|t|)
+#>   0.7482331
 ```
 
 All works well!

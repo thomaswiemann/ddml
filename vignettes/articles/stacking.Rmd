@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This article illustrates the computational advantages of short-stacking over conventional stacking for estimation using double/debiased machine learning. See also [Ahrens et al. (2023)](https://arxiv.org/abs/2301.09397) for further discussion short-stacking.
+This article illustrates the computational advantages of short-stacking over conventional stacking for estimation of structural parameters using double/debiased machine learning. See also [Ahrens et al. (2023)](https://arxiv.org/abs/2301.09397) for further discussion short-stacking.
 
 # Estimation with Stacking and Short-Stacking
 
