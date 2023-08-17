@@ -133,7 +133,7 @@ summary(late_fit)
 
 # References
 
-Angrist J, Evans W, (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." American Economic Review, 88(3), 450-477.
+Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." American Economic Review, 88(3), 450-477.
     
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 
