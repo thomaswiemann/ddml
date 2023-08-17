@@ -30,7 +30,7 @@ set.seed(900837)
 
 One of the coefficients of interest in AK91 is the effect of years of education on the log weekly wage of American males born between 1930-1939. The authors instrument for years of schooling with quarter of birth indicators (QOB). This strategy is motivated by mandatory attendance laws that determine at what age children may drop out of school. Since children born in later quarters achieve the age cut-off after more years of schooling, higher QOB should imply more years of schooling.
 
-Although the data is quite large ($n = 329509$), a need for sparse matrices only arises when the QOB instrument is interacted with other variables. Popular control variables are place of birth (POB) and year of birth (YOB). Depending on whether these are separately or jointly interacted with QOB, this results in 180 and 1530 instruments, respectively. The code snippet below constructs these two sets of instruments as well as the matrix of controls. We use the ``sparse.model.matrix`` command to construct sparse matrix objects as supported by the ``Matrix`` package.
+Although the data is quite large ($n = 329509$), a need for sparse matrices only arises when the QOB instrument is interacted with other variables. Popular control variables are place of birth (POB) and year of birth (YOB). Depending on whether these are separately or jointly interacted with QOB, this results in 180 and 1530 instruments, respectively. The code snippet below constructs these two sets of instruments as well as the matrix of controls. We use ``sparse.model.matrix()`` to construct sparse matrix objects as supported by the ``Matrix`` package.
 
 ```{r}
 # Load data
@@ -63,7 +63,7 @@ format(object.size(as.matrix(X)), units = "Mb")
 
 The syntax for estimation with sparse matrices in ``ddml`` is _exactly_ the same as estimation with dense matrices. In the below, we replicate AK91 using the simplified set of instruments and controls.
 
-We begin with estimating the returns to schooling using the set of 180 instruments. Following the convention of the returns to education-literature, our estimator selects only among the instruments but does regularize the coefficients corresponding to the control variables. This is achieved by formulating different base learners for the first and second stage reduced forms (see ``?ddml_fpliv``), and by setting the ``penalty.factor`` of the control variables to zero (see ``?mdl_glmnet`` and ``glment::glmnet()``).
+We begin with estimating the returns to schooling using the set of 180 instruments. Following the convention of the returns to education-literature, our estimator selects only among the instruments but does regularize the coefficients corresponding to the control variables. This is achieved by formulating different base learners for the first and second stage reduced forms (see ``?ddml_fpliv``), and by setting the ``penalty.factor`` of the control variables to zero (see ``?mdl_glmnet``).
 
 ```{r}
 learners_XZ <- list(list(fun = ols),

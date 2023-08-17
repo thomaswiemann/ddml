@@ -83,10 +83,10 @@ Check out our articles to learn more:
 
 For additional applied examples, see our case studies:
 
-- ``vignette("example_401k")``
-- ``vignette("example_BLP95")``
+- ``vignette("example_401k")`` revisits the effect of 401k participation on retirement savings
+- ``vignette("example_BLP95")`` considers flexible demand estimation with endogenous prices
 
-## Other Double/Debiased Machine Learning Packages in R
+## Other Double/Debiased Machine Learning Packages
 
 ``ddml`` is built to easily (and quickly) estimate common causal parameters with multiple machine learners. With its support for short-stacking, sparse matrices, and easy-to-learn syntax, we hope ``ddml`` is a useful complement to [``DoubleML``](https://docs.doubleml.org/stable/index.html), the expansive R and Python package. [``DoubleML``](https://docs.doubleml.org/stable/index.html) supports many advanced features such as [multiway clustering](https://docs.doubleml.org/stable/examples/r_double_ml_multiway_cluster.html) and  [stacking](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html).
 
