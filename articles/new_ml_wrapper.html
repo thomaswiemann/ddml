@@ -170,8 +170,7 @@ effect:</p>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;     Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
 <span><span class="co">#&gt;   -0.2323155  0.2009572 -1.156045 0.2476628</span></span></code></pre></div>
-<p>All works well! See <code>?stats::glm()</code> and
-<code>?stats::predict.glm()</code> for additional details.</p>
+<p>All works well!</p>
 </div>
 <div class="section level2">
 <h2 id="a-wrapper-for-neural-networks-based-on-keras">A Wrapper for Neural Networks based on <code>keras</code><a class="anchor" aria-label="anchor" href="#a-wrapper-for-neural-networks-based-on-keras"></a>
@@ -200,7 +199,7 @@ course, much more involved architectures are also supported (feel free
 to experiment!).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mdl_keras</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>,</span>
-<span>                      <span class="va">units</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">nhidden</span> <span class="op">=</span> <span class="fl">1</span>, </span>
+<span>                      <span class="va">units</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">nhidden</span> <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                      <span class="va">optimizer_fun</span> <span class="op">=</span> <span class="st">"rmsprop"</span>,</span>
 <span>                      <span class="va">loss</span> <span class="op">=</span> <span class="st">"mse"</span>,</span>
 <span>                      <span class="va">epochs</span> <span class="op">=</span> <span class="fl">10</span>,</span>
@@ -285,8 +284,10 @@ rule.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;     Estimate Std. Error    t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt;   -0.1902553  0.4335174 -0.4388642  0.66076</span></span></code></pre></div>
+<span><span class="co">#&gt;   Estimate Std. Error t value</span></span>
+<span><span class="co">#&gt;    16.1199   50.22244 0.32097</span></span>
+<span><span class="co">#&gt;    Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt;   0.7482331</span></span></code></pre></div>
 <p>All works well!</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

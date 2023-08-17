@@ -114,7 +114,7 @@
 <li>lasso (see <code><a href="reference/mdl_glmnet.html">?mdl_glmnet</a></code>)</li>
 <li>gradient boosting (see <code><a href="reference/mdl_xgboost.html">?mdl_xgboost</a></code>)</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<!-- end list --><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span>
 <span><span class="co">#     learners ols, rlasso, and xgboost.</span></span>
 <span><span class="va">late_fit_short</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
@@ -151,12 +151,14 @@
 </ul>
 <p>For additional applied examples, see our case studies:</p>
 <ul>
-<li><code><a href="articles/example_401k.html">vignette("example_401k")</a></code></li>
-<li><code><a href="articles/example_BLP95.html">vignette("example_BLP95")</a></code></li>
+<li>
+<code><a href="articles/example_401k.html">vignette("example_401k")</a></code> revisits the effect of 401k participation on retirement savings</li>
+<li>
+<code><a href="articles/example_BLP95.html">vignette("example_BLP95")</a></code> considers flexible demand estimation with endogenous prices</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="other-doubledebiased-machine-learning-packages-in-r">Other Double/Debiased Machine Learning Packages in R<a class="anchor" aria-label="anchor" href="#other-doubledebiased-machine-learning-packages-in-r"></a>
+<h2 id="other-doubledebiased-machine-learning-packages">Other Double/Debiased Machine Learning Packages<a class="anchor" aria-label="anchor" href="#other-doubledebiased-machine-learning-packages"></a>
 </h2>
 <p><code>ddml</code> is built to easily (and quickly) estimate common causal parameters with multiple machine learners. With its support for short-stacking, sparse matrices, and easy-to-learn syntax, we hope <code>ddml</code> is a useful complement to <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a>, the expansive R and Python package. <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a> supports many advanced features such as <a href="https://docs.doubleml.org/stable/examples/r_double_ml_multiway_cluster.html" class="external-link">multiway clustering</a> and <a href="https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html" class="external-link">stacking</a>.</p>
 </div>

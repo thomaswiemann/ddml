@@ -1,87 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://thomaswiemann.com/ddml/404.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/404.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/LICENSE.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/LICENSE.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/ddml.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/ddml.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_401k.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/example_401k.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/example_BLP95.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/example_BLP95.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/index.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/new_ml_wrapper.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/new_ml_wrapper.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/sparse.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/sparse.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/articles/stacking.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/articles/stacking.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/authors.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/authors.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/index.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/AE98.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/AE98.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/crosspred.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/crosspred.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/crossval.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/crossval.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_ate.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml_ate.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_fpliv.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml_fpliv.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_late.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml_late.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_pliv.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml_pliv.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ddml_plm.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ddml_plm.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/index.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_glmnet.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_ranger.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/mdl_ranger.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/mdl_xgboost.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/ols.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/ols.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/shortstacking.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/shortstacking.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/summary.ddml_ate.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.html</loc>
   </url>
   <url>
-    <loc>https://thomaswiemann.com/ddml/reference/summary.ddml_plm.html</loc>
+    <loc>https://www.thomaswiemann.com/ddml/reference/summary.ddml_plm.html</loc>
   </url>
 </urlset>

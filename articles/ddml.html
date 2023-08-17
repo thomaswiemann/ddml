@@ -94,8 +94,8 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This article gives a brief introduction to double/debiased machine
-learning using short-stacking in R. Topics discussed below include:</p>
+<p>This article is introduction to double/debiased machine learning
+using short-stacking in R. Topics discussed below include:</p>
 <ol style="list-style-type: decimal">
 <li>Estimation with a single machine learner</li>
 <li>Estimation with multiple machine learners &amp; short-stacking</li>
@@ -131,12 +131,12 @@ estimates of <span class="math inline">\(E[Y|Z=z, X], E[D|Z=z,
 X]\)</span> for <span class="math inline">\(z=0,1\)</span> and <span class="math inline">\(E[Z|X]\)</span>. In the absence of functional form
 assumptions, these conditional expectations need to be estimated
 nonparametrically.</p>
-<p>Here, we consider gradient boosting form the popular <a href="https://rdrr.io/cran/xgboost/" class="external-link">xgboost</a> package to estimate the
+<p>Here, we consider gradient boosting from the popular <a href="https://rdrr.io/cran/xgboost/" class="external-link">xgboost</a> package to estimate the
 nuisance parameters. The function <code>mdl_xgboost</code> is a wrapper
 for <code>xgboost</code>, allowing to specify all parameters of the
 original function. See <code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code> for details and take a
 look at <code>vignette("keras_wrapper")</code> to learn how to write a
-wrapper for a different machine learner yourself (it’s super easy!).</p>
+wrapper for a different machine learner yourself.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify a single learner</span></span>
 <span><span class="va">learners_single</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
@@ -272,9 +272,9 @@ learners</li>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor
-Supply: Evidence from Exogenous Variation in Family Size.” American
-Economic Review, 88(3), 450-477.</p>
+<p>Angrist J, Evans W (1998). “Children and Their Parents’ Labor Supply:
+Evidence from Exogenous Variation in Family Size.” American Economic
+Review, 88(3), 450-477.</p>
 <p>Wolpert D H (1992). “Stacked generalization.” Neural Networks, 5(2),
 241-259.</p>
 </div>
