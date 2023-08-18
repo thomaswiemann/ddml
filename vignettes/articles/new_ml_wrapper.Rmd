@@ -196,10 +196,8 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>   Estimate Std. Error t value
-#>    16.1199   50.22244 0.32097
-#>    Pr(>|t|)
-#>   0.7482331
+#>     Estimate Std. Error t value     Pr(>|t|)
+#>   -0.5248137  0.1401297 -3.7452 0.0001802505
 ```
 
 All works well!

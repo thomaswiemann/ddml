@@ -141,7 +141,7 @@ round(summary(stacking_fit, type = 'HC1'), 4)[2, , 1]
 The resulting coefficient is close to the coefficient based on 180 instruments. The stacking weights confirm that the first stage estimators with 180 instruments contribute almost exclusively to the final estimate, suggesting that the expansion to 1530 instrument has little benefit for the ols or lasso-based first stage fits.
 
 ```{r}
-round(stacking_fit$weights$D_XZ, 4)
+round(stacking_fit$weights$D1_XZ, 4)
 ```
 
 # References
