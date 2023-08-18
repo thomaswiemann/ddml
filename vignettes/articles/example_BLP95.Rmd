@@ -26,17 +26,6 @@ approaches, random forests, and gradient boosting.
 ```r
 library(ddml)
 library(AER) # for iv regression
-#> Loading required package: car
-#> Loading required package: carData
-#> Loading required package: lmtest
-#> Loading required package: zoo
-#> 
-#> Attaching package: 'zoo'
-#> The following objects are masked from 'package:base':
-#> 
-#>     as.Date, as.Date.numeric
-#> Loading required package: sandwich
-#> Loading required package: survival
 set.seed(713954)
 ```
 
@@ -66,22 +55,21 @@ approach of CHS2015.
 
 
 ```r
-ncol_X <- ncol(X_)
-#> Error in ncol(X_): object 'X_' not found
+ncol_X <- ncol(X)
 sum_other <- sum_rival <- matrix(0, nobs, 5)
 for (i in 1:nobs) {
   other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
   rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i])
-  sum_other[i, ] <- colSums(X_[other_ind, , drop = FALSE])
-  sum_rival[i, ] <- colSums(X_[rival_ind, , drop = FALSE])
+  sum_other[i, ] <- colSums(X[other_ind, , drop = FALSE])
+  sum_rival[i, ] <- colSums(X[rival_ind, , drop = FALSE])
 }#FOR
-#> Error in is.data.frame(x): object 'X_' not found
-Z_ <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z_)
+Z <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z)
 cat("Number of baseline controls: ", ncol_X, "\n",
     "Number of baseline instruments: ", ncol_Z)
-#> Error in cat("Number of baseline controls: ", ncol_X, "\n", "Number of baseline instruments: ", : object 'ncol_X' not found
+#> Number of baseline controls:  5 
+#>  Number of baseline instruments:  10
 ```
 
 In addition, we may be interested in extending the list of instruments. The below
@@ -92,24 +80,24 @@ constructs the additional instruments considered in CHS2015.
 tu = BLP95$trend/19;
 mpdu = BLP95$mpd/7;
 spaceu = BLP95$space/2;
-XL_ <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
-                       BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
-                       spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
-                         BLP95$air,  mpdu * BLP95$air, spaceu *
-                         BLP95$air, tu * BLP95$air, BLP95$hpwt *
-                         mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
-                       mpdu * spaceu,  mpdu * tu, spaceu * tu))
-ncol_XL <- ncol(XL_)
+XL <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
+                      BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
+                      spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
+                        BLP95$air,  mpdu * BLP95$air, spaceu *
+                        BLP95$air, tu * BLP95$air, BLP95$hpwt *
+                        mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
+                      mpdu * spaceu,  mpdu * tu, spaceu * tu))
+ncol_XL <- ncol(XL)
 sum_otherL <- sum_rivalL <- matrix(0, nobs, 24)
 for (i in 1:nobs) {
   other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
   rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i])
-  sum_otherL[i, ] <- colSums(XL_[other_ind, , drop = FALSE])
-  sum_rivalL[i, ] <- colSums(XL_[rival_ind, , drop = FALSE])
+  sum_otherL[i, ] <- colSums(XL[other_ind, , drop = FALSE])
+  sum_rivalL[i, ] <- colSums(XL[rival_ind, , drop = FALSE])
 }#FOR
-ZL_ <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL_)
+ZL <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL)
 cat("Number of extended controls: ", ncol_XL, "\n",
     "Number of extended instruments: ", ncol_ZL)
 #> Number of extended controls:  24 
@@ -121,34 +109,30 @@ cat("Number of extended controls: ", ncol_XL, "\n",
 We begin by computing the OLS and TSLS estimates using the baseline controls and instrumental variables. Note that the TSLS estimates differ from those in CHS2015. This is due to a slight instrument-construction error in the original code of the CHS2015.
 
 ```r
-ols_fit <- lm(y ~ D + X_)
-#> Error in eval(predvars, data, env): object 'X_' not found
+ols_fit <- lm(y ~ D + X)
 round(summary(ols_fit)$coefficients[2, ], 4)
-#> Error in summary(ols_fit): object 'ols_fit' not found
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.0886     0.0040   -22.0145     0.0000
 
-tsls_fit <- ivreg(y ~ D + X_ | X_ + Z_)
-#> Error in eval(predvars, data, env): object 'X_' not found
+tsls_fit <- ivreg(y ~ D + X | X + Z)
 round(summary(tsls_fit)$coefficients[2, ], 4)
-#> Error in summary(tsls_fit): object 'tsls_fit' not found
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.1357     0.0108   -12.5993     0.0000
 ```
 
 Similarly, we compute estimates using the expanded set of controls and instruments.
 
 
 ```r
-ols_L_fit <- lm(y ~ D + XL_)
+ols_L_fit <- lm(y ~ D + XL)
 round(summary(ols_L_fit)$coefficients[2, ], 4)
-#>   Estimate Std. Error    t value 
-#>    -0.0991     0.0044   -22.4630 
-#>   Pr(>|t|) 
-#>     0.0000
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.0991     0.0044   -22.4630     0.0000
 
-tsls_L_fit <- ivreg(y ~ D + XL_ | XL_ + ZL_)
+tsls_L_fit <- ivreg(y ~ D + XL | XL + ZL)
 round(summary(tsls_L_fit)$coefficients[2, ], 4)
-#>   Estimate Std. Error    t value 
-#>    -0.1258     0.0070   -17.8691 
-#>   Pr(>|t|) 
-#>     0.0000
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.1258     0.0070   -17.8691     0.0000
 ```
 
 # Estimating the Flexible Partially Linear IV Model with CV-Lasso
@@ -162,17 +146,15 @@ learner <- list(what = mdl_glmnet)
 
 # Estimate the ddml estimator using a single base learner
 lasso_fit <- ddml_fpliv(y, D = D,
-                        Z = ZL_, X = XL_,
+                        Z = ZL, X = XL,
                         learners = learner,
                         sample_folds = 10,
                         silent = T)
 round(summary(lasso_fit)[2, , 1], 4)
 #> FPLIV estimation results: 
 #> 
-#>   Estimate Std. Error    t value 
-#>    -0.1473     0.0090   -16.3142 
-#>   Pr(>|t|) 
-#>     0.0000
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.1473     0.0090   -16.3142     0.0000
 ```
 
 # Estimating the Flexible Partially Linear IV Model with Multiple Learners
@@ -184,14 +166,10 @@ In addition to allowing for different machine learners, we also consider differe
 
 ```r
 # Construct column indices for combined control and instrument sets
-X_c <- cbind(X_, XL_); colnames(X_c) <- c(1:ncol(X_c))
-#> Error in cbind(X_, XL_): object 'X_' not found
-#> Error in ncol(X_c): object 'X_c' not found
-Z_c <- cbind(Z_, ZL_); colnames(Z_c) <- c(1:ncol(Z_c))
-set_X <- 1:ncol(X_); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
-#> Error in ncol(X_): object 'X_' not found
-#> Error in ncol(X_c): object 'X_c' not found
-set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
+X_c <- cbind(X, XL); colnames(X_c) <- c(1:ncol(X_c))
+Z_c <- cbind(Z, ZL); colnames(Z_c) <- c(1:ncol(Z_c))
+set_X <- 1:ncol(X); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
+set_Z <- 1:ncol(Z); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 # Base learners
 learners <- list(list(fun = ols, # ols with the baseline set
@@ -217,7 +195,6 @@ learners <- list(list(fun = ols, # ols with the baseline set
                       args = list(nrounds = 300),
                       assign_X = set_X,
                       assign_Z = set_Z))
-#> Error in eval(expr, envir, enclos): object 'set_X' not found
 
 # Compute short-stacked IV estimate
 stacking_fit <- ddml_fpliv(y, D = D,
@@ -227,9 +204,11 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            shortstack = T,
                            sample_folds = 10,
                            silent = T)
-#> Error in nrow(X): object 'X_c' not found
 t(round(summary(stacking_fit), 4)[2, , ])
-#> Error in summary(stacking_fit): object 'stacking_fit' not found
+#> FPLIV estimation results: 
+#> 
+#>      Estimate Std. Error  t value Pr(>|t|)
+#> [1,]  -0.0982     0.0092 -10.7008        0
 ```
 Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
 
@@ -238,7 +217,13 @@ To better understand the composition of the final estimator, it is often useful 
 
 ```r
 sapply(stacking_fit$weights, round, 4)
-#> Error in lapply(X = X, FUN = FUN, ...): object 'stacking_fit' not found
+#>         y_X D1_X  D1_XZ
+#> [1,] 0.0000 0.00 0.0000
+#> [2,] 0.0000 0.00 0.0000
+#> [3,] 0.0000 0.00 0.0000
+#> [4,] 0.0000 0.00 0.0000
+#> [5,] 0.4394 0.45 0.3804
+#> [6,] 0.5606 0.55 0.6196
 ```
 
 # Elasticities
@@ -258,13 +243,13 @@ BLP1995's TSLS estimates suggest about 746-896 products with inelastic demand, n
 ```r
 # OLS implied number of products with inelastic demand
 compute_inelastic_demand(ols_fit$coef[2])
-#> Error in compute_inelastic_demand(ols_fit$coef[2]): object 'ols_fit' not found
+#> [1] 1502
 compute_inelastic_demand(ols_L_fit$coef[2])
 #> [1] 1405
 
 # TSLS implied number of products with inelastic demand
 compute_inelastic_demand(tsls_fit$coef[2])
-#> Error in compute_inelastic_demand(tsls_fit$coef[2]): object 'tsls_fit' not found
+#> [1] 746
 compute_inelastic_demand(tsls_L_fit$coef[2])
 #> [1] 896
 ```
@@ -277,7 +262,7 @@ compute_inelastic_demand(lasso_fit$coef)
 
 # ddml-stacking implied number of products with inelastic demand
 compute_inelastic_demand(stacking_fit$coef)
-#> Error in compute_inelastic_demand(stacking_fit$coef): object 'stacking_fit' not found
+#> [1] 1417
 ```
 
 # Bonus: Post-Lasso Estimates without Sample-Splitting
@@ -286,11 +271,18 @@ In addition to ``ddml``, we can also consider estimators from the ``hdm`` packag
 
 
 ```r
-rlassoIV_fit <- rlassoIV(x = XL_, d = D, y = y, z = ZL_,
+# Load hdm
+library(hdm)
+
+# Compute post-lasso IV estimator with the plug-in penalty
+rlassoIV_fit <- rlassoIV(x = XL, d = D, y = y, z = ZL,
                          select.Z = TRUE, select.X = FALSE, post = TRUE)
-#> Error in rlassoIV(x = XL_, d = D, y = y, z = ZL_, select.Z = TRUE, select.X = FALSE, : could not find function "rlassoIV"
 summary(rlassoIV_fit)
-#> Error in summary(rlassoIV_fit): object 'rlassoIV_fit' not found
+#> [1] "Estimates and significance testing of the effect of target variables in the IV regression model"
+#>        coeff.      se. t-value  p-value    
+#> [1,] -0.31558  0.05354  -5.894 3.78e-09 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The coefficient is drastically different from previous estimates, including the double/debaised machine learning estimates that included lasso-based approaches.
@@ -299,14 +291,12 @@ To gain some insight into potential causes for these differences, we check which
 
 
 ```r
-Zr_ <- ZL_[, which(rlassoIV_fit$selected[1:48])]
-#> Error in which(rlassoIV_fit$selected[1:48]): object 'rlassoIV_fit' not found
+Zr_ <- ZL[, which(rlassoIV_fit$selected[1:48])]
 dim(Zr_)[2]
-#> Error in eval(expr, envir, enclos): object 'Zr_' not found
-Xr_ <- XL_[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
-#> Error in which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)]): object 'rlassoIV_fit' not found
+#> [1] 2
+Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
 dim(Xr_)[2]
-#> Error in eval(expr, envir, enclos): object 'Xr_' not found
+#> [1] 6
 ```
 From the stacking weights above, we know that the double/debaised machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
 
@@ -325,9 +315,11 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         shortstack = T,
                         sample_folds = 10,
                         silent = T)
-#> Error in nrow(X): object 'Xr_' not found
 round(summary(stacking_r_fit)[2, , 1], 4)
-#> Error in summary(stacking_r_fit): object 'stacking_r_fit' not found
+#> FPLIV estimation results: 
+#> 
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.1044     0.0128    -8.1682     0.0000
 ```
 
 The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
@@ -335,7 +327,9 @@ The similarity of the coefficient estimates to the initial stacking estimates su
 
 ```r
 sapply(stacking_r_fit$weights, round, 4)
-#> Error in lapply(X = X, FUN = FUN, ...): object 'stacking_r_fit' not found
+#>       y_X   D1_X  D1_XZ
+#> [1,] 0.08 0.1287 0.0439
+#> [2,] 0.92 0.8713 0.9561
 ```
 
 The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.

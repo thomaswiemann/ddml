@@ -58,17 +58,17 @@ competing firms. The exact instrument specification here follows the
 approach of CHS2015.
 
 ```{r}
-ncol_X <- ncol(X_)
+ncol_X <- ncol(X)
 sum_other <- sum_rival <- matrix(0, nobs, 5)
 for (i in 1:nobs) {
   other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
   rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i])
-  sum_other[i, ] <- colSums(X_[other_ind, , drop = FALSE])
-  sum_rival[i, ] <- colSums(X_[rival_ind, , drop = FALSE])
+  sum_other[i, ] <- colSums(X[other_ind, , drop = FALSE])
+  sum_rival[i, ] <- colSums(X[rival_ind, , drop = FALSE])
 }#FOR
-Z_ <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z_)
+Z <- cbind(sum_other, sum_rival); ncol_Z <- ncol(Z)
 cat("Number of baseline controls: ", ncol_X, "\n",
     "Number of baseline instruments: ", ncol_Z)
 ```
@@ -80,24 +80,24 @@ constructs the additional instruments considered in CHS2015.
 tu = BLP95$trend/19;
 mpdu = BLP95$mpd/7;
 spaceu = BLP95$space/2;
-XL_ <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
-                       BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
-                       spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
-                         BLP95$air,  mpdu * BLP95$air, spaceu *
-                         BLP95$air, tu * BLP95$air, BLP95$hpwt *
-                         mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
-                       mpdu * spaceu,  mpdu * tu, spaceu * tu))
-ncol_XL <- ncol(XL_)
+XL <- as.matrix(cbind(1, BLP95[, c("hpwt", "air")], mpdu, spaceu, tu,
+                      BLP95$hpwt^2, BLP95$hpwt^3, mpdu^2, mpdu^3,
+                      spaceu^2, spaceu^3, tu^2, tu^3, BLP95$hpwt *
+                        BLP95$air,  mpdu * BLP95$air, spaceu *
+                        BLP95$air, tu * BLP95$air, BLP95$hpwt *
+                        mpdu, BLP95$hpwt * spaceu, BLP95$hpwt * tu,
+                      mpdu * spaceu,  mpdu * tu, spaceu * tu))
+ncol_XL <- ncol(XL)
 sum_otherL <- sum_rivalL <- matrix(0, nobs, 24)
 for (i in 1:nobs) {
   other_ind <- (BLP95$firmid == BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i]) & (BLP95$id != BLP95$id[i])
   rival_ind <- (BLP95$firmid != BLP95$firmid[i]) &
     (BLP95$cdid == BLP95$cdid[i])
-  sum_otherL[i, ] <- colSums(XL_[other_ind, , drop = FALSE])
-  sum_rivalL[i, ] <- colSums(XL_[rival_ind, , drop = FALSE])
+  sum_otherL[i, ] <- colSums(XL[other_ind, , drop = FALSE])
+  sum_rivalL[i, ] <- colSums(XL[rival_ind, , drop = FALSE])
 }#FOR
-ZL_ <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL_)
+ZL <- cbind(sum_otherL,sum_rivalL); ncol_ZL <- ncol(ZL)
 cat("Number of extended controls: ", ncol_XL, "\n",
     "Number of extended instruments: ", ncol_ZL)
 ```
@@ -106,20 +106,20 @@ cat("Number of extended controls: ", ncol_XL, "\n",
 
 We begin by computing the OLS and TSLS estimates using the baseline controls and instrumental variables. Note that the TSLS estimates differ from those in CHS2015. This is due to a slight instrument-construction error in the original code of the CHS2015.
 ```{r}
-ols_fit <- lm(y ~ D + X_)
+ols_fit <- lm(y ~ D + X)
 round(summary(ols_fit)$coefficients[2, ], 4)
 
-tsls_fit <- ivreg(y ~ D + X_ | X_ + Z_)
+tsls_fit <- ivreg(y ~ D + X | X + Z)
 round(summary(tsls_fit)$coefficients[2, ], 4)
 ```
 
 Similarly, we compute estimates using the expanded set of controls and instruments.
 
 ```{r}
-ols_L_fit <- lm(y ~ D + XL_)
+ols_L_fit <- lm(y ~ D + XL)
 round(summary(ols_L_fit)$coefficients[2, ], 4)
 
-tsls_L_fit <- ivreg(y ~ D + XL_ | XL_ + ZL_)
+tsls_L_fit <- ivreg(y ~ D + XL | XL + ZL)
 round(summary(tsls_L_fit)$coefficients[2, ], 4)
 ```
 
@@ -133,7 +133,7 @@ learner <- list(what = mdl_glmnet)
 
 # Estimate the ddml estimator using a single base learner
 lasso_fit <- ddml_fpliv(y, D = D,
-                        Z = ZL_, X = XL_,
+                        Z = ZL, X = XL,
                         learners = learner,
                         sample_folds = 10,
                         silent = T)
@@ -148,10 +148,10 @@ In addition to allowing for different machine learners, we also consider differe
 
 ```{r}
 # Construct column indices for combined control and instrument sets
-X_c <- cbind(X_, XL_); colnames(X_c) <- c(1:ncol(X_c))
-Z_c <- cbind(Z_, ZL_); colnames(Z_c) <- c(1:ncol(Z_c))
-set_X <- 1:ncol(X_); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
-set_Z <- 1:ncol(Z_); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
+X_c <- cbind(X, XL); colnames(X_c) <- c(1:ncol(X_c))
+Z_c <- cbind(Z, ZL); colnames(Z_c) <- c(1:ncol(Z_c))
+set_X <- 1:ncol(X); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
+set_Z <- 1:ncol(Z); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 # Base learners
 learners <- list(list(fun = ols, # ols with the baseline set
@@ -231,7 +231,11 @@ compute_inelastic_demand(stacking_fit$coef)
 In addition to ``ddml``, we can also consider estimators from the ``hdm`` package based on rigorous lasso -- i.e., with plug-in penalty parameters and without sample-splitting.
 
 ```{r}
-rlassoIV_fit <- rlassoIV(x = XL_, d = D, y = y, z = ZL_,
+# Load hdm
+library(hdm)
+
+# Compute post-lasso IV estimator with the plug-in penalty
+rlassoIV_fit <- rlassoIV(x = XL, d = D, y = y, z = ZL,
                          select.Z = TRUE, select.X = FALSE, post = TRUE)
 summary(rlassoIV_fit)
 ```
@@ -241,9 +245,9 @@ The coefficient is drastically different from previous estimates, including the 
 To gain some insight into potential causes for these differences, we check which instruments and controls were selected by the lasso procedure. Not surprisingly, lasso with a plug-in penalty selects only very few instruments and controls.
 
 ```{r}
-Zr_ <- ZL_[, which(rlassoIV_fit$selected[1:48])]
+Zr_ <- ZL[, which(rlassoIV_fit$selected[1:48])]
 dim(Zr_)[2]
-Xr_ <- XL_[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
+Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
 dim(Xr_)[2]
 ```
 From the stacking weights above, we know that the double/debaised machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
