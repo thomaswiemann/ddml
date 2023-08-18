@@ -10,4 +10,6 @@
 ^doc$
 ^Meta$
 ^vignettes/articles$
+^vignettes/precompile.R$
 ^README.Rmd$
+^cran-comments\.md$

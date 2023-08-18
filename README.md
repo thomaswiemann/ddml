@@ -27,14 +27,20 @@ discussion of the supported causal models and benefits of
 
 ## Installation
 
-Install latest development version from GitHub (requires
-[devtools](https://github.com/hadley/devtools) package):
+Install the latest development version from GitHub (requires
+[devtools](https://github.com/r-lib/devtools) package):
 
 ``` r
 if (!require("devtools")) {
   install.packages("devtools")
 }
 devtools::install_github("thomaswiemann/ddml", dependencies = TRUE)
+```
+
+Install the latest public release from CRAN:
+
+``` r
+install.packages("ddml")
 ```
 
 ## Example: LATE Estimation based on (Short-)Stacking
@@ -59,16 +65,14 @@ X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 `ddml_late` estimates the local average treatment effect (LATE) using
 double/debiased machine learning (see `?ddml_late`). Since the
 statistical properties of machine learners depend heavily on the
-underlying (unknown\!) structure of the data, adaptive combination of
+underlying (unknown!) structure of the data, adaptive combination of
 multiple machine learners can increase robustness. In the below snippet,
 `ddml_late` estimates the LATE with short-stacking based on three base
 learners:
 
-  - linear regression (see `?ols`)
-  - lasso (see `?mdl_glmnet`)
-  - gradient boosting (see `?mdl_xgboost`)
-
-<!-- end list -->
+- linear regression (see `?ols`)
+- lasso (see `?mdl_glmnet`)
+- gradient boosting (see `?mdl_xgboost`)
 
 ``` r
 # Estimate the local average treatment effect using short-stacking with base
@@ -94,20 +98,20 @@ summary(late_fit_short)
 
 Check out our articles to learn more:
 
-  - `vignette("ddml")` is a more detailed introduction to `ddml`
-  - `vignette("stacking")` discusses computational benefits of
-    short-stacking
-  - `vignette("new_ml_wrapper")` shows how to write user-provided base
-    learners
-  - `vignette("sparse")` illustrates support of sparse matrices (see
-    `?Matrix`)
+- `vignette("ddml")` is a more detailed introduction to `ddml`
+- `vignette("stacking")` discusses computational benefits of
+  short-stacking
+- `vignette("new_ml_wrapper")` shows how to write user-provided base
+  learners
+- `vignette("sparse")` illustrates support of sparse matrices (see
+  `?Matrix`)
 
 For additional applied examples, see our case studies:
 
-  - `vignette("example_401k")` revisits the effect of 401k participation
-    on retirement savings
-  - `vignette("example_BLP95")` considers flexible demand estimation
-    with endogenous prices
+- `vignette("example_401k")` revisits the effect of 401k participation
+  on retirement savings
+- `vignette("example_BLP95")` considers flexible demand estimation with
+  endogenous prices
 
 ## Other Double/Debiased Machine Learning Packages
 

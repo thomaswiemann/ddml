@@ -111,12 +111,12 @@ mdl_xgboost <- function(y, X,
   return(mdl_fit)
 }#MDL_XGBOOST
 
-# Prediction method for  mdl_xgboost
+# Prediction method for mdl_xgboost
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that 'predict.xgb.Booster'
   #     is not an exported object from 'namespace:xgboost', hence the less ideal
   #     fix.
-  class(object) <- class(object)[2] #
+  class(object) <- class(object)[2]
   stats::predict(object, newdata, ...)
 }#PREDICT.MDL_XGBOOST
 
