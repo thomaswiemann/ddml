@@ -152,10 +152,16 @@ present in the data.</p>
 <span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">xgboost_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; PLM estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   13915.72    1603.56       8.68       0.00</span></span>
 <span></span>
 <span><span class="co"># Comparison to multiple linear regression</span></span>
 <span><span class="va">lm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">X</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span><span class="op">$</span><span class="va">coefficients</span><span class="op">[</span><span class="fl">2</span>, <span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   11600.89    1345.12       8.62       0.00</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimation-using-multiple-machine-learners">Estimation using Multiple Machine Learners<a class="anchor" aria-label="anchor" href="#estimation-using-multiple-machine-learners"></a>
@@ -193,7 +199,11 @@ boosting.</p>
 <span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; PLM estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   13636.00    1526.01       8.94       0.00</span></span></code></pre></div>
 <p>To better understand which machine learners contribute to the final
 estimate, we can take a look at the assigned stacking weights. Each row
 corresponds to a base-learner (in chronological order) while the columns
@@ -202,7 +212,14 @@ random forest estimators contribute the most in both reduced forms,
 followed by the lasso estimator. Neither gradient boosting nor linear
 regression are assigned substantial weight.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         y_X   D1_X</span></span>
+<span><span class="co">#&gt; [1,] 0.0048 0.0197</span></span>
+<span><span class="co">#&gt; [2,] 0.2113 0.2817</span></span>
+<span><span class="co">#&gt; [3,] 0.2973 0.3400</span></span>
+<span><span class="co">#&gt; [4,] 0.5770 0.3504</span></span>
+<span><span class="co">#&gt; [5,] 0.0000 0.0000</span></span>
+<span><span class="co">#&gt; [6,] 0.0000 0.0238</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimation-with-different-sets-of-control-variables">Estimation with Different Sets of Control Variables<a class="anchor" aria-label="anchor" href="#estimation-with-different-sets-of-control-variables"></a>
@@ -264,7 +281,11 @@ variables of the control matrix.</p>
 <span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; PLM estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   14363.22    1500.04       9.58       0.00</span></span></code></pre></div>
 <p>To assess whether the additional effort in expanding the control
 variables had an effect on the composition of the reduced form
 estimates, we can again inspect the stacking weights. Indeed, the new
@@ -272,7 +293,15 @@ base learner that combines lasso with the polynomial expansion of the
 controls is assigned the largest weight, followed by the random forest
 estimators.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         y_X   D1_X</span></span>
+<span><span class="co">#&gt; [1,] 0.0176 0.0000</span></span>
+<span><span class="co">#&gt; [2,] 0.0000 0.1219</span></span>
+<span><span class="co">#&gt; [3,] 0.7368 0.4056</span></span>
+<span><span class="co">#&gt; [4,] 0.0000 0.1693</span></span>
+<span><span class="co">#&gt; [5,] 0.2702 0.2613</span></span>
+<span><span class="co">#&gt; [6,] 0.0022 0.0522</span></span>
+<span><span class="co">#&gt; [7,] 0.0000 0.0048</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimation-with-continious-and-binary-outcome-and-treatment-variables">Estimation with Continious and Binary Outcome and Treatment
@@ -345,11 +374,23 @@ argument.</p>
 <span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; PLM estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   14097.13    1483.65       9.50       0.00</span></span></code></pre></div>
 <p>The weights associated with the new base learners does not change
 substantially.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         y_X   D1_X</span></span>
+<span><span class="co">#&gt; [1,] 0.0132 0.0627</span></span>
+<span><span class="co">#&gt; [2,] 0.0000 0.2663</span></span>
+<span><span class="co">#&gt; [3,] 0.7411 0.0086</span></span>
+<span><span class="co">#&gt; [4,] 0.0000 0.4221</span></span>
+<span><span class="co">#&gt; [5,] 0.2690 0.2552</span></span>
+<span><span class="co">#&gt; [6,] 0.0000 0.0000</span></span>
+<span><span class="co">#&gt; [7,] 0.0000 0.0302</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="bonus-instrumental-variable-estimation">Bonus: Instrumental Variable Estimation<a class="anchor" aria-label="anchor" href="#bonus-instrumental-variable-estimation"></a>
@@ -375,9 +416,21 @@ to estimate the reduced form of 401k eligibility on the controls.</p>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="co">#&gt; PLIV estimation results: </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
+<span><span class="co">#&gt;   12986.88    1871.81       6.94       0.00</span></span>
 <span></span>
 <span><span class="co"># Stacking weights associated with each base learner</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         y_X   D1_X   Z1_X</span></span>
+<span><span class="co">#&gt; [1,] 0.0000 0.0647 0.0000</span></span>
+<span><span class="co">#&gt; [2,] 0.0000 0.2271 0.2414</span></span>
+<span><span class="co">#&gt; [3,] 0.7474 0.0080 0.0157</span></span>
+<span><span class="co">#&gt; [4,] 0.0000 0.4030 0.5337</span></span>
+<span><span class="co">#&gt; [5,] 0.2953 0.3036 0.2501</span></span>
+<span><span class="co">#&gt; [6,] 0.0000 0.0351 0.0000</span></span>
+<span><span class="co">#&gt; [7,] 0.0000 0.0000 0.0000</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
