@@ -13,3 +13,7 @@
 ^vignettes/precompile.R$
 ^README.Rmd$
 ^cran-comments\.md$
+^.envrc
+^flake.lock
+^flake.nix
+^.direnv/
