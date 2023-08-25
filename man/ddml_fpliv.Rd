@@ -144,19 +144,6 @@ fpliv_fit <- ddml_fpliv(y, D, Z, X,
                         sample_folds = 2,
                         silent = TRUE)
 summary(fpliv_fit)
-
-# Estimate the partially linear IV model using short-stacking with base
-#     ols, lasso, and ridge.
-fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                        learners = list(list(fun = ols),
-                                        list(fun = mdl_glmnet),
-                                        list(fun = mdl_glmnet,
-                                             args = list(alpha = 0))),
-                        ensemble_type = 'nnls',
-                        shortstack = TRUE,
-                        sample_folds = 2,
-                        silent = TRUE)
-summary(fpliv_fit)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
