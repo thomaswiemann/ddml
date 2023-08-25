@@ -30,7 +30,8 @@ Simple wrapper for \code{\link[xgboost:xgb.train]{xgboost::xgboost()}} with some
 default arguments.
 }
 \examples{
-xgboost_fit <- mdl_xgboost(rnorm(100), matrix(rnorm(1000), 100, 10))
+xgboost_fit <- mdl_xgboost(rnorm(100), matrix(rnorm(1000), 100, 10),
+                           nrounds = 10)
 class(xgboost_fit)
 }
 \references{
