@@ -17,3 +17,4 @@
 ^flake.lock$
 ^flake.nix$
 ^.direnv$
+^CRAN-SUBMISSION$
