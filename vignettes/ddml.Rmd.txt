@@ -8,7 +8,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
 
 
 # Introduction
@@ -25,8 +31,7 @@ See [Articles](index.html) for discussions of more advanced topics.
 
 For illustration, we apply ``ddml`` to the included random subsample of 5,000 observations from the data of Angrist & Evans (1998). The data contains information on the labor supply of mothers, their children, as well as demographic data. See ``?AE98`` for details.
 
-
-```r
+```{r}
 # Load ddml and set seed
 library(ddml)
 set.seed(35611)
@@ -42,8 +47,7 @@ X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 
 Here, we consider gradient boosting from the popular [xgboost](https://rdrr.io/cran/xgboost/) package to estimate the nuisance parameters. The function ``mdl_xgboost`` is a wrapper for ``xgboost``, allowing to specify all parameters of the original function. See ``?mdl_xgboost`` for details and take a look at ``vignette("new_ml_wrapper")`` to learn how to write a wrapper for a different machine learner yourself.
 
-
-```r
+```{r}
 # Specify a single learner
 learners_single <- list(what = mdl_xgboost,
                         args = list(nrounds = 10,
@@ -51,18 +55,13 @@ learners_single <- list(what = mdl_xgboost,
 ```
 
 Double/debiased machine learning relies on cross-fitting to avoid large bias from overfitting when estimating the nuisance parameters. The argument ``sample_folds = 3`` implies that 2/3 of the observations -- about 3,333 observations -- are used to train the machine learner in each cross-fitting sample fold.
-
-```r
+```{r}
 # Estimate the local average treatment effect using xgboost.
 late_fit <- ddml_late(y, D, Z, X,
                       learners = learners_single,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>     Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.2680106  0.2449627 -1.094087 0.2739166
 ```
 (Note that estimation here is based on a random subsample of 5,000 observations. The results can thus not readily be compared to those in Angrist & Evans (1998).)
 
@@ -74,8 +73,7 @@ Since the statistical properties of machine learners depend heavily on the under
 - lasso (see ``?mdl_glmnet``)
 - gradient boosting (see ``?mdl_xgboost``)
 
-
-```r
+```{r}
 learners_multiple <- list(list(fun = ols),
                           list(fun = mdl_glmnet),
                           list(fun = mdl_xgboost,
@@ -87,8 +85,7 @@ Short-stacking is a computationally convenient variant of stacking originally in
 
 In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the four base learners with linear coefficients that are constrained to be non-negative and sum to one.
 
-
-```r
+```{r}
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, lasso, and xgboost.
 late_fit <- ddml_late(y, D, Z, X,
@@ -98,26 +95,15 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>       Estimate Std. Error    t value  Pr(>|t|)
-#> nnls1 -0.19173  0.2005266 -0.9561322 0.3390054
 ```
 
 It is often insightful to see which base learners contribute the most to the final reduced form estimates. The below snippet shows the weights for the reduced forms $E[Y|Z=0,X]$ and $E[Y|Z=1,X]$:
-
-```r
+```{r}
 cat("Stacking weights for E[Y|Z=0, X]: \n")
-#> Stacking weights for E[Y|Z=0, X]:
 t(late_fit$weights$y_X_Z0)
-#>           [,1]      [,2]      [,3]
-#> nnls1 0.228205 0.5782117 0.1935833
 
 cat("Stacking weights for E[Y|Z=1, X]: \n")
-#> Stacking weights for E[Y|Z=1, X]:
 t(late_fit$weights$y_X_Z1)
-#>            [,1]      [,2]      [,3]
-#> nnls1 0.2389935 0.6920264 0.0689801
 ```
 
 # Estimation using Different Types of Short-Stacking
@@ -129,8 +115,7 @@ t(late_fit$weights$y_X_Z1)
 - ``'ols`` constructs unconstrained linear combinations of base learners
 - ``'average'`` computes an unweighted average of base learners
 
-
-```r
+```{r}
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, lasso, ridge, and xgboost.
 late_fit <- ddml_late(y, D, Z, X,
@@ -141,13 +126,6 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>              Estimate Std. Error   t value  Pr(>|t|)
-#> nnls       -0.2432971  0.2120355 -1.147436 0.2512017
-#> singlebest -0.2518913  0.1967114 -1.280512 0.2003652
-#> ols        -0.2417658  0.2122186 -1.139230 0.2546073
-#> average    -0.2117828  0.1958048 -1.081601 0.2794296
 ```
 
 # References

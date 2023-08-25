@@ -97,8 +97,8 @@ predict.mdl_glmnet <- function(object, newdata = NULL){
 #' Discovery and Data Mining, 785–794.
 #'
 #' @examples
-#' xgboost_fit <- mdl_xgboost(rnorm(100), matrix(rnorm(1000), 100, 10),
-#'                            nrounds = 10)
+#' xgboost_fit <- mdl_xgboost(rnorm(50), matrix(rnorm(150), 50, 3),
+#'                            nrounds = 1)
 #' class(xgboost_fit)
 mdl_xgboost <- function(y, X,
                         nrounds = 500, verbose = 0,
