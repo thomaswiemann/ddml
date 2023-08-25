@@ -1,5 +1,5 @@
 {
-  description = "Flake for development of ddml R package";
+  description = "Flake for development of the ddml R package";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
@@ -24,6 +24,7 @@
         covr
         testthat
         knitr
+        markdown
         rmarkdown
         readstata13
       ];
