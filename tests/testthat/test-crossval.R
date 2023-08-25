@@ -4,7 +4,7 @@ test_that("crossval_compute returns residuals (w/o instruments)", {
   y <- 1 + X %*% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
   # Define arguments
   test_sample <- sample(1:length(y), 33)
-  learner <- list(fun = mdl_glmnet)
+  learner <- list(fun = ols)
   # Compute cross-validation instance
   oos_resid <- crossval_compute(test_sample, learner,
                              y, X, Z = NULL)
@@ -18,10 +18,10 @@ test_that("crossval returns residuals by learner (w/o instruments)", {
   nonzero_X <- (runif(100) < 0.05)
   y <- X %*% (10*runif(100) * nonzero_X) + rnorm(100)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet), # lasso
-                 list(fun = ols), # ols w/ all features
+  learners <- list(list(fun = ols), 
+                 list(fun = ols), 
                  list(fun = ols,
-                      assign_X = which(nonzero_X))) # ols w/ important features
+                      assign_X = which(nonzero_X)))
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
                      learners,
@@ -37,9 +37,9 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   Z <- matrix(rnorm(100*10), 100, 10)
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet), # lasso
-                 list(fun = ols), # ols
-                 list(fun = ols)) # ols again
+  learners <- list(list(fun = ols), 
+                 list(fun = ols), 
+                 list(fun = ols)) 
 
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
