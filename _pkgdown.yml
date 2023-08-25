@@ -61,7 +61,7 @@ articles:
   navbar: ~
   contents:
   - ddml
-  - articles/stacking
+  - stacking
   - articles/new_ml_wrapper
   - articles/sparse
 - title: Case Studies
