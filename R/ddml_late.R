@@ -142,7 +142,7 @@ ddml_late <- function(y, D, Z, X,
                      subsamples_Z1 = NULL,
                      cv_subsamples_list_Z0 = NULL,
                      cv_subsamples_list_Z1 = NULL,
-                     silent = F) {
+                     silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   is_Z0 <- which(Z == 0)

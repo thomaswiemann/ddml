@@ -107,7 +107,7 @@ ddml_pliv <- function(y, D, Z, X,
                       cv_folds = 5,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
-                      silent = F) {
+                      silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)

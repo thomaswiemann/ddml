@@ -1,5 +1,5 @@
 Package: ddml
-Title: Double/Debiased Machine Learning in R
+Title: Double/Debiased Machine Learning
 Version: 0.1.0
 Date: 2023-08-17
 Authors@R: c(

@@ -18,7 +18,7 @@ ddml_ate(
   subsamples_D1 = NULL,
   cv_subsamples_list_D0 = NULL,
   cv_subsamples_list_D1 = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{

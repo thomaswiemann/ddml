@@ -79,7 +79,7 @@ ddml_fpliv <- function(y, D, Z, X,
                        enforce_LIE = TRUE,
                        subsamples = NULL,
                        cv_subsamples_list = NULL,
-                       silent = F) {
+                       silent = FALSE) {
   # Data parameters
   nobs <- length(y)
 

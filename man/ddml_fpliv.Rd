@@ -19,7 +19,7 @@ ddml_fpliv(
   enforce_LIE = TRUE,
   subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{

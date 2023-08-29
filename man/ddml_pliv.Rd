@@ -18,7 +18,7 @@ ddml_pliv(
   cv_folds = 5,
   subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{
