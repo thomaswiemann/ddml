@@ -1,5 +1,5 @@
 Package: ddml
-Title: Double/Debiased Machine Learning in R
+Title: Double/Debiased Machine Learning
 Version: 0.1.0
 Date: 2023-08-17
 Authors@R: c(
@@ -8,12 +8,13 @@ Authors@R: c(
     person("Mark E", "Schaffer", role = "aut"),
     person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
 Description: Estimate common causal parameters using double/debiased machine 
-    learning. 'ddml' simplifies estimation based on (short-)stacking, which 
-    leverages multiple base learners to increase robustness to the underlying 
+    learning as proposed by Chernozhukov et al. (2018) <doi:10.1111/ectj.12097>. 
+    'ddml' simplifies estimation based on (short-)stacking, which leverages 
+    multiple base learners to increase robustness to the underlying 
     data generating process.
 License: GPL (>= 3)
 URL: https://github.com/thomaswiemann/ddml,
-    https://www.thomaswiemann.com/ddml
+    https://thomaswiemann.com/ddml/
 BugReports: https://github.com/thomaswiemann/ddml/issues
 Encoding: UTF-8
 LazyData: true

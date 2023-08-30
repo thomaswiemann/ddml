@@ -18,7 +18,7 @@ ddml_pliv(
   cv_folds = 5,
   subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{
@@ -137,19 +137,6 @@ X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 pliv_fit <- ddml_pliv(y, D, Z, X,
                       learners = list(what = mdl_glmnet,
                                       args = list(alpha = 0)),
-                      sample_folds = 2,
-                      silent = TRUE)
-summary(pliv_fit)
-
-# Estimate the partially linear IV model using short-stacking with base
-#     ols, lasso, and ridge.
-pliv_fit <- ddml_pliv(y, D, Z, X,
-                      learners = list(list(fun = ols),
-                                      list(fun = mdl_glmnet),
-                                      list(fun = mdl_glmnet,
-                                           args = list(alpha = 0))),
-                      ensemble_type = 'nnls',
-                      shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)
 summary(pliv_fit)

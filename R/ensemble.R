@@ -5,7 +5,8 @@ ensemble <- function(y, X, Z = NULL,
                      cv_folds = 5,
                      cv_subsamples = NULL,
                      cv_results = NULL,
-                     silent = F, progress = NULL) {
+                     silent = FALSE,
+                     progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
   # Compute ensemble weights
@@ -87,7 +88,8 @@ ensemble_weights <- function(y, X, Z = NULL,
                              cv_folds = 5,
                              cv_subsamples = NULL,
                              cv_results = NULL,
-                             silent = F, progress = NULL) {
+                             silent = FALSE,
+                             progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
   ntype <- length(type)

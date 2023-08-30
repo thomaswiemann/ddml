@@ -100,7 +100,7 @@ ddml_ate <- function(y, D, X,
                      subsamples_D1 = NULL,
                      cv_subsamples_list_D0 = NULL,
                      cv_subsamples_list_D1 = NULL,
-                     silent = F) {
+                     silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   is_D0 <- which(D == 0)

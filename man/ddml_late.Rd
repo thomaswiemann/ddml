@@ -20,7 +20,7 @@ ddml_late(
   subsamples_Z1 = NULL,
   cv_subsamples_list_Z0 = NULL,
   cv_subsamples_list_Z1 = NULL,
-  silent = F
+  silent = FALSE
 )
 }
 \arguments{

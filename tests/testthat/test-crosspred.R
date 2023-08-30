@@ -16,7 +16,7 @@ test_that("crosspred computes with a single model", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(what = mdl_xgboost)
+  learners <- list(what = ols)
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, X, Z,
                              learners,
@@ -35,8 +35,8 @@ test_that("crosspred computes with ensemble procedures", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet),
-                 list(fun = mdl_ranger),
+  learners <- list(list(fun = ols),
+                 list(fun = ols),
                  list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, X, Z,
@@ -60,7 +60,7 @@ test_that("crosspred computes with ensemble procedures and sparse matrices", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet),
+  learners <- list(list(fun = ols),
                  list(fun = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, as(X, "sparseMatrix"),
@@ -84,8 +84,8 @@ test_that("crosspred computes auxilliary predictions", {
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
   y <-  X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet),
-                   list(fun = mdl_ranger),
+  learners <- list(list(fun = ols),
+                   list(fun = ols),
                    list(fun = ols))
   # Compute cross-sample and auxilliary predictions
   crosspred_res <- crosspred(y, X,

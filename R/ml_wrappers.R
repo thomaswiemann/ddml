@@ -97,7 +97,8 @@ predict.mdl_glmnet <- function(object, newdata = NULL){
 #' Discovery and Data Mining, 785–794.
 #'
 #' @examples
-#' xgboost_fit <- mdl_xgboost(rnorm(100), matrix(rnorm(1000), 100, 10))
+#' xgboost_fit <- mdl_xgboost(rnorm(50), matrix(rnorm(150), 50, 3),
+#'                            nrounds = 1)
 #' class(xgboost_fit)
 mdl_xgboost <- function(y, X,
                         nrounds = 500, verbose = 0,
@@ -111,12 +112,12 @@ mdl_xgboost <- function(y, X,
   return(mdl_fit)
 }#MDL_XGBOOST
 
-# Prediction method for  mdl_xgboost
+# Prediction method for mdl_xgboost
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method. Note that 'predict.xgb.Booster'
   #     is not an exported object from 'namespace:xgboost', hence the less ideal
   #     fix.
-  class(object) <- class(object)[2] #
+  class(object) <- class(object)[2]
   stats::predict(object, newdata, ...)
 }#PREDICT.MDL_XGBOOST
 

@@ -8,8 +8,7 @@ test_that("ddml_late computes with a single model", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(what = mdl_glmnet,
-                   args = list(alpha = 0.5))
+  learners <- list(what = ols)
   ddml_late_fit <- ddml_late(y, D, Z, X,
                              learners = learners,
                              cv_folds = 3,
@@ -29,8 +28,7 @@ test_that("ddml_plm computes with an ensemble procedure", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
-                        args = list(alpha = 0.5)),
+  learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
   ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -53,8 +51,7 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
-                        args = list(alpha = 0.5)),
+  learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
   ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -79,8 +76,7 @@ test_that("ddml_plm computes with multiple ensemble procedures & shortstack", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
-                        args = list(alpha = 0.5)),
+  learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
   ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -106,8 +102,7 @@ test_that("summary.ddml_late computes with a single model", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(what = mdl_glmnet,
-                   args = list(alpha = 0.5))
+  learners <- list(what = ols)
   ddml_late_fit <- ddml_late(y, D, Z, X,
                              learners = learners,
                              cv_folds = 3,

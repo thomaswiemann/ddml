@@ -11,7 +11,7 @@ crossval(
   learners,
   cv_folds = 5,
   cv_subsamples = NULL,
-  silent = F,
+  silent = FALSE,
   progress = NULL
 )
 }

@@ -10,4 +10,12 @@
 ^doc$
 ^Meta$
 ^vignettes/articles$
+^vignettes/precompile.R$
+^vignettes/ddml.Rmd.txt$
 ^README.Rmd$
+^cran-comments\.md$
+^.envrc$
+^flake.lock$
+^flake.nix$
+^.direnv$
+^CRAN-SUBMISSION$

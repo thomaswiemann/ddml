@@ -15,8 +15,9 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml)
-[![codecov](https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S)](https://codecov.io/gh/thomaswiemann/ddml)
+[![codecov](https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S)](https://app.codecov.io/gh/thomaswiemann/ddml)
 [![CodeFactor](https://www.codefactor.io/repository/github/thomaswiemann/ddml/badge)](https://www.codefactor.io/repository/github/thomaswiemann/ddml)
+[![CRAN Version](https://www.r-pkg.org/badges/version/ddml)](https://cran.r-project.org/package=ddml)
 <!-- badges: end -->
 
 ``ddml`` is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key feature of ``ddml`` is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process.
@@ -25,7 +26,7 @@ knitr::opts_chunk$set(
 
 ## Installation
 
-Install latest development version from GitHub (requires [devtools](https://github.com/hadley/devtools) package):
+Install the latest development version from GitHub (requires [devtools](https://github.com/r-lib/devtools) package):
 
 ```{r, eval = FALSE}
 if (!require("devtools")) {
@@ -33,6 +34,12 @@ if (!require("devtools")) {
 }
 devtools::install_github("thomaswiemann/ddml", dependencies = TRUE)
 ```
+
+Install the latest public release from CRAN:
+```{r, eval = FALSE}
+install.packages("ddml")
+```
+
 
 ## Example: LATE Estimation based on (Short-)Stacking
 

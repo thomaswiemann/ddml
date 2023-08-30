@@ -62,7 +62,8 @@ crossval <- function(y, X, Z = NULL,
                      learners,
                      cv_folds = 5,
                      cv_subsamples = NULL,
-                     silent = F, progress = NULL) {
+                     silent = FALSE,
+                     progress = NULL) {
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)
