@@ -8,6 +8,8 @@
 [![R-CMD-check](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml)
 [![codecov](https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S)](https://app.codecov.io/gh/thomaswiemann/ddml)
 [![CodeFactor](https://www.codefactor.io/repository/github/thomaswiemann/ddml/badge)](https://www.codefactor.io/repository/github/thomaswiemann/ddml)
+[![CRAN
+Version](https://www.r-pkg.org/badges/version/ddml)](https://cran.r-project.org/package=ddml)
 <!-- badges: end -->
 
 `ddml` is an implementation of double/debiased machine learning

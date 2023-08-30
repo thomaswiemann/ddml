@@ -13,7 +13,7 @@ vignette: >
 
 # Introduction
 
-This article is a introduction to double/debiased machine learning using short-stacking in R. Topics discussed below include:
+This article is an introduction to double/debiased machine learning using short-stacking in R. Topics discussed below include:
 
 1. Estimation with a single machine learner
 2. Estimation with multiple machine learners & short-stacking
@@ -38,7 +38,7 @@ Z = AE98[, "samesex"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
-``ddml_late`` estimates the local average treatment effect (LATE) using double/debiased machine learning (see ``?ddml_late``). The high-dimensional nuisance parameters arising in the estimate of the LATE are conditional expectation functions of the control variables $X$. In particular, we require first step estimates of $E[Y|Z=z, X], E[D|Z=z, X]$ for $z=0,1$ and $E[Z|X]$. In the absence of functional form assumptions, these conditional expectations need to be estimated nonparametrically.
+``ddml_late`` estimates the local average treatment effect (LATE) using double/debiased machine learning (see ``?ddml_late``). The high-dimensional nuisance parameters arising in the estimate of the LATE are conditional expectation functions of the control variables $X$. In particular, we require first step estimates of the reduced forms $E[Y|Z=z, X], E[D|Z=z, X]$ for $z=0,1$ and $E[Z|X]$. In the absence of functional form assumptions, these conditional expectations need to be estimated nonparametrically.
 
 Here, we consider gradient boosting from the popular [xgboost](https://rdrr.io/cran/xgboost/) package to estimate the nuisance parameters. The function ``mdl_xgboost`` is a wrapper for ``xgboost``, allowing to specify all parameters of the original function. See ``?mdl_xgboost`` for details and take a look at ``vignette("new_ml_wrapper")`` to learn how to write a wrapper for a different machine learner yourself.
 
