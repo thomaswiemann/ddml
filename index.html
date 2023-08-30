@@ -58,6 +58,9 @@
     <a class="dropdown-item" href="articles/index.html">More articles...</a>
   </div>
 </li>
+<li class="nav-item">
+  <a class="nav-link" href="news/index.html">Changelog</a>
+</li>
       </ul>
 <form class="form-inline my-2 my-lg-0" role="search">
         <input type="search" class="form-control me-sm-2" aria-label="Toggle navigation" name="search-input" data-search-index="search.json" id="search-input" placeholder="Search for" autocomplete="off">
@@ -87,18 +90,21 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install latest development version from GitHub (requires <a href="https://github.com/hadley/devtools" class="external-link">devtools</a> package):</p>
+<p>Install the latest development version from GitHub (requires <a href="https://github.com/r-lib/devtools" class="external-link">devtools</a> package):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"thomaswiemann/ddml"</span>, dependencies <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Install the latest public release from CRAN:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"ddml"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="example-late-estimation-based-on-short-stacking">Example: LATE Estimation based on (Short-)Stacking<a class="anchor" aria-label="anchor" href="#example-late-estimation-based-on-short-stacking"></a>
 </h2>
 <p>To illustrate <code>ddml</code> on a simple example, consider the included random subsample of 5,000 observations from the data of Angrist &amp; Evans (1998). The data contains information on the labor supply of mothers, their children, as well as demographic data. See <code><a href="reference/AE98.html">?AE98</a></code> for details.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load ddml and set seed</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">75523</span><span class="op">)</span></span>
@@ -114,7 +120,7 @@
 <li>lasso (see <code><a href="reference/mdl_glmnet.html">?mdl_glmnet</a></code>)</li>
 <li>gradient boosting (see <code><a href="reference/mdl_xgboost.html">?mdl_xgboost</a></code>)</li>
 </ul>
-<!-- end list --><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span>
 <span><span class="co">#     learners ols, rlasso, and xgboost.</span></span>
 <span><span class="va">late_fit_short</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
@@ -174,6 +180,7 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://cloud.r-project.org/package=ddml" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/thomaswiemann/ddml/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/thomaswiemann/ddml/issues" class="external-link">Report a bug</a></li>
 </ul>
@@ -208,7 +215,7 @@
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/thomaswiemann/ddml/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://codecov.io/gh/thomaswiemann/ddml" class="external-link"><img src="https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S" alt="codecov"></a></li>
+<li><a href="https://app.codecov.io/gh/thomaswiemann/ddml" class="external-link"><img src="https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S" alt="codecov"></a></li>
 <li><a href="https://www.codefactor.io/repository/github/thomaswiemann/ddml" class="external-link"><img src="https://www.codefactor.io/repository/github/thomaswiemann/ddml/badge" alt="CodeFactor"></a></li>
 </ul>
 </div>
