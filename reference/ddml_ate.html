@@ -85,7 +85,7 @@
 <span>  subsamples_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  silent <span class="op">=</span> <span class="cn">F</span></span>
+<span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -252,8 +252,8 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ate_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error  t value    Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1513902 0.01567861 -9.65584 4.64339e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1469574  0.0153823 -9.553664 1.251885e-21</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge.</span></span></span>
@@ -270,7 +270,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls -0.1478009 0.01524395 -9.695709 3.144469e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls -0.1440288  0.0153016 -9.412668 4.837021e-21</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

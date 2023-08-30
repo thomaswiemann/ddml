@@ -6,9 +6,9 @@ articles:
   example_BLP95: example_BLP95.html
   new_ml_wrapper: new_ml_wrapper.html
   sparse: sparse.html
-  ddml: ddml.html
   stacking: stacking.html
-last_built: 2023-08-30T03:22Z
+  ddml: ddml.html
+last_built: 2023-08-30T03:30Z
 urls:
   reference: https://www.thomaswiemann.com/ddml/reference
   article: https://www.thomaswiemann.com/ddml/articles
