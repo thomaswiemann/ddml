@@ -1,14 +1,14 @@
-#' Estimator of the Average Treatment Effect.
+#' Estimator of the Average Treatment Effect on the Treated.
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_ate()]
+#' @seealso [ddml::summary.ddml_att()]
 #'
-#' @description Estimator of the average treatment effect.
+#' @description Estimator of the average treatment effect on the treated.
 #'
-#' @details \code{ddml_ate} provides a double/debiased machine learning
-#'     estimator for the average treatment effect in the interactive model
-#'     given by
+#' @details \code{ddml_att} provides a double/debiased machine learning
+#'     estimator for the average treatment effect on the treated in the
+#'     interactive model given by
 #'
 #' \eqn{Y = g_0(D, X) + U,}
 #'
@@ -17,26 +17,18 @@
 #'     \eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
 #'     and \eqn{g_0} is an unknown nuisance function.
 #'
-#' In this model, the average treatment effect is defined as
+#' In this model, the average treatment effect on the treated is defined as
 #'
-#' \eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
+#' \eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X) \vert D = 1]}.
 #'
-#' @inheritParams ddml_plm
-#' @param D Binary endogenous variable of interest.
-#' @param subsamples_D0,subsamples_D1 List of vectors with sample indices for
-#'     cross-fitting, corresponding to untreated and treated observations,
-#'     respectively.
-#' @param cv_subsamples_list_D0,cv_subsamples_list_D1 List of lists, each
-#'     corresponding to a subsample containing vectors with subsample indices
-#'     for cross-validation. Arguments are separated for untreated and treated
-#'     observations, respectively.
+#' @inheritParams ddml_ate
 #'
-#' @return \code{ddml_ate} returns an object of S3 class
-#'     \code{ddml_ate}. An object of class \code{ddml_ate} is a list containing
+#' @return \code{ddml_att} returns an object of S3 class
+#'     \code{ddml_att}. An object of class \code{ddml_att} is a list containing
 #'     the following components:
 #'     \describe{
-#'         \item{\code{ate}}{A vector with the average treatment effect
-#'             estimates.}
+#'         \item{\code{att}}{A vector with the average treatment effect
+#'             on the treated estimates.}
 #'         \item{\code{weights}}{A list of matrices, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedure.}
@@ -44,10 +36,9 @@
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml_ate()].}
+#'             of scores. Used in [ddml::summary.ddml_att()].}
 #'         \item{\code{learners},\code{learners_DX},
-#'             \code{subsamples_D0},\code{subsamples_D1},
-#'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
+#'             \code{subsamples_D0},\code{cv_subsamples_list_D0},
 #'             \code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
@@ -69,17 +60,18 @@
 #' D = AE98[, "morekids"]
 #' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 #'
-#' # Estimate the average treatment effect using a single base learner, ridge.
-#' ate_fit <- ddml_ate(y, D, X,
+#' # Estimate the average treatment effect on the treated using a single base
+#' #     learner, ridge.
+#' att_fit <- ddml_att(y, D, X,
 #'                     learners = list(what = mdl_glmnet,
 #'                                     args = list(alpha = 0)),
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' summary(ate_fit)
+#' summary(att_fit)
 #'
-#' # Estimate the average treatment effect using short-stacking with base
-#' #     learners ols, lasso, and ridge.
-#' ate_fit <- ddml_ate(y, D, X,
+#' # Estimate the average treatment effect on the treated using short-stacking
+#' #     with base learners ols, lasso, and ridge.
+#' att_fit <- ddml_att(y, D, X,
 #'                     learners = list(list(fun = ols),
 #'                                     list(fun = mdl_glmnet),
 #'                                     list(fun = mdl_glmnet,
@@ -88,8 +80,8 @@
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
-#' summary(ate_fit)
-ddml_ate <- function(y, D, X,
+#' summary(att_fit)
+ddml_att <- function(y, D, X,
                      learners,
                      learners_DX = learners,
                      sample_folds = 2,
@@ -146,9 +138,8 @@ ddml_ate <- function(y, D, X,
       cv_subsamples_list[[k]][[j]] <- sort(c(indx_D0, indx_D1))
     }#FOR
 
-    # Auxilliary X
+    # Auxilliary X (only need treated observations)
     auxilliary_X_D1[[k]] <- X[-is_D0, , drop=F][subsamples_D1[[k]], , drop=F]
-    auxilliary_X_D0[[k]] <- X[is_D0, , drop=F][subsamples_D0[[k]], , drop=F]
   }#FOR
 
   # Print to progress to console
@@ -163,15 +154,6 @@ ddml_ate <- function(y, D, X,
                         silent = silent, progress = "E[Y|D=0,X]: ",
                         auxilliary_X = auxilliary_X_D1)
 
-  # Compute estimates of E[y|D=1,X]
-  y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = F],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        cv_subsamples_list = cv_subsamples_list_D1,
-                        subsamples = subsamples_D1,
-                        silent = silent, progress = "E[Y|D=1,X]: ",
-                        auxilliary_X = auxilliary_X_D0)
-
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
                      learners = learners_DX, ensemble_type = ensemble_type,
@@ -180,49 +162,52 @@ ddml_ate <- function(y, D, X,
                      subsamples = subsamples,
                      silent = silent, progress = "E[D|X]: ")
 
+  # Compute estimates of E[D] -- simple computation of averages here
+  D_res <- get_CEF(D, matrix(1, nobs, 1),
+                   learners = list(what = ols),
+                   ensemble_type = "average",
+                   shortstack = FALSE,
+                   cv_subsamples_list = NULL,
+                   subsamples = subsamples,
+                   silent = TRUE)
+
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- nensb > 1
 
   # Construct reduced form variables
-  g_D0 <- g_D1 <- matrix(0, nobs, nensb)
+  g_D0 <- matrix(0, nobs, nensb)
   g_D0[is_D0, ] <- y_X_D0_res$oos_fitted
-  g_D1[-is_D0, ] <- y_X_D1_res$oos_fitted
   if (!multiple_ensembles) {
     for (k in 1:sample_folds) {
-      g_D1[is_D0][subsamples_D0[[k]]] <- y_X_D1_res$auxilliary_fitted[[k]]
       g_D0[-is_D0][subsamples_D1[[k]]] <- y_X_D0_res$auxilliary_fitted[[k]]
     }#FOR
   } else {
     for (k in 1:sample_folds) {
-      g_D1[is_D0, ][subsamples_D0[[k]], ] <- y_X_D1_res$auxilliary_fitted[[k]]
       g_D0[-is_D0, ][subsamples_D1[[k]], ] <- y_X_D0_res$auxilliary_fitted[[k]]
     }#FOR
   }#IF
   m_X <- D_X_res$oos_fitted
 
-  # Compute the ATE using the constructed variables
+  # Compute the ATT using the constructed variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  psi_b <- D_copy * (y_copy - g_D1) / m_X +
-    (1 - D_copy) * (y_copy - g_D0) / (1 - m_X) + g_D1 - g_D0
-  ate <- colMeans(psi_b)
-  names(ate) <- ensemble_type
-
-  # Also set psi_a scores for easier computation of summary.ddml_ate
-  psi_a <- matrix(-1, nobs, nensb)
+  p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
+  psi_b <- D_copy * (y_copy - g_D0) / p_copy -
+    m_X * (1 - D_copy) * (y_copy - g_D0) / (p_copy * (1 - m_X))
+  psi_a <- -D_copy / p_copy
+  att <- -colMeans(psi_b) / colMeans(psi_a)
+  names(att) <- ensemble_type
 
   # Organize complementary ensemble output
   weights <- list(y_X_D0 = y_X_D0_res$weights,
-                  y_X_D1 = y_X_D1_res$weights,
                   D_X = D_X_res$weights)
 
   # Store complementary ensemble output
   mspe <- list(y_X_D0 = y_X_D0_res$mspe,
-               y_X_D1 = y_X_D1_res$mspe,
                D_X = D_X_res$mspe)
 
   # Organize output
-  ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
+  ddml_fit <- list(att = att, weights = weights, mspe = mspe,
                    psi_a = psi_a, psi_b = psi_b,
                    learners = learners,
                    learners_DX = learners_DX,
@@ -236,44 +221,21 @@ ddml_ate <- function(y, D, X,
   if (!silent) cat("DDML estimation completed. \n")
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_ate"
+  class(ddml_fit) <- "ddml_att"
   return(ddml_fit)
-}#DDML_ATE
+}#DDML_ATT
 
-#' Inference Methods for Treatment Effect Estimators.
-#'
-#' @description Inference methods for treatment effect estimators.
-#'
-#' @param object An object of class \code{ddml_ate}, \code{ddml_att}, and
-#'     \code{ddml_late}, as fitted by [ddml::ddml_ate()], [ddml::ddml_att()],
-#'     and [ddml::ddml_late()], respectively.
-#' @param ... Currently unused.
-#'
-#' @return A matrix with inference results.
+#' @rdname summary.ddml_ate
 #'
 #' @export
-#'
-#' @examples
-#' # Construct variables from the included Angrist & Evans (1998) data
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
-#'
-#' # Estimate the average treatment effect using a single base learner, ridge.
-#' ate_fit <- ddml_ate(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 2,
-#'                     silent = TRUE)
-#' summary(ate_fit)
-summary.ddml_ate <- function(object, ...) {
+summary.ddml_att <- function(object, ...) {
   # Check whether stacking was used, replace ensemble type if TRUE
   single_learner <- ("what" %in% names(object$learners))
   if (single_learner) object$ensemble_type <- " "
   # Compute and print inference results
-  cat("ATE estimation results: \n \n")
-  organize_interactive_inf_results(coef = object$ate,
+  cat("ATT estimation results: \n \n")
+  organize_interactive_inf_results(coef = object$att,
                                    psi_a = object$psi_a,
                                    psi_b = object$psi_b,
                                    ensemble_type = object$ensemble_type)
-}#SUMMARY.DDML_ATE
+}#SUMMARY.DDML_ATT
