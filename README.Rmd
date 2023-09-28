@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 [![codecov](https://codecov.io/gh/thomaswiemann/ddml/branch/master/graph/badge.svg?token=PHB9W2TJ6S)](https://app.codecov.io/gh/thomaswiemann/ddml)
 [![CodeFactor](https://www.codefactor.io/repository/github/thomaswiemann/ddml/badge)](https://www.codefactor.io/repository/github/thomaswiemann/ddml)
 [![CRAN Version](https://www.r-pkg.org/badges/version/ddml)](https://cran.r-project.org/package=ddml)
+[![cranlogs](https://cranlogs.r-pkg.org/badges/ddml)](https://cran.r-project.org/package=ddml)
 <!-- badges: end -->
 
 ``ddml`` is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key feature of ``ddml`` is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process.

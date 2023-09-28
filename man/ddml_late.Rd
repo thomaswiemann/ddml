@@ -26,7 +26,7 @@ ddml_late(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{Binary endogenous variable of interest.}
+\item{D}{The binary endogenous variable of interest.}
 
 \item{Z}{Binary instrumental variable.}
 
