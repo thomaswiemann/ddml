@@ -17,7 +17,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="" class="logo" alt=""><h1>Inference Methods for Treatment Effect Estimators.</h1>
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/R/ddml_ate.R" class="external-link"><code>R/ddml_ate.R</code></a>, <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/R/ddml_late.R" class="external-link"><code>R/ddml_late.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/R/ddml_ate.R" class="external-link"><code>R/ddml_ate.R</code></a>, <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/R/ddml_att.R" class="external-link"><code>R/ddml_att.R</code></a>, <a href="https://github.com/thomaswiemann/ddml/blob/HEAD/R/ddml_late.R" class="external-link"><code>R/ddml_late.R</code></a></small>
       <div class="d-none name"><code>summary.ddml_ate.Rd</code></div>
     </div>
 
@@ -74,6 +74,9 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for ddml_ate</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># S3 method for ddml_att</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
 <span><span class="co"># S3 method for ddml_late</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -81,8 +84,9 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>object</dt>
-<dd><p>An object of class <code>ddml_ate</code> and <code>ddml_late</code>, as
-fitted by <code><a href="ddml_ate.html">ddml_ate()</a></code> and <code><a href="ddml_late.html">ddml_late()</a></code>, respectively.</p></dd>
+<dd><p>An object of class <code>ddml_ate</code>, <code>ddml_att</code>, and
+<code>ddml_late</code>, as fitted by <code><a href="ddml_ate.html">ddml_ate()</a></code>, <code><a href="ddml_ate.html">ddml_att()</a></code>,
+and <code><a href="ddml_late.html">ddml_late()</a></code>, respectively.</p></dd>
 
 
 <dt>...</dt>
@@ -112,8 +116,8 @@ fitted by <code><a href="ddml_ate.html">ddml_ate()</a></code> and <code><a href=
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ate_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1523843 0.01587887 -9.596673 8.256686e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Estimate Std. Error  t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.151302 0.01530117 -9.88826 4.680943e-23</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
