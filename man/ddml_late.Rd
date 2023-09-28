@@ -26,7 +26,7 @@ ddml_late(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{Binary endogenous variable of interest.}
+\item{D}{The binary endogenous variable of interest.}
 
 \item{Z}{Binary instrumental variable.}
 
@@ -189,7 +189,6 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 
 Other ddml: 
 \code{\link{ddml_ate}()},
-\code{\link{ddml_att}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_pliv}()},
 \code{\link{ddml_plm}()}

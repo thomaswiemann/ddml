@@ -1,13 +1,15 @@
-#' Estimator of the Average Treatment Effect.
+#' Estimators of Average Treatment Effects.
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_ate()]
+#' @seealso [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()]
 #'
-#' @description Estimator of the average treatment effect.
+#' @description Estimators of the average treatment effect and the average
+#'     treatment effect on the treated.
 #'
-#' @details \code{ddml_ate} provides a double/debiased machine learning
-#'     estimator for the average treatment effect in the interactive model
+#' @details \code{ddml_ate} and \code{ddml_att} provide double/debiased machine
+#'     learning  estimators for the average treatment effect and the average
+#'     treatment effect on the treated, respectively, in the interactive model
 #'     given by
 #'
 #' \eqn{Y = g_0(D, X) + U,}
@@ -21,8 +23,12 @@
 #'
 #' \eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
 #'
+#' and the average treatment effect on the treated is defined as
+#'
+#' \eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+#'
 #' @inheritParams ddml_plm
-#' @param D Binary endogenous variable of interest.
+#' @param D The binary endogenous variable of interest.
 #' @param subsamples_D0,subsamples_D1 List of vectors with sample indices for
 #'     cross-fitting, corresponding to untreated and treated observations,
 #'     respectively.
@@ -31,12 +37,13 @@
 #'     for cross-validation. Arguments are separated for untreated and treated
 #'     observations, respectively.
 #'
-#' @return \code{ddml_ate} returns an object of S3 class
-#'     \code{ddml_ate}. An object of class \code{ddml_ate} is a list containing
+#' @return \code{ddml_ate} and \code{ddml_att} return an object of S3 class
+#'     \code{ddml_ate} and \code{ddml_att}, respectively. An object of class
+#'     \code{ddml_ate} or \code{ddml_att} is a list containing
 #'     the following components:
 #'     \describe{
-#'         \item{\code{ate}}{A vector with the average treatment effect
-#'             estimates.}
+#'         \item{\code{ate} / \code{att}}{A vector with the average treatment
+#'             effect / average treatment effect on the treated estimates.}
 #'         \item{\code{weights}}{A list of matrices, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedure.}
@@ -44,7 +51,8 @@
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml_ate()].}
+#'             of scores. Used in [ddml::summary.ddml_ate()] or
+#'             [ddml::summary.ddml_att()].}
 #'         \item{\code{learners},\code{learners_DX},
 #'             \code{subsamples_D0},\code{subsamples_D1},
 #'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
