@@ -35,6 +35,8 @@
         nativeBuildInputs = [ pkgs.bashInteractive ];
         buildInputs = [ 
           my-R
+          pkgs.rstudio
+          pkgs.quarto # needed for rstudio
         ];
        };
     });
