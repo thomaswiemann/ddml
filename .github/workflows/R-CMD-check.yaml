@@ -36,14 +36,32 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
+          #r-version: '4.1.0'
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      ## FIX??
+      #- name: Install lme4
+      #  run: Rscript -e "install.packages('lme4')"
+
+      #- name: Setup upterm session
+      #  uses: lhotari/action-upterm@v1
+      #  ##if: ${{ failure() }}
+      #  with:
+      #    ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+      #    limit-access-to-actor: true
+      #    ## limits ssh access and adds the ssh public keys of the listed GitHub users
+      #    limit-access-to-users: thomaswiemann
+      #    ## If no one connects after 20 minutes, shut down server.
+      #    wait-timeout-minutes: 10
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          extra-packages: any::rcmdcheck, cran/lme4@1.1-35
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
+
+

@@ -131,18 +131,18 @@
 #'                       silent = TRUE)
 #' summary(late_fit)
 ddml_late <- function(y, D, Z, X,
-                     learners,
-                     learners_DXZ = learners,
-                     learners_ZX = learners,
-                     sample_folds = 2,
-                     ensemble_type = "nnls",
-                     shortstack = FALSE,
-                     cv_folds = 5,
-                     subsamples_Z0 = NULL,
-                     subsamples_Z1 = NULL,
-                     cv_subsamples_list_Z0 = NULL,
-                     cv_subsamples_list_Z1 = NULL,
-                     silent = FALSE) {
+                      learners,
+                      learners_DXZ = learners,
+                      learners_ZX = learners,
+                      sample_folds = 2,
+                      ensemble_type = "nnls",
+                      shortstack = FALSE,
+                      cv_folds = 5,
+                      subsamples_Z0 = NULL,
+                      subsamples_Z1 = NULL,
+                      cv_subsamples_list_Z0 = NULL,
+                      cv_subsamples_list_Z1 = NULL,
+                      silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   is_Z0 <- which(Z == 0)
@@ -214,25 +214,45 @@ ddml_late <- function(y, D, Z, X,
                         silent = silent, progress = "E[Y|Z=1,X]: ",
                         auxilliary_X = auxilliary_X_Z0)
 
-  # Compute estimates of E[D|Z=0,X]
-  D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = F],
-                        learners = learners_DXZ,
-                        ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        cv_subsamples_list = cv_subsamples_list_Z0,
-                        subsamples = subsamples_Z0,
-                        silent = silent, progress = "E[D|Z=0,X]: ",
-                        auxilliary_X = auxilliary_X_Z1)
+  # Check for perfect non-compliance
+  if (all(D[Z==0] == 0)) {
+    # Artificially construct values for subsample with Z=0
+    D_X_Z0_res <- list(NULL)
+    D_X_Z0_res$oos_fitted <- rep(0, nobs_Z0)
+    D_X_Z0_res$auxilliary_fitted <-
+      lapply(y_X_Z0_res$auxilliary_fitted, function (x) {x * 0})
+    if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
+  } else {
+    # Compute estimates of E[D|Z=0,X]
+    D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = F],
+                          learners = learners_DXZ,
+                          ensemble_type = ensemble_type,
+                          shortstack = shortstack,
+                          cv_subsamples_list = cv_subsamples_list_Z0,
+                          subsamples = subsamples_Z0,
+                          silent = silent, progress = "E[D|Z=0,X]: ",
+                          auxilliary_X = auxilliary_X_Z1)
+  }#IFELSE
 
-  # Compute estimates of E[D|Z=1,X]
-  D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = F],
-                        learners = learners_DXZ,
-                        ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        cv_subsamples_list = cv_subsamples_list_Z1,
-                        subsamples = subsamples_Z1,
-                        silent = silent, progress = "E[D|Z=1,X]: ",
-                        auxilliary_X = auxilliary_X_Z0)
+  # Check for perfect compliance
+  if (all(D[Z==1] == 1)) {
+    # Artificially construct values for subsample with Z=0
+    D_X_Z1_res <- list(NULL)
+    D_X_Z1_res$oos_fitted <- rep(0, nobs_Z1)
+    D_X_Z1_res$auxilliary_fitted <-
+      lapply(y_X_Z1_res$auxilliary_fitted, function (x) {x * 0})
+    if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
+  } else {
+    # Compute estimates of E[D|Z=1,X]
+    D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = F],
+                          learners = learners_DXZ,
+                          ensemble_type = ensemble_type,
+                          shortstack = shortstack,
+                          cv_subsamples_list = cv_subsamples_list_Z1,
+                          subsamples = subsamples_Z1,
+                          silent = silent, progress = "E[D|Z=1,X]: ",
+                          auxilliary_X = auxilliary_X_Z0)
+  }#IFELSE
 
   # Compute estimates of E[Z|X]
   Z_X_res <- get_CEF(Z, X,
