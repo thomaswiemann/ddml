@@ -21,9 +21,13 @@ jobs:
         with:
           use-public-rspm: true
 
+      ## FIX??
+      - name: Install lme4
+        run: Rscript -e "install.packages('lme4')"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::covr, any::lme4
+          extra-packages: any::covr, lme4=?ignore
           needs: coverage
 
       - name: Test coverage

@@ -39,6 +39,10 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      ## FIX??
+      - name: Install lme4
+        run: Rscript -e "install.packages('lme4')"
+
       #- name: Setup upterm session
       #  uses: lhotari/action-upterm@v1
       #  ##if: ${{ failure() }}
@@ -52,7 +56,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, any::lme4
+          extra-packages: any::rcmdcheck, lme4=?ignore
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2

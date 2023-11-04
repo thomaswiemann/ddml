@@ -28,9 +28,13 @@ jobs:
         with:
           use-public-rspm: true
 
+      ## FIX??
+      - name: Install lme4
+        run: Rscript -e "install.packages('lme4')"
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., any::lme4
+          extra-packages: any::pkgdown, local::., lme4=?ignore
           needs: website
 
       - name: Build site
