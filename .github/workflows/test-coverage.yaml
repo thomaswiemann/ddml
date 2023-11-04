@@ -21,6 +21,16 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+          limit-access-to-actor: true
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-users: thomaswiemann
+          ## If no one connects after 10 minutes, shut down server.
+          wait-timeout-minutes: 10
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr
