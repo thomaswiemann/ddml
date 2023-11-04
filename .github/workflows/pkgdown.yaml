@@ -35,7 +35,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::., cran/lme4@1.1.35
+          extra-packages: any::pkgdown, local::., cran/lme4@1.1-35
           needs: website
 
       - name: Build site
