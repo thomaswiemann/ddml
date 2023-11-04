@@ -21,12 +21,6 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Setup upterm session
-        uses: lhotari/action-upterm@v1
-        with:
-          ## If no one connects after 20 minutes, shut down server.
-          wait-timeout-minutes: 60
-
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr
