@@ -52,7 +52,7 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck, lme4
+          extra-packages: any::rcmdcheck, any::lme4
           needs: check
 
       - uses: r-lib/actions/check-r-package@v2
