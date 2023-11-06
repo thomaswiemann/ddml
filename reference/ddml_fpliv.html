@@ -84,6 +84,9 @@
 <span>  shortstack <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cv_folds <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  enforce_LIE <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  custom_ensemble_weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  custom_ensemble_weights_DXZ <span class="op">=</span> <span class="va">custom_ensemble_weights</span>,</span>
+<span>  custom_ensemble_weights_DX <span class="op">=</span> <span class="va">custom_ensemble_weights</span>,</span>
 <span>  subsamples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -133,14 +136,10 @@ used in <code>fun</code>. Omission of <code>assign_X</code> (and/or <code>assign
 results in inclusion of all variables in <code>X</code> (and/or <code>Z</code>).</p></dd>
 
 
-<dt>learners_DXZ</dt>
-<dd><p>Optional argument to allow for different estimators of
-\(E[D \vert X, Z]\). Setup is identical to <code>learners</code>.</p></dd>
-
-
-<dt>learners_DX</dt>
-<dd><p>Optional argument to allow for different estimators of
-\(E[D|X]\). Setup is identical to <code>learners</code>.</p></dd>
+<dt>learners_DXZ, learners_DX</dt>
+<dd><p>Optional arguments to allow for different
+estimators of \(E[D \vert X, Z]\), \(E[D \vert X]\). Setup is
+identical to <code>learners</code>.</p></dd>
 
 
 <dt>sample_folds</dt>
@@ -170,6 +169,24 @@ construction.</p></dd>
 <dt>enforce_LIE</dt>
 <dd><p>Indicator equal to 1 if the law of iterated expectations
 is enforced in the first stage.</p></dd>
+
+
+<dt>custom_ensemble_weights</dt>
+<dd><p>A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in <code>learners</code>
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.</p></dd>
+
+
+<dt>custom_ensemble_weights_DXZ, custom_ensemble_weights_DX</dt>
+<dd><p>Optional
+arguments to allow for different
+custom ensemble weights for <code>learners_DXZ</code>,<code>learners_DX</code>. Setup
+is identical to <code>custom_ensemble_weights</code>. Note:
+<code>custom_ensemble_weights</code> and
+<code>custom_ensemble_weights_DXZ</code>,<code>custom_ensemble_weights_DX</code> must
+have the same number of columns.</p></dd>
 
 
 <dt>subsamples</dt>
@@ -265,9 +282,9 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , single base learner</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.0007637832 0.006886049 -0.1109175 0.9116818</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1314871198 0.186064302 -0.7066757 0.4797680</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 Estimate  Std. Error     t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.000242832 0.006889513 -0.03524662 0.9718831</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.200986788 0.174392852 -1.15249442 0.2491180</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

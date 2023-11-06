@@ -83,6 +83,9 @@
 <span>  ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
 <span>  shortstack <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  cv_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  custom_ensemble_weights <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  custom_ensemble_weights_DXZ <span class="op">=</span> <span class="va">custom_ensemble_weights</span>,</span>
+<span>  custom_ensemble_weights_ZX <span class="op">=</span> <span class="va">custom_ensemble_weights</span>,</span>
 <span>  subsamples_Z0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  subsamples_Z1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_Z0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -134,14 +137,10 @@ used in <code>fun</code>. Omission of <code>assign_X</code> (and/or <code>assign
 results in inclusion of all variables in <code>X</code> (and/or <code>Z</code>).</p></dd>
 
 
-<dt>learners_DXZ</dt>
-<dd><p>Optional argument to allow for different estimators of
-\(E[D \vert X, Z]\). Setup is identical to <code>learners</code>.</p></dd>
-
-
-<dt>learners_ZX</dt>
-<dd><p>Optional argument to allow for different estimators of
-\(E[Z\vert X]\). Setup is identical to <code>learners</code>.</p></dd>
+<dt>learners_DXZ, learners_ZX</dt>
+<dd><p>Optional arguments to allow for different
+estimators of \(E[D \vert X, Z]\), \(E[Z \vert X]\). Setup is
+identical to <code>learners</code>.</p></dd>
 
 
 <dt>sample_folds</dt>
@@ -166,6 +165,24 @@ that all weights sum to one.</p></li>
 <dt>cv_folds</dt>
 <dd><p>Number of folds used for cross-validation in ensemble
 construction.</p></dd>
+
+
+<dt>custom_ensemble_weights</dt>
+<dd><p>A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in <code>learners</code>
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.</p></dd>
+
+
+<dt>custom_ensemble_weights_DXZ, custom_ensemble_weights_ZX</dt>
+<dd><p>Optional
+arguments to allow for different
+custom ensemble weights for <code>learners_DXZ</code>,<code>learners_ZX</code>. Setup
+is identical to <code>custom_ensemble_weights</code>. Note:
+<code>custom_ensemble_weights</code> and
+<code>custom_ensemble_weights_DXZ</code>,<code>custom_ensemble_weights_ZX</code> must
+have the same number of columns.</p></dd>
 
 
 <dt>subsamples_Z0, subsamples_Z1</dt>
@@ -275,24 +292,31 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2511397  0.1999589 -1.255957 0.2091317</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2281167  0.2021167 -1.128639 0.2590503</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
-<span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge.</span></span></span>
+<span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
+<span class="r-in"><span><span class="co">#     to estimate the ATE using every individual base learner.</span></span></span>
+<span class="r-in"><span><span class="va">weights_everylearner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">weights_everylearner</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mdl:ols"</span>, <span class="st">"mdl:lasso"</span>, <span class="st">"mdl:ridge"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">late_fit</span> <span class="op">&lt;-</span> <span class="fu">ddml_late</span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span></span>
 <span class="r-in"><span>                      learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                      <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span></span>
 <span class="r-in"><span>                                           args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                      ensemble_type <span class="op">=</span> <span class="st">'nnls'</span>,</span></span>
+<span class="r-in"><span>                      custom_ensemble_weights <span class="op">=</span> <span class="va">weights_everylearner</span>,</span></span>
 <span class="r-in"><span>                      shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                      sample_folds <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls -0.1556748  0.1918754 -0.8113324 0.4171748</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error    t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1373803  0.1927503 -0.7127371 0.4760085</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1604371  0.1726486 -0.9292693 0.3527495</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.2707565  0.1996976 -1.3558329 0.1751523</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.2728544  0.2002032 -1.3628873 0.1729180</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
