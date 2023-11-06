@@ -60,3 +60,47 @@ test_that("prediction with ensemble learners returns fitted values", {
   # Check output with expectations
   expect_equal(dim(ens_fitted), c(length(D), 3))
 })#TEST_THAT
+
+test_that("ensemble_weights returns a weight matrix w/ custom weights", {
+  # Simulate small dataset
+  X <- cbind(1, matrix(rnorm(100*39), 100, 39))
+  Z <- matrix(rnorm(100*10), 100, 10)
+  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
+  # Define arguments
+  learners <- list(list(fun = mdl_glmnet),
+                   list(fun = ols))
+  # Define custom weights
+  weights_DX <- diag(length(learners))
+  # Compute ensemble weights
+  ensemble_types = c("average", "singlebest", "ols", "nnls", "nnls1")
+  ens_w_res <- ensemble_weights(D, X, Z,
+                                type = ensemble_types,
+                                learners,
+                                cv_folds = 3,
+                                custom_weights = weights_DX,
+                                silent = T)
+  # Check output with expectations
+  expect_equal(dim(ens_w_res$weights), c(length(learners), 7))
+})#TEST_THAT
+
+test_that("prediction w/ ensembles returns fitted values w/ custom weights", {
+  # Simulate small dataset
+  X <- cbind(1, matrix(rnorm(100*39), 100, 39))
+  Z <- matrix(rnorm(100*10), 100, 10)
+  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
+  # Define arguments
+  learners <- list(list(fun = mdl_glmnet),
+                   list(fun = ols))
+  # Define custom weights
+  weights_DX <- diag(length(learners))
+  # Compute ensemble
+  ens_fit <- ensemble(D, X, Z,
+                      type = c("average", "ols", "singlebest"),
+                      learners,
+                      cv_folds = 3,
+                      custom_weights = weights_DX,
+                      silent = T)
+  ens_fitted <- predict(ens_fit, newdata = X, newZ = Z)
+  # Check output with expectations
+  expect_equal(dim(ens_fitted), c(length(D), 5))
+})#TEST_THAT
