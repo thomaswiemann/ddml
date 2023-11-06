@@ -132,6 +132,30 @@ test_that("ddml_plm computes w/ multiple ensemble procedures & shortstacking", {
   expect_equal(length(ddml_plm_fit$coef), 5)
 })#TEST_THAT
 
+test_that("ddml_plm computes w/ ensemble procedures & custom weights", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  D <-  X %*% runif(40) + rnorm(nobs)
+  y <- D + X %*% runif(40) + rnorm(nobs)
+  # Define arguments
+  learners <- list(list(fun = ols),
+                   list(fun = ols))
+  # Compute DDML PLM estimator
+  ddml_plm_fit <- ddml_plm(y, D, X,
+                           learners,
+                           ensemble_type = c("ols", "nnls",
+                                             "nnls1",
+                                             "singlebest", "average"),
+                           shortstack = TRUE,
+                           cv_folds = 3,
+                           custom_ensemble_weights = diag(1, length(learners)),
+                           sample_folds = 3,
+                           silent = T)
+  # Check output with expectations
+  expect_equal(length(ddml_plm_fit$coef), 7)
+})#TEST_THAT
+
 test_that("summary.ddml_plm computes with a single model", {
   # Simulate small dataset
   nobs <- 200
@@ -170,11 +194,12 @@ test_that("summary.ddml_plm computes with multiple ensemble procedures", {
                                              "singlebest", "average"),
                            shortstack = FALSE,
                            cv_folds = 3,
+                           custom_ensemble_weights = diag(1, length(learners)),
                            sample_folds = 3,
                            silent = T)
   capture_output({inf_res <- summary(ddml_plm_fit, type = "HC1")})
   # Check output with expectations
-  expect_equal(length(inf_res), 8 * 5)
+  expect_equal(length(inf_res), 8 * 7)
 })#TEST_THAT
 
 test_that("ddml_plm computes with an ensemble procedure and multivariate D", {

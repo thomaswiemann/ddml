@@ -12,6 +12,7 @@ crosspred(
   sample_folds = 2,
   ensemble_type = "average",
   cv_folds = 5,
+  custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
   compute_predictions_bylearner = FALSE,
   subsamples = NULL,
@@ -73,6 +74,12 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{cv_folds}{Number of folds used for cross-validation in ensemble
 construction.}
+
+\item{custom_ensemble_weights}{A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
 
 \item{compute_insample_predictions}{Indicator equal to 1 if in-sample
 predictions should also be computed.}

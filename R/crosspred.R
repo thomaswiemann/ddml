@@ -47,6 +47,11 @@
 #'     Multiple ensemble types may be passed as a vector of strings.
 #' @param cv_folds Number of folds used for cross-validation in ensemble
 #'     construction.
+#' @param custom_ensemble_weights A numerical matrix with user-specified
+#'     ensemble weights. Each column corresponds to a custom ensemble
+#'     specification, each row corresponds to a base learner in \code{learners}
+#'     (in chronological order). Optional column names are used to name the
+#'     estimation results corresponding the custom ensemble specification.
 #' @param compute_insample_predictions Indicator equal to 1 if in-sample
 #'     predictions should also be computed.
 #' @param compute_predictions_bylearner Indicator equal to 1 if in-sample
@@ -118,6 +123,7 @@ crosspred <- function(y, X, Z = NULL,
                       sample_folds = 2,
                       ensemble_type = "average",
                       cv_folds = 5,
+                      custom_ensemble_weights = NULL,
                       compute_insample_predictions = FALSE,
                       compute_predictions_bylearner = FALSE,
                       subsamples = NULL,
@@ -129,6 +135,9 @@ crosspred <- function(y, X, Z = NULL,
   nobs <- nrow(X)
   nlearners <- length(learners)
   calc_ensemble <- !("what" %in% names(learners))
+  ncustom <- ncol(custom_ensemble_weights)
+  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+  nensb <- length(ensemble_type) + ncustom
   # Create sample fold tuple
   if (is.null(subsamples)) {
     subsamples <- generate_subsamples(nobs, sample_folds)
@@ -146,7 +155,7 @@ crosspred <- function(y, X, Z = NULL,
   cv_folds <- length(cv_subsamples_list[[1]])
 
   # Initialize output matrices
-  oos_fitted <- matrix(0, nobs, length(ensemble_type)^(calc_ensemble))
+  oos_fitted <- matrix(0, nobs, nensb^(calc_ensemble))
   oos_fitted_bylearner <- matrix(0, nobs, nlearners)
   is_fitted <- rep(list(NULL), sample_folds)
   is_fitted_bylearner <- rep(list(NULL), sample_folds)
@@ -154,9 +163,7 @@ crosspred <- function(y, X, Z = NULL,
   auxilliary_fitted_bylearner <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
   colnames(mspe) <- paste("sample fold ", 1:sample_folds)
-  weights <- array(0, dim = c(nlearners, length(ensemble_type), sample_folds))
-  dimnames(weights) <- list(NULL, ensemble_type,
-                            paste("sample fold ", 1:sample_folds))
+  weights <- array(0, dim = c(nlearners, nensb, sample_folds))
   # Loop over training samples
   for (k in 1:sample_folds) {
     # Compute fit on training data. Check whether a single model or an ensemble
@@ -208,6 +215,7 @@ crosspred <- function(y, X, Z = NULL,
                           Z[-subsamples[[k]], , drop = F],
                           ensemble_type, learners,
                           cv_folds, cv_subsamples_list[[k]],
+                          custom_weights = custom_ensemble_weights,
                           silent = silent,
                           progress = paste0(progress_k, ", "))
       # Compute out-of-sample predictions
@@ -225,6 +233,9 @@ crosspred <- function(y, X, Z = NULL,
         mspe[,k] <- mdl_fit$cv_res$mspe
       }#IF
     }#IFELSE
+    # Assign names to weights
+    dimnames(weights) <- list(NULL, colnames(mdl_fit$weights),
+                              paste("sample fold ", 1:sample_folds))
     # Compute in-sample predictions (optional)
     if (compute_insample_predictions) {
       if (!calc_ensemble) {
@@ -263,7 +274,6 @@ crosspred <- function(y, X, Z = NULL,
     }#IF
   }#FOR
   # When multiple ensembles are computed, need to reorganize is_fitted
-  nensb <- length(ensemble_type)
   if (compute_insample_predictions & calc_ensemble & nensb > 1) {
     # Loop over each ensemble type to creat list of is_fitted's
     new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)

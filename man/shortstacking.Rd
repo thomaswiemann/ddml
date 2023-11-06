@@ -10,7 +10,8 @@ shortstacking(
   Z = NULL,
   learners,
   sample_folds = 2,
-  ensemble_type,
+  ensemble_type = "average",
+  custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
   subsamples = NULL,
   silent = FALSE,
@@ -68,6 +69,12 @@ that all weights sum to one.}
 \item{\code{"average"} Simple average over base learners.}
 }
 Multiple ensemble types may be passed as a vector of strings.}
+
+\item{custom_ensemble_weights}{A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
 
 \item{compute_insample_predictions}{Indicator equal to 1 if in-sample
 predictions should also be computed.}

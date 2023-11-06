@@ -61,6 +61,15 @@
 #' @param shortstack Boolean to use short-stacking.
 #' @param cv_folds Number of folds used for cross-validation in ensemble
 #'     construction.
+#' @param custom_ensemble_weights A numerical matrix with user-specified
+#'     ensemble weights. Each column corresponds to a custom ensemble
+#'     specification, each row corresponds to a base learner in \code{learners}
+#'     (in chronological order). Optional column names are used to name the
+#'     estimation results corresponding the custom ensemble specification.
+#' @param custom_ensemble_weights_DX Optional argument to allow for different
+#'     custom ensemble weights for \code{learners_DX}. Setup is identical to
+#'     \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
+#'     \code{custom_ensemble_weights_DX} must have the same number of columns.
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples_list List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
@@ -111,13 +120,17 @@
 #' summary(plm_fit)
 #'
 #' # Estimate the partially linear model using short-stacking with base learners
-#' #     ols, lasso, and ridge
+#' #     ols, lasso, and ridge. We can also use custom_ensemble_weights
+#' #     to estimate the ATE using every individual base learner.
+#' weights_everylearner <- diag(1, 3)
+#' colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 #' plm_fit <- ddml_plm(y, D, X,
 #'                     learners = list(list(fun = ols),
 #'                                     list(fun = mdl_glmnet),
 #'                                     list(fun = mdl_glmnet,
 #'                                          args = list(alpha = 0))),
 #'                     ensemble_type = 'nnls',
+#'                     custom_ensemble_weights = weights_everylearner,
 #'                     shortstack = TRUE,
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
@@ -129,11 +142,16 @@ ddml_plm <- function(y, D, X,
                      ensemble_type = "nnls",
                      shortstack = FALSE,
                      cv_folds = 5,
+                     custom_ensemble_weights = NULL,
+                     custom_ensemble_weights_DX = custom_ensemble_weights,
                      subsamples = NULL,
                      cv_subsamples_list = NULL,
                      silent = FALSE) {
   # Data parameters
   nobs <- length(y)
+  ncustom <- ncol(custom_ensemble_weights)
+  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+  nensb <- length(ensemble_type) + ncustom
 
   # Check for multivariate endogenous variables
   D <- as.matrix(D)
@@ -162,6 +180,7 @@ ddml_plm <- function(y, D, X,
                      learners = learners,
                      ensemble_type = ensemble_type,
                      shortstack = shortstack,
+                     custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = subsamples,
                      cv_subsamples_list = cv_subsamples_list,
                      silent = silent, progress = "E[Y|X]: ")
@@ -173,14 +192,20 @@ ddml_plm <- function(y, D, X,
                                  learners = learners_DX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,
+                                 custom_ensemble_weights =
+                                   custom_ensemble_weights_DX,
                                  subsamples = subsamples,
                                  cv_subsamples_list = cv_subsamples_list,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
 
+  # Update ensemble type to account for (optional) custom weights
+  ensemble_type <- dimnames(y_X_res$weights)[[2]]
+  nensb <- length(ensemble_type)
+
   # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- length(ensemble_type) > 1
+  multiple_ensembles <- nensb > 1
 
   # If a single ensemble is calculated, no loops are required.
   if (!multiple_ensembles) {
@@ -198,8 +223,7 @@ ddml_plm <- function(y, D, X,
 
   # If multiple ensembles are calculated, iterate over each type.
   if (multiple_ensembles) {
-    # Iterate over ensemble type. Compute DDML IV estimate for each.
-    nensb <- length(ensemble_type)
+    # Iterate over ensemble type. Compute DDML estimate for each.
     coef <- matrix(0, nD, nensb)
     mspe <- ols_fit <- rep(list(1), nensb)
     nlearners <- length(learners); nlearners_DX <- length(learners_DX)
@@ -221,7 +245,7 @@ ddml_plm <- function(y, D, X,
     }#FOR
 
     # Assign names for more legible output
-    colnames(coef) <- names(ols_fit) <- ensemble_type
+    colnames(coef) <- names(ols_fit) <- dimnames(y_X_res$weights)[[2]]
     rownames(coef) <- names(ols_fit_j$coefficients)[-1]
   }#IF
 

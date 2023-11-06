@@ -17,6 +17,9 @@ ddml_fpliv(
   shortstack = FALSE,
   cv_folds = 5,
   enforce_LIE = TRUE,
+  custom_ensemble_weights = NULL,
+  custom_ensemble_weights_DXZ = custom_ensemble_weights,
+  custom_ensemble_weights_DX = custom_ensemble_weights,
   subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = FALSE
@@ -60,11 +63,9 @@ Omission of the \code{args} element results in default arguments being
 used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
 results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
-\item{learners_DXZ}{Optional argument to allow for different estimators of
-\eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.}
-
-\item{learners_DX}{Optional argument to allow for different estimators of
-\eqn{E[D|X]}. Setup is identical to \code{learners}.}
+\item{learners_DXZ, learners_DX}{Optional arguments to allow for different
+estimators of \eqn{E[D \vert X, Z]}, \eqn{E[D \vert X]}. Setup is
+identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
@@ -87,6 +88,20 @@ construction.}
 
 \item{enforce_LIE}{Indicator equal to 1 if the law of iterated expectations
 is enforced in the first stage.}
+
+\item{custom_ensemble_weights}{A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
+
+\item{custom_ensemble_weights_DXZ, custom_ensemble_weights_DX}{Optional
+arguments to allow for different
+custom ensemble weights for \code{learners_DXZ},\code{learners_DX}. Setup
+is identical to \code{custom_ensemble_weights}. Note:
+\code{custom_ensemble_weights} and
+\code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_DX} must
+have the same number of columns.}
 
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 

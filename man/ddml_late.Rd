@@ -16,6 +16,9 @@ ddml_late(
   ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
+  custom_ensemble_weights = NULL,
+  custom_ensemble_weights_DXZ = custom_ensemble_weights,
+  custom_ensemble_weights_ZX = custom_ensemble_weights,
   subsamples_Z0 = NULL,
   subsamples_Z1 = NULL,
   cv_subsamples_list_Z0 = NULL,
@@ -61,11 +64,9 @@ Omission of the \code{args} element results in default arguments being
 used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
 results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
-\item{learners_DXZ}{Optional argument to allow for different estimators of
-\eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.}
-
-\item{learners_ZX}{Optional argument to allow for different estimators of
-\eqn{E[Z\vert X]}. Setup is identical to \code{learners}.}
+\item{learners_DXZ, learners_ZX}{Optional arguments to allow for different
+estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
+identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
@@ -85,6 +86,20 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{cv_folds}{Number of folds used for cross-validation in ensemble
 construction.}
+
+\item{custom_ensemble_weights}{A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
+
+\item{custom_ensemble_weights_DXZ, custom_ensemble_weights_ZX}{Optional
+arguments to allow for different
+custom ensemble weights for \code{learners_DXZ},\code{learners_ZX}. Setup
+is identical to \code{custom_ensemble_weights}. Note:
+\code{custom_ensemble_weights} and
+\code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_ZX} must
+have the same number of columns.}
 
 \item{subsamples_Z0, subsamples_Z1}{List of vectors with sample indices for
 cross-fitting, corresponding to observations with \eqn{Z=0} and
@@ -159,13 +174,17 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 
 # Estimate the local average treatment effect using short-stacking with base
-#     learners ols, lasso, and ridge.
+#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
+#     to estimate the ATE using every individual base learner.
+weights_everylearner <- diag(1, 3)
+colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 late_fit <- ddml_late(y, D, Z, X,
                       learners = list(list(fun = ols),
                                       list(fun = mdl_glmnet),
                                       list(fun = mdl_glmnet,
                                            args = list(alpha = 0))),
                       ensemble_type = 'nnls',
+                      custom_ensemble_weights = weights_everylearner,
                       shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)

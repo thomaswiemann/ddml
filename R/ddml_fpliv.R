@@ -18,8 +18,16 @@
 #'
 #' @inheritParams ddml_pliv
 #' @param Z A (sparse) matrix of instruments.
-#' @param learners_DXZ Optional argument to allow for different estimators of
-#'     \eqn{E[D \vert X, Z]}. Setup is identical to \code{learners}.
+#' @param learners_DXZ,learners_DX Optional arguments to allow for different
+#'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[D \vert X]}. Setup is
+#'     identical to \code{learners}.
+#' @param custom_ensemble_weights_DXZ,custom_ensemble_weights_DX Optional
+#'     arguments to allow for different
+#'     custom ensemble weights for \code{learners_DXZ},\code{learners_DX}. Setup
+#'     is identical to \code{custom_ensemble_weights}. Note:
+#'     \code{custom_ensemble_weights} and
+#'     \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_DX} must
+#'     have the same number of columns.
 #' @param enforce_LIE Indicator equal to 1 if the law of iterated expectations
 #'     is enforced in the first stage.
 #'
@@ -77,11 +85,15 @@ ddml_fpliv <- function(y, D, Z, X,
                        shortstack = FALSE,
                        cv_folds = 5,
                        enforce_LIE = TRUE,
+                       custom_ensemble_weights = NULL,
+                       custom_ensemble_weights_DXZ = custom_ensemble_weights,
+                       custom_ensemble_weights_DX = custom_ensemble_weights,
                        subsamples = NULL,
                        cv_subsamples_list = NULL,
                        silent = FALSE) {
   # Data parameters
   nobs <- length(y)
+  nensb_raw <- length(ensemble_type) # number of ensembles w/o custom weights
 
   # Check for multivariate endogenous variables
   D <- as.matrix(D)
@@ -109,6 +121,7 @@ ddml_fpliv <- function(y, D, Z, X,
   y_X_res <- get_CEF(y, X, Z = NULL,
                      learners = learners, ensemble_type = ensemble_type,
                      shortstack = shortstack,
+                     custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = subsamples,
                      cv_subsamples_list = cv_subsamples_list,
                      compute_insample_predictions = F,
@@ -122,6 +135,8 @@ ddml_fpliv <- function(y, D, Z, X,
                                   learners = learners_DXZ,
                                   ensemble_type = ensemble_type,
                                   shortstack = shortstack,
+                                  custom_ensemble_weights =
+                                    custom_ensemble_weights_DXZ,
                                   subsamples = subsamples,
                                   cv_subsamples_list = cv_subsamples_list,
                                   compute_insample_predictions = enforce_LIE,
@@ -137,6 +152,8 @@ ddml_fpliv <- function(y, D, Z, X,
                                    learners = learners_DX,
                                    ensemble_type = ensemble_type,
                                    shortstack = shortstack,
+                                   custom_ensemble_weights =
+                                     custom_ensemble_weights_DX,
                                    subsamples = subsamples,
                                    cv_subsamples_list = cv_subsamples_list,
                                    compute_insample_predictions = F,
@@ -145,8 +162,12 @@ ddml_fpliv <- function(y, D, Z, X,
     }#FOR
   }#IF
 
-  # Check whether multiple ensembles are computed simultaneously.
-  multiple_ensembles <- length(ensemble_type) > 1
+  # Update ensemble type to account for (optional) custom weights
+  ensemble_type <- dimnames(y_X_res$weights)[[2]]
+  nensb <- length(ensemble_type)
+
+  # Check whether multiple ensembles are computed simultaneously
+  multiple_ensembles <- nensb > 1
 
   # If a single ensemble is calculated, no loops are required.
   if (!multiple_ensembles) {
@@ -185,7 +206,6 @@ ddml_fpliv <- function(y, D, Z, X,
   # If multiple ensembles are calculated, iterate over each type.
   if (multiple_ensembles) {
     # Iterate over ensemble type. Compute DDML IV estimate for each.
-    nensb <- length(ensemble_type)
     coef <- matrix(0, nD, nensb)
     iv_fit <- rep(list(1), nensb)
     nlearners <- length(learners)
@@ -209,17 +229,42 @@ ddml_fpliv <- function(y, D, Z, X,
         D_X_res_list <- list()
         for (k in 1:nD) {
           progress_jk <- paste0("E[D", k, "|X] (", ensemble_type[j], "): ")
-          D_X_res_list[[k]] <-
-            get_CEF(D_XZ_res_list[[k]]$is_fitted[[j]], X, Z = NULL,
-                    learners = learners_DX,
-                    ensemble_type = ensemble_type[j],
-                    shortstack = shortstack,
-                    cv_subsamples_list = cv_subsamples_list,
-                    subsamples = subsamples,
-                    compute_insample_predictions = F,
-                    silent = silent,
-                    progress = progress_jk,
-                    shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
+
+          # Check whether j is a custom ensemble specification. Necessary to
+          #     assign correct corresponding custom_weights vector.
+          if (j <= nensb_raw) { # j is not a custom specification
+            D_X_res_list[[k]] <-
+              get_CEF(D_XZ_res_list[[k]]$is_fitted[[j]], X, Z = NULL,
+                      learners = learners_DX,
+                      ensemble_type = ensemble_type[j],
+                      shortstack = shortstack,
+                      cv_subsamples_list = cv_subsamples_list,
+                      subsamples = subsamples,
+                      compute_insample_predictions = F,
+                      silent = silent,
+                      progress = progress_jk,
+                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
+          } else { # j is a custom specification
+            D_X_res_list[[k]] <-
+              get_CEF(D_XZ_res_list[[k]]$is_fitted[[j]], X, Z = NULL,
+                      learners = learners_DX,
+                      ensemble_type = "average",
+                      shortstack = shortstack,
+                      custom_ensemble_weights =
+                        custom_ensemble_weights_DX[, j - nensb_raw, drop = F],
+                      cv_subsamples_list = cv_subsamples_list,
+                      subsamples = subsamples,
+                      compute_insample_predictions = F,
+                      silent = silent,
+                      progress = progress_jk,
+                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
+            # Remove "average" oos_fitted and weights
+            D_X_res_list[[k]]$oos_fitted <- D_X_res_list[[k]]$oos_fitted[, -1]
+            D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1, ,
+                                                                   drop = F]
+          }#IFELSE
+
+
         }#FOR
       }#IF
 

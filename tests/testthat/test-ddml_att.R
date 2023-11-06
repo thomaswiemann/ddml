@@ -37,7 +37,7 @@ test_that("ddml_att computes with an ensemble procedure", {
   expect_equal(length(ddml_att_fit$att), 1)
 })#TEST_THAT
 
-test_that("ddml_att computes with multiple ensemble procedures", {
+test_that("ddml_att computes w/ multiple ensembles + custom weights", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
@@ -45,20 +45,22 @@ test_that("ddml_att computes with multiple ensemble procedures", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(list(fun = ols),
+                   list(fun = ols))
   # Compute DDML PLM estimator
   ddml_att_fit <- ddml_att(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",
                                              "singlebest", "average"),
                            cv_folds = 3,
+                           custom_ensemble_weights = diag(1, 2),
                            sample_folds = 3,
                            silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_att_fit$att), 4)
+  expect_equal(length(ddml_att_fit$att), 6)
 })#TEST_THAT
 
-test_that("ddml_att computes with multiple ensemble procedures & shortstack", {
+test_that("ddml_att computes w/ multp ensembles, custom weights + shortstack", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
@@ -66,14 +68,15 @@ test_that("ddml_att computes with multiple ensemble procedures & shortstack", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(list(fun = ols),
+                   list(fun = ols))
   # Compute DDML PLM estimator
   ddml_att_fit <- ddml_att(y, D, X,
                            learners,
-                           ensemble_type = c("ols", "nnls",
-                                             "singlebest", "average"),
+                           ensemble_type = c("ols", "average"),
                            shortstack = TRUE,
                            cv_folds = 3,
+                           custom_ensemble_weights = diag(1, 2),
                            sample_folds = 3,
                            silent = T)
   # Check output with expectations

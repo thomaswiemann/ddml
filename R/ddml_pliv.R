@@ -46,8 +46,16 @@
 #'     Omission of the \code{args} element results in default arguments being
 #'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
 #'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
-#' @param learners_ZX Optional argument to allow for different estimators of
-#'     \eqn{E[Z\vert X]}. Setup is identical to \code{learners}.
+#' @param learners_DX,learners_ZX Optional arguments to allow for different
+#'     base learners for estimation of \eqn{E[D|X]}, \eqn{E[Z|X]}. Setup is
+#'     identical to \code{learners}.
+#' @param custom_ensemble_weights_DX,custom_ensemble_weights_ZX Optional
+#'     arguments to allow for different
+#'     custom ensemble weights for \code{learners_DX},\code{learners_ZX}. Setup
+#'     is identical to \code{custom_ensemble_weights}. Note:
+#'     \code{custom_ensemble_weights} and
+#'     \code{custom_ensemble_weights_DX},\code{custom_ensemble_weights_ZX} must
+#'     have the same number of columns.
 #'
 #' @return \code{ddml_pliv} returns an object of S3 class
 #'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
@@ -105,12 +113,17 @@ ddml_pliv <- function(y, D, Z, X,
                       ensemble_type = "nnls",
                       shortstack = FALSE,
                       cv_folds = 5,
+                      custom_ensemble_weights = NULL,
+                      custom_ensemble_weights_DX = custom_ensemble_weights,
+                      custom_ensemble_weights_ZX = custom_ensemble_weights,
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
                       silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)
+  ncustom <- ncol(custom_ensemble_weights)
+  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
 
   # Check for multivariate endogenous variables
   D <- as.matrix(D)
@@ -139,6 +152,7 @@ ddml_pliv <- function(y, D, Z, X,
   y_X_res <- get_CEF(y, X,
                      learners = learners, ensemble_type = ensemble_type,
                      shortstack = shortstack,
+                     custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = subsamples,
                      cv_subsamples_list = cv_subsamples_list,
                      silent = silent, progress = "E[Y|X]: ")
@@ -150,6 +164,8 @@ ddml_pliv <- function(y, D, Z, X,
                                  learners = learners_ZX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,
+                                 custom_ensemble_weights =
+                                   custom_ensemble_weights_ZX,
                                  subsamples = subsamples,
                                  cv_subsamples_list = cv_subsamples_list,
                                  silent = silent,
@@ -163,14 +179,20 @@ ddml_pliv <- function(y, D, Z, X,
                                  learners = learners_DX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,
+                                 custom_ensemble_weights =
+                                   custom_ensemble_weights_DX,
                                  subsamples = subsamples,
                                  cv_subsamples_list = cv_subsamples_list,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
 
+  # Update ensemble type to account for (optional) custom weights
+  ensemble_type <- dimnames(y_X_res$weights)[[2]]
+  nensb <- length(ensemble_type)
+
   # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- length(ensemble_type) > 1
+  multiple_ensembles <- nensb > 1
 
   # If a single ensemble is calculated, no loops are required.
   if (!multiple_ensembles) {
@@ -190,7 +212,6 @@ ddml_pliv <- function(y, D, Z, X,
   # If multiple ensembles are calculated, iterate over each type.
   if (multiple_ensembles) {
     # Iterate over ensemble type. Compute DDML IV estimate for each.
-    nensb <- length(ensemble_type)
     coef <- matrix(0, nD, nensb)
     iv_fit <- rep(list(1), nensb)
     nlearners <- length(learners)

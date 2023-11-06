@@ -5,6 +5,7 @@ ensemble <- function(y, X, Z = NULL,
                      cv_folds = 5,
                      cv_subsamples = NULL,
                      cv_results = NULL,
+                     custom_weights = NULL,
                      silent = FALSE,
                      progress = NULL) {
   # Data parameters
@@ -15,6 +16,7 @@ ensemble <- function(y, X, Z = NULL,
                                 cv_folds = cv_folds,
                                 cv_subsamples = cv_subsamples,
                                 cv_results = cv_results,
+                                custom_weights = custom_weights,
                                 silent = silent, progress = progress)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
@@ -88,10 +90,13 @@ ensemble_weights <- function(y, X, Z = NULL,
                              cv_folds = 5,
                              cv_subsamples = NULL,
                              cv_results = NULL,
+                             custom_weights = NULL,
                              silent = FALSE,
                              progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
+  ncustom <- ncol(custom_weights)
+  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
   ntype <- length(type)
 
   # Check whether out-of-sample residuals should be calculated to inform the
@@ -106,7 +111,7 @@ ensemble_weights <- function(y, X, Z = NULL,
                            silent = silent, progress = progress)
   }#IF
   # Compute weights for each ensemble type
-  weights <- matrix(0, length(learners), length(type))
+  weights <- matrix(0, nlearners, ntype + ncustom)
   for (k in 1:ntype) {
     if (type[k] == "average") {
       # Assign 1 to all included learners and normalize
@@ -143,6 +148,15 @@ ensemble_weights <- function(y, X, Z = NULL,
       weights[mdl_min, k] <- 1
     }#IFELSE
   }#FOR
+  # Append weights with custom weights
+  if (!(ncustom == 0)) {
+    weights[, (ntype + 1):(ntype + ncustom)] <- custom_weights
+  }#IF
+  # Assign ensemble types to columns
+  if (!(ncustom == 0) && is.null(colnames(custom_weights))) {
+    colnames(custom_weights) <- paste0("custom_", 1:ncustom)
+  }#IF
+  colnames(weights) <- c(type, colnames(custom_weights))
   # Organize and return output
   output <- list(weights = weights, cv_results = cv_results)
   return(output)

@@ -14,6 +14,8 @@ ddml_plm(
   ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 5,
+  custom_ensemble_weights = NULL,
+  custom_ensemble_weights_DX = custom_ensemble_weights,
   subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = FALSE
@@ -74,6 +76,17 @@ Multiple ensemble types may be passed as a vector of strings.}
 \item{cv_folds}{Number of folds used for cross-validation in ensemble
 construction.}
 
+\item{custom_ensemble_weights}{A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
+
+\item{custom_ensemble_weights_DX}{Optional argument to allow for different
+custom ensemble weights for \code{learners_DX}. Setup is identical to
+\code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
+\code{custom_ensemble_weights_DX} must have the same number of columns.}
+
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
 \item{cv_subsamples_list}{List of lists, each corresponding to a subsample
@@ -130,13 +143,17 @@ plm_fit <- ddml_plm(y, D, X,
 summary(plm_fit)
 
 # Estimate the partially linear model using short-stacking with base learners
-#     ols, lasso, and ridge
+#     ols, lasso, and ridge. We can also use custom_ensemble_weights
+#     to estimate the ATE using every individual base learner.
+weights_everylearner <- diag(1, 3)
+colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 plm_fit <- ddml_plm(y, D, X,
                     learners = list(list(fun = ols),
                                     list(fun = mdl_glmnet),
                                     list(fun = mdl_glmnet,
                                          args = list(alpha = 0))),
                     ensemble_type = 'nnls',
+                    custom_ensemble_weights = weights_everylearner,
                     shortstack = TRUE,
                     sample_folds = 2,
                     silent = TRUE)
