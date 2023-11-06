@@ -174,13 +174,17 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 
 # Estimate the local average treatment effect using short-stacking with base
-#     learners ols, lasso, and ridge.
+#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
+#     to estimate the ATE using every individual base learner.
+weights_everylearner <- diag(1, 3)
+colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 late_fit <- ddml_late(y, D, Z, X,
                       learners = list(list(fun = ols),
                                       list(fun = mdl_glmnet),
                                       list(fun = mdl_glmnet,
                                            args = list(alpha = 0))),
                       ensemble_type = 'nnls',
+                      custom_ensemble_weights = weights_everylearner,
                       shortstack = TRUE,
                       sample_folds = 2,
                       silent = TRUE)
