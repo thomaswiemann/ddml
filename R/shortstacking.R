@@ -65,7 +65,8 @@
 shortstacking <- function (y, X, Z = NULL,
                            learners,
                            sample_folds = 2,
-                           ensemble_type,
+                           ensemble_type = "average",
+                           custom_ensemble_weights = NULL,
                            compute_insample_predictions = FALSE,
                            subsamples = NULL,
                            silent = FALSE,
@@ -76,13 +77,21 @@ shortstacking <- function (y, X, Z = NULL,
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
+
+  # Throw error if no ensemble is estimated
   calc_ensemble <- !("what" %in% names(learners))
+  if (!calc_ensemble) {
+    stop("shortstacking cannot be estimated with a single learner.")
+  }#IF
+
   # Create sample fold tuple
   if (is.null(subsamples)) {
     subsamples <- generate_subsamples(nobs, sample_folds)
   }#IF
   sample_folds <- length(subsamples)
-  nensb <- length(ensemble_type)
+  ncustom <- ncol(custom_ensemble_weights)
+  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+  nensb <- length(ensemble_type) + ncustom
 
   # Compute out-of-sample predictions for each learner
   res <- crosspred(y, X, Z,
@@ -100,6 +109,7 @@ shortstacking <- function (y, X, Z = NULL,
     res$oos_fitted_bylearner
   weights <- ensemble_weights(shortstack_y, X, learners = learners,
                               type = ensemble_type,
+                              custom_weights = custom_ensemble_weights,
                               cv_results = fakecv)$weights
 
   # Compute predictions
@@ -124,6 +134,7 @@ shortstacking <- function (y, X, Z = NULL,
       weights_k <- ensemble_weights(y[-subsamples[[k]]], X[-subsamples[[k]], ],
                                     learners = learners,
                                     type = ensemble_type,
+                                    custom_weights = custom_ensemble_weights,
                                     cv_results = fakecv_k)$weights
       # Combine base learners
       is_fitted[[k]] <- res$is_fitted_bylearner[[k]] %*% weights_k
@@ -144,9 +155,6 @@ shortstacking <- function (y, X, Z = NULL,
 
   # Compute mspe
   mspe <- colMeans((kronecker(shortstack_y, t(rep(1, nensb))) - oos_fitted)^2)
-
-  # Assign names
-  colnames(weights) <- names(mspe) <- ensemble_type
 
   # return shortstacking output
   output <- list(oos_fitted = oos_fitted,
