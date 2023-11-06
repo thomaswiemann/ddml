@@ -72,9 +72,9 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{custom_ensemble_weights}{A numerical matrix with user-specified
 ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to base learner in (in chronological
-order). Optional column names are used to name the estimation results
-corresponding the custom ensemble specification.}
+specification, each row corresponds to a base learner in \code{learners}
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.}
 
 \item{compute_insample_predictions}{Indicator equal to 1 if in-sample
 predictions should also be computed.}

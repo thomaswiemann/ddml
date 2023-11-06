@@ -104,6 +104,8 @@ ddml_ate <- function(y, D, X,
                      ensemble_type = "nnls",
                      shortstack = FALSE,
                      cv_folds = 5,
+                     custom_ensemble_weights = NULL,
+                     custom_ensemble_weights_DX = custom_ensemble_weights,
                      subsamples_D0 = NULL,
                      subsamples_D1 = NULL,
                      cv_subsamples_list_D0 = NULL,
@@ -114,7 +116,6 @@ ddml_ate <- function(y, D, X,
   is_D0 <- which(D == 0)
   nobs_D0 <- length(is_D0)
   nobs_D1 <- nobs - nobs_D0
-  nensb <- length(ensemble_type)
 
   # Create sample fold tuple by treatment
   if (is.null(subsamples_D0) | is.null(subsamples_D1)) {
@@ -166,6 +167,7 @@ ddml_ate <- function(y, D, X,
   y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = F],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
+                        custom_ensemble_weights = custom_ensemble_weights,
                         cv_subsamples_list = cv_subsamples_list_D0,
                         subsamples = subsamples_D0,
                         silent = silent, progress = "E[Y|D=0,X]: ",
@@ -175,6 +177,7 @@ ddml_ate <- function(y, D, X,
   y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = F],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
+                        custom_ensemble_weights = custom_ensemble_weights,
                         cv_subsamples_list = cv_subsamples_list_D1,
                         subsamples = subsamples_D1,
                         silent = silent, progress = "E[Y|D=1,X]: ",
@@ -184,9 +187,14 @@ ddml_ate <- function(y, D, X,
   D_X_res <- get_CEF(D, X,
                      learners = learners_DX, ensemble_type = ensemble_type,
                      shortstack = shortstack,
+                     custom_ensemble_weights = custom_ensemble_weights_DX,
                      cv_subsamples_list = cv_subsamples_list,
                      subsamples = subsamples,
                      silent = silent, progress = "E[D|X]: ")
+
+  # Update ensemble type to account for (optional) custom weights
+  ensemble_type <- dimnames(y_X_D0_res$weights)[[2]]
+  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
 
   # Check whether multiple ensembles are computed simultaneously
   multiple_ensembles <- nensb > 1

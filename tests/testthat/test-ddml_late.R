@@ -62,7 +62,7 @@ test_that("ddml_late computes with an ensemble procedure", {
   expect_equal(length(ddml_late_fit$late), 1)
 })#TEST_THAT
 
-test_that("ddml_late computes with multiple ensemble procedures", {
+test_that("ddml_late computes w/ multiple ensembles & custom weights", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
@@ -81,10 +81,11 @@ test_that("ddml_late computes with multiple ensemble procedures", {
                                                "nnls1",
                                                "singlebest", "average"),
                              cv_folds = 3,
+                             custom_ensemble_weights = diag(1, 2),
                              sample_folds = 3,
                              silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_late_fit$late), 5)
+  expect_equal(length(ddml_late_fit$late), 7)
 })#TEST_THAT
 
 test_that("ddml_late computes with multiple ensemble procedures + perfect compliance", {
@@ -113,7 +114,7 @@ test_that("ddml_late computes with multiple ensemble procedures + perfect compli
   expect_equal(length(ddml_late_fit$late), 5)
 })#TEST_THAT
 
-test_that("ddml_late computes with multiple ensemble procedures & shortstack", {
+test_that("ddml_late computes w/ mult ensembles, custom weights, & shortstack", {
   # Simulate small dataset
   nobs <- 200
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
@@ -133,10 +134,11 @@ test_that("ddml_late computes with multiple ensemble procedures & shortstack", {
                                                "singlebest", "average"),
                              shortstack = TRUE,
                              cv_folds = 3,
+                             custom_ensemble_weights = diag(1, 2),
                              sample_folds = 3,
                              silent = T)
   # Check output with expectations
-  expect_equal(length(ddml_late_fit$late), 5)
+  expect_equal(length(ddml_late_fit$late), 7)
 })#TEST_THAT
 
 test_that("summary.ddml_late computes with a single model", {
