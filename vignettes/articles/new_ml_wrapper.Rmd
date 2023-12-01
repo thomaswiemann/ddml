@@ -19,7 +19,7 @@ This article illustrates how users can write their own base learners. The necess
 
 We outline the requirements on two concrete examples:
 
-1. A simple wrapper for ``stats::glm()``
+1. A simple wrapper for ``gbm::gbm.fit()`` for generalized boosted regression
 2. A more extensive wrapper for neural networks based on [``keras``](https://cran.r-project.org/web/packages/keras/index.html)
 
 To test our wrappers, we apply them to the included random subsample of 5,000 observations from the data of Angrist & Evans (1998). See ``?AE98`` for details.
@@ -37,49 +37,72 @@ Z = AE98[, "samesex"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
-# A Wrapper for ``stats::glm()``
+# A Wrapper for ``gbm::gbm.fit()``
 
-We begin with writing an estimation function that takes named arguments ``y`` and ``X`` and returns a fitted model object. To allow for arguments to be passed from the wrapper to ``stats::glm()``, we also make use of the ``...`` argument.
+We begin with writing an estimation function that takes named arguments ``y`` and ``X`` and returns a fitted model object. To allow for arguments to be passed from the wrapper to ``gbm::gbm.fit()``, we also make use of the ``...`` argument.
 
 
 ```r
-# Write glm wrapper
-mdl_glm <- function(y, X, ...) {
-  df <- data.frame(y, X) # transform data from matrices to data.frame
-  glm_fit <- glm(y ~ ., data = df, ...) # fit glm
-  class(glm_fit) <- c("mdl_glm", class(glm_fit)) # append class
-  return(glm_fit) # return fitted glm object
-}#MDL_GLM
+# Load gbm
+library(gbm)
+
+# Write gbm wrapper
+mdl_gbm <- function(y, X, ...) {
+  gbm_fit <- gbm.fit(x = X, y = y, ...) # fit gbm
+  class(gbm_fit) <- c("mdl_gbm", class(gbm_fit)) # append class
+  return(gbm_fit) # return fitted gbm object
+}#MDL_GBM
 ```
 
-Note that the above wrapper first transforms the inputs to a ``data.frame``. This is necessary because ``glm()`` will not take matrices as input but ``ddml`` supports only matrices (and sparse matrices, see ``vignette("sparse")``). As a consequence, we also need to wrap ``predict.glm()``:
+Note that by default, predicted values from ``gbm::predict.gbm()`` do not return values on the scale of the outcome variable (see ``?gbm::predict.gbm()``). It is therefore important to also construct a simple prediction method for the ``mdl_gbm`` object:
 
 
 ```r
-# Write predict.glm wrapper
-predict.mdl_glm <- function(object, newdata) {
-  df <- data.frame(newdata) # transform data from matrices to data.frame
-  predict.glm(object, df, type = "response")
-}#PREDICT.MDL_GLM
+# Write prediction method for gbm.wrapper
+predict.mdl_gbm <- function(object, newdata, ...) {
+  class(object) <- class(object)[-1] # remove mdl_gbm from the class list
+  predict(object, newdata, type = "response", n.trees = object$n.trees)
+}#MDL_GBM
 ```
 
-To test the wrapper, we estimate the local average treatment effect:
+As a simple test, we check the class of the object returned by the wrapper and the prediction method we constructed:
 
 ```r
-# Use the new glm base learner
-learner_glm <-  list(what = mdl_glm,
-                     args = list(family = binomial(link = "logit")))
+# Estimate gbm
+gbm_fit <- mdl_gbm(y, X, 
+                   distribution  = "bernoulli",
+                   n.trees = 1000,
+                   interaction.depth = 6, 
+                   verbose = FALSE)
+# Compute predictions
+fitted_values <- predict(gbm_fit, X)
+# Check class
+class(gbm_fit)
+#> [1] "mdl_gbm" "gbm"
+class(fitted_values)
+#> [1] "numeric"
+```
+
+The classes are what we expected. The wrapper should now be compatible with the ``ddml`` machinery. As a final test, we estimate the local average treatment effect. (Computation can take a while, feel free to set ``n.trees`` or ``interaction.depth`` to a smaller value for this test.)
+
+```r
+# Use the new gbm base learner
+learner_gbm <-  list(what = mdl_gbm,
+                     args = list(distribution  = "bernoulli",
+                                 n.trees = 1000,
+                                 interaction.depth = 6, 
+                                 verbose = FALSE))
 
 # Estimate ddml_late
 late_fit <- ddml_late(y, D, Z, X,
-                      learners = learner_glm,
+                      learners = learner_gbm,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
 #> LATE estimation results: 
 #>  
 #>     Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.2323155  0.2009572 -1.156045 0.2476628
+#>   -0.2330304   0.204703 -1.138383 0.2549607
 ```
 
 All works well!
@@ -93,6 +116,7 @@ We now consider an example using the neural network implementation of the ``kera
 ```r
 # Load keras
 library(keras)
+#> Warning: package 'keras' was built under R version 4.3.1
 ```
 
 The requirements for the wrapper to be compatible with ``ddml`` are the same as before, however, because estimating a neural network is more involved, we need to write a more extensive wrapper. In particular, our wrapper for the ``keras`` package has four components:
@@ -196,8 +220,8 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>     Estimate Std. Error t value     Pr(>|t|)
-#>   -0.5248137  0.1401297 -3.7452 0.0001802505
+#>      Estimate Std. Error   t value  Pr(>|t|)
+#>   -0.07430665  0.0493069 -1.507023 0.1318047
 ```
 
 All works well!

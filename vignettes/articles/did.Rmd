@@ -1,5 +1,6 @@
 ---
 title: "Diff-in-Diff meets DDML"
+description: "Tutorial on difference-in-difference estimation with double/debiased machine learning."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Diff-in-Diff meets DDML}
