@@ -1,5 +1,5 @@
 ---
-title: "Diff-in-Diff meets DDML "
+title: "Diff-in-Diff meets DDML"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Diff-in-Diff meets DDML}
@@ -89,7 +89,7 @@ ggdid(attgt_lm, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%" />
+<img src="figures/unnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%" />
 <p class="caption">Diff-in-Diff Estimates.</p>
 </div>
 
@@ -130,7 +130,7 @@ ggdid(dyn_lm, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%" />
+<img src="figures/unnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%" />
 <p class="caption">Dynamic Treatment Effect Estimates.</p>
 </div>
 
@@ -237,7 +237,7 @@ ggdid(attgt_xgboost, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%" />
+<img src="figures/unnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%" />
 <p class="caption">xgboost-based Diff-in-Diff Estimates.</p>
 </div>
 
@@ -277,7 +277,7 @@ ggdid(dyn_xgboost, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%" />
+<img src="figures/unnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%" />
 <p class="caption">xgboost-based Dynamic Treatment Effect Estimates.</p>
 </div>
 
@@ -411,7 +411,7 @@ ggdid(attgt_stacking, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-12-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%" />
+<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%" />
 <p class="caption">Stacking-based Diff-in-Diff Estimates.</p>
 </div>
 The results are largely similar to those of the default linear estimator of the ``did`` package, suggesting that the linear approximation of the reduced forms is sufficiently accurate. (Of course we didn't know that before -- now, at least, we can sleep easy!)
@@ -452,7 +452,7 @@ ggdid(dyn_stacking, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="vignettes/articles/figures/unnamed-chunk-13-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%" />
+<img src="figures/unnamed-chunk-13-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%" />
 <p class="caption">Stacking-based Dynamic Treatment Effect Estimates.</p>
 </div>
 
