@@ -37,7 +37,7 @@
     <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
     <a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a>
     <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
-    <a class="dropdown-item" href="../articles/did.html">Diff-in-Diff meets DDML</a>
+    <a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a>
     <div class="dropdown-divider"></div>
     <a class="dropdown-item" href="../articles/index.html">More articles...</a>
   </div>
@@ -292,8 +292,8 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1851458  0.1977386 -0.9363158 0.3491106</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2180008  0.1942468 -1.122288  0.26174</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -313,11 +313,11 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1640893  0.1926486 -0.8517544 0.3943504</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1587020  0.1757216 -0.9031449 0.3664490</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.2970753  0.2058032 -1.4434921 0.1488819</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.2912938  0.2033071 -1.4327769 0.1519216</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error    t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.18424175  0.1870093 -0.9852011 0.3245253</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.09183141  0.1656084 -0.5545092 0.5792304</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.20743470  0.1931218 -1.0741132 0.2827720</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.20740156  0.1929413 -1.0749464 0.2823987</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
