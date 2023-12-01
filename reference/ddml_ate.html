@@ -39,7 +39,7 @@ treatment effect on the treated."><!-- mathjax --><script src="https://cdnjs.clo
     <a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a>
     <a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a>
     <a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a>
-    <a class="dropdown-item" href="../articles/did.html">Diff-in-Diff meets DDML </a>
+    <a class="dropdown-item" href="../articles/did.html">Diff-in-Diff meets DDML</a>
     <div class="dropdown-divider"></div>
     <a class="dropdown-item" href="../articles/index.html">More articles...</a>
   </div>
@@ -297,8 +297,8 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ate_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1457121 0.01552028 -9.388498 6.086214e-21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error  t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1502878 0.01528614 -9.83164 8.226782e-23</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -319,10 +319,10 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1480938 0.01532416 -9.664079 4.284556e-22</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1382082 0.01590472 -8.689759 3.632095e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1476821 0.01551010 -9.521676 1.704080e-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1488338 0.01533276 -9.706915 2.817348e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1476321 0.01529884 -9.649889 4.920894e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1375689 0.01585812 -8.674979 4.136259e-18</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1481681 0.01531128 -9.677057 3.774239e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1475102 0.01517645 -9.719676 2.485722e-22</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
