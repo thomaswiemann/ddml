@@ -88,6 +88,7 @@ Check out our articles to learn more:
 - ``vignette("stacking")`` discusses computational benefits of short-stacking
 - ``vignette("new_ml_wrapper")`` shows how to write user-provided base learners 
 - ``vignette("sparse")`` illustrates support of sparse matrices (see ``?Matrix``)
+- ``vignette("did")`` discusses integration with the diff-in-diff package  [``did``](https://bcallaway11.github.io/did/) 
 
 For additional applied examples, see our case studies:
 

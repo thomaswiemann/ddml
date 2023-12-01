@@ -9,6 +9,10 @@ knit("vignettes/articles/new_ml_wrapper.Rmd.txt",
 knit("vignettes/articles/example_BLP95.Rmd.txt",
      "vignettes/articles/example_BLP95.Rmd")
 
+# depends on did
+knit("vignettes/articles/did.Rmd.txt",
+     "vignettes/articles/did.Rmd")
+
 # depends on SIPP data
 knit("vignettes/articles/example_401k.Rmd.txt",
      "vignettes/articles/example_401k.Rmd")
