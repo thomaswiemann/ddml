@@ -1,9 +1,9 @@
 ---
-title: "Diff-in-Diff meets DDML"
+title: "Diff-in-Diff with Double/Debiased Machine Learning"
 description: "Tutorial on difference-in-difference estimation with double/debiased machine learning."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Diff-in-Diff meets DDML}
+  %\VignetteIndexEntry{Diff-in-Diff with Double/Debiased Machine Learning}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,10 +12,9 @@ vignette: >
 
 # Introduction
 
-This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates.
+This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates -- or: difference-in-difference with machine learning.
 
 For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html).
-
 
 # Estimation using ``did``'s Default Estimator
 
@@ -25,6 +24,7 @@ For illustration, consider the data of Callaway and Sant'Anna (2020) on county-l
 ```r
 # Load the did package
 library(did)
+#> Warning: package 'did' was built under R version 4.3.2
 set.seed(588239)
 
 # Print the data
@@ -135,19 +135,18 @@ ggdid(dyn_lm, ylim = c(-.4, .4))
 <p class="caption">Dynamic Treatment Effect Estimates.</p>
 </div>
 
-
 # Contructing a ``xgboost``-based Diff-in-Diff Estimator
 
 Without additional _parametric_ functional form assumptions on the reduced form equations, it is _not_ guaranteed that the default ``att_gt`` estimator returns a convex combination of causal effects. This is because linear predictors do not necessarily correspond to the conditional expectation functions arising in the doubly-robust score of the group-time average treatment effect. The resulting misspecification error can then lead to negative weights in the aggregation of individual-level treatment effects.
 
-Fortunately, a convex combination of causal effects can be guaranteed (without parametric functional form assumptions) when using machine learning (nonparametric) reduced for estimators.
+Fortunately, a convex combination of causal effects can be guaranteed (without parametric functional form assumptions) when using machine learning (nonparametric) reduced form estimators.
 
-The ``ddml`` package facilitates the use of a large set of machine learning reduced form estimators, including simultaneous considerations of multiple estimators via (short-)stacking.
+``ddml`` facilitates the use of a large set of machine learning reduced form estimators, including simultaneous considerations of multiple estimators via (short-)stacking.
 
-To use ``ddml`` estimators with the ``did`` package, we can make use of the ``est_method`` argument of the ``att_gt`` function (see also ``?att_gt``). It is useful to construct an estimation method in two steps:
+To use ``ddml`` estimators with the ``did`` package, we can make use of the ``est_method`` argument of the ``att_gt`` function (see also ``?did::att_gt``). It is useful to construct this method in two steps:
 
 1. A simple wrapper for ``ddml_att`` that returns the objects needed by ``att_gt``
-2. A second wrapper that hard-codes arguments passed to ``ddml_att`
+2. A second wrapper that hard-codes arguments passed to ``ddml_att``
 
 This two-step approach allows for cleaner code when considering multiple ddml-based estimators (as we do in this article).
 
@@ -290,35 +289,17 @@ It is ex-ante difficult to trade-off the potential bias from misspecification th
 
 # Contructing a Shortstacking-based Diff-in-Diff Estimator
 
-Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage the (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
+# Contructing a Shortstacking-based Diff-in-Diff Estimator
 
-To ensure that machine learners are not spuriously selected, we include the linear control specifications considered by the default ``did`` learner as well. The code snippet below constructs the logistic regression reduced form estimator:
+Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
 
-
-```r
-# Write glm wrapper
-mdl_glm <- function(y, X, ...) {
-  df <- data.frame(y, X) # transform data from matrices to data.frame
-  glm_fit <- glm(y ~ ., data = df, ...) # fit glm
-  class(glm_fit) <- c("mdl_glm", class(glm_fit)) # append class
-  return(glm_fit) # return fitted glm object
-}#MDL_GLM
-
-# Write predict.glm wrapper
-predict.mdl_glm <- function(object, newdata) {
-  df <- data.frame(newdata) # transform data from matrices to data.frame
-  predict.glm(object, df, type = "response")
-}#PREDICT.MDL_GLM
-```
-
-Then, we construct a new wrapper for our ``ddml_did_method`` that hard-codes different reduced form estimators:
+We construct a new wrapper for our ``ddml_did_method`` that hard-codes different reduced form estimators:
 
 - linear or logistic regression
 - gradient tree boosting with more and less regularization
 - random forests with more and less regularization
 
-The reduced form estimators are then optimally combined via non-negative least squares. We leverage shortstacking to reduce computational time (see also ``vignette(stacking)``).
-
+The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also ``vignette(stacking)``).
 
 ```r
 my_did_stacking <- function(y1, y0, D, covariates, ...) {
