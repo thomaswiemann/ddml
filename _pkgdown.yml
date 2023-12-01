@@ -65,6 +65,7 @@ articles:
   - articles/stacking
   - articles/new_ml_wrapper
   - articles/sparse
+  - articles/did
 - title: Case Studies
   contents:
   - starts_with("articles/example")

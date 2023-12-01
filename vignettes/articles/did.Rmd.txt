@@ -1,0 +1,270 @@
+---
+title: "Diff-in-Diff meets DDML "
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Diff-in-Diff meets DDML}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "vignettes/articles/figures/"
+)
+```
+
+# Introduction
+
+This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates.
+
+For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html).
+
+
+# Estimation using ``did``'s Default Estimator
+
+For illustration, consider the data of Callaway and Sant'Anna (2020) on county-level teen employment rates from 2003-2007 for additional details. We are interested in the effect of treatment on the log-employment rate ``lemp`` and assume that parallel trends holds conditional on county population (``lpop`` is the log of county population).
+
+```{r}
+# Load the did package
+library(did)
+set.seed(588239)
+
+# Print the data
+data(mpdta)
+head(mpdta)
+```
+
+By default, the group-time average treatment effect estimator of the ``did`` package controls _linearly_ for additional covariates. (In particular, the propensity score is estimated using [logistic regression](https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L96) and the outcome reduced form is estimated via  [linear regression](https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L107)). The below code snippet runs the default linear specification (similar to [this article](https://bcallaway11.github.io/did/articles/did-basics.html#an-example-with-real-data)).
+
+```{r}
+# Estimate group-time average treatment effects with covariates
+attgt_lm <- att_gt(yname = "lemp",
+                   gname = "first.treat",
+                   idname = "countyreal",
+                   tname = "year",
+                   xformla = ~lpop,
+                   data = mpdta)
+
+# summarize the results
+summary(attgt_lm)
+```
+
+The ``did`` package offers visualization methods using ``gglpot2``:
+
+```{r, fig.width=8, fig.height=10, fig.align='center', out.width="90%", dpi = 200, fig.cap="Diff-in-Diff Estimates."}
+ggdid(attgt_lm, ylim = c(-.4, .4))
+```
+
+Further, the group-time average treatment effects can easily be aggregated, for example, to estimate dynamic average treatment effects:
+
+```{r,  fig.width=8,fig.height=5, fig.align='center', out.width="90%", dpi = 200, fig.cap="Dynamic Treatment Effect Estimates."}
+# aggregate the group-time average treatment effects
+dyn_lm <- aggte(attgt_lm, type = "dynamic")
+summary(dyn_lm)
+ggdid(dyn_lm, ylim = c(-.4, .4))
+```
+
+
+# Contructing a ``xgboost``-based Diff-in-Diff Estimator
+
+Without additional _parametric_ functional form assumptions on the reduced form equations, it is _not_ guaranteed that the default ``att_gt`` estimator returns a convex combination of causal effects. This is because linear predictors do not necessarily correspond to the conditional expectation functions arising in the doubly-robust score of the group-time average treatment effect. The resulting misspecification error can then lead to negative weights in the aggregation of individual-level treatment effects.
+
+Fortunately, a convex combination of causal effects can be guaranteed (without parametric functional form assumptions) when using machine learning (nonparametric) reduced for estimators.
+
+The ``ddml`` package facilitates the use of a large set of machine learning reduced form estimators, including simultaneous considerations of multiple estimators via (short-)stacking.
+
+To use ``ddml`` estimators with the ``did`` package, we can make use of the ``est_method`` argument of the ``att_gt`` function (see also ``?att_gt``). It is useful to construct an estimation method in two steps:
+
+1. A simple wrapper for ``ddml_att`` that returns the objects needed by ``att_gt``
+2. A second wrapper that hard-codes arguments passed to ``ddml_att`
+
+This two-step approach allows for cleaner code when considering multiple ddml-based estimators (as we do in this article).
+
+The below code-snippet constructs a simple estimation method following step 1:
+```{r}
+# load the ddml package
+library(ddml)
+
+# write a general wrapper for ddml_att
+ddml_did_method <- function(y1, y0, D, covariates, ...) {
+  # Compute difference in outcomes
+  delta_y <- y1 - y0
+  # Compute the ATT
+  att_fit <- ddml_att(y = delta_y, D = D, X = covariates, ...)
+  # Return results
+  inf.func <- att_fit$psi_b + att_fit$att * att_fit$psi_a
+  output <- list(ATT = att_fit$att, att.inf.func = inf.func)
+  return(output)
+}#DDML_DID_METHOD
+```
+
+A potentially suitable machine learning reduced form estimator is gradient tree boosting (see also ``?mdl_xgboost``). The below code snippet completes the second wrapper by hard-coding both the learner and its arguments. Here, we consider 10-fold cross-fitting with a heavily regularized gradient tree bosting estimator (``eta`` is the learning rate, see also ``?mdl_xgboost``).
+
+```{r}
+my_did_xgboost <- function(y1, y0, D, covariates, ...) {
+  # Hard-code learners
+  learners = list(what = mdl_xgboost,
+                  args = list(nround = 500,
+                              params = list(eta = 0.05, max_depth = 1),
+                              early_stopping_rounds = 1))
+  learners_DX = learners
+
+  # Call the general ddml_did method w/ additional hard-coded arguments
+  ddml_did_method(y1, y0, D, covariates,
+                  learners = learners,
+                  learners_DX = learners_DX,
+                  sample_folds = 10,
+                  silent = TRUE)
+}#MY_DID_DDML
+```
+
+We can now use the reduced form estimator ``my_did_xgboost`` and pass it via the ``est_method`` argument:
+
+```{r, fig.width=8, fig.height=10, fig.align='center', out.width="90%", dpi = 200, fig.cap="xgboost-based Diff-in-Diff Estimates."}
+# estimate group-time average treatment effects with ddml
+attgt_xgboost <- att_gt(yname = "lemp",
+                        gname = "first.treat",
+                        idname = "countyreal",
+                        tname = "year",
+                        xformla = ~lpop,
+                        data = mpdta,
+                        est_method = my_did_xgboost)
+
+# summarize the results
+summary(attgt_xgboost)
+
+# plot the coefficients
+ggdid(attgt_xgboost, ylim = c(-.4, .4))
+```
+
+Of course, use of the ``ddml``-based reduced form estimator still allows us to leverage the various other methods of the ``did`` package, including the construction (and visualization of) dynamic average treatment effects:
+
+```{r,  fig.width=8,fig.height=5, fig.align='center', out.width="90%", dpi = 200, fig.cap="xgboost-based Dynamic Treatment Effect Estimates."}
+# aggregate the group-time average treatment effects
+dyn_xgboost <- aggte(attgt_xgboost, type = "dynamic")
+summary(dyn_xgboost)
+ggdid(dyn_xgboost, ylim = c(-.4, .4))
+
+```
+
+The gradient tree boosting-based ATT estimate of about -0.094 is slightly larger than the ATT estimate of about -0.08 of the linear estimator of the ``did`` package.
+
+Given these two coefficients, is there a good reason to choose one over the other?
+
+It is ex-ante difficult to trade-off the potential bias from misspecification that the linear estimator suffers from with the potential bias from estimation error that the gradient tree boosting estimator may suffer from. ``ddml`` allows to resolve this conflict in a data-driven manner by simultaneousconsideration of multiple machine learners via (short-)stacking. We turn to this in the next section.
+
+# Contructing a Shortstacking-based Diff-in-Diff Estimator
+
+Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage the (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
+
+To ensure that machine learners are not spuriously selected, we include the linear control specifications considered by the default ``did`` learner as well. The code snippet below constructs the logistic regression reduced form estimator:
+
+```{r}
+# Write glm wrapper
+mdl_glm <- function(y, X, ...) {
+  df <- data.frame(y, X) # transform data from matrices to data.frame
+  glm_fit <- glm(y ~ ., data = df, ...) # fit glm
+  class(glm_fit) <- c("mdl_glm", class(glm_fit)) # append class
+  return(glm_fit) # return fitted glm object
+}#MDL_GLM
+
+# Write predict.glm wrapper
+predict.mdl_glm <- function(object, newdata) {
+  df <- data.frame(newdata) # transform data from matrices to data.frame
+  predict.glm(object, df, type = "response")
+}#PREDICT.MDL_GLM
+```
+
+Then, we construct a new wrapper for our ``ddml_did_method`` that hard-codes different reduced form estimators:
+
+- linear or logistic regression
+- gradient tree boosting with more and less regularization
+- random forests with more and less regularization
+
+The reduced form estimators are then optimally combined via non-negative least squares. We leverage shortstacking to reduce computational time (see also ``vignette(stacking)``).
+
+```{r}
+my_did_stacking <- function(y1, y0, D, covariates, ...) {
+  # Hard-code learners for outcome reduced-form
+  learners = list(list(fun = ols),
+                  list(fun = mdl_xgboost,
+                       args = list(nround = 500,
+                                   params = list(eta = 0.05, max_depth = 1),
+                                   early_stopping_rounds = 1)),
+                  list(fun = mdl_xgboost,
+                       args = list(nround = 500,
+                                   params = list(eta = 0.1, max_depth = 3),
+                                   early_stopping_rounds = 1)),
+                  list(fun = mdl_ranger,
+                       args = list(num.trees = 1000,
+                                   max.depth = 1)),
+                  list(fun = mdl_ranger,
+                       args = list(num.trees = 1000,
+                                   max.depth = 20)))
+  # Hard-code learners for treatment reduced-form
+  learners_DX = list(list(fun = mdl_glm),
+                  list(fun = mdl_xgboost,
+                       args = list(nround = 500,
+                                   params = list(eta = 0.05, max_depth = 1),
+                                   early_stopping_rounds = 1)),
+                  list(fun = mdl_xgboost,
+                       args = list(nround = 500,
+                                   params = list(eta = 0.05, max_depth = 3),
+                                   early_stopping_rounds = 1)),
+                  list(fun = mdl_ranger,
+                       args = list(num.trees = 1000,
+                                   max.depth = 1)),
+                  list(fun = mdl_ranger,
+                       args = list(num.trees = 1000,
+                                   max.depth = 20)))
+  # Call the general ddml_did method w/ additional hard-coded arguments
+  ddml_did_method(y1, y0, D, covariates,
+                  learners = learners,
+                  learners_DX = learners_DX,
+                  sample_folds = 10,
+                  ensemble_type = "nnls",
+                  shortstack = TRUE,
+                  silent = TRUE)
+}#MY_DID_DDML
+```
+
+Finally, we recompute the group-time average treatment effects using our shortstacking estimator:
+
+```{r, fig.width=8, fig.height=10, fig.align='center', out.width="90%", dpi = 200, fig.cap="Stacking-based Diff-in-Diff Estimates."}
+# estimate group-time average treatment effects with ddml
+attgt_stacking <- att_gt(yname = "lemp",
+                         gname = "first.treat",
+                         idname = "countyreal",
+                         tname = "year",
+                         xformla = ~lpop ,
+                         data = mpdta,
+                         est_method = my_did_stacking)
+
+# summarize the results
+summary(attgt_stacking)
+
+# plot the coefficients
+ggdid(attgt_stacking, ylim = c(-.4, .4))
+```
+The results are largely similar to those of the default linear estimator of the ``did`` package, suggesting that the linear approximation of the reduced forms is sufficiently accurate. (Of course we didn't know that before -- now, at least, we can sleep easy!)
+
+Other settings, in particular settings with multiple control variables, may show starker difference in the final estimates.
+
+```{r,  fig.width=8,fig.height=5, fig.align='center', out.width="90%", dpi = 200, fig.cap="Stacking-based Dynamic Treatment Effect Estimates."}
+# aggregate the group-time average treatment effects
+dyn_stacking <- aggte(attgt_stacking, type = "dynamic")
+summary(dyn_stacking)
+ggdid(dyn_stacking, ylim = c(-.4, .4))
+
+```
+
+
+
+# References
+
+Callaway B, Sant'Anna P (2021). “Difference-in-differences with multiple time periods.” Journal of Econometrics, 200-230.
+
+Callaway B, Sant'Anna P (2021). “did: Difference in Differences.” R package version 2.1.2, https://bcallaway11.github.io/did/.
+
