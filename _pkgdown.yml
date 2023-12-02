@@ -42,7 +42,7 @@ reference:
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
-  - mld_glm
+  - mdl_glm
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
