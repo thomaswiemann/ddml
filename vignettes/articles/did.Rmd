@@ -187,7 +187,7 @@ my_did_xgboost <- function(y1, y0, D, covariates, ...) {
                   learners_DX = learners_DX,
                   sample_folds = 10,
                   silent = TRUE)
-}#MY_DID_DDML
+}#MY_DID_XGBOOST
 ```
 
 We can now use the reduced form estimator ``my_did_xgboost`` and pass it via the ``est_method`` argument:
@@ -289,8 +289,6 @@ It is ex-ante difficult to trade-off the potential bias from misspecification th
 
 # Contructing a Shortstacking-based Diff-in-Diff Estimator
 
-# Contructing a Shortstacking-based Diff-in-Diff Estimator
-
 Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
 
 We construct a new wrapper for our ``ddml_did_method`` that hard-codes different reduced form estimators:
@@ -299,7 +297,7 @@ We construct a new wrapper for our ``ddml_did_method`` that hard-codes different
 - gradient tree boosting with more and less regularization
 - random forests with more and less regularization
 
-The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also ``vignette(stacking)``).
+The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also `vignette("stacking")`).
 
 ```r
 my_did_stacking <- function(y1, y0, D, covariates, ...) {
@@ -343,7 +341,7 @@ my_did_stacking <- function(y1, y0, D, covariates, ...) {
                   ensemble_type = "nnls",
                   shortstack = TRUE,
                   silent = TRUE)
-}#MY_DID_DDML
+}#MY_DID_STACKING
 ```
 
 Finally, we recompute the group-time average treatment effects using our shortstacking estimator:
