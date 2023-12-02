@@ -170,3 +170,39 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Predict using randomForest prediction method
   stats::predict(object, data = newdata, ...)$predictions
 }#PREDICT.MDL_RANGER
+
+# glm ==========================================================================
+
+#' Wrapper for [stats::glm()].
+#'
+#' @family ml_wrapper
+#'
+#' @seealso [stats::glm()]
+#'
+#' @description Simple wrapper for [stats::glm()].
+#'
+#' @param y The outcome variable.
+#' @param X The feature matrix.
+#' @param ... Additional arguments passed to \code{glm}. See
+#'     [stats::glm()] for a complete list of arguments.
+#'
+#' @return \code{mdl_glm} returns an object of S3 class \code{mdl_glm} as a
+#'     simple mask of the return object of [stats::glm()].
+#' @export
+#'
+#' @examples
+#' glm_fit <- mdl_glm(sample(0:1, 100, replace = TRUE),
+#'                    matrix(rnorm(1000), 100, 10))
+#' class(glm_fit)
+mdl_glm <- function(y, X, ...) {
+  df <- data.frame(y, X) # transform data from matrices to data.frame
+  glm_fit <- glm(y ~ ., data = df, ...) # fit glm
+  class(glm_fit) <- c("mdl_glm", class(glm_fit)) # append class
+  return(glm_fit) # return fitted glm object
+}#MDL_GLM
+
+# Prediction method for mdl_glm
+predict.mdl_glm <- function(object, newdata, ...) {
+  df <- data.frame(newdata) # transform data from matrices to data.frame
+  predict.glm(object, df, type = "response", ...)
+}#PREDICT.MDL_GLM

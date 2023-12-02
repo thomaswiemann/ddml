@@ -7,8 +7,10 @@ test_that("ddml_att computes with a single model", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
+  learners_DX <- list(what = mdl_glm)
   ddml_att_fit <- ddml_att(y, D, X,
                            learners = learners,
+                           learners_DX = learners_DX,
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
