@@ -293,7 +293,7 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2512435   0.204141 -1.230735 0.2184219</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2149487  0.2019837 -1.064188 0.2872434</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -313,11 +313,11 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1334056  0.1722788 -0.7743591 0.4387185</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1202229  0.1723253 -0.6976511 0.4853954</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.2393889  0.2021981 -1.1839324 0.2364398</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.2461875  0.2025237 -1.2155982 0.2241380</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error    t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.17035031  0.1920300 -0.8871027 0.3750236</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.06099754  0.1651533 -0.3693390 0.7118751</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.18262527  0.1990469 -0.9174985 0.3588815</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.18472563  0.1994635 -0.9261126 0.3543875</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
