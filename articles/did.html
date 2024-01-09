@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,7 +108,9 @@ flexibly control for covariates – or: difference-in-difference with
 machine learning.</p>
 <p>For an excellent introduction to differences-in-differences with
 multiple time periods, see also <a href="https://bcallaway11.github.io/did/articles/multi-period-did.html" class="external-link">this
-article</a>.</p>
+article</a>. For a detailed discussion of the relevant asymptotic theory
+for double/debiased machine learning difference-in-difference estimators
+see Chang (2020).</p>
 </div>
 <div class="section level2">
 <h2 id="estimation-using-dids-default-estimator">Estimation using <code>did</code>’s Default Estimator<a class="anchor" aria-label="anchor" href="#estimation-using-dids-default-estimator"></a>
@@ -395,7 +397,7 @@ over the other?</p>
 misspecification that the linear estimator suffers from with the
 potential bias from estimation error that the gradient tree boosting
 estimator may suffer from. <code>ddml</code> allows to resolve this
-conflict in a data-driven manner by simultaneousconsideration of
+conflict in a data-driven manner by simultaneous consideration of
 multiple machine learners via (short-)stacking. We turn to this in the
 next section.</p>
 </div>
@@ -507,7 +509,7 @@ our shortstacking estimator:</p>
 <span><span class="co"># plot the coefficients</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%"><p class="caption">
 Stacking-based Diff-in-Diff Estimates.
 </p>
 </div>
@@ -548,7 +550,7 @@ variables, may show starker difference in the final estimates.</p>
 <span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-13-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
 Stacking-based Dynamic Treatment Effect Estimates.
 </p>
 </div>
@@ -560,6 +562,8 @@ Stacking-based Dynamic Treatment Effect Estimates.
 multiple time periods.” Journal of Econometrics, 200-230.</p>
 <p>Callaway B, Sant’Anna P (2021). “did: Difference in Differences.” R
 package version 2.1.2, <a href="https://bcallaway11.github.io/did/" class="external-link uri">https://bcallaway11.github.io/did/</a>.</p>
+<p>Chang NC (2020). “Double/debiased machine learning for
+difference-in-difference models.” The Econometrics Journal, 177-191.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

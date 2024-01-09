@@ -19,7 +19,7 @@ treatment effect on the treated."><!-- mathjax --><script src="https://cdnjs.clo
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -298,7 +298,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1486049 0.01517551 -9.792415 1.213622e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1461397 0.01523314 -9.593539 8.511406e-22</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -319,10 +319,10 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1424329 0.01539778 -9.250221 2.240280e-20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1390627 0.01597647 -8.704222 3.197598e-18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1452165 0.01537276 -9.446351 3.508480e-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1470638 0.01533023 -9.593058 8.551238e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1462121 0.01521454 -9.610023 7.253305e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1351773 0.01583020 -8.539203 1.351506e-17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1428965 0.01523650 -9.378560 6.687969e-21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1446630 0.01518496 -9.526728 1.623193e-21</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
