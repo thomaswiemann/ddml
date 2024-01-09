@@ -14,7 +14,7 @@ vignette: >
 
 This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates -- or: difference-in-difference with machine learning.
 
-For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html).
+For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html). For a detailed discussion of the relevant asymptotic theory for double/debiased machine learning difference-in-difference estimators see Chang (2020).
 
 # Estimation using ``did``'s Default Estimator
 
@@ -285,7 +285,7 @@ The gradient tree boosting-based ATT estimate of about -0.094 is slightly larger
 
 Given these two coefficients, is there a good reason to choose one over the other?
 
-It is ex-ante difficult to trade-off the potential bias from misspecification that the linear estimator suffers from with the potential bias from estimation error that the gradient tree boosting estimator may suffer from. ``ddml`` allows to resolve this conflict in a data-driven manner by simultaneousconsideration of multiple machine learners via (short-)stacking. We turn to this in the next section.
+It is ex-ante difficult to trade-off the potential bias from misspecification that the linear estimator suffers from with the potential bias from estimation error that the gradient tree boosting estimator may suffer from. ``ddml`` allows to resolve this conflict in a data-driven manner by simultaneous consideration of multiple machine learners via (short-)stacking. We turn to this in the next section.
 
 # Contructing a Shortstacking-based Diff-in-Diff Estimator
 
@@ -298,6 +298,7 @@ We construct a new wrapper for our ``ddml_did_method`` that hard-codes different
 - random forests with more and less regularization
 
 The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also `vignette("stacking")`).
+
 
 ```r
 my_did_stacking <- function(y1, y0, D, covariates, ...) {
@@ -391,7 +392,7 @@ ggdid(attgt_stacking, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%" />
+<img src="figures/unnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%" />
 <p class="caption">Stacking-based Diff-in-Diff Estimates.</p>
 </div>
 The results are largely similar to those of the default linear estimator of the ``did`` package, suggesting that the linear approximation of the reduced forms is sufficiently accurate. (Of course we didn't know that before -- now, at least, we can sleep easy!)
@@ -432,7 +433,7 @@ ggdid(dyn_stacking, ylim = c(-.4, .4))
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-13-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%" />
+<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%" />
 <p class="caption">Stacking-based Dynamic Treatment Effect Estimates.</p>
 </div>
 
@@ -443,4 +444,6 @@ ggdid(dyn_stacking, ylim = c(-.4, .4))
 Callaway B, Sant'Anna P (2021). “Difference-in-differences with multiple time periods.” Journal of Econometrics, 200-230.
 
 Callaway B, Sant'Anna P (2021). “did: Difference in Differences.” R package version 2.1.2, https://bcallaway11.github.io/did/.
+
+Chang NC (2020). "Double/debiased machine learning for difference-in-difference models." The Econometrics Journal, 177-191.
 

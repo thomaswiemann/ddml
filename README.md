@@ -18,7 +18,10 @@ estimators as proposed by Chernozhukov et al. (2018). The key feature of
 `ddml` is the straightforward estimation of nuisance parameters using
 (short-)stacking (Wolpert, 1992), which allows for multiple machine
 learners to increase robustness to the underlying data generating
-process.
+process. See also [Ahrens et
+al. (2024)](https://arxiv.org/abs/2401.01645) for a detailed
+illustration of the practical benefits of combining DDML with
+(short-)stacking.
 
 `ddml` is the sister R package to our
 [Stata](https://github.com/aahrens1/ddml/) package, mirroring its key
@@ -137,6 +140,9 @@ and
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
 Double/debiased machine learning in Stata.”
 <https://arxiv.org/abs/2301.09397>
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model averaging
+and double machine learning.” <https://arxiv.org/abs/2401.01645>
 
 Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply:
 Evidence from Exogenous Variation in Family Size.” American Economic

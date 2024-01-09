@@ -196,7 +196,7 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
 #' class(glm_fit)
 mdl_glm <- function(y, X, ...) {
   df <- data.frame(y, X) # transform data from matrices to data.frame
-  glm_fit <- glm(y ~ ., data = df, ...) # fit glm
+  glm_fit <- stats::glm(y ~ ., data = df, ...) # fit glm
   class(glm_fit) <- c("mdl_glm", class(glm_fit)) # append class
   return(glm_fit) # return fitted glm object
 }#MDL_GLM
@@ -204,5 +204,5 @@ mdl_glm <- function(y, X, ...) {
 # Prediction method for mdl_glm
 predict.mdl_glm <- function(object, newdata, ...) {
   df <- data.frame(newdata) # transform data from matrices to data.frame
-  predict.glm(object, df, type = "response", ...)
+  stats::predict.glm(object, df, type = "response", ...)
 }#PREDICT.MDL_GLM
