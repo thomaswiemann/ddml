@@ -37,9 +37,9 @@ test_that("crossval returns residuals by learner in correct order", {
   X <- rnorm(n)
   y <- X + rnorm(n)
   # split data to two folds and compute residuals manually
-  subsample_list <- ddml:::generate_subsamples(n, 2)
+  subsample_list <- generate_subsamples(n, 2)
   oos_res_cv <- numeric(n)
-  for(i in 1:length(subsample_list)) {
+  for(i in seq_along(subsample_list)) {
     idx_i <- subsample_list[[i]]
     ols_fit <- ols(y[-idx_i], X[-idx_i])
     oos_res_cv[idx_i] <- y[idx_i] - X[idx_i] %*% ols_fit$coef
@@ -64,7 +64,6 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   learners <- list(list(fun = ols),
                  list(fun = ols),
                  list(fun = ols))
-
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
                      learners,

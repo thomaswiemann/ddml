@@ -78,9 +78,7 @@ gbm_fit <- mdl_gbm(y, X,
 fitted_values <- predict(gbm_fit, X)
 # Check class
 class(gbm_fit)
-#> [1] "mdl_gbm" "gbm"
 class(fitted_values)
-#> [1] "numeric"
 ```
 
 The classes are what we expected. The wrapper should now be compatible with the ``ddml`` machinery. As a final test, we estimate the local average treatment effect. (Computation can take a while, feel free to set ``n.trees`` or ``interaction.depth`` to a smaller value for this test.)
@@ -99,10 +97,6 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>     Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.2330304   0.204703 -1.138383 0.2549607
 ```
 
 All works well!
@@ -116,7 +110,6 @@ We now consider an example using the neural network implementation of the ``kera
 ```r
 # Load keras
 library(keras)
-#> Warning: package 'keras' was built under R version 4.3.1
 ```
 
 The requirements for the wrapper to be compatible with ``ddml`` are the same as before, however, because estimating a neural network is more involved, we need to write a more extensive wrapper. In particular, our wrapper for the ``keras`` package has four components:
@@ -218,10 +211,6 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = T)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>      Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.07430665  0.0493069 -1.507023 0.1318047
 ```
 
 All works well!
