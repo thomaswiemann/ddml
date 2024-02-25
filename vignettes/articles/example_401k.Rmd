@@ -246,6 +246,8 @@ round(summary(stacking_fit)[2, , 1], 2)
 
 The weights associated with the new base learners are now slightly larger:
 
+
+
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X

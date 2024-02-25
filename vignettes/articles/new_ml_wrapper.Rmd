@@ -45,6 +45,7 @@ We begin with writing an estimation function that takes named arguments ``y`` an
 ```r
 # Load gbm
 library(gbm)
+#> Loaded gbm 2.1.8.1
 
 # Write gbm wrapper
 mdl_gbm <- function(y, X, ...) {
@@ -116,7 +117,6 @@ We now consider an example using the neural network implementation of the ``kera
 ```r
 # Load keras
 library(keras)
-#> Warning: package 'keras' was built under R version 4.3.1
 ```
 
 The requirements for the wrapper to be compatible with ``ddml`` are the same as before, however, because estimating a neural network is more involved, we need to write a more extensive wrapper. In particular, our wrapper for the ``keras`` package has four components:
@@ -220,8 +220,8 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>      Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.07430665  0.0493069 -1.507023 0.1318047
+#>     Estimate Std. Error   t value    Pr(>|t|)
+#>   -0.6972909  0.2566123 -2.717293 0.006581826
 ```
 
 All works well!

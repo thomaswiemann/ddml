@@ -24,7 +24,6 @@ For illustration, consider the data of Callaway and Sant'Anna (2020) on county-l
 ```r
 # Load the did package
 library(did)
-#> Warning: package 'did' was built under R version 4.3.2
 set.seed(588239)
 
 # Print the data
