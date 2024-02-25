@@ -100,8 +100,9 @@
 </h2>
 <p>This article illustrates the computational advantages of
 short-stacking over conventional stacking for estimation of structural
-parameters using double/debiased machine learning. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2023)</a> for
-further discussion short-stacking.</p>
+parameters using double/debiased machine learning. See also Ahrens et
+al. (<a href="https://arxiv.org/abs/2301.09397" class="external-link">2023</a>, <a href="https://arxiv.org/abs/2401.01645" class="external-link">2024</a>) for further discussion
+of short-stacking.</p>
 </div>
 <div class="section level2">
 <h2 id="estimation-with-stacking-and-short-stacking">Estimation with Stacking and Short-Stacking<a class="anchor" aria-label="anchor" href="#estimation-with-stacking-and-short-stacking"></a>
@@ -176,17 +177,19 @@ double/debiased machine learning estimators. As the run-times below
 show, this results in a substantially reduced computational burden:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time single learner:"</span>, <span class="va">time_singlelearner</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time single learner: 9.049</span></span>
+<span><span class="co">#&gt; Time single learner: 8.737</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time short-stacking:"</span>, <span class="va">time_shortstacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time short-stacking: 19.965</span></span>
+<span><span class="co">#&gt; Time short-stacking: 21.295</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Time stacking:      "</span>, <span class="va">time_stacking</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time stacking:       125.658</span></span></code></pre></div>
+<span><span class="co">#&gt; Time stacking:       124.636</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
 Double/debiased machine learning in Stata.” <a href="https://arxiv.org/abs/2301.09397" class="external-link uri">https://arxiv.org/abs/2301.09397</a></p>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model
+averaging and double machine learning.” <a href="https://arxiv.org/abs/2401.01645" class="external-link uri">https://arxiv.org/abs/2401.01645</a></p>
 <p>Angrist J, Evans W (1998). “Children and Their Parents’ Labor Supply:
 Evidence from Exogenous Variation in Family Size.” American Economic
 Review, 88(3), 450-477.</p>
