@@ -56,7 +56,6 @@ format(object.size(X), units = "Mb")
 
 # Memory needed for the dense control matrix
 format(object.size(as.matrix(X)), units = "Mb")
-#> Warning in asMethod(object): sparse->dense coercion: allocating vector of size 1.3 GiB
 #> [1] "1302.3 Mb"
 ```
 # Estimation with Sparse Matrices

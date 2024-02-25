@@ -26,17 +26,6 @@ approaches, random forests, and gradient boosting.
 ```r
 library(ddml)
 library(AER) # for iv regression
-#> Loading required package: car
-#> Loading required package: carData
-#> Loading required package: lmtest
-#> Loading required package: zoo
-#> 
-#> Attaching package: 'zoo'
-#> The following objects are masked from 'package:base':
-#> 
-#>     as.Date, as.Date.numeric
-#> Loading required package: sandwich
-#> Loading required package: survival
 set.seed(713954)
 ```
 
@@ -142,9 +131,6 @@ round(summary(ols_L_fit)$coefficients[2, ], 4)
 
 tsls_L_fit <- ivreg(y ~ D + XL | XL + ZL)
 round(summary(tsls_L_fit)$coefficients[2, ], 4)
-#> Warning in printHypothesis(L, rhs, names(b)): one or more coefficients in the hypothesis include
-#>      arithmetic operators in their names;
-#>   the printed representation of the hypothesis will be omitted
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>    -0.1258     0.0070   -17.8691     0.0000
 ```
@@ -222,7 +208,7 @@ t(round(summary(stacking_fit), 4)[2, , ])
 #> FPLIV estimation results: 
 #> 
 #>      Estimate Std. Error  t value Pr(>|t|)
-#> [1,]  -0.0982     0.0092 -10.7037        0
+#> [1,]  -0.0982     0.0092 -10.7008        0
 ```
 Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
 
@@ -231,13 +217,13 @@ To better understand the composition of the final estimator, it is often useful 
 
 ```r
 sapply(stacking_fit$weights, round, 4)
-#>         y_X   D1_X  D1_XZ
-#> [1,] 0.0000 0.0000 0.0000
-#> [2,] 0.0000 0.0000 0.0000
-#> [3,] 0.0000 0.0000 0.0000
-#> [4,] 0.0000 0.0000 0.0000
-#> [5,] 0.4394 0.4501 0.3804
-#> [6,] 0.5606 0.5499 0.6196
+#>         y_X D1_X  D1_XZ
+#> [1,] 0.0000 0.00 0.0000
+#> [2,] 0.0000 0.00 0.0000
+#> [3,] 0.0000 0.00 0.0000
+#> [4,] 0.0000 0.00 0.0000
+#> [5,] 0.4394 0.45 0.3804
+#> [6,] 0.5606 0.55 0.6196
 ```
 
 # Elasticities
@@ -287,14 +273,16 @@ In addition to ``ddml``, we can also consider estimators from the ``hdm`` packag
 ```r
 # Load hdm
 library(hdm)
-#> Error in library(hdm): there is no package called 'hdm'
 
 # Compute post-lasso IV estimator with the plug-in penalty
 rlassoIV_fit <- rlassoIV(x = XL, d = D, y = y, z = ZL,
                          select.Z = TRUE, select.X = FALSE, post = TRUE)
-#> Error in rlassoIV(x = XL, d = D, y = y, z = ZL, select.Z = TRUE, select.X = FALSE, : could not find function "rlassoIV"
 summary(rlassoIV_fit)
-#> Error in eval(expr, envir, enclos): object 'rlassoIV_fit' not found
+#> [1] "Estimates and significance testing of the effect of target variables in the IV regression model"
+#>        coeff.      se. t-value  p-value    
+#> [1,] -0.31558  0.05354  -5.894 3.78e-09 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The coefficient is drastically different from previous estimates, including the double/debaised machine learning estimates that included lasso-based approaches.
@@ -304,13 +292,11 @@ To gain some insight into potential causes for these differences, we check which
 
 ```r
 Zr_ <- ZL[, which(rlassoIV_fit$selected[1:48])]
-#> Error in eval(expr, envir, enclos): object 'rlassoIV_fit' not found
 dim(Zr_)[2]
-#> Error in eval(expr, envir, enclos): object 'Zr_' not found
+#> [1] 2
 Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
-#> Error in eval(expr, envir, enclos): object 'rlassoIV_fit' not found
 dim(Xr_)[2]
-#> Error in eval(expr, envir, enclos): object 'Xr_' not found
+#> [1] 6
 ```
 From the stacking weights above, we know that the double/debaised machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
 
@@ -329,9 +315,11 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         shortstack = T,
                         sample_folds = 10,
                         silent = T)
-#> Error in eval(expr, envir, enclos): object 'Xr_' not found
 round(summary(stacking_r_fit)[2, , 1], 4)
-#> Error in eval(expr, envir, enclos): object 'stacking_r_fit' not found
+#> FPLIV estimation results: 
+#> 
+#>   Estimate Std. Error    t value   Pr(>|t|) 
+#>    -0.1044     0.0128    -8.1682     0.0000
 ```
 
 The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
@@ -339,7 +327,9 @@ The similarity of the coefficient estimates to the initial stacking estimates su
 
 ```r
 sapply(stacking_r_fit$weights, round, 4)
-#> Error in eval(expr, envir, enclos): object 'stacking_r_fit' not found
+#>       y_X   D1_X  D1_XZ
+#> [1,] 0.08 0.1287 0.0439
+#> [2,] 0.92 0.8713 0.9561
 ```
 
 The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.

@@ -45,6 +45,7 @@ We begin with writing an estimation function that takes named arguments ``y`` an
 ```r
 # Load gbm
 library(gbm)
+#> Loaded gbm 2.1.8.1
 
 # Write gbm wrapper
 mdl_gbm <- function(y, X, ...) {
@@ -78,7 +79,9 @@ gbm_fit <- mdl_gbm(y, X,
 fitted_values <- predict(gbm_fit, X)
 # Check class
 class(gbm_fit)
+#> [1] "mdl_gbm" "gbm"
 class(fitted_values)
+#> [1] "numeric"
 ```
 
 The classes are what we expected. The wrapper should now be compatible with the ``ddml`` machinery. As a final test, we estimate the local average treatment effect. (Computation can take a while, feel free to set ``n.trees`` or ``interaction.depth`` to a smaller value for this test.)
@@ -97,6 +100,10 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
+#> LATE estimation results: 
+#>  
+#>     Estimate Std. Error   t value  Pr(>|t|)
+#>   -0.2330304   0.204703 -1.138383 0.2549607
 ```
 
 All works well!
@@ -211,6 +218,10 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = T)
 summary(late_fit)
+#> LATE estimation results: 
+#>  
+#>     Estimate Std. Error   t value    Pr(>|t|)
+#>   -0.6972909  0.2566123 -2.717293 0.006581826
 ```
 
 All works well!
