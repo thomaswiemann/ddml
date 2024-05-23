@@ -131,7 +131,7 @@ short-stacking, sparse matrices, and easy-to-learn syntax, we hope
 R and Python package.
 [`DoubleML`](https://docs.doubleml.org/stable/index.html) supports many
 advanced features such as [multiway
-clustering](https://docs.doubleml.org/stable/examples/r_double_ml_multiway_cluster.html)
+clustering](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html)
 and
 [stacking](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html).
 
