@@ -33,26 +33,33 @@ test_that("crossval returns residuals by learner (w/o instruments)", {
 
 test_that("crossval returns residuals by learner in correct order", {
   # Simulate small dataset
-  n <- 100
-  X <- rnorm(n)
-  y <- X + rnorm(n)
+  n <- 147
+  X <- matrix(rnorm(n * 10), n, 10)
+  y <- rowSums(X[, 1:3]) + rnorm(n)
   # split data to two folds and compute residuals manually
   subsample_list <- generate_subsamples(n, 2)
-  oos_res_cv <- numeric(n)
+  oos_res_cv <- matrix(0, n, 2)
   for(i in seq_along(subsample_list)) {
     idx_i <- subsample_list[[i]]
-    ols_fit <- ols(y[-idx_i], X[-idx_i])
-    oos_res_cv[idx_i] <- y[idx_i] - X[idx_i] %*% ols_fit$coef
+    # ols 1
+    ols_fit <- ols(y[-idx_i], X[-idx_i, 1:5])
+    oos_res_cv[idx_i, 1] <- y[idx_i] - X[idx_i, 1:5] %*% ols_fit$coef
+    # ols 1
+    ols_fit <- ols(y[-idx_i], X[-idx_i, 1:10])
+    oos_res_cv[idx_i, 2] <- y[idx_i] - X[idx_i, 1:10] %*% ols_fit$coef
   }#FOR
   # Compute cross-validation with crossval using the same subsamples
-  cv_res <- crossval(y, as.matrix(X),
-                     learners = list(list(fun = ols),
-                                     list(fun = ols)),
+  cv_res <- crossval(y, X,
+                     learners = list(list(fun = ols,
+                                          assign_X = c(1:5)),
+                                     list(fun = ols,
+                                          assign_X = c(1:10))),
                      cv_subsamples = subsample_list,
                      silent = T)
+
   # Check output with expectations
-  expect_equal(cv_res$oos_resid[, 1], oos_res_cv)
-  expect_equal(cv_res$oos_resid[, 2], oos_res_cv)
+  expect_equal(round(cv_res$oos_resid[, 1], 3), round(oos_res_cv[, 1], 3))
+  expect_equal(round(cv_res$oos_resid[, 2], 3), round(oos_res_cv[, 2], 3))
 })#TEST_THAT
 
 test_that("crossval returns residuals by learner (w/ instruments)", {
@@ -63,12 +70,12 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   # Define arguments
   learners <- list(list(fun = ols),
                  list(fun = ols),
-                 list(fun = ols))
+                 list(fun = mdl_glmnet))
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
                      learners,
                      cv_folds = 3,
                      silent = T)
   # Check output with expectations
-  expect_equal(all(cv_res$oos_resid[,2] == cv_res$oos_resid[,3]), TRUE)
+  expect_equal(all(cv_res$oos_resid[,1] == cv_res$oos_resid[,2]), TRUE)
 })#TEST_THAT
