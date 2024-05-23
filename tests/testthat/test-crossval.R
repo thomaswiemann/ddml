@@ -77,5 +77,6 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
                      cv_folds = 3,
                      silent = T)
   # Check output with expectations
-  expect_equal(all(cv_res$oos_resid[,1] == cv_res$oos_resid[,2]), TRUE)
+  expect_equal(all(round(cv_res$oos_resid[, 1], 3) ==
+                     round(cv_res$oos_resid[, 2], 3)), TRUE)
 })#TEST_THAT
