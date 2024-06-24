@@ -339,7 +339,7 @@ summary.ddml_fpliv <- function(object, ...) {
                                        ensemble_type = object$ensemble_type,
                                        ...)
   summary_res <- list(coefficients = coefficients, parameter = "PLIV")
-  class(summary_res) <- "summary.ddml_pliv"
+  class(summary_res) <- "summary.ddml_fpliv"
   summary_res
 }#SUMMARY.DDML_FPLIV
 
