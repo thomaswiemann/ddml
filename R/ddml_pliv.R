@@ -274,9 +274,8 @@ summary.ddml_pliv <- function(object, ...) {
   coefficients <- organize_inf_results(fit_obj_list = object$iv_fit,
                                        ensemble_type = object$ensemble_type,
                                        ...)
-  summary_res <- list(coefficients = coefficients, parameter = "PLIV")
-  class(summary_res) <- "summary.ddml_pliv"
-  summary_res
+  class(coefficients) <- c("summary.ddml_pliv", class(coefficients))
+  coefficients
 }#SUMMARY.DDML_PLIV
 
 #' @rdname print.summary.ddml_plm
@@ -284,5 +283,6 @@ summary.ddml_pliv <- function(object, ...) {
 #' @export
 print.summary.ddml_pliv <- function(x, ...) {
   cat("PLIV estimation results: \n \n")
-  print(x$coefficients)
+  class(x) <- class(x)[-1]
+  print(x)
 }#PRINT.SUMMARY.DDML_PLIV

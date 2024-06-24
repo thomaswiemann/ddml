@@ -174,7 +174,7 @@ test_that("summary.ddml_plm computes with a single model", {
   inf_res <- summary(ddml_plm_fit, type = "HC1")
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res$coefficients), 8)
+  expect_equal(length(inf_res), 8)
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with multiple ensemble procedures", {
@@ -201,7 +201,7 @@ test_that("summary.ddml_plm computes with multiple ensemble procedures", {
   inf_res <- summary(ddml_plm_fit, type = "HC1")
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res$coefficients), 8 * 7)
+  expect_equal(length(inf_res), 8 * 7)
 })#TEST_THAT
 
 test_that("ddml_plm computes with an ensemble procedure and multivariate D", {

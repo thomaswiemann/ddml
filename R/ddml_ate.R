@@ -296,10 +296,8 @@ summary.ddml_ate <- function(object, ...) {
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
                                                      object$ensemble_type)
-  summary_res <- list(coefficients = coefficients,
-                      parameter = "ATE")
-  class(summary_res) <- "summary.ddml_ate"
-  summary_res
+  class(coefficients) <- c("summary.ddml_ate", class(coefficients))
+  coefficients
 }#SUMMARY.DDML_ATE
 
 #' Print Methods for Treatment Effect Estimators.
@@ -331,5 +329,6 @@ summary.ddml_ate <- function(object, ...) {
 #' summary(ate_fit)
 print.summary.ddml_ate <- function(x, ...) {
   cat("ATE estimation results: \n \n")
-  print(x$coefficients)
+  class(x) <- class(x)[-1]
+  print(x)
 }#PRINT.SUMMARY.DDML_ATE

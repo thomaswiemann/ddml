@@ -165,10 +165,8 @@ summary.ddml_att <- function(object, ...) {
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
                                                      object$ensemble_type)
-  summary_res <- list(coefficients = coefficients,
-                      parameter = "ATT")
-  class(summary_res) <- "summary.ddml_att"
-  summary_res
+  class(coefficients) <- c("summary.ddml_att", class(coefficients))
+  coefficients
 }#SUMMARY.DDML_ATT
 
 #' @rdname print.summary.ddml_ate
@@ -176,5 +174,6 @@ summary.ddml_att <- function(object, ...) {
 #' @export
 print.summary.ddml_att <- function(x, ...) {
   cat("ATT estimation results: \n \n")
-  print(x$coefficients)
+  class(x) <- class(x)[-1]
+  print(x)
 }#PRINT.SUMMARY.DDML_ATT
