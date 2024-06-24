@@ -51,9 +51,9 @@ test_that("crossval returns residuals by learner in correct order", {
   # Compute cross-validation with crossval using the same subsamples
   cv_res <- crossval(y, X,
                      learners = list(list(fun = ols,
-                                          assign_X = c(1:5)),
+                                          assign_X = 1:5),
                                      list(fun = ols,
-                                          assign_X = c(1:10))),
+                                          assign_X = 1:10)),
                      cv_subsamples = subsample_list,
                      silent = T)
 

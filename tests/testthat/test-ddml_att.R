@@ -99,9 +99,11 @@ test_that("summary.ddml_att computes with a single model", {
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
-  capture_output({inf_res <- summary(ddml_att_fit)})
+  # Compute inference results & test print
+  inf_res <- summary(ddml_att_fit)
+  capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 4)
+  expect_equal(length(inf_res$coefficients), 4)
 })#TEST_THAT
 
 test_that("summary.ddml_att computes with multiple ensemble procedures", {
@@ -121,7 +123,9 @@ test_that("summary.ddml_att computes with multiple ensemble procedures", {
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
-  capture_output({inf_res <- summary(ddml_att_fit)}, print = FALSE)
+  # Compute inference results & test print
+  inf_res <- summary(ddml_att_fit)
+  capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 16)
+  expect_equal(length(inf_res$coefficients), 16)
 })#TEST_THAT

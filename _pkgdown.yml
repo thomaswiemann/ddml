@@ -30,6 +30,11 @@ navbar:
     - github
 
 reference:
+- title: internal
+  contents:
+  - ddml
+  - matches("print")
+  - matches("summary")
 - title: Supported Models
   contents:
   - ddml_plm
@@ -38,7 +43,6 @@ reference:
   - ddml_pliv
   - ddml_fpliv
   - ddml_late
-  - matches("summary")
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -54,9 +58,6 @@ reference:
 - title: Dataset
   contents:
   - AE98
-- title: internal
-  contents:
-  - ddml
 
 articles:
 - title: Key Features

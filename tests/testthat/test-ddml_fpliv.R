@@ -252,9 +252,10 @@ test_that("summary.ddml_fpliv computes with a single model", {
                                learners,
                                sample_folds = 3,
                                silent = T)
-  capture_output({inf_res <- summary(ddml_fpliv_fit, type = "HC1")})
+  inf_res <- summary(ddml_fpliv_fit, type = "HC1")
+  capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 8)
+  expect_equal(length(inf_res$coefficients), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with an ensemble procedure, multi D", {
