@@ -1,6 +1,6 @@
 Package: ddml
 Title: Double/Debiased Machine Learning
-Version: 0.2.1
+Version: 0.2.1.9000
 Date: 2024-05-23
 Authors@R: c(
     person("Achim", "Ahrens", role = "aut"),
