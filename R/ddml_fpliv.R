@@ -338,7 +338,7 @@ summary.ddml_fpliv <- function(object, ...) {
   coefficients <- organize_inf_results(fit_obj_list = object$iv_fit,
                                        ensemble_type = object$ensemble_type,
                                        ...)
-  summary_res <- list(coefficients = coefficients, parameter = "PLIV")
+  summary_res <- list(coefficients = coefficients, parameter = "FPLIV")
   class(summary_res) <- "summary.ddml_fpliv"
   summary_res
 }#SUMMARY.DDML_FPLIV
