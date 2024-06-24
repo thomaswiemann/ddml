@@ -372,10 +372,8 @@ summary.ddml_late <- function(object, ...) {
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
                                                      object$ensemble_type)
-  summary_res <- list(coefficients = coefficients,
-                      parameter = "LATE")
-  class(summary_res) <- "summary.ddml_late"
-  summary_res
+  class(coefficients) <- c("summary.ddml_late", class(coefficients))
+  coefficients
 }#SUMMARY.DDML_LATE
 
 #' @rdname print.summary.ddml_ate
@@ -383,6 +381,7 @@ summary.ddml_late <- function(object, ...) {
 #' @export
 print.summary.ddml_late <- function(x, ...) {
   cat("LATE estimation results: \n \n")
-  print(x$coefficients)
+  class(x) <- class(x)[-1]
+  print(x)
 }#PRINT.SUMMARY.DDML_LATE
 

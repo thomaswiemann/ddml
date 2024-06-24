@@ -103,7 +103,7 @@ test_that("summary.ddml_att computes with a single model", {
   inf_res <- summary(ddml_att_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res$coefficients), 4)
+  expect_equal(length(inf_res), 4)
 })#TEST_THAT
 
 test_that("summary.ddml_att computes with multiple ensemble procedures", {
@@ -127,5 +127,5 @@ test_that("summary.ddml_att computes with multiple ensemble procedures", {
   inf_res <- summary(ddml_att_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res$coefficients), 16)
+  expect_equal(length(inf_res), 16)
 })#TEST_THAT
