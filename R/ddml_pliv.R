@@ -276,13 +276,13 @@ summary.ddml_pliv <- function(object, ...) {
                                        ...)
   summary_res <- list(coefficients = coefficients, parameter = "PLIV")
   class(summary_res) <- "summary.ddml_pliv"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_PLIV
 
 #' @rdname print.summary.ddml_plm
 #'
 #' @export
-print.summary.ddml_pliv <- function(object, ...) {
+print.summary.ddml_pliv <- function(x, ...) {
   cat("PLIV estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_PLIV

@@ -168,13 +168,13 @@ summary.ddml_att <- function(object, ...) {
   summary_res <- list(coefficients = coefficients,
                       parameter = "ATT")
   class(summary_res) <- "summary.ddml_att"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_ATT
 
 #' @rdname print.summary.ddml_ate
 #'
 #' @export
-print.summary.ddml_att <- function(object, ...) {
+print.summary.ddml_att <- function(x, ...) {
   cat("ATT estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_ATT

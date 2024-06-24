@@ -375,14 +375,14 @@ summary.ddml_late <- function(object, ...) {
   summary_res <- list(coefficients = coefficients,
                       parameter = "LATE")
   class(summary_res) <- "summary.ddml_late"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_LATE
 
 #' @rdname print.summary.ddml_ate
 #'
 #' @export
-print.summary.ddml_late <- function(object, ...) {
+print.summary.ddml_late <- function(x, ...) {
   cat("LATE estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_LATE
 

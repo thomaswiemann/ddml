@@ -5,7 +5,7 @@ generate_subsamples <- function(nobs, sample_folds) {
   subsamples <- sapply(1:sample_folds,
                        function(x) {which(sample_groups == x)},
                        simplify = F)
-  return(subsamples)
+  subsamples
 }#GENERATE_SUBSAMPLES
 
 # Simple generalized inverse wrapper.
@@ -17,7 +17,7 @@ csolve <- function(X) {
     X_inv <- MASS::ginv(X)
   }#IF
   # Return (generalized) inverse
-  return(X_inv)
+  X_inv
 }#CSOLVE
 
 # Function to pull oosresid from get_CEF results
@@ -54,8 +54,8 @@ organize_inf_results <- function(fit_obj_list, ensemble_type, ...) {
                                 c("Estimate", "Std. Error",
                                   "t value", "Pr(>|t|)"),
                                 ensemble_type)
-  # Print inference results
-  return(inf_results)
+  # Return inference results
+  inf_results
 }#COMPUTE_INF_RESULTS
 
 # Function to compute std. errors, t-vals, and p-vals for plm, pliv, and fpliv.
@@ -92,12 +92,11 @@ organize_interactive_inf_results <- function(coef, psi_a, psi_b,
                                                   psi_a = psi_a[, ens],
                                                   psi_b = psi_b[, ens])
   }#FOR
-  # Name and print output
+  # Name and return output
   dimnames(inf_results) <- list(ensemble_type,
                                 c("Estimate", "Std. Error",
                                   "t value", "Pr(>|t|)"))
   inf_results
-  #print(inf_results)
 }#ORGANIZE_INTERACTIVE_INF_RESULTS
 
 # Function to compute std. errors, t-vals, and p-vals for ate and late.
@@ -114,5 +113,5 @@ compute_interactive_inf_results_by_ensemble <- function(coef, psi_a, psi_b) {
   # Store results in a matrix
   inf_results <- c(coef, std_error, t_values, p_value)
   # Return results
-  return(inf_results)
+  inf_results
 }#COMPUTE_INTERACTIVE_INF_RESULTS_BY_ENSEMBLE

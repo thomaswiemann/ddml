@@ -340,13 +340,13 @@ summary.ddml_fpliv <- function(object, ...) {
                                        ...)
   summary_res <- list(coefficients = coefficients, parameter = "PLIV")
   class(summary_res) <- "summary.ddml_pliv"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_FPLIV
 
 #' @rdname print.summary.ddml_plm
 #'
 #' @export
-print.summary.ddml_fpliv <- function(object, ...) {
+print.summary.ddml_fpliv <- function(x, ...) {
   cat("FPLIV estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_FPLIV

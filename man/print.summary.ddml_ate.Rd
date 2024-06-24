@@ -6,14 +6,14 @@
 \alias{print.summary.ddml_late}
 \title{Print Methods for Treatment Effect Estimators.}
 \usage{
-\method{print}{summary.ddml_ate}(object, ...)
+\method{print}{summary.ddml_ate}(x, ...)
 
-\method{print}{summary.ddml_att}(object, ...)
+\method{print}{summary.ddml_att}(x, ...)
 
-\method{print}{summary.ddml_late}(object, ...)
+\method{print}{summary.ddml_late}(x, ...)
 }
 \arguments{
-\item{object}{An object of class \code{summary.ddml_ate},
+\item{x}{An object of class \code{summary.ddml_ate},
 \code{summary.ddml_att}, and \code{ddml_late}, as returned by
 \code{\link[=summary.ddml_ate]{summary.ddml_ate()}}, \code{\link[=summary.ddml_att]{summary.ddml_att()}}, and
 \code{\link[=summary.ddml_late]{summary.ddml_late()}}, respectively.}

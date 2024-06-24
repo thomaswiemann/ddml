@@ -325,14 +325,14 @@ summary.ddml_plm <- function(object, ...) {
                                        ...)
   summary_res <- list(coefficients = coefficients, parameter = "PLM")
   class(summary_res) <- "summary.ddml_plm"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_PLM
 
 #' Print Methods for Treatment Effect Estimators.
 #'
 #' @description Inference methods for treatment effect estimators.
 #'
-#' @param object An object of class \code{summary.ddml_plm},
+#' @param x An object of class \code{summary.ddml_plm},
 #'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as
 #'     returned by [ddml::summary.ddml_plm()], [ddml::summary.ddml_pliv()],
 #'     and [ddml::summary.ddml_fpliv()], respectively.
@@ -355,7 +355,7 @@ summary.ddml_plm <- function(object, ...) {
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' summary(plm_fit)
-print.summary.ddml_plm <- function(object, ...) {
+print.summary.ddml_plm <- function(x, ...) {
   cat("PLM estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_PLM

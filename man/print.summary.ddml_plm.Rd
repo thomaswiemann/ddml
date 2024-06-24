@@ -6,14 +6,14 @@
 \alias{print.summary.ddml_plm}
 \title{Print Methods for Treatment Effect Estimators.}
 \usage{
-\method{print}{summary.ddml_fpliv}(object, ...)
+\method{print}{summary.ddml_fpliv}(x, ...)
 
-\method{print}{summary.ddml_pliv}(object, ...)
+\method{print}{summary.ddml_pliv}(x, ...)
 
-\method{print}{summary.ddml_plm}(object, ...)
+\method{print}{summary.ddml_plm}(x, ...)
 }
 \arguments{
-\item{object}{An object of class \code{summary.ddml_plm},
+\item{x}{An object of class \code{summary.ddml_plm},
 \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as
 returned by \code{\link[=summary.ddml_plm]{summary.ddml_plm()}}, \code{\link[=summary.ddml_pliv]{summary.ddml_pliv()}},
 and \code{\link[=summary.ddml_fpliv]{summary.ddml_fpliv()}}, respectively.}

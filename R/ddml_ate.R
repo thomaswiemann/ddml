@@ -299,14 +299,14 @@ summary.ddml_ate <- function(object, ...) {
   summary_res <- list(coefficients = coefficients,
                       parameter = "ATE")
   class(summary_res) <- "summary.ddml_ate"
-  return(summary_res)
+  summary_res
 }#SUMMARY.DDML_ATE
 
 #' Print Methods for Treatment Effect Estimators.
 #'
 #' @description Inference methods for treatment effect estimators.
 #'
-#' @param object An object of class \code{summary.ddml_ate},
+#' @param x An object of class \code{summary.ddml_ate},
 #'     \code{summary.ddml_att}, and \code{ddml_late}, as returned by
 #'     [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()], and
 #'     [ddml::summary.ddml_late()], respectively.
@@ -329,7 +329,7 @@ summary.ddml_ate <- function(object, ...) {
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' summary(ate_fit)
-print.summary.ddml_ate <- function(object, ...) {
+print.summary.ddml_ate <- function(x, ...) {
   cat("ATE estimation results: \n \n")
-  print(object$coefficients)
+  print(x$coefficients)
 }#PRINT.SUMMARY.DDML_ATE

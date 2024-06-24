@@ -1,5 +1,7 @@
 # ddml (development version)
 
+* Fixes output of ``ddml::print.summary.ddml_plm`` and ``ddml::print.summary.ddml_ate`` (#57).
+
 # ddml 0.2.1
 
 * Fixes permuted residuals returned by ``ddml::crossval`` (#54).
