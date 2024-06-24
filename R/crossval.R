@@ -94,8 +94,9 @@ crossval <- function(y, X, Z = NULL,
   })#SAPPLY
 
   # Compile residual matrix
-  oos_resid <- unlist(cv_res)[order(unlist(cv_subsamples))]
+  oos_resid <- unlist(cv_res)
   oos_resid <- matrix(oos_resid, nobs, nlearners)
+  oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSE]
 
   # Compute MSPE by learner
   mspe <- colMeans(oos_resid^2)
