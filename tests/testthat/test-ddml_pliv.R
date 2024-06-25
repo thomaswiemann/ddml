@@ -144,7 +144,8 @@ test_that("summary.ddml_pliv computes with a single model", {
                              learners,
                              sample_folds = 3,
                              silent = T)
-  capture_output({summary(ddml_pliv_fit, type = "HC1")})
+  inf_res <- summary(ddml_pliv_fit, type = "HC1")
+  capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 1)
 })#TEST_THAT
@@ -167,7 +168,8 @@ test_that("summary.ddml_pliv computes with custom ensemble weights", {
                              sample_folds = 3,
                              custom_ensemble_weights = diag(1, 2),
                              silent = T)
-  capture_output({summary(ddml_pliv_fit, type = "HC1")})
+  inf_res <- summary(ddml_pliv_fit, type = "HC1")
+  capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 3)
 })#TEST_THAT

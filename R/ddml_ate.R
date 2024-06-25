@@ -290,10 +290,46 @@ summary.ddml_ate <- function(object, ...) {
   # Check whether stacking was used, replace ensemble type if TRUE
   single_learner <- ("what" %in% names(object$learners))
   if (single_learner) object$ensemble_type <- " "
-  # Compute and print inference results
-  cat("ATE estimation results: \n \n")
-  organize_interactive_inf_results(coef = object$ate,
-                                   psi_a = object$psi_a,
-                                   psi_b = object$psi_b,
-                                   ensemble_type = object$ensemble_type)
+  # Compute and return inference results
+  coefficients <- organize_interactive_inf_results(coef = object$ate,
+                                                   psi_a = object$psi_a,
+                                                   psi_b = object$psi_b,
+                                                   ensemble_type =
+                                                     object$ensemble_type)
+  summary_res <- list(coefficients = coefficients,
+                      parameter = "ATE")
+  class(summary_res) <- "summary.ddml_ate"
+  return(summary_res)
 }#SUMMARY.DDML_ATE
+
+#' Print Methods for Treatment Effect Estimators.
+#'
+#' @description Inference methods for treatment effect estimators.
+#'
+#' @param object An object of class \code{summary.ddml_ate},
+#'     \code{summary.ddml_att}, and \code{ddml_late}, as returned by
+#'     [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()], and
+#'     [ddml::summary.ddml_late()], respectively.
+#' @param ... Currently unused.
+#'
+#' @return NULL.
+#'
+#' @export
+#'
+#' @examples
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the average treatment effect using a single base learner, ridge.
+#' ate_fit <- ddml_ate(y, D, X,
+#'                     learners = list(what = mdl_glmnet,
+#'                                     args = list(alpha = 0)),
+#'                     sample_folds = 2,
+#'                     silent = TRUE)
+#' summary(ate_fit)
+print.summary.ddml_ate <- function(object, ...) {
+  cat("ATE estimation results: \n \n")
+  print(object$coefficients)
+}#PRINT.SUMMARY.DDML_ATE

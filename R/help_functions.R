@@ -96,7 +96,8 @@ organize_interactive_inf_results <- function(coef, psi_a, psi_b,
   dimnames(inf_results) <- list(ensemble_type,
                                 c("Estimate", "Std. Error",
                                   "t value", "Pr(>|t|)"))
-  print(inf_results)
+  inf_results
+  #print(inf_results)
 }#ORGANIZE_INTERACTIVE_INF_RESULTS
 
 # Function to compute std. errors, t-vals, and p-vals for ate and late.

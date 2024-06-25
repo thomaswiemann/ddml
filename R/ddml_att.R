@@ -160,9 +160,21 @@ summary.ddml_att <- function(object, ...) {
   single_learner <- ("what" %in% names(object$learners))
   if (single_learner) object$ensemble_type <- " "
   # Compute and print inference results
-  cat("ATT estimation results: \n \n")
-  organize_interactive_inf_results(coef = object$att,
-                                   psi_a = object$psi_a,
-                                   psi_b = object$psi_b,
-                                   ensemble_type = object$ensemble_type)
+  coefficients <- organize_interactive_inf_results(coef = object$att,
+                                                   psi_a = object$psi_a,
+                                                   psi_b = object$psi_b,
+                                                   ensemble_type =
+                                                     object$ensemble_type)
+  summary_res <- list(coefficients = coefficients,
+                      parameter = "ATT")
+  class(summary_res) <- "summary.ddml_att"
+  return(summary_res)
 }#SUMMARY.DDML_ATT
+
+#' @rdname print.summary.ddml_ate
+#'
+#' @export
+print.summary.ddml_att <- function(object, ...) {
+  cat("ATT estimation results: \n \n")
+  print(object$coefficients)
+}#PRINT.SUMMARY.DDML_ATT
