@@ -12,7 +12,7 @@ vignette: >
 
 # Introduction
 
-This article illustrates the computational advantages of short-stacking over conventional stacking for estimation of structural parameters using double/debiased machine learning. See also Ahrens et al. ([2023](https://arxiv.org/abs/2301.09397), [2024](https://arxiv.org/abs/2401.01645)) for further discussion of short-stacking.
+This article illustrates the computational advantages of short-stacking over conventional stacking for estimation of structural parameters using double/debiased machine learning. See also Ahrens et al. ([2024a](https://arxiv.org/abs/2301.09397), [2024b](https://arxiv.org/abs/2401.01645)) for further discussion of short-stacking.
 
 # Estimation with Stacking and Short-Stacking
 
@@ -91,9 +91,11 @@ cat("Time stacking:      ", time_stacking[1])
 
 # References
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased machine learning in Stata." Stata Journal, 2024, 24(1): 3-45.
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
+Double/debiased machine learning in Stata.” Stata Journal, 24(1):
+3-45.
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model averaging and double machine learning." <https://arxiv.org/abs/2401.01645>
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). "Model averaging and double machine learning." <https://arxiv.org/abs/2401.01645>
 
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence 
     from Exogenous Variation in Family Size." American Economic

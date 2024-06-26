@@ -19,7 +19,7 @@ estimators as proposed by Chernozhukov et al. (2018). The key feature of
 (short-)stacking (Wolpert, 1992), which allows for multiple machine
 learners to increase robustness to the underlying data generating
 process. See also [Ahrens et
-al. (2024)](https://arxiv.org/abs/2401.01645) for a detailed
+al. (2024b)](https://arxiv.org/abs/2401.01645) for a detailed
 illustration of the practical benefits of combining DDML with
 (short-)stacking.
 
@@ -27,7 +27,7 @@ illustration of the practical benefits of combining DDML with
 [Stata](https://github.com/aahrens1/ddml/) package, mirroring its key
 features while also leveraging R to simplify estimation with
 user-provided machine learners and/or sparse matrices. See also [Ahrens
-et al. (2023)](https://arxiv.org/abs/2301.09397) with additional
+et al. (2024a)](https://arxiv.org/abs/2301.09397) with additional
 discussion of the supported causal models and benefits of
 (short)-stacking.
 
@@ -137,11 +137,11 @@ and
 
 ## References
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
-Double/debiased machine learning in Stata.” Stata Journal, 2024, 24(1):
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
+Double/debiased machine learning in Stata.” Stata Journal, 24(1):
 3-45.
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model averaging
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging
 and double machine learning.” <https://arxiv.org/abs/2401.01645>
 
 Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply:
