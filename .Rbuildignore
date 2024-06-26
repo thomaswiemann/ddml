@@ -19,3 +19,4 @@
 ^flake.nix$
 ^.direnv$
 ^CRAN-SUBMISSION$
+^debugging$
