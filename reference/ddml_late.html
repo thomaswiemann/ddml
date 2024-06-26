@@ -91,6 +91,7 @@
 <span>  subsamples_Z1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_Z0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_Z1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trim <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -199,6 +200,11 @@ for cross-validation. Arguments are separated for observations with
 \(Z=0\) and \(Z=1\), respectively.</p></dd>
 
 
+<dt>trim</dt>
+<dd><p>Number in (0, 1) for trimming the estimated propensity scores at
+<code>trim</code> and <code>1-trim</code>.</p></dd>
+
+
 <dt>silent</dt>
 <dd><p>Boolean to silence estimation updates.</p></dd>
 
@@ -226,6 +232,10 @@ cross-validation step in the ensemble construction.</p></dd>
 <dt><code>psi_a</code>, <code>psi_b</code></dt>
 <dd><p>Matrices needed for the computation
 of scores. Used in <code><a href="summary.ddml_ate.html">summary.ddml_late()</a></code>.</p></dd>
+
+<dt><code>oos_pred</code></dt>
+<dd><p>List of matrices, providing the reduced form
+predicted values.</p></dd>
 
 <dt><code>learners</code>,<code>learners_DXZ</code>,<code>learners_ZX</code>,
 <code>subsamples_Z0</code>,<code>subsamples_Z1</code>,
@@ -293,7 +303,7 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2126393  0.1983906 -1.071822 0.2838002</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2359986  0.1885035 -1.251959 0.2105849</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -313,11 +323,11 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error    t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.21084693  0.1944477 -1.0843377 0.2782151</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.09830777  0.1702596 -0.5773992 0.5636698</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.18826158  0.1979579 -0.9510184 0.3415950</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.20961093  0.1979483 -1.0589175 0.2896373</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error   t value  Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.20707768  0.1819401 -1.138164 0.2550520</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.07906747  0.1615924 -0.489302 0.6246279</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.18700762  0.1789349 -1.045115 0.2959697</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.19988295  0.1812691 -1.102686 0.2701635</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

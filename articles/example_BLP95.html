@@ -227,8 +227,6 @@ learning with lasso selection of instruments and controls. (See
 <span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;    -0.1473     0.0090   -16.3142     0.0000</span></span></code></pre></div>
 </div>
@@ -288,8 +286,6 @@ corresponding to the initial and extended sets.</p>
 <span>                           sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;      Estimate Std. Error  t value Pr(&gt;|t|)</span></span>
 <span><span class="co">#&gt; [1,]  -0.0982     0.0092 -10.7008        0</span></span></code></pre></div>
 <p>Interestingly, the coefficient is closer to the OLS estimates than to
@@ -408,8 +404,6 @@ instruments.</p>
 <span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;    -0.1044     0.0128    -8.1682     0.0000</span></span></code></pre></div>
 <p>The similarity of the coefficient estimates to the initial stacking

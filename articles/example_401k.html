@@ -156,8 +156,6 @@ present in the data.</p>
 <span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">xgboost_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;   13915.72    1603.56       8.68       0.00</span></span>
 <span></span>
@@ -204,8 +202,6 @@ boosting.</p>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;   13636.00    1526.01       8.94       0.00</span></span></code></pre></div>
 <p>To better understand which machine learners contribute to the final
@@ -286,8 +282,6 @@ variables of the control matrix.</p>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;   14363.22    1500.04       9.58       0.00</span></span></code></pre></div>
 <p>To assess whether the additional effort in expanding the control
@@ -361,8 +355,6 @@ argument.</p>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;   14097.13    1483.65       9.50       0.00</span></span></code></pre></div>
 <p>The weights associated with the new base learners are now slightly
@@ -402,8 +394,6 @@ to estimate the reduced form of 401k eligibility on the controls.</p>
 <span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLIV estimation results: </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
 <span><span class="co">#&gt;   12986.88    1871.81       6.94       0.00</span></span>
 <span></span>

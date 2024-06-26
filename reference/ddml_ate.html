@@ -91,6 +91,7 @@ treatment effect on the treated.</p>
 <span>  subsamples_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trim <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -110,6 +111,7 @@ treatment effect on the treated.</p>
 <span>  subsamples_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D0 <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cv_subsamples_list_D1 <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  trim <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  silent <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -207,6 +209,11 @@ for cross-validation. Arguments are separated for untreated and treated
 observations, respectively.</p></dd>
 
 
+<dt>trim</dt>
+<dd><p>Number in (0, 1) for trimming the estimated propensity scores at
+<code>trim</code> and <code>1-trim</code>.</p></dd>
+
+
 <dt>silent</dt>
 <dd><p>Boolean to silence estimation updates.</p></dd>
 
@@ -236,6 +243,10 @@ cross-validation step in the ensemble construction.</p></dd>
 <dd><p>Matrices needed for the computation
 of scores. Used in <code><a href="summary.ddml_ate.html">summary.ddml_ate()</a></code> or
 <code><a href="summary.ddml_ate.html">summary.ddml_att()</a></code>.</p></dd>
+
+<dt><code>oos_pred</code></dt>
+<dd><p>List of matrices, providing the reduced form
+predicted values.</p></dd>
 
 <dt><code>learners</code>,<code>learners_DX</code>,
 <code>subsamples_D0</code>,<code>subsamples_D1</code>,
@@ -294,11 +305,12 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span>                                    args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                    sample_folds <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>: 1 propensity scores were trimmed.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ate_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.141632 0.01535324 -9.224892 2.838475e-20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value     Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.1427531  0.0153179 -9.319369 1.170342e-20</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -315,14 +327,15 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-in"><span>                    shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                    sample_folds <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                    silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>nnls: 1 propensity scores were trimmed.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">ate_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1433993 0.01526657 -9.393025 5.830105e-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1362464 0.01593975 -8.547585 1.256911e-17</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1464894 0.01533315 -9.553773 1.250572e-21</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1468082 0.01528892 -9.602257 7.821283e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.1434110 0.01525109 -9.403327 5.286445e-21</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.1325085 0.01591423 -8.326415 8.332730e-17</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.1429033 0.01531673 -9.329883 1.059879e-20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.1434319 0.01527087 -9.392520 5.858162e-21</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
