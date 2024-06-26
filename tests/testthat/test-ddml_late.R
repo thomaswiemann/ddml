@@ -9,11 +9,13 @@ test_that("ddml_late computes with a single model", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners = learners,
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners = learners,
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 1)
 })#TEST_THAT
@@ -30,11 +32,13 @@ test_that("ddml_late computes with a single model & perfect non-compliance", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners = learners,
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners = learners,
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 1)
 })#TEST_THAT
@@ -52,12 +56,14 @@ test_that("ddml_late computes with an ensemble procedure", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners = learners,
-                             ensemble_type = "ols",
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners = learners,
+                               ensemble_type = "ols",
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 1)
 })#TEST_THAT
@@ -75,15 +81,17 @@ test_that("ddml_late computes w/ multiple ensembles & custom weights", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners,
-                             ensemble_type = c("ols", "nnls",
-                                               "nnls1",
-                                               "singlebest", "average"),
-                             cv_folds = 3,
-                             custom_ensemble_weights = diag(1, 2),
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners,
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
+                               cv_folds = 3,
+                               custom_ensemble_weights = diag(1, 2),
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 7)
 })#TEST_THAT
@@ -102,14 +110,16 @@ test_that("ddml_late computes with multiple ensemble procedures + perfect compli
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners,
-                             ensemble_type = c("ols", "nnls",
-                                               "nnls1",
-                                               "singlebest", "average"),
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners,
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 5)
 })#TEST_THAT
@@ -127,16 +137,18 @@ test_that("ddml_late computes w/ mult ensembles, custom weights, & shortstack", 
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners,
-                             ensemble_type = c("ols", "nnls",
-                                               "nnls1",
-                                               "singlebest", "average"),
-                             shortstack = TRUE,
-                             cv_folds = 3,
-                             custom_ensemble_weights = diag(1, 2),
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners,
+                               ensemble_type = c("ols", "nnls",
+                                                 "nnls1",
+                                                 "singlebest", "average"),
+                               shortstack = TRUE,
+                               cv_folds = 3,
+                               custom_ensemble_weights = diag(1, 2),
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_late_fit$late), 7)
 })#TEST_THAT
@@ -152,11 +164,13 @@ test_that("summary.ddml_late computes with a single model", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_late_fit <- ddml_late(y, D, Z, X,
-                             learners = learners,
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = T)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners = learners,
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
   # Compute inference results & test print
   inf_res <- summary(ddml_late_fit)
   capture_output({print(inf_res)}, print = FALSE)
