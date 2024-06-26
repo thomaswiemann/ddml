@@ -63,8 +63,6 @@ xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                         sample_folds = 10,
                         silent = T)
 round(summary(xgboost_fit)[2, , 1], 2)
-#> PLM estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>   13915.72    1603.56       8.68       0.00
 
@@ -105,8 +103,6 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          shortstack = T,
                          silent = T)
 round(summary(stacking_fit)[2, , 1], 2)
-#> PLM estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>   13636.00    1526.01       8.94       0.00
 ```
@@ -175,8 +171,6 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          shortstack = T,
                          silent = T)
 round(summary(stacking_fit)[2, , 1], 2)
-#> PLM estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>   14363.22    1500.04       9.58       0.00
 ```
@@ -238,8 +232,6 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          shortstack = T,
                          silent = T)
 round(summary(stacking_fit)[2, , 1], 2)
-#> PLM estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>   14097.13    1483.65       9.50       0.00
 ```
@@ -281,8 +273,6 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          shortstack = T,
                          silent = T)
 round(summary(stacking_IV_fit)[2, , 1], 2)
-#> PLIV estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>   12986.88    1871.81       6.94       0.00
 

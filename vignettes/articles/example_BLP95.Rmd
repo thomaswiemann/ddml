@@ -151,8 +151,6 @@ lasso_fit <- ddml_fpliv(y, D = D,
                         sample_folds = 10,
                         silent = T)
 round(summary(lasso_fit)[2, , 1], 4)
-#> FPLIV estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>    -0.1473     0.0090   -16.3142     0.0000
 ```
@@ -205,8 +203,6 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            sample_folds = 10,
                            silent = T)
 t(round(summary(stacking_fit), 4)[2, , ])
-#> FPLIV estimation results: 
-#> 
 #>      Estimate Std. Error  t value Pr(>|t|)
 #> [1,]  -0.0982     0.0092 -10.7008        0
 ```
@@ -316,8 +312,6 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         sample_folds = 10,
                         silent = T)
 round(summary(stacking_r_fit)[2, , 1], 4)
-#> FPLIV estimation results: 
-#> 
 #>   Estimate Std. Error    t value   Pr(>|t|) 
 #>    -0.1044     0.0128    -8.1682     0.0000
 ```

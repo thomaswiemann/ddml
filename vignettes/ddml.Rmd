@@ -62,7 +62,7 @@ summary(late_fit)
 #> LATE estimation results: 
 #>  
 #>     Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.2680106  0.2449627 -1.094087 0.2739166
+#>   -0.2437858  0.1955697 -1.246542 0.2125656
 ```
 (Note that estimation here is based on a random subsample of 5,000 observations. The results can thus not readily be compared to those in Angrist & Evans (1998).)
 
@@ -100,8 +100,8 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>       Estimate Std. Error    t value  Pr(>|t|)
-#> nnls1 -0.19173  0.2005266 -0.9561322 0.3390054
+#>         Estimate Std. Error   t value  Pr(>|t|)
+#> nnls1 -0.2116275  0.1882458 -1.124208 0.2609246
 ```
 
 It is often insightful to see which base learners contribute the most to the final reduced form estimates. The below snippet shows the weights for the reduced forms $E[Y|Z=0,X]$ and $E[Y|Z=1,X]$:
@@ -144,10 +144,10 @@ summary(late_fit)
 #> LATE estimation results: 
 #>  
 #>              Estimate Std. Error   t value  Pr(>|t|)
-#> nnls       -0.2432971  0.2120355 -1.147436 0.2512017
-#> singlebest -0.2518913  0.1967114 -1.280512 0.2003652
-#> ols        -0.2417658  0.2122186 -1.139230 0.2546073
-#> average    -0.2117828  0.1958048 -1.081601 0.2794296
+#> nnls       -0.2317638  0.1898602 -1.220708 0.2221966
+#> singlebest -0.2317469  0.1899961 -1.219746 0.2225614
+#> ols        -0.2365499  0.1904547 -1.242027 0.2142266
+#> average    -0.2225647  0.1882465 -1.182305 0.2370849
 ```
 
 # References
