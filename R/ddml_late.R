@@ -87,6 +87,8 @@
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
 #'             of scores. Used in [ddml::summary.ddml_late()].}
+#'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
+#'             predicted values.}
 #'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
 #'             \code{subsamples_Z0},\code{subsamples_Z1},
 #'             \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
@@ -155,6 +157,7 @@ ddml_late <- function(y, D, Z, X,
                       subsamples_Z1 = NULL,
                       cv_subsamples_list_Z0 = NULL,
                       cv_subsamples_list_Z1 = NULL,
+                      trim = 0.01,
                       silent = FALSE) {
   # Data parameters
   nobs <- length(y)
@@ -181,7 +184,7 @@ ddml_late <- function(y, D, Z, X,
     }# FOR
   }#IF
 
-  # Merge subsamples across treatment and create auxilliary control matrix
+  # Merge subsamples across treatment and create auxiliary control matrix
   subsamples <- subsamples_Z0
   cv_subsamples_list <- cv_subsamples_list_Z0
   auxilliary_X_Z0 <- rep(list(NULL), sample_folds)
@@ -310,19 +313,22 @@ ddml_late <- function(y, D, Z, X,
   }#IF
   r_X <- Z_X_res$oos_fitted
 
+  # Trim propensity scores, return warnings
+  r_X_tr <- trim_propensity_scores(r_X, trim, ensemble_type)
+
   # Compute the ATE using the constructed variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
   Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
-  psi_b <- Z_copy * (y_copy - l_Z1) / r_X +
-    (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X) +
+  psi_b <- Z_copy * (y_copy - l_Z1) / r_X_tr -
+    (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X_tr) +
     l_Z1 - l_Z0
-  psi_a <- Z_copy * (D_copy - p_Z1) / r_X +
-    (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X) +
-    p_Z1 - p_Z0
+  psi_a <- -(Z_copy * (D_copy - p_Z1) / r_X_tr -
+    (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X_tr) +
+    p_Z1 - p_Z0)
   numerator <- colMeans(psi_b)
   denominator <- colMeans(psi_a)
-  late <- numerator / denominator
+  late <- -numerator / denominator
   names(late) <- ensemble_type
 
   # Organize complementary ensemble output
@@ -339,9 +345,15 @@ ddml_late <- function(y, D, Z, X,
                D_X_Z1 = D_X_Z1_res$mspe,
                Z_X = Z_X_res$mspe)
 
+  # Organize reduced form predicted values
+  oos_pred <- list(EY_Z0_X = l_Z0, EY_Z1_X = l_Z1,
+                   ED_Z0_X = p_Z0, ED_Z1_X = p_Z1,
+                   EZ_X = r_X)
+
   # Organize output
   ddml_fit <- list(late = late, weights = weights, mspe = mspe,
                    psi_a = psi_a, psi_b = psi_b,
+                   oos_pred = oos_pred,
                    learners = learners,
                    learners_DXZ = learners_DXZ,
                    learners_ZX = learners_ZX,

@@ -21,6 +21,7 @@ ddml_ate(
   subsamples_D1 = NULL,
   cv_subsamples_list_D0 = NULL,
   cv_subsamples_list_D1 = NULL,
+  trim = 0.01,
   silent = FALSE
 )
 
@@ -40,6 +41,7 @@ ddml_att(
   subsamples_D1 = NULL,
   cv_subsamples_list_D0 = NULL,
   cv_subsamples_list_D1 = NULL,
+  trim = 0.01,
   silent = FALSE
 )
 }
@@ -118,6 +120,9 @@ corresponding to a subsample containing vectors with subsample indices
 for cross-validation. Arguments are separated for untreated and treated
 observations, respectively.}
 
+\item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
+\code{trim} and \code{1-trim}.}
+
 \item{silent}{Boolean to silence estimation updates.}
 }
 \value{
@@ -137,6 +142,8 @@ cross-validation step in the ensemble construction.}
 \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
 of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}} or
 \code{\link[=summary.ddml_att]{summary.ddml_att()}}.}
+\item{\code{oos_pred}}{List of matrices, providing the reduced form
+predicted values.}
 \item{\code{learners},\code{learners_DX},
 \code{subsamples_D0},\code{subsamples_D1},
 \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},

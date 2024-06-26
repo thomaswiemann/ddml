@@ -1,5 +1,7 @@
 # ddml (development version)
 
+* Adds propensity score trimming option to ``ddml::ddml_ate()``, ``ddml::ddml_att()``, and ``ddml::ddml_late()``.
+* Fixes ATE and LATE scores.
 * Fixes output of ``ddml::print.summary.ddml_plm`` and ``ddml::print.summary.ddml_ate`` (#57).
 
 # ddml 0.2.1

@@ -97,7 +97,7 @@ summary(late_fit_short)
 #> LATE estimation results: 
 #>  
 #>         Estimate Std. Error   t value  Pr(>|t|)
-#> nnls1 -0.2105019   0.195529 -1.076576 0.2816698
+#> nnls1 -0.2105019  0.1852237 -1.136474 0.2557583
 ```
 
 ## Learn More about `ddml`

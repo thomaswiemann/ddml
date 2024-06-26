@@ -115,3 +115,29 @@ compute_interactive_inf_results_by_ensemble <- function(coef, psi_a, psi_b) {
   # Return results
   inf_results
 }#COMPUTE_INTERACTIVE_INF_RESULTS_BY_ENSEMBLE
+
+# Function to trim propensity scores and warn user
+trim_propensity_scores <- function(m_X, trim, ensemble_type) {
+  # Data parameter
+  nensb <- length(ensemble_type)
+  # Trim by ensemble type
+  for (j in length(nensb)) {
+    indx_trim_0 <- which(m_X[, j] <= trim)
+    indx_trim_1 <- which(m_X[, j] >= 1 - trim)
+    ntrim <- length(c(indx_trim_0, indx_trim_1))
+    if (ntrim > 0) {
+      # Warn user
+      if (nensb == 1) {
+        warning(paste0(ntrim, " propensity scores were trimmed."))
+      } else {
+        warning(paste0(ensemble_type[j], ": ", ntrim,
+                       " propensity scores were trimmed."))
+      }#IFELSE
+      # Replace scores by constant
+      m_X[indx_trim_0, j] <- trim
+      m_X[indx_trim_1, j] <- 1 - trim
+    }#IF
+  }#FOR
+  # Return trimmed scores
+  m_X
+}#TRIM_PROPENSITY_SCORES

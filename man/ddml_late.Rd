@@ -23,6 +23,7 @@ ddml_late(
   subsamples_Z1 = NULL,
   cv_subsamples_list_Z0 = NULL,
   cv_subsamples_list_Z1 = NULL,
+  trim = 0.01,
   silent = FALSE
 )
 }
@@ -110,6 +111,9 @@ corresponding to a subsample containing vectors with subsample indices
 for cross-validation. Arguments are separated for observations with
 \eqn{Z=0} and \eqn{Z=1}, respectively.}
 
+\item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
+\code{trim} and \code{1-trim}.}
+
 \item{silent}{Boolean to silence estimation updates.}
 }
 \value{
@@ -127,6 +131,8 @@ base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
 \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
 of scores. Used in \code{\link[=summary.ddml_late]{summary.ddml_late()}}.}
+\item{\code{oos_pred}}{List of matrices, providing the reduced form
+predicted values.}
 \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
 \code{subsamples_Z0},\code{subsamples_Z1},
 \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},

@@ -14,6 +14,7 @@ ddml_att <- function(y, D, X,
                      subsamples_D1 = NULL,
                      cv_subsamples_list_D0 = NULL,
                      cv_subsamples_list_D1 = NULL,
+                     trim = 0.01,
                      silent = FALSE) {
   # Data parameters
   nobs <- length(y)
@@ -115,12 +116,15 @@ ddml_att <- function(y, D, X,
   }#IF
   m_X <- D_X_res$oos_fitted
 
+  # Trim propensity scores, return warnings
+  m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
+
   # Compute the ATT using the constructed variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
   p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
   psi_b <- D_copy * (y_copy - g_D0) / p_copy -
-    m_X * (1 - D_copy) * (y_copy - g_D0) / (p_copy * (1 - m_X))
+    m_X_tr * (1 - D_copy) * (y_copy - g_D0) / (p_copy * (1 - m_X_tr))
   psi_a <- -D_copy / p_copy
   att <- -colMeans(psi_b) / colMeans(psi_a)
   names(att) <- ensemble_type
@@ -133,9 +137,13 @@ ddml_att <- function(y, D, X,
   mspe <- list(y_X_D0 = y_X_D0_res$mspe,
                D_X = D_X_res$mspe)
 
+  # Organize reduced form predicted values
+  oos_pred <- list(EY_D0_X = g_D0, ED_X = m_X, ED = D_res$oos_fitted)
+
   # Organize output
   ddml_fit <- list(att = att, weights = weights, mspe = mspe,
                    psi_a = psi_a, psi_b = psi_b,
+                   oos_pred = oos_pred,
                    learners = learners,
                    learners_DX = learners_DX,
                    subsamples_D0 = subsamples_D0,
