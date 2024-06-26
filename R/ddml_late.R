@@ -181,7 +181,7 @@ ddml_late <- function(y, D, Z, X,
     }# FOR
   }#IF
 
-  # Merge subsamples across treatment and create auxilliary control matrix
+  # Merge subsamples across treatment and create auxiliary control matrix
   subsamples <- subsamples_Z0
   cv_subsamples_list <- cv_subsamples_list_Z0
   auxilliary_X_Z0 <- rep(list(NULL), sample_folds)
@@ -317,12 +317,12 @@ ddml_late <- function(y, D, Z, X,
   psi_b <- Z_copy * (y_copy - l_Z1) / r_X +
     (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X) +
     l_Z1 - l_Z0
-  psi_a <- Z_copy * (D_copy - p_Z1) / r_X +
+  psi_a <- -(Z_copy * (D_copy - p_Z1) / r_X +
     (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X) +
-    p_Z1 - p_Z0
+    p_Z1 - p_Z0)
   numerator <- colMeans(psi_b)
   denominator <- colMeans(psi_a)
-  late <- numerator / denominator
+  late <- -numerator / denominator
   names(late) <- ensemble_type
 
   # Organize complementary ensemble output
