@@ -8,7 +8,6 @@
 #' @param y The outcome variable.
 #' @param X The feature matrix.
 #' @param const Boolean equal to \code{TRUE} if a constant should be included.
-#'     The default is \code{FALSE}
 #' @param w A vector of weights for weighted least squares.
 #'
 #' @return \code{ols} returns an object of S3 class
@@ -25,7 +24,7 @@
 #' ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)), const = TRUE)
 #' ols_fit$coef
 ols <- function(y, X,
-                const = FALSE,
+                const = TRUE,
                 w = NULL) {
   # Add constant (optional)
   if (const) X <- cbind(1, X)
@@ -48,7 +47,7 @@ ols <- function(y, X,
   output <- list(coef = coef, y = y, X = X,
                  const = const, w = w)
   class(output) <- "ols" # define S3 class
-  return(output)
+  output
 }#OLS
 
 # Complementary methods ========================================================
@@ -62,6 +61,5 @@ predict.ols <- function(object, newdata = NULL, ...){
     newdata <- cbind(1, newdata)
   }#IFELSE
   # Calculate and return fitted values with the OLS coefficient
-  fitted <- newdata%*%object$coef
-  return(fitted)
+  newdata %*% object$coef
 }#PREDICT.OLS

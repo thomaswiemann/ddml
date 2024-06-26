@@ -4,7 +4,7 @@
 \alias{ols}
 \title{Ordinary least squares.}
 \usage{
-ols(y, X, const = FALSE, w = NULL)
+ols(y, X, const = TRUE, w = NULL)
 }
 \arguments{
 \item{y}{The outcome variable.}

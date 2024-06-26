@@ -6,17 +6,19 @@
 \alias{print.summary.ddml_late}
 \title{Print Methods for Treatment Effect Estimators.}
 \usage{
-\method{print}{summary.ddml_ate}(x, ...)
+\method{print}{summary.ddml_ate}(x, digits = 3, ...)
 
-\method{print}{summary.ddml_att}(x, ...)
+\method{print}{summary.ddml_att}(x, digits = 3, ...)
 
-\method{print}{summary.ddml_late}(x, ...)
+\method{print}{summary.ddml_late}(x, digits = 3, ...)
 }
 \arguments{
 \item{x}{An object of class \code{summary.ddml_ate},
 \code{summary.ddml_att}, and \code{ddml_late}, as returned by
 \code{\link[=summary.ddml_ate]{summary.ddml_ate()}}, \code{\link[=summary.ddml_att]{summary.ddml_att()}}, and
 \code{\link[=summary.ddml_late]{summary.ddml_late()}}, respectively.}
+
+\item{digits}{The number of significant digits used for printing.}
 
 \item{...}{Currently unused.}
 }

@@ -96,8 +96,8 @@ late_fit_short <- ddml_late(y, D, Z, X,
 summary(late_fit_short)
 #> LATE estimation results: 
 #>  
-#>         Estimate Std. Error  t value  Pr(>|t|)
-#> nnls1 -0.2216093  0.1868402 -1.18609 0.2355868
+#>       Estimate Std. Error t value Pr(>|t|)
+#> nnls1   -0.222      0.187   -1.19    0.236
 ```
 
 ## Learn More about `ddml`
@@ -138,8 +138,8 @@ and
 ## References
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml:
-Double/debiased machine learning in Stata.”
-<https://arxiv.org/abs/2301.09397>
+Double/debiased machine learning in Stata.” Stata Journal, 2024, 24(1):
+3-45.
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model averaging
 and double machine learning.” <https://arxiv.org/abs/2401.01645>
