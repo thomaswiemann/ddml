@@ -64,11 +64,11 @@ xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                                         args = list(nrounds = 300)),
                         sample_folds = 10,
                         silent = T)
-round(summary(xgboost_fit)[2, , 1], 2)
+summary(xgboost_fit)
 
 # Comparison to multiple linear regression
 lm_fit <- lm(y ~ D + X)
-round(summary(lm_fit)$coefficients[2, ], 2)
+summary(lm_fit)
 ```
 
 # Estimation using Multiple Machine Learners
@@ -99,7 +99,7 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
+summary(stacking_fit)
 ```
 
 To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
@@ -155,7 +155,7 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
+summary(stacking_fit)
 ```
 
 To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
@@ -204,7 +204,7 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
+summary(stacking_fit)
 ```
 
 The weights associated with the new base learners are now slightly larger:
@@ -233,7 +233,7 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_IV_fit)[2, , 1], 2)
+summary(stacking_IV_fit)
 
 # Stacking weights associated with each base learner
 sapply(stacking_IV_fit$weights, round, 4)

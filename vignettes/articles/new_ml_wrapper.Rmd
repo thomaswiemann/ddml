@@ -45,7 +45,6 @@ We begin with writing an estimation function that takes named arguments ``y`` an
 ```r
 # Load gbm
 library(gbm)
-#> Loaded gbm 2.1.8.1
 
 # Write gbm wrapper
 mdl_gbm <- function(y, X, ...) {
@@ -70,10 +69,10 @@ As a simple test, we check the class of the object returned by the wrapper and t
 
 ```r
 # Estimate gbm
-gbm_fit <- mdl_gbm(y, X, 
+gbm_fit <- mdl_gbm(y, X,
                    distribution  = "bernoulli",
                    n.trees = 1000,
-                   interaction.depth = 6, 
+                   interaction.depth = 6,
                    verbose = FALSE)
 # Compute predictions
 fitted_values <- predict(gbm_fit, X)
@@ -91,7 +90,7 @@ The classes are what we expected. The wrapper should now be compatible with the 
 learner_gbm <-  list(what = mdl_gbm,
                      args = list(distribution  = "bernoulli",
                                  n.trees = 1000,
-                                 interaction.depth = 6, 
+                                 interaction.depth = 6,
                                  verbose = FALSE))
 
 # Estimate ddml_late
@@ -102,8 +101,8 @@ late_fit <- ddml_late(y, D, Z, X,
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>     Estimate Std. Error   t value  Pr(>|t|)
-#>   -0.2330304   0.204703 -1.138383 0.2549607
+#>   Estimate Std. Error t value Pr(>|t|)
+#>     -0.236       0.19   -1.24    0.214
 ```
 
 All works well!
@@ -142,6 +141,18 @@ mdl_keras <- function(y, X,
                       metrics = c("mae"),
                       verbose = 0) {
 
+  # Data parameters
+  nobs <- length(y)
+
+  # Normalize data
+  std_y <- c(mean(y), sd(y))
+  std_X <- apply(X, 2, function(x) c(mean(x), max(sd(x), 1e-3)))
+  y <- (y - std_y[1])/std_y[2]
+  X <- X - matrix(replicate(nobs, std_X[1, , drop = F]),
+    nrow = nobs, byrow = T)
+  X <- X / matrix(replicate(nobs, std_X[2, , drop = F]),
+    nrow = nobs, byrow = T)
+
   # ===============================================
   # ADJUST THIS PART FOR DIFFERENT ARCHITECTURES ==
 
@@ -172,6 +183,10 @@ mdl_keras <- function(y, X,
                        steps_per_epoch = steps_per_epoch,
                        verbose = verbose)
 
+  # Add standardization to object
+  nnet$std_y <- std_y
+  nnet$std_X <- std_X
+
   # Append class
   class(nnet) <- c("mdl_keras", class(nnet))
 
@@ -185,8 +200,17 @@ The prediction method for our fitted object ensures the predictions are returned
 
 ```r
 predict.mdl_keras <- function(object, newdata){
-  class(object) <- class(object)[-1] # Remove custom class from object
-  as.numeric(predict(object, newdata))
+  # Standardize newdata
+  nobs <- nrow(newdata)
+  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = F]),
+    nrow = nobs, byrow = T)
+  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = F]),
+    nrow = nobs, byrow = T)
+  # Predict data and output as matrix
+  class(object) <- class(object)[-1] # Not a pretty solution...
+  fitted <- as.numeric(predict(object, newdata))
+  # Re-standardize to output and return
+  object$std_y[2] * fitted + object$std_y[1]
 }#PREDICT.MDL_KERAS
 ```
 
@@ -217,11 +241,13 @@ late_fit <- ddml_late(y, D, Z, X,
                       learners = learner_keras,
                       sample_folds = 10,
                       silent = T)
+#> Warning in trim_propensity_scores(r_X, trim, ensemble_type): : 2 propensity
+#> scores were trimmed.
 summary(late_fit)
 #> LATE estimation results: 
 #>  
-#>     Estimate Std. Error   t value    Pr(>|t|)
-#>   -0.6972909  0.2566123 -2.717293 0.006581826
+#>   Estimate Std. Error t value Pr(>|t|)
+#>     -0.187      0.189  -0.989    0.322
 ```
 
 All works well!

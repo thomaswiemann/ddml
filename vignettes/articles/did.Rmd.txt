@@ -8,11 +8,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.path = "figures/"
+  fig.path = "figures/",
+  eval = TRUE
 )
 ```
 
@@ -99,14 +100,14 @@ ddml_did_method <- function(y1, y0, D, covariates, ...) {
 }#DDML_DID_METHOD
 ```
 
-A potentially suitable machine learning reduced form estimator is gradient tree boosting (see also ``?mdl_xgboost``). The below code snippet completes the second wrapper by hard-coding both the learner and its arguments. Here, we consider 10-fold cross-fitting with a heavily regularized gradient tree bosting estimator (``eta`` is the learning rate, see also ``?mdl_xgboost``).
+A potentially suitable machine learning reduced form estimator is gradient tree boosting (see also ``?mdl_xgboost``). The below code snippet completes the second wrapper by hard-coding both the learner and its arguments. Here, we consider 10-fold cross-fitting with a gradient tree boosting estimator (``eta`` is the learning rate, see also ``?mdl_xgboost``).
 
 ```{r}
 my_did_xgboost <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners
   learners = list(what = mdl_xgboost,
                   args = list(nround = 500,
-                              params = list(eta = 0.05, max_depth = 1),
+                              params = list(eta = 0.05, max_depth = 3),
                               early_stopping_rounds = 1))
   learners_DX = learners
 
@@ -148,7 +149,7 @@ ggdid(dyn_xgboost, ylim = c(-.4, .4))
 
 ```
 
-The gradient tree boosting-based ATT estimate of about -0.094 is slightly larger than the ATT estimate of about -0.08 of the linear estimator of the ``did`` package.
+The gradient tree boosting-based ATT estimate is only slightly different from the ATT estimate using the linear estimator of the ``did`` package, however, it is statistically insignificant.
 
 Given these two coefficients, is there a good reason to choose one over the other?
 
@@ -176,7 +177,7 @@ my_did_stacking <- function(y1, y0, D, covariates, ...) {
                                    early_stopping_rounds = 1)),
                   list(fun = mdl_xgboost,
                        args = list(nround = 500,
-                                   params = list(eta = 0.1, max_depth = 3),
+                                   params = list(eta = 0.05, max_depth = 3),
                                    early_stopping_rounds = 1)),
                   list(fun = mdl_ranger,
                        args = list(num.trees = 1000,

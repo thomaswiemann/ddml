@@ -8,7 +8,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+```
 
 # Introduction
 
@@ -18,8 +24,7 @@ This article illustrates the computational advantages of short-stacking over con
 
 We apply ``ddml`` to the included random subsample of 5,000 observations from the data of Angrist & Evans (1998). The data contains information on the labor supply of mothers, their children, as well as demographic data. See ``?AE98`` for details.
 
-
-```r
+```{r}
 # Load ddml and set seed
 library(ddml)
 set.seed(221945)
@@ -38,8 +43,7 @@ For a comparison of run-times, we consider the following three estimators for th
 3. Stacking with linear regression, lasso, and gradient boosting
 
 
-
-```r
+```{r}
 time_singlelearner <- system.time({
   late_fit <- ddml_late(y, D, Z, X,
                         learners = list(what = mdl_xgboost,
@@ -79,14 +83,11 @@ time_stacking <- system.time({
 
 Both stacking and short-stacking construct weighted averages of the considered base learners to minimize the out-of-sample mean squared prediction error (MSPE). The difference between the two approaches lies in the construction of the MSPE: While stacking runs cross-validation in each cross-fitting sample fold, short-stacking directly uses the out-of-sample predictions arising in the cross-fitting step of double/debiased machine learning estimators. As the run-times below show, this results in a substantially reduced computational burden:
 
-
-```r
+```{r}
 cat("Time single learner:", time_singlelearner[1], "\n")
-#> Time single learner: 10.39
 cat("Time short-stacking:", time_shortstacking[1], "\n")
-#> Time short-stacking: 12.83
 cat("Time stacking:      ", time_stacking[1])
-#> Time stacking:       117.98
+
 ```
 
 # References

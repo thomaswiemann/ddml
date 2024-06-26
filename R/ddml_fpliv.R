@@ -345,8 +345,8 @@ summary.ddml_fpliv <- function(object, ...) {
 #' @rdname print.summary.ddml_plm
 #'
 #' @export
-print.summary.ddml_fpliv <- function(x, ...) {
+print.summary.ddml_fpliv <- function(x, digits = 3, ...) {
   cat("FPLIV estimation results: \n \n")
   class(x) <- class(x)[-1]
-  print(x)
+  print(x, digits = digits)
 }#PRINT.SUMMARY.DDML_FPLIV

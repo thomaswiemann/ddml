@@ -62,15 +62,20 @@ xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                                         args = list(nrounds = 300)),
                         sample_folds = 10,
                         silent = T)
-round(summary(xgboost_fit)[2, , 1], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   13915.72    1603.56       8.68       0.00
+summary(xgboost_fit)
+#> PLM estimation results: 
+#>  
+#> , , single base learner
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -224        626  -0.357 7.21e-01
+#> D_r            13916       1604   8.678 4.03e-18
 
 # Comparison to multiple linear regression
 lm_fit <- lm(y ~ D + X)
-round(summary(lm_fit)$coefficients[2, ], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   11600.89    1345.12       8.62       0.00
+summary(lm_fit)
+#>     Estimate   Std. Error      t value     Pr(>|t|) 
+#> 1.160089e+04 1.345117e+03 8.624444e+00 7.428141e-18
 ```
 
 # Estimation using Multiple Machine Learners
@@ -102,9 +107,14 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   13636.00    1526.01       8.94       0.00
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)    -1627        538   -3.03 2.48e-03
+#> D_r            13636       1526    8.94 4.04e-19
 ```
 
 To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
@@ -170,9 +180,14 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   14363.22    1500.04       9.58       0.00
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -512        533  -0.961 3.37e-01
+#> D_r            14363       1500   9.575 1.02e-21
 ```
 
 To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
@@ -231,9 +246,14 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_fit)[2, , 1], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   14097.13    1483.65       9.50       0.00
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -487        535   -0.91 3.63e-01
+#> D_r            14097       1484    9.50 2.07e-21
 ```
 
 The weights associated with the new base learners are now slightly larger:
@@ -272,9 +292,14 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          sample_folds = 10,
                          shortstack = T,
                          silent = T)
-round(summary(stacking_IV_fit)[2, , 1], 2)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>   12986.88    1871.81       6.94       0.00
+summary(stacking_IV_fit)
+#> PLIV estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -776        531   -1.46 1.44e-01
+#> D_r            12987       1872    6.94 3.97e-12
 
 # Stacking weights associated with each base learner
 sapply(stacking_IV_fit$weights, round, 4)

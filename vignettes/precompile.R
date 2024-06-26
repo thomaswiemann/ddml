@@ -17,6 +17,10 @@ knit("vignettes/articles/example_401k.Rmd.txt",
 knit("vignettes/articles/sparse.Rmd.txt",
      "vignettes/articles/sparse.Rmd")
 
+#
+knit("vignettes/articles/stacking.Rmd.txt",
+     "vignettes/articles/stacking.Rmd")
+
 # takes too long to run on cran...
 knit("vignettes/ddml.Rmd.txt",
      "vignettes/ddml.Rmd")

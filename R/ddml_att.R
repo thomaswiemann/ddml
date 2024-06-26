@@ -180,8 +180,8 @@ summary.ddml_att <- function(object, ...) {
 #' @rdname print.summary.ddml_ate
 #'
 #' @export
-print.summary.ddml_att <- function(x, ...) {
+print.summary.ddml_att <- function(x, digits = 3, ...) {
   cat("ATT estimation results: \n \n")
   class(x) <- class(x)[-1]
-  print(x)
+  print(x, digits = digits)
 }#PRINT.SUMMARY.DDML_ATT

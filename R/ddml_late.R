@@ -391,9 +391,9 @@ summary.ddml_late <- function(object, ...) {
 #' @rdname print.summary.ddml_ate
 #'
 #' @export
-print.summary.ddml_late <- function(x, ...) {
+print.summary.ddml_late <- function(x, digits = 3, ...) {
   cat("LATE estimation results: \n \n")
   class(x) <- class(x)[-1]
-  print(x)
+  print(x, digits = digits)
 }#PRINT.SUMMARY.DDML_LATE
 
