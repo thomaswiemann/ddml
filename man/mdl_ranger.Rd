@@ -19,7 +19,8 @@ mdl_ranger(y, X, ...)
 simple mask of the return object of \code{\link[ranger:ranger]{ranger::ranger()}}.
 }
 \description{
-Simple wrapper for \code{\link[ranger:ranger]{ranger::ranger()}}.
+Simple wrapper for \code{\link[ranger:ranger]{ranger::ranger()}}. Supports regression
+(default) and probability forests (set \code{probability = TRUE}).
 }
 \examples{
 ranger_fit <- mdl_ranger(rnorm(100), matrix(rnorm(1000), 100, 10))

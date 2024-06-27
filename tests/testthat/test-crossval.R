@@ -43,10 +43,12 @@ test_that("crossval returns residuals by learner in correct order", {
     idx_i <- subsample_list[[i]]
     # ols 1
     ols_fit <- ols(y[-idx_i], X[-idx_i, 1:5])
-    oos_res_cv[idx_i, 1] <- y[idx_i] - X[idx_i, 1:5] %*% ols_fit$coef
+    oos_res_cv[idx_i, 1] <- y[idx_i] -
+      ddml:::predict.ols(ols_fit, X[idx_i, 1:5])
     # ols 1
     ols_fit <- ols(y[-idx_i], X[-idx_i, 1:10])
-    oos_res_cv[idx_i, 2] <- y[idx_i] - X[idx_i, 1:10] %*% ols_fit$coef
+    oos_res_cv[idx_i, 2] <- y[idx_i] -
+      ddml:::predict.ols(ols_fit, X[idx_i, 1:10])
   }#FOR
   # Compute cross-validation with crossval using the same subsamples
   cv_res <- crossval(y, X,

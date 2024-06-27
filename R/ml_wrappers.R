@@ -129,7 +129,8 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
 #'
 #' @seealso [ranger::ranger()]
 #'
-#' @description Simple wrapper for [ranger::ranger()].
+#' @description Simple wrapper for [ranger::ranger()]. Supports regression
+#'     (default) and probability forests (set \code{probability = TRUE}).
 #'
 #' @param y The outcome variable.
 #' @param X The feature matrix.
@@ -162,13 +163,22 @@ mdl_ranger <- function(y, X, ...){
 
 # Prediction method for mdl_ranger
 predict.mdl_ranger <- function(object, newdata = NULL, ...){
-  # Assign columnames to newdata if none are given
+  # Assign column names to newdata if none are given
   if (is.null(colnames(newdata))) {
     colnames(newdata) <- seq(dim(newdata)[2])
   }#IF
   class(object) <- class(object)[2]
   # Predict using randomForest prediction method
-  stats::predict(object, data = newdata, ...)$predictions
+  if (object$treetype == "Probability estimation") {
+    #stats::predict(object, data = newdata, ...)$predictions[, 2]
+    stats::predict(object, data = newdata,)$predictions[, 2]
+  } else if (object$treetype == "Regression") {
+    #stats::predict(object, data = newdata, ...)$predictions
+    stats::predict(object, data = newdata)$predictions
+  } else {
+    warning("mdl_ranger is only designed for regression and probability forests")
+    stats::predict(object, data = newdata, ...)$predictions
+  }#IFELSE
 }#PREDICT.MDL_RANGER
 
 # glm ==========================================================================

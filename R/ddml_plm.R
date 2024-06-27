@@ -335,6 +335,7 @@ summary.ddml_plm <- function(object, ...) {
 #'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as
 #'     returned by [ddml::summary.ddml_plm()], [ddml::summary.ddml_pliv()],
 #'     and [ddml::summary.ddml_fpliv()], respectively.
+#' @param digits Number of significant digits used for priniting.
 #' @param ... Currently unused.
 #'
 #' @return NULL.
@@ -354,8 +355,8 @@ summary.ddml_plm <- function(object, ...) {
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' summary(plm_fit)
-print.summary.ddml_plm <- function(x, ...) {
+print.summary.ddml_plm <- function(x, digits = 3, ...) {
   cat("PLM estimation results: \n \n")
   class(x) <- class(x)[-1]
-  print(x)
+  print(x, digits = digits)
 }#PRINT.SUMMARY.DDML_PLM

@@ -320,6 +320,7 @@ summary.ddml_ate <- function(object, ...) {
 #'     \code{summary.ddml_att}, and \code{ddml_late}, as returned by
 #'     [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()], and
 #'     [ddml::summary.ddml_late()], respectively.
+#' @param digits The number of significant digits used for printing.
 #' @param ... Currently unused.
 #'
 #' @return NULL.
@@ -339,8 +340,8 @@ summary.ddml_ate <- function(object, ...) {
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' summary(ate_fit)
-print.summary.ddml_ate <- function(x, ...) {
+print.summary.ddml_ate <- function(x, digits = 3, ...) {
   cat("ATE estimation results: \n \n")
   class(x) <- class(x)[-1]
-  print(x)
+  print(x, digits = digits)
 }#PRINT.SUMMARY.DDML_ATE

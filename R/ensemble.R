@@ -139,7 +139,7 @@ ensemble_weights <- function(y, X, Z = NULL,
       # Reconstruct out of sample fitted values
       oos_fitted <- as.numeric(y) - cv_results$oos_resid
       # For unconstrained stacking, simply calculate the ols coefficients
-      weights[, k] <- ols(y, oos_fitted)$coef
+      weights[, k] <- ols(y, oos_fitted, const = FALSE)$coef
     } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
       mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = F])
