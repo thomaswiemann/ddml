@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,8 +161,8 @@ learner in each cross-fitting sample fold.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;     Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt;   -0.2437858  0.1955697 -1.246542 0.2125656</span></span></code></pre></div>
+<span><span class="co">#&gt;   Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt;     -0.244      0.196   -1.25    0.213</span></span></code></pre></div>
 <p>(Note that estimation here is based on a random subsample of 5,000
 observations. The results can thus not readily be compared to those in
 Angrist &amp; Evans (1998).)</p>
@@ -212,8 +212,8 @@ coefficients that are constrained to be non-negative and sum to one.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;         Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls1 -0.2116275  0.1882458 -1.124208 0.2609246</span></span></code></pre></div>
+<span><span class="co">#&gt;       Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; nnls1   -0.212      0.188   -1.12    0.261</span></span></code></pre></div>
 <p>It is often insightful to see which base learners contribute the most
 to the final reduced form estimates. The below snippet shows the weights
 for the reduced forms <span class="math inline">\(E[Y|Z=0,X]\)</span>
@@ -266,11 +266,11 @@ learners</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;              Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls       -0.2317638  0.1898602 -1.220708 0.2221966</span></span>
-<span><span class="co">#&gt; singlebest -0.2317469  0.1899961 -1.219746 0.2225614</span></span>
-<span><span class="co">#&gt; ols        -0.2365499  0.1904547 -1.242027 0.2142266</span></span>
-<span><span class="co">#&gt; average    -0.2225647  0.1882465 -1.182305 0.2370849</span></span></code></pre></div>
+<span><span class="co">#&gt;            Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; nnls         -0.232      0.190   -1.22    0.222</span></span>
+<span><span class="co">#&gt; singlebest   -0.232      0.190   -1.22    0.223</span></span>
+<span><span class="co">#&gt; ols          -0.237      0.190   -1.24    0.214</span></span>
+<span><span class="co">#&gt; average      -0.223      0.188   -1.18    0.237</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

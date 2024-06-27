@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -158,6 +158,8 @@ regularly fails to load into memory.</p>
 <span></span>
 <span><span class="co"># Memory needed for the dense control matrix</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html" class="external-link">object.size</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"Mb"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in asMethod(object): sparse-&gt;dense coercion: allocating vector of size</span></span>
+<span><span class="co">#&gt; 1.3 GiB</span></span>
 <span><span class="co">#&gt; [1] "1302.3 Mb"</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -191,11 +193,14 @@ to zero (see <code><a href="../reference/mdl_glmnet.html">?mdl_glmnet</a></code>
 <span>                                 shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                                 sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                                 silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_180IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_180IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; , , nnls1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt;     0.1121     0.0215     5.2258     0.0000</span></span></code></pre></div>
+<span><span class="co">#&gt;              Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; (Intercept) -6.14e-05    0.00113 -0.0542 9.57e-01</span></span>
+<span><span class="co">#&gt; D_r          1.12e-01    0.02145  5.2258 1.73e-07</span></span></code></pre></div>
 <p>The exercise can be repeated with the larger set of 1530 instruments
 as well. Without support for sparse matrices, this estimation step would
 not be possible without very large memory.</p>
@@ -215,11 +220,14 @@ not be possible without very large memory.</p>
 <span>                                 shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                                 sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                                 silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_1530IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_1530IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; , , nnls1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt;     0.0630     0.0357     1.7636     0.0778</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; (Intercept) 4.98e-05    0.00111   0.045   0.9641</span></span>
+<span><span class="co">#&gt; D_r         6.30e-02    0.03574   1.764   0.0778</span></span></code></pre></div>
 <p>The coefficients corresponding to the two sets of instruments are
 quite different. Leveraging the <code>ddml</code> functionality that
 allows for specification of different sets of input variables, we
@@ -253,11 +261,14 @@ regressions simultaneously.</p>
 <span>                           shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
 <span>                           sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
 <span><span class="co">#&gt; FPLIV estimation results: </span></span>
+<span><span class="co">#&gt;  </span></span>
+<span><span class="co">#&gt; , , nnls1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt;     0.1241     0.0201     6.1669     0.0000</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; (Intercept) 0.000143    0.00115   0.124 9.01e-01</span></span>
+<span><span class="co">#&gt; D_r         0.124080    0.02012   6.167 6.97e-10</span></span></code></pre></div>
 <p>The resulting coefficient is close to the coefficient based on 180
 instruments. The stacking weights confirm that the first stage
 estimators with 180 instruments contribute almost exclusively to the

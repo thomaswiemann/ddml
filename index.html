@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,8 +86,8 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><code>ddml</code> is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key feature of <code>ddml</code> is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process. See also <a href="https://arxiv.org/abs/2401.01645" class="external-link">Ahrens et al. (2024)</a> for a detailed illustration of the practical benefits of combining DDML with (short-)stacking.</p>
-<p><code>ddml</code> is the sister R package to our <a href="https://github.com/aahrens1/ddml/" class="external-link">Stata</a> package, mirroring its key features while also leveraging R to simplify estimation with user-provided machine learners and/or sparse matrices. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2023)</a> with additional discussion of the supported causal models and benefits of (short)-stacking.</p>
+<p><code>ddml</code> is an implementation of double/debiased machine learning estimators as proposed by Chernozhukov et al. (2018). The key feature of <code>ddml</code> is the straightforward estimation of nuisance parameters using (short-)stacking (Wolpert, 1992), which allows for multiple machine learners to increase robustness to the underlying data generating process. See also <a href="https://arxiv.org/abs/2401.01645" class="external-link">Ahrens et al. (2024b)</a> for a detailed illustration of the practical benefits of combining DDML with (short-)stacking.</p>
+<p><code>ddml</code> is the sister R package to our <a href="https://github.com/aahrens1/ddml/" class="external-link">Stata</a> package, mirroring its key features while also leveraging R to simplify estimation with user-provided machine learners and/or sparse matrices. See also <a href="https://arxiv.org/abs/2301.09397" class="external-link">Ahrens et al. (2024a)</a> with additional discussion of the supported causal models and benefits of (short)-stacking.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -137,8 +137,8 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit_short</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;         Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls1 -0.2105019  0.1852237 -1.136474 0.2557583</span></span></code></pre></div>
+<span><span class="co">#&gt;       Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt; nnls1   -0.222      0.187   -1.19    0.236</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="learn-more-about-ddml">Learn More about <code>ddml</code>
@@ -175,8 +175,8 @@
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). “ddml: Double/debiased machine learning in Stata.” <a href="https://arxiv.org/abs/2301.09397" class="external-link uri">https://arxiv.org/abs/2301.09397</a></p>
-<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model averaging and double machine learning.” <a href="https://arxiv.org/abs/2401.01645" class="external-link uri">https://arxiv.org/abs/2401.01645</a></p>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml: Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.</p>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging and double machine learning.” <a href="https://arxiv.org/abs/2401.01645" class="external-link uri">https://arxiv.org/abs/2401.01645</a></p>
 <p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply: Evidence from Exogenous Variation in Family Size.” American Economic Review, 88(3), 450-477.</p>
 <p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W, Robins J (2018). “Double/debiased machine learning for treatment and structural parameters.” The Econometrics Journal, 21(1), C1-C68.</p>
 <p>Wolpert D H (1992). “Stacked generalization.” Neural Networks, 5(2), 241-259.</p>

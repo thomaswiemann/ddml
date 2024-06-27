@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,7 +141,6 @@ argument.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load gbm</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/gbm-developers/gbm" class="external-link">gbm</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loaded gbm 2.1.8.1</span></span>
 <span></span>
 <span><span class="co"># Write gbm wrapper</span></span>
 <span><span class="va">mdl_gbm</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
@@ -164,10 +163,10 @@ important to also construct a simple prediction method for the
 wrapper and the prediction method we constructed:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Estimate gbm</span></span>
-<span><span class="va">gbm_fit</span> <span class="op">&lt;-</span> <span class="fu">mdl_gbm</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, </span>
+<span><span class="va">gbm_fit</span> <span class="op">&lt;-</span> <span class="fu">mdl_gbm</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>,</span>
 <span>                   distribution  <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>
 <span>                   n.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                   interaction.depth <span class="op">=</span> <span class="fl">6</span>, </span>
+<span>                   interaction.depth <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>                   verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="co"># Compute predictions</span></span>
 <span><span class="va">fitted_values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">gbm_fit</span>, <span class="va">X</span><span class="op">)</span></span>
@@ -186,7 +185,7 @@ while, feel free to set <code>n.trees</code> or
 <span><span class="va">learner_gbm</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_gbm</span>,</span>
 <span>                     args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>distribution  <span class="op">=</span> <span class="st">"bernoulli"</span>,</span>
 <span>                                 n.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                                 interaction.depth <span class="op">=</span> <span class="fl">6</span>, </span>
+<span>                                 interaction.depth <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>                                 verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Estimate ddml_late</span></span>
@@ -197,8 +196,8 @@ while, feel free to set <code>n.trees</code> or
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;     Estimate Std. Error   t value  Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt;   -0.2330304   0.204703 -1.138383 0.2549607</span></span></code></pre></div>
+<span><span class="co">#&gt;   Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt;     -0.236       0.19   -1.24    0.214</span></span></code></pre></div>
 <p>All works well!</p>
 </div>
 <div class="section level2">
@@ -239,6 +238,18 @@ to experiment!).</p>
 <span>                      <span class="va">metrics</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mae"</span><span class="op">)</span>,</span>
 <span>                      <span class="va">verbose</span> <span class="op">=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span></span>
+<span>  <span class="co"># Data parameters</span></span>
+<span>  <span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="co"># Normalize data</span></span>
+<span>  <span class="va">std_y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">std_X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">X</span>, <span class="fl">2</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fl">1e-3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">y</span> <span class="op">-</span> <span class="va">std_y</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span><span class="op">/</span><span class="va">std_y</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
+<span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="va">X</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="va">std_X</span><span class="op">[</span><span class="fl">1</span>, , drop <span class="op">=</span> <span class="cn">F</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="va">nobs</span>, byrow <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>  <span class="va">X</span> <span class="op">&lt;-</span> <span class="va">X</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="va">std_X</span><span class="op">[</span><span class="fl">2</span>, , drop <span class="op">=</span> <span class="cn">F</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="va">nobs</span>, byrow <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span></span>
 <span>  <span class="co"># ===============================================</span></span>
 <span>  <span class="co"># ADJUST THIS PART FOR DIFFERENT ARCHITECTURES ==</span></span>
 <span></span>
@@ -269,6 +280,10 @@ to experiment!).</p>
 <span>                       steps_per_epoch <span class="op">=</span> <span class="va">steps_per_epoch</span>,</span>
 <span>                       verbose <span class="op">=</span> <span class="va">verbose</span><span class="op">)</span></span>
 <span></span>
+<span>  <span class="co"># Add standardization to object</span></span>
+<span>  <span class="va">nnet</span><span class="op">$</span><span class="va">std_y</span> <span class="op">&lt;-</span> <span class="va">std_y</span></span>
+<span>  <span class="va">nnet</span><span class="op">$</span><span class="va">std_X</span> <span class="op">&lt;-</span> <span class="va">std_X</span></span>
+<span></span>
 <span>  <span class="co"># Append class</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">nnet</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mdl_keras"</span>, <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">nnet</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -279,8 +294,17 @@ to experiment!).</p>
 are returned as a numerical vector:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">predict.mdl_keras</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span>, <span class="va">newdata</span><span class="op">)</span><span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="co"># Remove custom class from object</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">newdata</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="co"># Standardize newdata</span></span>
+<span>  <span class="va">nobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">newdata</span><span class="op">)</span></span>
+<span>  <span class="va">newdata</span> <span class="op">&lt;-</span> <span class="va">newdata</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="va">object</span><span class="op">$</span><span class="va">std_X</span><span class="op">[</span><span class="fl">1</span>, , drop <span class="op">=</span> <span class="cn">F</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="va">nobs</span>, byrow <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>  <span class="va">newdata</span> <span class="op">&lt;-</span> <span class="va">newdata</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">replicate</a></span><span class="op">(</span><span class="va">nobs</span>, <span class="va">object</span><span class="op">$</span><span class="va">std_X</span><span class="op">[</span><span class="fl">2</span>, , drop <span class="op">=</span> <span class="cn">F</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="va">nobs</span>, byrow <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>  <span class="co"># Predict data and output as matrix</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="co"># Not a pretty solution...</span></span>
+<span>  <span class="va">fitted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">newdata</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="co"># Re-standardize to output and return</span></span>
+<span>  <span class="va">object</span><span class="op">$</span><span class="va">std_y</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">*</span> <span class="va">fitted</span> <span class="op">+</span> <span class="va">object</span><span class="op">$</span><span class="va">std_y</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="op">}</span><span class="co">#PREDICT.MDL_KERAS</span></span></code></pre></div>
 <p>To test the wrapper, we again estimate the local average treatment
 effect. In addition to the architecture, it is important to properly
@@ -310,11 +334,13 @@ rule.</p>
 <span>                      learners <span class="op">=</span> <span class="va">learner_keras</span>,</span>
 <span>                      sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                      silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in trim_propensity_scores(r_X, trim, ensemble_type): : 2 propensity</span></span>
+<span><span class="co">#&gt; scores were trimmed.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; LATE estimation results: </span></span>
 <span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;     Estimate Std. Error   t value    Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt;   -0.6972909  0.2566123 -2.717293 0.006581826</span></span></code></pre></div>
+<span><span class="co">#&gt;   Estimate Std. Error t value Pr(&gt;|t|)</span></span>
+<span><span class="co">#&gt;     -0.187      0.189  -0.989    0.322</span></span></code></pre></div>
 <p>All works well!</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

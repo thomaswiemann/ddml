@@ -17,7 +17,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -302,8 +302,8 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -0.2359986  0.1885035 -1.251959 0.2105849</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     -0.236      0.189   -1.25    0.211</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span></span>
 <span class="r-in"><span><span class="co">#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights</span></span></span>
@@ -323,11 +323,11 @@ Treatment Effects." Econometrica, 62(2), 467-475.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> LATE estimation results: </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error   t value  Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> nnls      -0.20707768  0.1819401 -1.138164 0.2550520</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols   -0.07906747  0.1615924 -0.489302 0.6246279</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso -0.18700762  0.1789349 -1.045115 0.2959697</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge -0.19988295  0.1812691 -1.102686 0.2701635</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> nnls        -0.207      0.182   -1.14    0.255</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ols     -0.183      0.178   -1.03    0.305</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:lasso   -0.187      0.179   -1.05    0.296</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mdl:ridge   -0.200      0.181   -1.10    0.270</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

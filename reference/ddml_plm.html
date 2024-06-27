@@ -17,7 +17,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -261,9 +261,9 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , single base learner</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error     t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.0007204734 0.006877341   0.1047605 9.165659e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1483220220 0.014700193 -10.0898010 6.129365e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.00072    0.00688   0.105 9.17e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.14832    0.01470 -10.090 6.13e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Estimate the partially linear model using short-stacking with base learners</span></span></span>
@@ -286,27 +286,27 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , nnls</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                Estimate  Std. Error    t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.00147421 0.006883107   0.214178 8.304082e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.14947020 0.014730261 -10.147152 3.411741e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.00124    0.00688    0.18 8.57e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.14951    0.01473  -10.15 3.35e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , mdl:ols</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 Estimate  Std. Error   t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.003412073 0.006898066  0.494642 6.208528e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.141683435 0.014682123 -9.650064 4.912490e-22</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error  t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.000266    0.00688  -0.0386 9.69e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.149559    0.01474 -10.1495 3.33e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , mdl:lasso</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error      t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.0002879934 0.006884257  -0.04183362 9.666313e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1495940169 0.014729260 -10.15624781 3.108085e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error  t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.000288    0.00688  -0.0418 9.67e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.149594    0.01473 -10.1562 3.11e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , mdl:ridge</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                  Estimate  Std. Error      t value     Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.0002309068 0.006884361  -0.03354077 9.732434e-01</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.1494407672 0.014732341 -10.14372166 3.533745e-24</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error  t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -0.000231    0.00688  -0.0335 9.73e-01</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.149441    0.01473 -10.1437 3.53e-24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
