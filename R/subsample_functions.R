@@ -9,7 +9,7 @@ get_crossfit_indices <- function(cluster_variable,
 
   # Data parameters
   nobs <- length(cluster_variable)
-  n_cluster <- length(unique(cluster_variable))
+  cluster <- !identical(cluster_variable,  1:nobs)
 
   # Check whether indices should be constructed by D
   by_D <- !is.null(D)
@@ -28,20 +28,33 @@ get_crossfit_indices <- function(cluster_variable,
     D_levels <- sort(unique(D))
     n_D_levels <- length(D_levels)
     is_D <- rep(list(NULL), n_D_levels)
-    nobs_by_D <- rep(0, n_D_levels)
+    nobs_byD <- rep(0, n_D_levels)
     for (d in 1:n_D_levels) {
       is_D[[d]] <- which(D == D_levels[d])
-      nobs_by_D[d] <- length(is_D[[d]])
+      nobs_byD[[d]] <- length(is_D[[d]])
     }#FOR
 
     if (is.null(subsamples_byD)) {
       # Create sample fold tuple by treatment levels
       subsamples_byD <- rep(list(NULL), n_D_levels)
       for (d in 1:n_D_levels) {
-        subsamples_byD[[d]] <- generate_subsamples(nobs_by_D[d], sample_folds)
+        if (cluster) {
+          # Create temp cluster variable to efficiently map clusters to sample indices
+          tmp_cl <- get_temp_cluster(cluster_variable[D==d])
+          subsamples_temp <- generate_subsamples(tmp_cl$n_cluster,
+                                                 sample_folds)
+          subsamples_byD[[d]] <- lapply(subsamples_temp, function (x) {
+            unname(unlist(tmp_cl$cluster_map[x]))
+          })#LAPPLY
+        } else {
+          subsamples_byD[[d]] <- generate_subsamples(nobs_byD[d], sample_folds)
+        }#IFELSE
       }#FOR
     }#IF
     sample_folds <- length(subsamples_byD[[1]])
+
+
+
 
     # Merge subsamples across treatment levels
     subsamples <- rep(list(NULL), sample_folds)
@@ -54,15 +67,17 @@ get_crossfit_indices <- function(cluster_variable,
       subsamples[[k]] <- sort(subsamples[[k]])
     }#FOR
 
+    # Warning: CV subsample creation currently ignores dependence!
+
     # Create CV subsamples by treatment level
     if (is.null(cv_subsamples_byD)) {
       cv_subsamples_byD <- rep(list(NULL), n_D_levels)
       for (d in 1:n_D_levels) {
         cv_subsamples_byD[[d]] <- rep(list(NULL), sample_folds)
         for (k in 1:sample_folds) {
-          nobs_d_k <- nobs_by_D[[d]] - length(subsamples_byD[[d]][[k]])
+          nobs_d_k <- nobs_byD[[d]] - length(subsamples_byD[[d]][[k]])
           cv_subsamples_byD[[d]][[k]] <-
-            generate_subsamples(nobs_d_k, cv_folds) #ddml:::
+            generate_subsamples(nobs_d_k, cv_folds)
         }# FOR
       }#FOR
     }#IF
@@ -93,9 +108,22 @@ get_crossfit_indices <- function(cluster_variable,
       stop("Must also supply subsamples. if supplying cv_subsamples_list")
 
     # Create sample fold tuple
-    if (is.null(subsamples))
-      subsamples <- generate_subsamples(nobs, sample_folds)
+    if (is.null(subsamples)) {
+      if (cluster) {
+        # Create temp cluster variable to efficiently map clusters to sample indices
+        tmp_cl <- get_temp_cluster(cluster_variable)
+        subsamples_temp <- generate_subsamples(tmp_cl$n_cluster,
+                                               sample_folds)
+        subsamples <- lapply(subsamples_temp, function (x) {
+          unname(unlist(tmp_cl$cluster_map[x]))
+        })#LAPPLY
+      } else {
+        subsamples <- generate_subsamples(nobs, sample_folds)
+      }#IFELSE
+    }#IF
     sample_folds <- length(subsamples)
+
+    # Warning: CV subsample creation currently ignores dependence!
 
     # Create cv-subsamples tuple
     if (is.null(cv_subsamples_list)) {
@@ -170,3 +198,12 @@ generate_subsamples <- function(nobs, sample_folds) {
                        simplify = F)
   subsamples
 }#GENERATE_SUBSAMPLES
+
+# Simple function to create a temp cluster variable for more efficient mapping
+get_temp_cluster <- function(cluster_variable) {
+  tmp_cluster <- as.numeric(factor(cluster_variable))
+  cluster_map <- split(seq_along(tmp_cluster), tmp_cluster)
+  return(list(tmp_cluster = tmp_cluster,
+              cluster_map = cluster_map,
+              n_cluster = length(unique(tmp_cluster))))
+}#GET_TEMP_CLUSTER

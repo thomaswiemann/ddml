@@ -8,12 +8,12 @@ test_that("subsample construction works with multi-valued D", {
   y <- D + X %*% runif(40) + rnorm(nobs)
 
   # Compute crossfit indices w/o splitting by D
-  crossfit_indices_1 <- get_crossfit_indices(nobs = 500,
+  crossfit_indices_1 <- get_crossfit_indices(cluster_variable = 1:500,
                                            sample_folds = 5, cv_folds = 3,
                                            D = NULL)
 
   # Compute crossfit indices w/ splitting by D
-  crossfit_indices_2 <- get_crossfit_indices(nobs = 500,
+  crossfit_indices_2 <- get_crossfit_indices(cluster_variable = 1:500,
                                            sample_folds = 5, cv_folds = 3,
                                            D = D)
 
@@ -28,23 +28,47 @@ test_that("subsample construction works with multi-valued D", {
 
 test_that("subsample construction works with multi-valued D and dependence", {
   # Simulate small dataset
+  n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
+  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
+  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
   fun <- stepfun(quantile(D_tld, probs = c(0.25, 0.5, 0.75)), c(1, 2, 3, 4))
   D <- fun(D_tld)
+  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, ]
   y <- D + X %*% runif(40) + rnorm(nobs)
-  id <- sample(c(1:200), nobs, replace = TRUE)
 
   # Compute crossfit indices w/o splitting by D
-  crossfit_indices_1 <- get_crossfit_indices(nobs = 500,
+  crossfit_indices_1 <- get_crossfit_indices(cluster_variable =
+                                               cluster_variable,
                                              sample_folds = 5, cv_folds = 3,
                                              D = NULL)
+  expect_identical(
+    setdiff(unique(cluster_variable[crossfit_indices_1$subsamples[[1]]]),
+          unique(cluster_variable[crossfit_indices_1$subsamples[[2]]])),
+    unique(cluster_variable[crossfit_indices_1$subsamples[[1]]]))
 
   # Compute crossfit indices w/ splitting by D
-  crossfit_indices_2 <- get_crossfit_indices(nobs = 500,
+  crossfit_indices_2 <- get_crossfit_indices(cluster_variable =
+                                               cluster_variable,
                                              sample_folds = 5, cv_folds = 3,
                                              D = D)
+
+
+  # Check that cluster variables are unique across folds
+  expect_identical(
+  setdiff(cluster_variable[D==1][crossfit_indices_2$subsamples_byD[[1]][[1]]],
+          cluster_variable[D==1][crossfit_indices_2$subsamples_byD[[1]][[2]]]),
+  unique(cluster_variable[D==1][crossfit_indices_2$subsamples_byD[[1]][[1]]]))
+  expect_identical(
+    setdiff(cluster_variable[D==2][crossfit_indices_2$subsamples_byD[[2]][[1]]],
+            cluster_variable[D==2][crossfit_indices_2$subsamples_byD[[2]][[2]]]),
+    unique(cluster_variable[D==2][crossfit_indices_2$subsamples_byD[[2]][[1]]]))
+  expect_identical(
+    setdiff(unique(cluster_variable[crossfit_indices_2$subsamples[[1]]]),
+            unique(cluster_variable[crossfit_indices_2$subsamples[[2]]])),
+    unique(cluster_variable[crossfit_indices_2$subsamples[[1]]]))
 
   # Check that subsamples and cv subsamples are of matching size
   expect_equal(nobs - length(crossfit_indices_1$subsamples[[1]]),
@@ -65,7 +89,7 @@ test_that("auxiliary_X construction works with multi-valued D", {
   y <- D + X %*% runif(40) + rnorm(nobs)
 
   # Compute crossfit indices w/ splitting by D
-  crossfit_indices <- get_crossfit_indices(nobs = 500,
+  crossfit_indices <- get_crossfit_indices(cluster_variable = 1:500,
                                              sample_folds = 5, cv_folds = 3,
                                              D = D)
 
