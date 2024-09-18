@@ -108,66 +108,29 @@
 ddml_ate <- function(y, D, X,
                      learners,
                      learners_DX = learners,
-                     sample_folds = 2,
+                     sample_folds = 10,
                      ensemble_type = "nnls",
                      shortstack = FALSE,
-                     cv_folds = 5,
+                     cv_folds = 10,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
-                     subsamples_D0 = NULL,
-                     subsamples_D1 = NULL,
-                     cv_subsamples_list_D0 = NULL,
-                     cv_subsamples_list_D1 = NULL,
+                     subsamples_byD = NULL,
+                     cv_subsamples_byD = NULL,
                      trim = 0.01,
                      silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   is_D0 <- which(D == 0)
-  nobs_D0 <- length(is_D0)
-  nobs_D1 <- nobs - nobs_D0
 
-  # Create sample fold tuple by treatment
-  if (is.null(subsamples_D0) | is.null(subsamples_D1)) {
-    subsamples_D0 <- generate_subsamples(nobs_D0, sample_folds)
-    subsamples_D1 <- generate_subsamples(nobs_D1, sample_folds)
-  }#IF
-  sample_folds <- length(subsamples_D0)
+  # Create sample and cv-fold tuples
+  cf_indxs <- get_crossfit_indices(nobs, D = D,
+                                   sample_folds = sample_folds,
+                                   cv_folds = cv_folds,
+                                   subsamples_byD = subsamples_byD,
+                                   cv_subsamples_byD = cv_subsamples_byD)
 
-  # Create cv-subsamples tuple by treatment
-  if (is.null(cv_subsamples_list_D0) | is.null(cv_subsamples_list_D1)) {
-    cv_subsamples_list_D0 <- rep(list(NULL), sample_folds)
-    cv_subsamples_list_D1 <- rep(list(NULL), sample_folds)
-    for (k in 1:sample_folds) {
-      nobs_D0_k <- nobs_D0 - length(subsamples_D0[[k]])
-      nobs_D1_k <- nobs_D1 - length(subsamples_D1[[k]])
-      cv_subsamples_list_D0[[k]] <- generate_subsamples(nobs_D0_k, cv_folds)
-      cv_subsamples_list_D1[[k]] <- generate_subsamples(nobs_D1_k, cv_folds)
-    }# FOR
-  }#IF
-
-  # Merge subsamples across treatment and create auxiliary control matrix
-  subsamples <- subsamples_D0
-  cv_subsamples_list <- cv_subsamples_list_D0
-  auxilliary_X_D0 <- rep(list(NULL), sample_folds)
-  auxilliary_X_D1 <- rep(list(NULL), sample_folds)
-  for (k in 1:sample_folds) {
-    # Sample folds
-    subsamples[[k]] <- sort(c((1:nobs)[is_D0][subsamples_D0[[k]]],
-                              (1:nobs)[-is_D0][subsamples_D1[[k]]]))
-    # CV folds
-    nobs_k <- nobs - length(subsamples[[k]])
-    is_D0_k <- which(D[-subsamples[[k]]] == 0)
-    is_D1_k <- which(D[-subsamples[[k]]] == 1)
-    for (j in 1:cv_folds) {
-      indx_D0 <- is_D0_k[cv_subsamples_list_D0[[k]][[j]]]
-      indx_D1 <- is_D1_k[cv_subsamples_list_D1[[k]][[j]]]
-      cv_subsamples_list[[k]][[j]] <- sort(c(indx_D0, indx_D1))
-    }#FOR
-
-    # Auxiliary X
-    auxilliary_X_D1[[k]] <- X[-is_D0, , drop=F][subsamples_D1[[k]], , drop=F]
-    auxilliary_X_D0[[k]] <- X[is_D0, , drop=F][subsamples_D0[[k]], , drop=F]
-  }#FOR
+  # Create tuple for extrapolated fitted values
+  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, D)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -177,28 +140,28 @@ ddml_ate <- function(y, D, X,
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        cv_subsamples_list = cv_subsamples_list_D0,
-                        subsamples = subsamples_D0,
+                        subsamples = cf_indxs$subsamples_byD[[1]],
+                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxilliary_X = auxilliary_X_D1)
+                        auxilliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|D=1,X]
   y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = F],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        cv_subsamples_list = cv_subsamples_list_D1,
-                        subsamples = subsamples_D1,
+                        subsamples = cf_indxs$subsamples_byD[[2]],
+                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|D=1,X]: ",
-                        auxilliary_X = auxilliary_X_D0)
+                        auxilliary_X = get_auxiliary_X(aux_indxs[[2]], X))
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
                      learners = learners_DX, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights_DX,
-                     cv_subsamples_list = cv_subsamples_list,
-                     subsamples = subsamples,
+                     subsamples = cf_indxs$subsamples,
+                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
                      silent = silent, progress = "E[D|X]: ")
 
   # Update ensemble type to account for (optional) custom weights
@@ -209,20 +172,9 @@ ddml_ate <- function(y, D, X,
   multiple_ensembles <- nensb > 1
 
   # Construct reduced form variables
-  g_D0 <- g_D1 <- matrix(0, nobs, nensb)
-  g_D0[is_D0, ] <- y_X_D0_res$oos_fitted
-  g_D1[-is_D0, ] <- y_X_D1_res$oos_fitted
-  if (!multiple_ensembles) {
-    for (k in 1:sample_folds) {
-      g_D1[is_D0][subsamples_D0[[k]]] <- y_X_D1_res$auxilliary_fitted[[k]]
-      g_D0[-is_D0][subsamples_D1[[k]]] <- y_X_D0_res$auxilliary_fitted[[k]]
-    }#FOR
-  } else {
-    for (k in 1:sample_folds) {
-      g_D1[is_D0, ][subsamples_D0[[k]], ] <- y_X_D1_res$auxilliary_fitted[[k]]
-      g_D0[-is_D0, ][subsamples_D1[[k]], ] <- y_X_D0_res$auxilliary_fitted[[k]]
-    }#FOR
-  }#IF
+  g_X_byD <- extrapolate_CEF(D = D,
+                             CEF_res_byD = list(y_X_D0_res, y_X_D1_res),
+                             aux_indxs = aux_indxs)
   m_X <- D_X_res$oos_fitted
 
   # Trim propensity scores, return warnings
@@ -231,8 +183,9 @@ ddml_ate <- function(y, D, X,
   # Compute the ATE using the constructed variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  psi_b <- D_copy * (y_copy - g_D1) / m_X_tr -
-    (1 - D_copy) * (y_copy - g_D0) / (1 - m_X_tr) + g_D1 - g_D0
+  psi_b <- D_copy * (y_copy - g_X_byD[, , 2]) / m_X_tr -
+    (1 - D_copy) * (y_copy -  g_X_byD[, , 1]) / (1 - m_X_tr) +
+    g_X_byD[, , 2] - g_X_byD[, , 1]
   ate <- colMeans(psi_b)
   names(ate) <- ensemble_type
 
@@ -250,7 +203,9 @@ ddml_ate <- function(y, D, X,
                D_X = D_X_res$mspe)
 
   # Organize reduced form predicted values
-  oos_pred <- list(EY_D0_X = g_D0, EY_D1_X = g_D1, ED_X = m_X)
+  oos_pred <- list(EY_D0_X = g_X_byD[, , 1],
+                   EY_D1_X = g_X_byD[, , 2],
+                   ED_X = m_X)
 
   # Organize output
   ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
@@ -258,10 +213,8 @@ ddml_ate <- function(y, D, X,
                    oos_pred = oos_pred,
                    learners = learners,
                    learners_DX = learners_DX,
-                   subsamples_D0 = subsamples_D0,
-                   subsamples_D1 = subsamples_D1,
-                   cv_subsamples_list_D0 = cv_subsamples_list_D0,
-                   cv_subsamples_list_D1 = cv_subsamples_list_D1,
+                   subsamples_byD = subsamples_byD,
+                   cv_subsamples_byD = cv_subsamples_byD,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress

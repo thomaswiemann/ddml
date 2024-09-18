@@ -48,3 +48,28 @@ get_CEF <- function(y, X, Z = NULL,
 update_progress <- function(silent) {
   if (!silent) cat(" -- Done! \n")
 }#UPDATE_PROGRESS
+
+# Construct CEF from auxiliary_X
+extrapolate_CEF <- function(D, CEF_res_byD, aux_indxs) {
+  # Data parameters
+  nobs <- length(D)
+  D_levels <- sort(unique(D))
+  n_D_levels <- length(D_levels)
+  is_D <- rep(list(NULL), n_D_levels)
+  for (d in 1:n_D_levels) is_D[[d]] <- which(D == D_levels[d])
+  nensb <- ncol(as.matrix(CEF_res_byD[[1]]$oos_fitted))
+  sample_folds <- length(CEF_res_byD[[1]]$auxilliary_fitted)
+
+  # Populate CEF
+  g_X_byD <- array(0, dim = c(nobs, nensb, n_D_levels))
+  for (d in 1:n_D_levels) {
+    g_X_byD[is_D[[d]], , d] <- CEF_res_byD[[d]]$oos_fitted
+    for (k in 1:sample_folds) {
+      g_X_byD[aux_indxs[[d]][[k]], , d] <-
+        CEF_res_byD[[d]]$auxilliary_fitted[[k]]
+    }#FOR
+  }#FOR
+
+  # return as array, third dimension is different levels of d
+  g_X_byD
+}#EXTRAPOLATE_CEF

@@ -138,10 +138,10 @@
 ddml_plm <- function(y, D, X,
                      learners,
                      learners_DX = learners,
-                     sample_folds = 2,
+                     sample_folds = 10,
                      ensemble_type = "nnls",
                      shortstack = FALSE,
-                     cv_folds = 5,
+                     cv_folds = 10,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      subsamples = NULL,
@@ -157,20 +157,12 @@ ddml_plm <- function(y, D, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
-  sample_folds <- length(subsamples)
-
-  # Create cv-subsamples tuple
-  if (is.null(cv_subsamples_list) & !shortstack) {
-    cv_subsamples_list <- rep(list(NULL), sample_folds)
-    for (k in 1:sample_folds) {
-      nobs_k <- nobs - length(subsamples[[k]])
-      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
-    }# FOR
-  }#IF
+  # Create sample and cv-fold tuples
+  cf_indxs <- get_crossfit_indices(nobs,
+                                   sample_folds = sample_folds,
+                                   cv_folds = cv_folds,
+                                   subsamples = subsamples,
+                                   cv_subsamples_list = cv_subsamples_list)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -181,8 +173,8 @@ ddml_plm <- function(y, D, X,
                      ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = subsamples,
-                     cv_subsamples_list = cv_subsamples_list,
+                     subsamples = cf_indxs$subsamples,
+                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
                      silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X], loop through endogenous variables
@@ -194,8 +186,9 @@ ddml_plm <- function(y, D, X,
                                  shortstack = shortstack,
                                  custom_ensemble_weights =
                                    custom_ensemble_weights_DX,
-                                 subsamples = subsamples,
-                                 cv_subsamples_list = cv_subsamples_list,
+                                 subsamples = cf_indxs$subsamples,
+                                 cv_subsamples_list =
+                                   cf_indxs$cv_subsamples_list,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
@@ -262,8 +255,8 @@ ddml_plm <- function(y, D, X,
                    learners = learners,
                    learners_DX = learners_DX,
                    ols_fit = ols_fit,
-                   subsamples = subsamples,
-                   cv_subsamples_list = cv_subsamples_list,
+                   subsamples = cf_indxs$subsamples,
+                   cv_subsamples_list = cf_indxs$cv_subsamples_list,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress
