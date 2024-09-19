@@ -11,8 +11,7 @@ ols(y, X, const = TRUE, w = NULL)
 
 \item{X}{The feature matrix.}
 
-\item{const}{Boolean equal to \code{TRUE} if a constant should be included.
-The default is \code{FALSE}}
+\item{const}{Boolean equal to \code{TRUE} if a constant should be included.}
 
 \item{w}{A vector of weights for weighted least squares.}
 }

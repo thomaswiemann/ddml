@@ -29,13 +29,13 @@
 #'
 #' @inheritParams ddml_plm
 #' @param D The binary endogenous variable of interest.
-#' @param subsamples_D0,subsamples_D1 List of vectors with sample indices for
-#'     cross-fitting, corresponding to untreated and treated observations,
-#'     respectively.
-#' @param cv_subsamples_list_D0,cv_subsamples_list_D1 List of lists, each
-#'     corresponding to a subsample containing vectors with subsample indices
-#'     for cross-validation. Arguments are separated for untreated and treated
-#'     observations, respectively.
+#' @param subsamples_byD List of two lists corresponding to the two treatment
+#'     levels. Each list contains vectors with sample indices for
+#'     cross-fitting.
+#' @param cv_subsamples_byD List of two lists, each corresponding to one of the
+#'     two treatment levels. Each of the two lists contains lists, each
+#'     corresponding to a subsample and contains vectors with subsample indices
+#'     for cross-validation.
 #' @param trim Number in (0, 1) for trimming the estimated propensity scores at
 #'     \code{trim} and \code{1-trim}.
 #'
@@ -57,7 +57,7 @@
 #'             [ddml::summary.ddml_att()].}
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
-#'         \item{\code{learners},\code{learners_DX},
+#'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
 #'             \code{subsamples_D0},\code{subsamples_D1},
 #'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
 #'             \code{ensemble_type}}{Pass-through of
@@ -114,6 +114,7 @@ ddml_ate <- function(y, D, X,
                      cv_folds = 10,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
+                     cluster_variable = 1:length(y),
                      subsamples_byD = NULL,
                      cv_subsamples_byD = NULL,
                      trim = 0.01,
@@ -123,7 +124,7 @@ ddml_ate <- function(y, D, X,
   is_D0 <- which(D == 0)
 
   # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(nobs, D = D,
+  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = D,
                                    sample_folds = sample_folds,
                                    cv_folds = cv_folds,
                                    subsamples_byD = subsamples_byD,
@@ -173,7 +174,8 @@ ddml_ate <- function(y, D, X,
 
   # Construct reduced form variables
   g_X_byD <- extrapolate_CEF(D = D,
-                             CEF_res_byD = list(y_X_D0_res, y_X_D1_res),
+                             CEF_res_byD = list(list(y_X_D0_res, d=0),
+                                                list(y_X_D1_res, d=1)),
                              aux_indxs = aux_indxs)
   m_X <- D_X_res$oos_fitted
 
@@ -213,6 +215,7 @@ ddml_ate <- function(y, D, X,
                    oos_pred = oos_pred,
                    learners = learners,
                    learners_DX = learners_DX,
+                   cluster_variable = cluster_variable,
                    subsamples_byD = subsamples_byD,
                    cv_subsamples_byD = cv_subsamples_byD,
                    ensemble_type = ensemble_type)

@@ -55,7 +55,6 @@ test_that("subsample construction works with multi-valued D and dependence", {
                                              sample_folds = 5, cv_folds = 3,
                                              D = D)
 
-
   # Check that cluster variables are unique across folds
   expect_identical(
   setdiff(cluster_variable[D==1][crossfit_indices_2$subsamples_byD[[1]][[1]]],

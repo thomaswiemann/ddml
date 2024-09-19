@@ -40,7 +40,7 @@ get_crossfit_indices <- function(cluster_variable,
       for (d in 1:n_D_levels) {
         if (cluster) {
           # Create temp cluster variable to efficiently map clusters to sample indices
-          tmp_cl <- get_temp_cluster(cluster_variable[D==d])
+          tmp_cl <- get_temp_cluster(cluster_variable[D==D_levels[d]])
           subsamples_temp <- generate_subsamples(tmp_cl$n_cluster,
                                                  sample_folds)
           subsamples_byD[[d]] <- lapply(subsamples_temp, function (x) {
