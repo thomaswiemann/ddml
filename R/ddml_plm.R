@@ -273,16 +273,20 @@ ddml_plm <- function(y, D, X,
 
 #' Inference Methods for Partially Linear Estimators.
 #'
-#' @seealso [sandwich::vcovHC()]
+#' @seealso [sandwich::vcovHC()], [sandwich::vcovCL()]
 #'
 #' @description Inference methods for partially linear estimators. Simple
-#'     wrapper for [sandwich::vcovHC()].
+#'     wrapper for [sandwich::vcovHC()] and [sandwich::vcovCL()]. Default
+#'     standard errors are heteroskedasiticty-robust. If the \code{ddml}
+#'     estimator was computed using a \code{cluster_variable}, the standard
+#'     errors are also cluster-robust by default.
 #'
 #' @param object An object of class \code{ddml_plm}, \code{ddml_pliv}, or
 #'     \code{ddml_fpliv} as fitted by [ddml::ddml_plm()], [ddml::ddml_pliv()],
 #'     and [ddml::ddml_fpliv()], respectively.
-#' @param ... Additional arguments passed to \code{vcovHC}. See
-#'     [sandwich::vcovHC()] for a complete list of arguments.
+#' @param ... Additional arguments passed to \code{vcovHC} and \code{vcovCL}.
+#'     See [sandwich::vcovHC()] and [sandwich::vcovCL()] for a complete list of
+#'     arguments.
 #'
 #' @return An array with inference results for each \code{ensemble_type}.
 #'
@@ -319,6 +323,8 @@ summary.ddml_plm <- function(object, ...) {
   # Compute and print inference results
   coefficients <- organize_inf_results(fit_obj_list = object$ols_fit,
                                        ensemble_type = object$ensemble_type,
+                                       cluster_variable =
+                                         object$cluster_variable,
                                        ...)
   class(coefficients) <- c("summary.ddml_plm", class(coefficients))
   coefficients
@@ -326,7 +332,7 @@ summary.ddml_plm <- function(object, ...) {
 
 #' Print Methods for Treatment Effect Estimators.
 #'
-#' @description Inference methods for treatment effect estimators.
+#' @description Print methods for treatment effect estimators.
 #'
 #' @param x An object of class \code{summary.ddml_plm},
 #'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as

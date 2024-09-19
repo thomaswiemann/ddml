@@ -230,7 +230,10 @@ ddml_ate <- function(y, D, X,
 
 #' Inference Methods for Treatment Effect Estimators.
 #'
-#' @description Inference methods for treatment effect estimators.
+#' @description Inference methods for treatment effect estimators. By default,
+#'     standard errors are heteroskedasiticty-robust. If the \code{ddml}
+#'     estimator was computed using a \code{cluster_variable}, the standard
+#'     errors are also cluster-robust by default.
 #'
 #' @param object An object of class \code{ddml_ate}, \code{ddml_att}, and
 #'     \code{ddml_late}, as fitted by [ddml::ddml_ate()], [ddml::ddml_att()],
@@ -263,14 +266,16 @@ summary.ddml_ate <- function(object, ...) {
                                                    psi_a = object$psi_a,
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
-                                                     object$ensemble_type)
+                                                     object$ensemble_type,
+                                                   cluster_variable =
+                                                     object$cluster_variable)
   class(coefficients) <- c("summary.ddml_ate", class(coefficients))
   coefficients
 }#SUMMARY.DDML_ATE
 
 #' Print Methods for Treatment Effect Estimators.
 #'
-#' @description Inference methods for treatment effect estimators.
+#' @description Print methods for treatment effect estimators.
 #'
 #' @param x An object of class \code{summary.ddml_ate},
 #'     \code{summary.ddml_att}, and \code{ddml_late}, as returned by

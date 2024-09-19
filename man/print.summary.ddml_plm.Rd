@@ -26,7 +26,7 @@ and \code{\link[=summary.ddml_fpliv]{summary.ddml_fpliv()}}, respectively.}
 NULL.
 }
 \description{
-Inference methods for treatment effect estimators.
+Print methods for treatment effect estimators.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

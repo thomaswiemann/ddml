@@ -270,6 +270,8 @@ summary.ddml_pliv <- function(object, ...) {
   # Compute and print inference results
   coefficients <- organize_inf_results(fit_obj_list = object$iv_fit,
                                        ensemble_type = object$ensemble_type,
+                                       cluster_variable =
+                                         object$cluster_variable,
                                        ...)
   class(coefficients) <- c("summary.ddml_pliv", class(coefficients))
   coefficients

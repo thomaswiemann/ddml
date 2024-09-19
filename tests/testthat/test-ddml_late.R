@@ -205,3 +205,34 @@ test_that("summary.ddml_late computes with a single model", {
   # Check output with expectations
   expect_equal(length(inf_res), 4)
 })#TEST_THAT
+
+test_that("summary.ddml_late computes with a single model and dependence", {
+  # Simulate small dataset
+  n_cluster <- 250
+  nobs <- 500
+  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
+  Z_tld <-  X %*% runif(40) + rnorm(n_cluster)
+  fun <- stepfun(quantile(Z_tld, probs = c(0.5)), c(0, 1))
+  Z <- fun(Z_tld)
+  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
+  Z <- Z[cluster_variable, drop = F]
+  X <- X[cluster_variable, , drop = F]
+  eps <- rnorm(nobs)
+  D <- Z + X %*% runif(40) + eps
+  y <- D + X %*% runif(40) + 0.1 * eps + rnorm(nobs)
+  # Define arguments
+  learners <- list(what = ols)
+  expect_warning({
+    ddml_late_fit <- ddml_late(y, D, Z, X,
+                               learners = learners,
+                               cluster_variable = cluster_variable,
+                               cv_folds = 3,
+                               sample_folds = 3,
+                               silent = T)
+  })
+  # Compute inference results & test print
+  inf_res <- summary(ddml_late_fit)
+  capture_output({print(inf_res)}, print = FALSE)
+  # Check output with expectations
+  expect_equal(length(inf_res), 4)
+})#TEST_THAT

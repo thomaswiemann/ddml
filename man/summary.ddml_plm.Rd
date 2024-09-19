@@ -17,15 +17,19 @@
 \code{ddml_fpliv} as fitted by \code{\link[=ddml_plm]{ddml_plm()}}, \code{\link[=ddml_pliv]{ddml_pliv()}},
 and \code{\link[=ddml_fpliv]{ddml_fpliv()}}, respectively.}
 
-\item{...}{Additional arguments passed to \code{vcovHC}. See
-\code{\link[sandwich:vcovHC]{sandwich::vcovHC()}} for a complete list of arguments.}
+\item{...}{Additional arguments passed to \code{vcovHC} and \code{vcovCL}.
+See \code{\link[sandwich:vcovHC]{sandwich::vcovHC()}} and \code{\link[sandwich:vcovCL]{sandwich::vcovCL()}} for a complete list of
+arguments.}
 }
 \value{
 An array with inference results for each \code{ensemble_type}.
 }
 \description{
 Inference methods for partially linear estimators. Simple
-wrapper for \code{\link[sandwich:vcovHC]{sandwich::vcovHC()}}.
+wrapper for \code{\link[sandwich:vcovHC]{sandwich::vcovHC()}} and \code{\link[sandwich:vcovCL]{sandwich::vcovCL()}}. Default
+standard errors are heteroskedasiticty-robust. If the \code{ddml}
+estimator was computed using a \code{cluster_variable}, the standard
+errors are also cluster-robust by default.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -53,5 +57,5 @@ Object-Oriented Implementation of Clustered Covariances in R.” Journal of
 Statistical Software, 95(1), 1-36.
 }
 \seealso{
-\code{\link[sandwich:vcovHC]{sandwich::vcovHC()}}
+\code{\link[sandwich:vcovHC]{sandwich::vcovHC()}}, \code{\link[sandwich:vcovCL]{sandwich::vcovCL()}}
 }

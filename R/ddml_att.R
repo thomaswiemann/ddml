@@ -128,7 +128,9 @@ summary.ddml_att <- function(object, ...) {
                                                    psi_a = object$psi_a,
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
-                                                     object$ensemble_type)
+                                                     object$ensemble_type,
+                                                   cluster_variable =
+                                                     object$cluster_variable)
   class(coefficients) <- c("summary.ddml_att", class(coefficients))
   coefficients
 }#SUMMARY.DDML_ATT
