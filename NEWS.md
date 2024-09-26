@@ -1,8 +1,11 @@
 # ddml (development version)
 
+* Implements one-way clustered inference.
+* Increases defaults for ``sample_folds`` and ``cv_folds`` to ``10``.
+
 # ddml 0.2.2
 
-* Changes ``ddml:ols()`` default to ``const=TRUE``.
+* Changes ``ddml::ols()`` default to ``const=TRUE``.
 * Adds probability forest compatibility to ``ddml::mdl_ranger()``.
 * Adds propensity score trimming option to ``ddml::ddml_ate()``, ``ddml::ddml_att()``, and ``ddml::ddml_late()``.
 * Fixes ATE and LATE scores.
