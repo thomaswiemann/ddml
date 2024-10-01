@@ -144,7 +144,7 @@ ddml_ate <- function(y, D, X,
                         subsamples = cf_indxs$subsamples_byD[[1]],
                         cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxilliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|D=1,X]
   y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = F],
@@ -154,7 +154,7 @@ ddml_ate <- function(y, D, X,
                         subsamples = cf_indxs$subsamples_byD[[2]],
                         cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|D=1,X]: ",
-                        auxilliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,

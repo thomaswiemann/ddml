@@ -19,7 +19,7 @@
 #'             ensemble procedures.}
 #'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
 #'             a list of matrices with in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+#'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{oos_fitted_bylearner}}{A matrix of
 #'             out-of-sample predictions, each column corresponding to a base
@@ -27,7 +27,7 @@
 #'         \item{\code{is_fitted_bylearner}}{When
 #'             \code{compute_insample_predictions = T}, a list of matrices with
 #'             in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+#'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 #'             not \code{NULL}, a
 #'             list of matrices with additional predictions for each learner.}
 #'     }
@@ -71,7 +71,7 @@ shortstacking <- function (y, X, Z = NULL,
                            subsamples = NULL,
                            silent = FALSE,
                            progress = NULL,
-                           auxilliary_X = NULL,
+                           auxiliary_X = NULL,
                            shortstack_y = y) {
 
   # Data parameters
@@ -101,7 +101,7 @@ shortstacking <- function (y, X, Z = NULL,
                    compute_predictions_bylearner = TRUE,
                    subsamples = subsamples,
                    silent = silent, progress = progress,
-                   auxilliary_X = auxilliary_X)
+                   auxiliary_X = auxiliary_X)
 
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()
@@ -116,10 +116,10 @@ shortstacking <- function (y, X, Z = NULL,
   oos_fitted <- res$oos_fitted_bylearner %*% weights
 
   # Compute auxilliary predictions (optional)
-  auxilliary_fitted <- rep(list(NULL), sample_folds)
-  if (!is.null(auxilliary_X)) {
+  auxiliary_fitted <- rep(list(NULL), sample_folds)
+  if (!is.null(auxiliary_X)) {
     for (k in 1:sample_folds) {
-      auxilliary_fitted[[k]] <- res$auxilliary_fitted_bylearner[[k]] %*% weights
+      auxiliary_fitted[[k]] <- res$auxiliary_fitted_bylearner[[k]] %*% weights
     }#FOR
   }#if
 
@@ -160,9 +160,9 @@ shortstacking <- function (y, X, Z = NULL,
   output <- list(oos_fitted = oos_fitted,
                  weights = weights, mspe = mspe,
                  is_fitted = is_fitted,
-                 auxilliary_fitted = auxilliary_fitted,
+                 auxiliary_fitted = auxiliary_fitted,
                  oos_fitted_bylearner = res$oos_fitted_bylearner,
                  is_fitted_bylearner = res$is_fitted_bylearner,
-                 auxilliary_fitted_bylearner = res$auxilliary_fitted_bylearner)
+                 auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)
 }#SHORTSTACKING

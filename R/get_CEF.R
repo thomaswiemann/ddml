@@ -10,7 +10,7 @@ get_CEF <- function(y, X, Z = NULL,
                     cv_subsamples_list,
                     silent = FALSE,
                     progress = NULL,
-                    auxilliary_X = NULL,
+                    auxiliary_X = NULL,
                     shortstack_y = y) {
   # Compute CEF
   if (shortstack) {
@@ -22,7 +22,7 @@ get_CEF <- function(y, X, Z = NULL,
                            compute_insample_predictions,
                          subsamples = subsamples,
                          silent = silent, progress = progress,
-                         auxilliary_X = auxilliary_X,
+                         auxiliary_X = auxiliary_X,
                          shortstack_y = shortstack_y)
   } else {
     res <- crosspred(y, X, Z,
@@ -36,7 +36,7 @@ get_CEF <- function(y, X, Z = NULL,
                      subsamples = subsamples,
                      cv_subsamples_list = cv_subsamples_list,
                      silent = silent, progress = progress,
-                     auxilliary_X = auxilliary_X)
+                     auxiliary_X = auxiliary_X)
   }#IFELSE
   update_progress(silent)
 
@@ -58,7 +58,7 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indxs) {
   is_D <- rep(list(NULL), nCEF)
   for (d in 1:nCEF) is_D[[d]] <- which(D == D_levels[d])
   nensb <- ncol(as.matrix(CEF_res_byD[[1]][[1]]$oos_fitted))
-  sample_folds <- length(CEF_res_byD[[1]][[1]]$auxilliary_fitted)
+  sample_folds <- length(CEF_res_byD[[1]][[1]]$auxiliary_fitted)
 
   # Populate CEF
   g_X_byD <- array(0, dim = c(nobs, nensb, nCEF))
@@ -66,7 +66,7 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indxs) {
     g_X_byD[is_D[[d]], , d] <- CEF_res_byD[[d]][[1]]$oos_fitted
     for (k in 1:sample_folds) {
       g_X_byD[aux_indxs[[d]][[k]], , d] <-
-        CEF_res_byD[[d]][[1]]$auxilliary_fitted[[k]]
+        CEF_res_byD[[d]][[1]]$auxiliary_fitted[[k]]
     }#FOR
   }#FOR
 

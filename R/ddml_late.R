@@ -183,7 +183,7 @@ ddml_late <- function(y, D, Z, X,
                         subsamples = cf_indxs$subsamples_byD[[1]],
                         cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|Z=0,X]: ",
-                        auxilliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|Z=1,X]
   y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
@@ -193,15 +193,15 @@ ddml_late <- function(y, D, Z, X,
                         subsamples = cf_indxs$subsamples_byD[[2]],
                         cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|Z=1,X]: ",
-                        auxilliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
 
   # Check for perfect non-compliance
   if (all(D[Z==0] == 0)) {
     # Artificially construct values for subsample with Z=0
     D_X_Z0_res <- list(NULL)
     D_X_Z0_res$oos_fitted <- rep(0, length(is_Z0))
-    D_X_Z0_res$auxilliary_fitted <-
-      lapply(y_X_Z0_res$auxilliary_fitted, function (x) {x * 0})
+    D_X_Z0_res$auxiliary_fitted <-
+      lapply(y_X_Z0_res$auxiliary_fitted, function (x) {x * 0})
     if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=0,X]
@@ -213,7 +213,7 @@ ddml_late <- function(y, D, Z, X,
                           subsamples = cf_indxs$subsamples_byD[[1]],
                           cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                           silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxilliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                          auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
   }#IFELSE
 
   # Check for perfect compliance
@@ -221,8 +221,8 @@ ddml_late <- function(y, D, Z, X,
     # Artificially construct values for subsample with Z=0
     D_X_Z1_res <- list(NULL)
     D_X_Z1_res$oos_fitted <- rep(0, nobs - length(is_Z0))
-    D_X_Z1_res$auxilliary_fitted <-
-      lapply(y_X_Z1_res$auxilliary_fitted, function (x) {x * 0})
+    D_X_Z1_res$auxiliary_fitted <-
+      lapply(y_X_Z1_res$auxiliary_fitted, function (x) {x * 0})
     if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=1,X]
@@ -234,7 +234,7 @@ ddml_late <- function(y, D, Z, X,
                           subsamples = cf_indxs$subsamples_byD[[2]],
                           cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
                           silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxilliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                          auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
   }#IFELSE
 
   # Compute estimates of E[Z|X]

@@ -40,7 +40,7 @@ ddml_att <- function(y, D, X,
                         subsamples = cf_indxs$subsamples_byD[[1]],
                         cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxilliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,

@@ -2,6 +2,7 @@
 
 * Implements one-way clustered inference.
 * Increases defaults for ``sample_folds`` and ``cv_folds`` to ``10``.
+* Fixes typo in ``auxiliary_X`` arguments.
 
 # ddml 0.2.2
 
