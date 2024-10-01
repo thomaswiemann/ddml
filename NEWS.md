@@ -1,4 +1,4 @@
-# ddml (development version)
+# ddml 0.3.0
 
 * Implements one-way clustered inference.
 * Increases defaults for ``sample_folds`` and ``cv_folds`` to ``10``.
