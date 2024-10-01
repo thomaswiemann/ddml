@@ -23,7 +23,10 @@ and \code{\link[=ddml_late]{ddml_late()}}, respectively.}
 A matrix with inference results.
 }
 \description{
-Inference methods for treatment effect estimators.
+Inference methods for treatment effect estimators. By default,
+standard errors are heteroskedasiticty-robust. If the \code{ddml}
+estimator was computed using a \code{cluster_variable}, the standard
+errors are also cluster-robust by default.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

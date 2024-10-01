@@ -125,7 +125,7 @@ test_that("crosspred computes auxilliary predictions", {
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T,
-                             auxilliary_X = list(X, X, X))
+                             auxiliary_X = list(X, X, X))
   # Check output with expectations
-  expect_equal(dim(crosspred_res$auxilliary_fitted[[1]]), c(length(y), 5))
+  expect_equal(dim(crosspred_res$auxiliary_fitted[[1]]), c(length(y), 5))
 })#TEST_THAT

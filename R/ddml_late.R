@@ -65,13 +65,13 @@
 #'     \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_ZX} must
 #'     have the same number of columns.
-#' @param subsamples_Z0,subsamples_Z1 List of vectors with sample indices for
-#'     cross-fitting, corresponding to observations with \eqn{Z=0} and
-#'     \eqn{Z=1}, respectively.
-#' @param cv_subsamples_list_Z0,cv_subsamples_list_Z1 List of lists, each
-#'     corresponding to a subsample containing vectors with subsample indices
-#'     for cross-validation. Arguments are separated for observations with
-#'     \eqn{Z=0} and \eqn{Z=1}, respectively.
+#' @param subsamples_byZ List of two lists corresponding to the two instrument
+#'     levels. Each list contains vectors with sample indices for
+#'     cross-fitting.
+#' @param cv_subsamples_byZ List of two lists, each corresponding to one of the
+#'     two instrument levels. Each of the two lists contains lists, each
+#'     corresponding to a subsample and contains vectors with subsample indices
+#'     for cross-validation.
 #'
 #' @return \code{ddml_late} returns an object of S3 class
 #'     \code{ddml_late}. An object of class \code{ddml_late} is a list
@@ -90,10 +90,10 @@
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
-#'             \code{subsamples_Z0},\code{subsamples_Z1},
-#'             \code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
-#'             \code{ensemble_type}}{Pass-through of
-#'             selected user-provided arguments. See above.}
+#'             \code{cluster_variable},\code{subsamples_Z0},
+#'             \code{subsamples_Z1},\code{cv_subsamples_list_Z0},
+#'             \code{cv_subsamples_list_Z1},\code{ensemble_type}}{Pass-through
+#'             of selected user-provided arguments. See above.}
 #'     }
 #' @export
 #'
@@ -146,67 +146,31 @@ ddml_late <- function(y, D, Z, X,
                       learners,
                       learners_DXZ = learners,
                       learners_ZX = learners,
-                      sample_folds = 2,
+                      sample_folds = 10,
                       ensemble_type = "nnls",
                       shortstack = FALSE,
-                      cv_folds = 5,
+                      cv_folds = 10,
                       custom_ensemble_weights = NULL,
                       custom_ensemble_weights_DXZ = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
-                      subsamples_Z0 = NULL,
-                      subsamples_Z1 = NULL,
-                      cv_subsamples_list_Z0 = NULL,
-                      cv_subsamples_list_Z1 = NULL,
+                      cluster_variable = seq_along(y),
+                      subsamples_byZ = NULL,
+                      cv_subsamples_byZ = NULL,
                       trim = 0.01,
                       silent = FALSE) {
   # Data parameters
   nobs <- length(y)
   is_Z0 <- which(Z == 0)
-  nobs_Z0 <- length(is_Z0)
-  nobs_Z1 <- nobs - nobs_Z0
 
-  # Create sample fold tuple by treatment
-  if (is.null(subsamples_Z0) | is.null(subsamples_Z1)) {
-    subsamples_Z0 <- generate_subsamples(nobs_Z0, sample_folds)
-    subsamples_Z1 <- generate_subsamples(nobs_Z1, sample_folds)
-  }#IF
-  sample_folds <- length(subsamples_Z0)
+  # Create sample and cv-fold tuples
+  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = Z,
+                                   sample_folds = sample_folds,
+                                   cv_folds = cv_folds,
+                                   subsamples_byD = subsamples_byZ,
+                                   cv_subsamples_byD = cv_subsamples_byZ)
 
-  # Create cv-subsamples tuple by treatment
-  if (is.null(cv_subsamples_list_Z0) | is.null(cv_subsamples_list_Z1)) {
-    cv_subsamples_list_Z0 <- rep(list(NULL), sample_folds)
-    cv_subsamples_list_Z1 <- rep(list(NULL), sample_folds)
-    for (k in 1:sample_folds) {
-      nobs_Z0_k <- nobs_Z0 - length(subsamples_Z0[[k]])
-      nobs_Z1_k <- nobs_Z1 - length(subsamples_Z1[[k]])
-      cv_subsamples_list_Z0[[k]] <- generate_subsamples(nobs_Z0_k, cv_folds)
-      cv_subsamples_list_Z1[[k]] <- generate_subsamples(nobs_Z1_k, cv_folds)
-    }# FOR
-  }#IF
-
-  # Merge subsamples across treatment and create auxiliary control matrix
-  subsamples <- subsamples_Z0
-  cv_subsamples_list <- cv_subsamples_list_Z0
-  auxilliary_X_Z0 <- rep(list(NULL), sample_folds)
-  auxilliary_X_Z1 <- rep(list(NULL), sample_folds)
-  for (k in 1:sample_folds) {
-    # Sample folds
-    subsamples[[k]] <- sort(c((1:nobs)[is_Z0][subsamples_Z0[[k]]],
-                              (1:nobs)[-is_Z0][subsamples_Z1[[k]]]))
-    # CV folds
-    nobs_k <- nobs - length(subsamples[[k]])
-    is_Z0_k <- which(Z[-subsamples[[k]]] == 0)
-    is_Z1_k <- which(Z[-subsamples[[k]]] == 1)
-    for (j in 1:cv_folds) {
-      indx_Z0 <- is_Z0_k[cv_subsamples_list_Z0[[k]][[j]]]
-      indx_Z1 <- is_Z1_k[cv_subsamples_list_Z1[[k]][[j]]]
-      cv_subsamples_list[[k]][[j]] <- sort(c(indx_Z0, indx_Z1))
-    }#FOR
-
-    # Auxilliary X
-    auxilliary_X_Z1[[k]] <- X[-is_Z0, , drop=F][subsamples_Z1[[k]], , drop=F]
-    auxilliary_X_Z0[[k]] <- X[is_Z0, , drop=F][subsamples_Z0[[k]], , drop=F]
-  }#FOR
+  # Create tuple for extrapolated fitted values
+  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, Z)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -216,28 +180,28 @@ ddml_late <- function(y, D, Z, X,
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        cv_subsamples_list = cv_subsamples_list_Z0,
-                        subsamples = subsamples_Z0,
+                        subsamples = cf_indxs$subsamples_byD[[1]],
+                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|Z=0,X]: ",
-                        auxilliary_X = auxilliary_X_Z1)
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|Z=1,X]
   y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        cv_subsamples_list = cv_subsamples_list_Z1,
-                        subsamples = subsamples_Z1,
+                        subsamples = cf_indxs$subsamples_byD[[2]],
+                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|Z=1,X]: ",
-                        auxilliary_X = auxilliary_X_Z0)
+                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
 
   # Check for perfect non-compliance
   if (all(D[Z==0] == 0)) {
     # Artificially construct values for subsample with Z=0
     D_X_Z0_res <- list(NULL)
-    D_X_Z0_res$oos_fitted <- rep(0, nobs_Z0)
-    D_X_Z0_res$auxilliary_fitted <-
-      lapply(y_X_Z0_res$auxilliary_fitted, function (x) {x * 0})
+    D_X_Z0_res$oos_fitted <- rep(0, length(is_Z0))
+    D_X_Z0_res$auxiliary_fitted <-
+      lapply(y_X_Z0_res$auxiliary_fitted, function (x) {x * 0})
     if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=0,X]
@@ -246,19 +210,19 @@ ddml_late <- function(y, D, Z, X,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          cv_subsamples_list = cv_subsamples_list_Z0,
-                          subsamples = subsamples_Z0,
-                          silent = silent, progress = "E[D|Z=0,X]: ",
-                          auxilliary_X = auxilliary_X_Z1)
+                          subsamples = cf_indxs$subsamples_byD[[1]],
+                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
+                          silent = silent, progress = "E[Y|Z=0,X]: ",
+                          auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
   }#IFELSE
 
   # Check for perfect compliance
   if (all(D[Z==1] == 1)) {
     # Artificially construct values for subsample with Z=0
     D_X_Z1_res <- list(NULL)
-    D_X_Z1_res$oos_fitted <- rep(0, nobs_Z1)
-    D_X_Z1_res$auxilliary_fitted <-
-      lapply(y_X_Z1_res$auxilliary_fitted, function (x) {x * 0})
+    D_X_Z1_res$oos_fitted <- rep(0, nobs - length(is_Z0))
+    D_X_Z1_res$auxiliary_fitted <-
+      lapply(y_X_Z1_res$auxiliary_fitted, function (x) {x * 0})
     if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=1,X]
@@ -267,10 +231,10 @@ ddml_late <- function(y, D, Z, X,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          cv_subsamples_list = cv_subsamples_list_Z1,
-                          subsamples = subsamples_Z1,
-                          silent = silent, progress = "E[D|Z=1,X]: ",
-                          auxilliary_X = auxilliary_X_Z0)
+                          subsamples = cf_indxs$subsamples_byD[[2]],
+                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
+                          silent = silent, progress = "E[Y|Z=0,X]: ",
+                          auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
   }#IFELSE
 
   # Compute estimates of E[Z|X]
@@ -278,8 +242,8 @@ ddml_late <- function(y, D, Z, X,
                      learners = learners_ZX, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights_ZX,
-                     cv_subsamples_list = cv_subsamples_list,
-                     subsamples = subsamples,
+                     subsamples = cf_indxs$subsamples,
+                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
                      compute_insample_predictions = F,
                      silent = silent, progress = "E[Z|X]: ")
 
@@ -291,26 +255,14 @@ ddml_late <- function(y, D, Z, X,
   multiple_ensembles <- nensb > 1
 
   # Construct reduced form variables
-  l_Z0 <- l_Z1 <- p_Z0 <- p_Z1 <- matrix(0, nobs, nensb)
-  l_Z0[is_Z0, ] <- y_X_Z0_res$oos_fitted
-  l_Z1[-is_Z0, ] <- y_X_Z1_res$oos_fitted
-  p_Z0[is_Z0, ] <- D_X_Z0_res$oos_fitted
-  p_Z1[-is_Z0, ] <- D_X_Z1_res$oos_fitted
-  if (!multiple_ensembles) {
-    for (k in 1:sample_folds) {
-      l_Z1[is_Z0][subsamples_Z0[[k]]] <- y_X_Z1_res$auxilliary_fitted[[k]]
-      l_Z0[-is_Z0][subsamples_Z1[[k]]] <- y_X_Z0_res$auxilliary_fitted[[k]]
-      p_Z1[is_Z0][subsamples_Z0[[k]]] <- D_X_Z1_res$auxilliary_fitted[[k]]
-      p_Z0[-is_Z0][subsamples_Z1[[k]]] <- D_X_Z0_res$auxilliary_fitted[[k]]
-    }#FOR
-  } else {
-    for (k in 1:sample_folds) {
-      l_Z1[is_Z0, ][subsamples_Z0[[k]], ] <- y_X_Z1_res$auxilliary_fitted[[k]]
-      l_Z0[-is_Z0, ][subsamples_Z1[[k]], ] <- y_X_Z0_res$auxilliary_fitted[[k]]
-      p_Z1[is_Z0, ][subsamples_Z0[[k]], ] <- D_X_Z1_res$auxilliary_fitted[[k]]
-      p_Z0[-is_Z0, ][subsamples_Z1[[k]], ] <- D_X_Z0_res$auxilliary_fitted[[k]]
-    }#FOR
-  }#IF
+  l_X_byZ <- extrapolate_CEF(D = Z,
+                             CEF_res_byD = list(list(y_X_Z0_res, d=0),
+                                                list(y_X_Z1_res, d=1)),
+                             aux_indxs = aux_indxs)
+  p_X_byZ <- extrapolate_CEF(D = Z,
+                             CEF_res_byD = list(list(D_X_Z0_res, d=0),
+                                                list(D_X_Z1_res, d=1)),
+                             aux_indxs = aux_indxs)
   r_X <- Z_X_res$oos_fitted
 
   # Trim propensity scores, return warnings
@@ -320,12 +272,12 @@ ddml_late <- function(y, D, Z, X,
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
   D_copy <- matrix(rep(D, nensb), nobs, nensb)
   Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
-  psi_b <- Z_copy * (y_copy - l_Z1) / r_X_tr -
-    (1 - Z_copy) * (y_copy - l_Z0) / (1 - r_X_tr) +
-    l_Z1 - l_Z0
-  psi_a <- -(Z_copy * (D_copy - p_Z1) / r_X_tr -
-    (1 - Z_copy) * (D_copy - p_Z0) / (1 - r_X_tr) +
-    p_Z1 - p_Z0)
+  psi_b <- Z_copy * (y_copy - l_X_byZ[, , 2]) / r_X_tr -
+    (1 - Z_copy) * (y_copy - l_X_byZ[, , 1]) / (1 - r_X_tr) +
+    l_X_byZ[, , 2] - l_X_byZ[, , 1]
+  psi_a <- -(Z_copy * (D_copy - p_X_byZ[, , 2]) / r_X_tr -
+    (1 - Z_copy) * (D_copy - p_X_byZ[, , 1]) / (1 - r_X_tr) +
+      p_X_byZ[, , 2] - p_X_byZ[, , 1])
   numerator <- colMeans(psi_b)
   denominator <- colMeans(psi_a)
   late <- -numerator / denominator
@@ -346,8 +298,8 @@ ddml_late <- function(y, D, Z, X,
                Z_X = Z_X_res$mspe)
 
   # Organize reduced form predicted values
-  oos_pred <- list(EY_Z0_X = l_Z0, EY_Z1_X = l_Z1,
-                   ED_Z0_X = p_Z0, ED_Z1_X = p_Z1,
+  oos_pred <- list(EY_Z0_X = l_X_byZ[, , 1], EY_Z1_X = l_X_byZ[, , 2],
+                   ED_Z0_X = p_X_byZ[, , 1], ED_Z1_X = p_X_byZ[, , 2],
                    EZ_X = r_X)
 
   # Organize output
@@ -357,10 +309,9 @@ ddml_late <- function(y, D, Z, X,
                    learners = learners,
                    learners_DXZ = learners_DXZ,
                    learners_ZX = learners_ZX,
-                   subsamples_Z0 = subsamples_Z0,
-                   subsamples_Z1 = subsamples_Z1,
-                   cv_subsamples_list_Z0 = cv_subsamples_list_Z0,
-                   cv_subsamples_list_Z1 = cv_subsamples_list_Z1,
+                   cluster_variable = cluster_variable,
+                   subsamples_byZ = subsamples_byZ,
+                   cv_subsamples_byZ = cv_subsamples_byZ,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress
@@ -383,7 +334,9 @@ summary.ddml_late <- function(object, ...) {
                                                    psi_a = object$psi_a,
                                                    psi_b = object$psi_b,
                                                    ensemble_type =
-                                                     object$ensemble_type)
+                                                     object$ensemble_type,
+                                                   cluster_variable =
+                                                     object$cluster_variable)
   class(coefficients) <- c("summary.ddml_late", class(coefficients))
   coefficients
 }#SUMMARY.DDML_LATE

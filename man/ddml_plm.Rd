@@ -10,12 +10,13 @@ ddml_plm(
   X,
   learners,
   learners_DX = learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "nnls",
   shortstack = FALSE,
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
+  cluster_variable = seq_along(y),
   subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = FALSE
@@ -87,6 +88,8 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
 \code{custom_ensemble_weights_DX} must have the same number of columns.}
 
+\item{cluster_variable}{A vector of cluster indices.}
+
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
 \item{cv_subsamples_list}{List of lists, each corresponding to a subsample
@@ -109,9 +112,10 @@ cross-validation step in the ensemble construction.}
 \item{\code{ols_fit}}{Object of class \code{lm} from the second
 stage regression of \eqn{Y - \hat{E}[Y|X]} on
 \eqn{D - \hat{E}[D|X]}.}
-\item{\code{learners},\code{learners_DX},\code{subsamples},
-\code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
-selected user-provided arguments. See above.}
+\item{\code{learners},\code{learners_DX},\code{cluster_variable},
+\code{subsamples}, \code{cv_subsamples_list},
+\code{ensemble_type}}{Pass-through of selected user-provided
+arguments. See above.}
 }
 }
 \description{

@@ -11,16 +11,15 @@ ddml_ate(
   X,
   learners,
   learners_DX = learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "nnls",
   shortstack = FALSE,
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
-  subsamples_D0 = NULL,
-  subsamples_D1 = NULL,
-  cv_subsamples_list_D0 = NULL,
-  cv_subsamples_list_D1 = NULL,
+  cluster_variable = seq_along(y),
+  subsamples_byD = NULL,
+  cv_subsamples_byD = NULL,
   trim = 0.01,
   silent = FALSE
 )
@@ -31,16 +30,15 @@ ddml_att(
   X,
   learners,
   learners_DX = learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "nnls",
   shortstack = FALSE,
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
-  subsamples_D0 = NULL,
-  subsamples_D1 = NULL,
-  cv_subsamples_list_D0 = NULL,
-  cv_subsamples_list_D1 = NULL,
+  cluster_variable = seq_along(y),
+  subsamples_byD = NULL,
+  cv_subsamples_byD = NULL,
   trim = 0.01,
   silent = FALSE
 )
@@ -111,14 +109,16 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
 \code{custom_ensemble_weights_DX} must have the same number of columns.}
 
-\item{subsamples_D0, subsamples_D1}{List of vectors with sample indices for
-cross-fitting, corresponding to untreated and treated observations,
-respectively.}
+\item{cluster_variable}{A vector of cluster indices.}
 
-\item{cv_subsamples_list_D0, cv_subsamples_list_D1}{List of lists, each
-corresponding to a subsample containing vectors with subsample indices
-for cross-validation. Arguments are separated for untreated and treated
-observations, respectively.}
+\item{subsamples_byD}{List of two lists corresponding to the two treatment
+levels. Each list contains vectors with sample indices for
+cross-fitting.}
+
+\item{cv_subsamples_byD}{List of two lists, each corresponding to one of the
+two treatment levels. Each of the two lists contains lists, each
+corresponding to a subsample and contains vectors with subsample indices
+for cross-validation.}
 
 \item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
 \code{trim} and \code{1-trim}.}
@@ -144,7 +144,7 @@ of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}} or
 \code{\link[=summary.ddml_att]{summary.ddml_att()}}.}
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
-\item{\code{learners},\code{learners_DX},
+\item{\code{learners},\code{learners_DX},\code{cluster_variable},
 \code{subsamples_D0},\code{subsamples_D1},
 \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
 \code{ensemble_type}}{Pass-through of

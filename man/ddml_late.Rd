@@ -12,17 +12,16 @@ ddml_late(
   learners,
   learners_DXZ = learners,
   learners_ZX = learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "nnls",
   shortstack = FALSE,
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_ZX = custom_ensemble_weights,
-  subsamples_Z0 = NULL,
-  subsamples_Z1 = NULL,
-  cv_subsamples_list_Z0 = NULL,
-  cv_subsamples_list_Z1 = NULL,
+  cluster_variable = seq_along(y),
+  subsamples_byZ = NULL,
+  cv_subsamples_byZ = NULL,
   trim = 0.01,
   silent = FALSE
 )
@@ -102,14 +101,16 @@ is identical to \code{custom_ensemble_weights}. Note:
 \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_ZX} must
 have the same number of columns.}
 
-\item{subsamples_Z0, subsamples_Z1}{List of vectors with sample indices for
-cross-fitting, corresponding to observations with \eqn{Z=0} and
-\eqn{Z=1}, respectively.}
+\item{cluster_variable}{A vector of cluster indices.}
 
-\item{cv_subsamples_list_Z0, cv_subsamples_list_Z1}{List of lists, each
-corresponding to a subsample containing vectors with subsample indices
-for cross-validation. Arguments are separated for observations with
-\eqn{Z=0} and \eqn{Z=1}, respectively.}
+\item{subsamples_byZ}{List of two lists corresponding to the two instrument
+levels. Each list contains vectors with sample indices for
+cross-fitting.}
+
+\item{cv_subsamples_byZ}{List of two lists, each corresponding to one of the
+two instrument levels. Each of the two lists contains lists, each
+corresponding to a subsample and contains vectors with subsample indices
+for cross-validation.}
 
 \item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
 \code{trim} and \code{1-trim}.}
@@ -134,10 +135,10 @@ of scores. Used in \code{\link[=summary.ddml_late]{summary.ddml_late()}}.}
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
-\code{subsamples_Z0},\code{subsamples_Z1},
-\code{cv_subsamples_list_Z0},\code{cv_subsamples_list_Z1},
-\code{ensemble_type}}{Pass-through of
-selected user-provided arguments. See above.}
+\code{cluster_variable},\code{subsamples_Z0},
+\code{subsamples_Z1},\code{cv_subsamples_list_Z0},
+\code{cv_subsamples_list_Z1},\code{ensemble_type}}{Pass-through
+of selected user-provided arguments. See above.}
 }
 }
 \description{

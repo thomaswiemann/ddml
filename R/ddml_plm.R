@@ -70,6 +70,7 @@
 #'     custom ensemble weights for \code{learners_DX}. Setup is identical to
 #'     \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DX} must have the same number of columns.
+#' @param cluster_variable A vector of cluster indices.
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples_list List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
@@ -89,9 +90,10 @@
 #'         \item{\code{ols_fit}}{Object of class \code{lm} from the second
 #'             stage regression of \eqn{Y - \hat{E}[Y|X]} on
 #'             \eqn{D - \hat{E}[D|X]}.}
-#'         \item{\code{learners},\code{learners_DX},\code{subsamples},
-#'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
-#'             selected user-provided arguments. See above.}
+#'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
+#'             \code{subsamples}, \code{cv_subsamples_list},
+#'             \code{ensemble_type}}{Pass-through of selected user-provided
+#'             arguments. See above.}
 #'     }
 #' @export
 #'
@@ -138,12 +140,13 @@
 ddml_plm <- function(y, D, X,
                      learners,
                      learners_DX = learners,
-                     sample_folds = 2,
+                     sample_folds = 10,
                      ensemble_type = "nnls",
                      shortstack = FALSE,
-                     cv_folds = 5,
+                     cv_folds = 10,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
+                     cluster_variable = seq_along(y),
                      subsamples = NULL,
                      cv_subsamples_list = NULL,
                      silent = FALSE) {
@@ -157,20 +160,12 @@ ddml_plm <- function(y, D, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
-  sample_folds <- length(subsamples)
-
-  # Create cv-subsamples tuple
-  if (is.null(cv_subsamples_list) & !shortstack) {
-    cv_subsamples_list <- rep(list(NULL), sample_folds)
-    for (k in 1:sample_folds) {
-      nobs_k <- nobs - length(subsamples[[k]])
-      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
-    }# FOR
-  }#IF
+  # Create sample and cv-fold tuples
+  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
+                                   sample_folds = sample_folds,
+                                   cv_folds = cv_folds,
+                                   subsamples = subsamples,
+                                   cv_subsamples_list = cv_subsamples_list)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -181,8 +176,8 @@ ddml_plm <- function(y, D, X,
                      ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = subsamples,
-                     cv_subsamples_list = cv_subsamples_list,
+                     subsamples = cf_indxs$subsamples,
+                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
                      silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X], loop through endogenous variables
@@ -194,8 +189,9 @@ ddml_plm <- function(y, D, X,
                                  shortstack = shortstack,
                                  custom_ensemble_weights =
                                    custom_ensemble_weights_DX,
-                                 subsamples = subsamples,
-                                 cv_subsamples_list = cv_subsamples_list,
+                                 subsamples = cf_indxs$subsamples,
+                                 cv_subsamples_list =
+                                   cf_indxs$cv_subsamples_list,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
@@ -262,8 +258,9 @@ ddml_plm <- function(y, D, X,
                    learners = learners,
                    learners_DX = learners_DX,
                    ols_fit = ols_fit,
-                   subsamples = subsamples,
-                   cv_subsamples_list = cv_subsamples_list,
+                   cluster_variable = cluster_variable,
+                   subsamples = cf_indxs$subsamples,
+                   cv_subsamples_list = cf_indxs$cv_subsamples_list,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress
@@ -276,16 +273,20 @@ ddml_plm <- function(y, D, X,
 
 #' Inference Methods for Partially Linear Estimators.
 #'
-#' @seealso [sandwich::vcovHC()]
+#' @seealso [sandwich::vcovHC()], [sandwich::vcovCL()]
 #'
 #' @description Inference methods for partially linear estimators. Simple
-#'     wrapper for [sandwich::vcovHC()].
+#'     wrapper for [sandwich::vcovHC()] and [sandwich::vcovCL()]. Default
+#'     standard errors are heteroskedasiticty-robust. If the \code{ddml}
+#'     estimator was computed using a \code{cluster_variable}, the standard
+#'     errors are also cluster-robust by default.
 #'
 #' @param object An object of class \code{ddml_plm}, \code{ddml_pliv}, or
 #'     \code{ddml_fpliv} as fitted by [ddml::ddml_plm()], [ddml::ddml_pliv()],
 #'     and [ddml::ddml_fpliv()], respectively.
-#' @param ... Additional arguments passed to \code{vcovHC}. See
-#'     [sandwich::vcovHC()] for a complete list of arguments.
+#' @param ... Additional arguments passed to \code{vcovHC} and \code{vcovCL}.
+#'     See [sandwich::vcovHC()] and [sandwich::vcovCL()] for a complete list of
+#'     arguments.
 #'
 #' @return An array with inference results for each \code{ensemble_type}.
 #'
@@ -322,6 +323,8 @@ summary.ddml_plm <- function(object, ...) {
   # Compute and print inference results
   coefficients <- organize_inf_results(fit_obj_list = object$ols_fit,
                                        ensemble_type = object$ensemble_type,
+                                       cluster_variable =
+                                         object$cluster_variable,
                                        ...)
   class(coefficients) <- c("summary.ddml_plm", class(coefficients))
   coefficients
@@ -329,7 +332,7 @@ summary.ddml_plm <- function(object, ...) {
 
 #' Print Methods for Treatment Effect Estimators.
 #'
-#' @description Inference methods for treatment effect estimators.
+#' @description Print methods for treatment effect estimators.
 #'
 #' @param x An object of class \code{summary.ddml_plm},
 #'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as

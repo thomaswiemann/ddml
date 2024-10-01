@@ -60,7 +60,7 @@
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples_list List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
-#' @param auxilliary_X An optional list of matrices of length
+#' @param auxiliary_X An optional list of matrices of length
 #'     \code{sample_folds}, each containing additional observations to calculate
 #'     predictions for.
 #'
@@ -74,7 +74,7 @@
 #'             ensemble procedures.}
 #'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
 #'             a list of matrices with in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+#'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{oos_fitted_bylearner}}{When
 #'             \code{compute_predictions_bylearner = T}, a matrix of
@@ -84,7 +84,7 @@
 #'             \code{compute_insample_predictions = T} and
 #'             \code{compute_predictions_bylearner = T}, a list of matrices with
 #'             in-sample predictions by sample fold.}
-#'         \item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+#'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 #'             not \code{NULL} and \code{compute_predictions_bylearner = T}, a
 #'             list of matrices with additional predictions for each learner.}
 #'     }
@@ -130,7 +130,7 @@ crosspred <- function(y, X, Z = NULL,
                       cv_subsamples_list = NULL,
                       silent = FALSE,
                       progress = NULL,
-                      auxilliary_X = NULL) {
+                      auxiliary_X = NULL) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
@@ -159,8 +159,8 @@ crosspred <- function(y, X, Z = NULL,
   oos_fitted_bylearner <- matrix(0, nobs, nlearners)
   is_fitted <- rep(list(NULL), sample_folds)
   is_fitted_bylearner <- rep(list(NULL), sample_folds)
-  auxilliary_fitted <- rep(list(NULL), sample_folds)
-  auxilliary_fitted_bylearner <- rep(list(NULL), sample_folds)
+  auxiliary_fitted <- rep(list(NULL), sample_folds)
+  auxiliary_fitted_bylearner <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
   colnames(mspe) <- paste("sample fold ", 1:sample_folds)
   weights <- array(0, dim = c(nlearners, nensb, sample_folds))
@@ -248,9 +248,9 @@ crosspred <- function(y, X, Z = NULL,
       }#IFELSE
     }#IF
     # Compute auxilliary predictions (optional)
-    if (!is.null(auxilliary_X)) {
-      auxilliary_fitted[[k]] <- stats::predict(mdl_fit,
-                                               auxilliary_X[[k]])
+    if (!is.null(auxiliary_X)) {
+      auxiliary_fitted[[k]] <- stats::predict(mdl_fit,
+                                               auxiliary_X[[k]])
     }#if
     # Compute out-of-sample predictions for each learner (optional)
     if (compute_predictions_bylearner) {
@@ -267,9 +267,9 @@ crosspred <- function(y, X, Z = NULL,
                            newZ = Z[-subsamples[[k]], , drop = F])
       }#IF
       # Compute auxilliary predictions by learner (optional)
-      if (!is.null(auxilliary_X)) {
-        auxilliary_fitted_bylearner[[k]] <- stats::predict(mdl_fit,
-                                                           auxilliary_X[[k]])
+      if (!is.null(auxiliary_X)) {
+        auxiliary_fitted_bylearner[[k]] <- stats::predict(mdl_fit,
+                                                           auxiliary_X[[k]])
       }#if
     }#IF
   }#FOR
@@ -289,9 +289,9 @@ crosspred <- function(y, X, Z = NULL,
   output <- list(oos_fitted = oos_fitted,
                  weights = weights, mspe = mspe,
                  is_fitted = is_fitted,
-                 auxilliary_fitted = auxilliary_fitted,
+                 auxiliary_fitted = auxiliary_fitted,
                  oos_fitted_bylearner = oos_fitted_bylearner,
                  is_fitted_bylearner = is_fitted_bylearner,
-                 auxilliary_fitted_bylearner = auxilliary_fitted_bylearner)
+                 auxiliary_fitted_bylearner = auxiliary_fitted_bylearner)
   return(output)
 }#CROSSPRED

@@ -19,7 +19,7 @@ crosspred(
   cv_subsamples_list = NULL,
   silent = FALSE,
   progress = NULL,
-  auxilliary_X = NULL
+  auxiliary_X = NULL
 )
 }
 \arguments{
@@ -97,7 +97,7 @@ containing vectors with subsample indices for cross-validation.}
 
 \item{progress}{String to print before learner and cv fold progress.}
 
-\item{auxilliary_X}{An optional list of matrices of length
+\item{auxiliary_X}{An optional list of matrices of length
 \code{sample_folds}, each containing additional observations to calculate
 predictions for.}
 }
@@ -112,7 +112,7 @@ assigned to each base learner (in chronological order) by the
 ensemble procedures.}
 \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
 a list of matrices with in-sample predictions by sample fold.}
-\item{\code{auxilliary_fitted}}{When \code{auxilliary_X} is not
+\item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
 \item{\code{oos_fitted_bylearner}}{When
 \code{compute_predictions_bylearner = T}, a matrix of
@@ -122,7 +122,7 @@ learner (in chronological order).}
 \code{compute_insample_predictions = T} and
 \code{compute_predictions_bylearner = T}, a list of matrices with
 in-sample predictions by sample fold.}
-\item{\code{auxilliary_fitted_bylearner}}{When \code{auxilliary_X} is
+\item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 not \code{NULL} and \code{compute_predictions_bylearner = T}, a
 list of matrices with additional predictions for each learner.}
 }
