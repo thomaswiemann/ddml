@@ -26,7 +26,7 @@ test_that("ddml_att computes with a single model and dependence", {
   nobs <- 500
   X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
   D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = c(0.5)), c(0, 1))
+  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
   D <- fun(D_tld)
   cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
   D <- D[cluster_variable, drop = F]
@@ -150,7 +150,7 @@ test_that("summary.ddml_att computes with a single model and dependence", {
   nobs <- 500
   X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
   D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = c(0.5)), c(0, 1))
+  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
   D <- fun(D_tld)
   cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
   D <- D[cluster_variable, drop = F]

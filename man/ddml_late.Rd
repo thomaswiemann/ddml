@@ -19,7 +19,7 @@ ddml_late(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_ZX = custom_ensemble_weights,
-  cluster_variable = 1:length(y),
+  cluster_variable = seq_along(y),
   subsamples_byZ = NULL,
   cv_subsamples_byZ = NULL,
   trim = 0.01,

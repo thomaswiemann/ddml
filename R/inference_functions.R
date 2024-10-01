@@ -32,7 +32,7 @@ organize_inf_results <- function(fit_obj_list, ensemble_type, cluster_variable,
 compute_inf_results_by_ensemble <- function(fit_obj, cluster_variable, ...) {
   # Data parameters
   ncoef <- length(fit_obj$coefficients)
-  cluster <- identical(1:length(fit_obj$residuals), cluster_variable)
+  cluster <- identical(seq_along(fit_obj$residuals), cluster_variable)
   # Compute standard error, t-values, and p-vales
   if (cluster) {
     Sigma <- sandwich::vcovCL(fit_obj, cluster = cluster_variable, ...)
@@ -51,7 +51,7 @@ compute_inf_results_by_ensemble <- function(fit_obj, cluster_variable, ...) {
   inf_results[, 3, 1] <- t_values
   inf_results[, 4, 1] <- p_values
   # Return results
-  return(inf_results)
+  inf_results
 }#COMPUTE_INF_RESULTS_BY_ENSEMBLE
 
 # Function to organize inference results for ate and late.

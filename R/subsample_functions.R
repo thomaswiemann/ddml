@@ -203,7 +203,6 @@ generate_subsamples <- function(nobs, sample_folds) {
 get_temp_cluster <- function(cluster_variable) {
   tmp_cluster <- as.numeric(factor(cluster_variable))
   cluster_map <- split(seq_along(tmp_cluster), tmp_cluster)
-  return(list(tmp_cluster = tmp_cluster,
-              cluster_map = cluster_map,
-              n_cluster = length(unique(tmp_cluster))))
+  list(tmp_cluster = tmp_cluster, cluster_map = cluster_map,
+       n_cluster = length(unique(tmp_cluster)))
 }#GET_TEMP_CLUSTER

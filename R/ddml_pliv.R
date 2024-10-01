@@ -117,7 +117,7 @@ ddml_pliv <- function(y, D, Z, X,
                       custom_ensemble_weights = NULL,
                       custom_ensemble_weights_DX = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
-                      cluster_variable = 1:length(y),
+                      cluster_variable = seq_along(y),
                       subsamples = NULL,
                       cv_subsamples_list = NULL,
                       silent = FALSE) {

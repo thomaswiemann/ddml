@@ -22,7 +22,7 @@ test_that("ddml_fpliv computes with a single model and dependence", {
   nobs <- 500
   X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
   Z_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(Z_tld, probs = c(0.5)), c(0, 1))
+  fun <- stepfun(quantile(Z_tld, probs = 0.5), c(0, 1))
   Z <- fun(Z_tld)
   cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
   Z <- as.matrix(Z[cluster_variable, drop = F])
