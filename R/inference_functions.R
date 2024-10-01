@@ -32,7 +32,7 @@ organize_inf_results <- function(fit_obj_list, ensemble_type, cluster_variable,
 compute_inf_results_by_ensemble <- function(fit_obj, cluster_variable, ...) {
   # Data parameters
   ncoef <- length(fit_obj$coefficients)
-  cluster <- identical(seq_along(fit_obj$residuals), cluster_variable)
+  cluster <- !identical(seq_along(fit_obj$residuals), cluster_variable)
   # Compute standard error, t-values, and p-vales
   if (cluster) {
     Sigma <- sandwich::vcovCL(fit_obj, cluster = cluster_variable, ...)
@@ -80,16 +80,16 @@ compute_interactive_inf_results_by_ensemble <- function(coef, psi_a, psi_b,
                                                         cluster_variable) {
   # Data parameters
   nobs <- length(psi_a)
-  cluster <- identical(1:nobs, cluster_variable)
+  cluster <- !identical(1:nobs, cluster_variable)
   # Compute scores
   scores <- psi_a * coef + psi_b
   # Compute standard error, t-values, and p-vales
   if (cluster) {
     # Aggregate scores to cluster level for clustered standard errors
     scores <- stats::aggregate(scores, by = list(cluster_variable),
-                               FUN = mean)[, 2]
+                               FUN = sum)[, 2]
     psi_a <- stats::aggregate(psi_a, by = list(cluster_variable),
-                              FUN = mean)[, 2]
+                              FUN = sum)[, 2]
     nobs <- length(scores)
   }#IF
   std_error <- sqrt(mean(scores^2) / nobs) / abs(mean(psi_a))
