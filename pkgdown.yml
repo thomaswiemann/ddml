@@ -1,16 +1,15 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   ddml: ddml.html
-  did: did.html
-  example_401k: example_401k.html
-  example_BLP95: example_BLP95.html
-  new_ml_wrapper: new_ml_wrapper.html
-  sparse: sparse.html
-  stacking: stacking.html
-last_built: 2024-06-27T12:47Z
+  articles/did: did.html
+  articles/example_401k: example_401k.html
+  articles/example_BLP95: example_BLP95.html
+  articles/new_ml_wrapper: new_ml_wrapper.html
+  articles/sparse: sparse.html
+  articles/stacking: stacking.html
+last_built: 2024-10-01T22:13Z
 urls:
   reference: https://www.thomaswiemann.com/ddml/reference
   article: https://www.thomaswiemann.com/ddml/articles
-
