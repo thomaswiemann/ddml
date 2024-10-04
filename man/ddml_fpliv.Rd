@@ -181,6 +181,7 @@ Other ddml:
 \code{\link{ddml_ate}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()}
+\code{\link{ddml_plm}()},
+\code{\link{ddml_policy}()}
 }
 \concept{ddml}

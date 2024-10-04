@@ -53,9 +53,6 @@ get_crossfit_indices <- function(cluster_variable,
     }#IF
     sample_folds <- length(subsamples_byD[[1]])
 
-
-
-
     # Merge subsamples across treatment levels
     subsamples <- rep(list(NULL), sample_folds)
     for (k in 1:sample_folds) {

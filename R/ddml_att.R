@@ -104,8 +104,8 @@ ddml_att <- function(y, D, X,
                    learners = learners,
                    learners_DX = learners_DX,
                    cluster_variable = cluster_variable,
-                   subsamples = cf_indxs$subsamples_byD,
-                   cv_subsamples_list = cf_indxs$cv_subsamples_byD,
+                   subsamples_byD = cf_indxs$subsamples_byD,
+                   cv_subsamples_byD = cf_indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress

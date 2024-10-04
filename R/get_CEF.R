@@ -70,6 +70,8 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indxs) {
     }#FOR
   }#FOR
 
+  g_X_byD[1:10, , 1]
+
   # return as array, third dimension is different levels of d
   g_X_byD
 }#EXTRAPOLATE_CEF

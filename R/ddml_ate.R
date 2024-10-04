@@ -58,8 +58,8 @@
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples_D0},\code{subsamples_D1},
-#'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
+#'             \code{subsamples_byD},
+#'             \code{cv_subsamples_byD},
 #'             \code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
