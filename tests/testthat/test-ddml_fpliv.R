@@ -7,7 +7,7 @@ test_that("ddml_fpliv computes with a single model", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(what = ols)
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                sample_folds = 3,
@@ -31,7 +31,7 @@ test_that("ddml_fpliv computes with a single model and dependence", {
   D <- Z + X %*% runif(40) + eps
   y <- D + X %*% runif(40) + 0.1 * eps + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(what = ols)
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                cluster_variable = cluster_variable,

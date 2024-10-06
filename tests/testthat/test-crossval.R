@@ -19,9 +19,9 @@ test_that("crossval returns residuals by learner (w/o instruments)", {
   y <- X %*% (10*runif(100) * nonzero_X) + rnorm(100)
   # Define arguments
   learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = ols,
-                      assign_X = which(nonzero_X)))
+                   list(fun = ols),
+                   list(fun = ols,
+                        assign_X = which(nonzero_X)))
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
                      learners,
@@ -71,8 +71,8 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
   learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = mdl_glmnet))
+                   list(fun = ols),
+                   list(fun = mdl_glmnet))
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
                      learners,

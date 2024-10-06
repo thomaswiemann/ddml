@@ -56,7 +56,7 @@ test_that("prediction with ensemble learners returns fitted values", {
                       learners,
                       cv_folds = 3,
                       silent = T)
-  ens_fitted <- predict(ens_fit, newdata = X, newZ = Z)
+  ens_fitted <- ddml:::predict.ensemble(ens_fit, newdata = X, newZ = Z)
   # Check output with expectations
   expect_equal(dim(ens_fitted), c(length(D), 3))
 })#TEST_THAT
@@ -100,7 +100,7 @@ test_that("prediction w/ ensembles returns fitted values w/ custom weights", {
                       cv_folds = 3,
                       custom_weights = weights_DX,
                       silent = T)
-  ens_fitted <- predict(ens_fit, newdata = X, newZ = Z)
+  ens_fitted <- ddml:::predict.ensemble(ens_fit, newdata = X, newZ = Z)
   # Check output with expectations
   expect_equal(dim(ens_fitted), c(length(D), 5))
 })#TEST_THAT
