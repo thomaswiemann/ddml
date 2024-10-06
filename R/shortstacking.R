@@ -69,6 +69,7 @@ shortstacking <- function (y, X, Z = NULL,
                            custom_ensemble_weights = NULL,
                            compute_insample_predictions = FALSE,
                            subsamples = NULL,
+                           cluster_variable = seq_along(y),
                            silent = FALSE,
                            progress = NULL,
                            auxiliary_X = NULL,
@@ -84,10 +85,11 @@ shortstacking <- function (y, X, Z = NULL,
     stop("shortstacking cannot be estimated with a single learner.")
   }#IF
 
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
+  # Create crossfitting tuples
+  indxs <- get_crossfit_indices(cluster_variable,
+                                sample_folds = sample_folds,
+                                subsamples = subsamples)
+  subsamples <- indxs$subsamples
   sample_folds <- length(subsamples)
   ncustom <- ncol(custom_ensemble_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)

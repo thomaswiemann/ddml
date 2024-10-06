@@ -60,7 +60,8 @@
 #' cv_res$mspe
 crossval <- function(y, X, Z = NULL,
                      learners,
-                     cv_folds = 5,
+                     cv_folds = 10,
+                     cluster_variable = seq_along(y),
                      cv_subsamples = NULL,
                      silent = FALSE,
                      progress = NULL) {
@@ -68,10 +69,11 @@ crossval <- function(y, X, Z = NULL,
   nobs <- length(y)
   nlearners <- length(learners)
 
-  # Create cv sample fold tuple
-  if (is.null(cv_subsamples)) {
-    cv_subsamples <- generate_subsamples(nobs, cv_folds)
-  }#IF
+  # Get cv subsample tuple
+  indx <- get_crossfit_indices(cluster_variable,
+                               sample_folds = cv_folds,
+                               subsamples = cv_subsamples)
+  cv_subsamples <- indx$subsamples
   cv_folds <- length(cv_subsamples)
   nobs <- length(unlist(cv_subsamples)) # In case subsamples are user-provided
 

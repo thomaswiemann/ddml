@@ -91,8 +91,8 @@
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
 #'             \code{cluster_variable},\code{subsamples_Z0},
-#'             \code{subsamples_Z1},\code{cv_subsamples_list_Z0},
-#'             \code{cv_subsamples_list_Z1},\code{ensemble_type}}{Pass-through
+#'             \code{subsamples_Z1},\code{cv_subsamples_Z0},
+#'             \code{cv_subsamples_Z1},\code{ensemble_type}}{Pass-through
 #'             of selected user-provided arguments. See above.}
 #'     }
 #' @export
@@ -154,7 +154,11 @@ ddml_late <- function(y, D, Z, X,
                       custom_ensemble_weights_DXZ = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
+                      stratify = TRUE,
+                      balance_on = "clusters",
+                      subsamples = NULL,
                       subsamples_byZ = NULL,
+                      cv_subsamples = NULL,
                       cv_subsamples_byZ = NULL,
                       trim = 0.01,
                       silent = FALSE) {
@@ -162,15 +166,21 @@ ddml_late <- function(y, D, Z, X,
   nobs <- length(y)
   is_Z0 <- which(Z == 0)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = Z,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples_byD = subsamples_byZ,
-                                   cv_subsamples_byD = cv_subsamples_byZ)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- !shortstack &
+    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function")
 
-  # Create tuple for extrapolated fitted values
-  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, Z)
+  # Create crossfitting and cv tuples
+  indxs <- get_all_indx(cluster_variable = cluster_variable,
+                        sample_folds = sample_folds, cv_folds = cv_folds,
+                        D = Z, by_D = TRUE, stratify = stratify,
+                        balance_on = balance_on,
+                        subsamples = subsamples,
+                        subsamples_byD = subsamples_byZ,
+                        cv_subsamples = cv_subsamples,
+                        cv_subsamples_byD = cv_subsamples_byZ,
+                        compute_cv_indices = w_cv, compute_aux_X_indices = TRUE)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -180,20 +190,20 @@ ddml_late <- function(y, D, Z, X,
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[1]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
+                        subsamples = indxs$subsamples_byD[[1]],
+                        cv_subsamples = indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|Z=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
 
   # Compute estimates of E[y|Z=1,X]
   y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[2]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
+                        subsamples = indxs$subsamples_byD[[2]],
+                        cv_subsamples = indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|Z=1,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X))
 
   # Check for perfect non-compliance
   if (all(D[Z==0] == 0)) {
@@ -210,10 +220,10 @@ ddml_late <- function(y, D, Z, X,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          subsamples = cf_indxs$subsamples_byD[[1]],
-                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
+                          subsamples = indxs$subsamples_byD[[1]],
+                          cv_subsamples = indxs$cv_subsamples_byD[[1]],
                           silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
   }#IFELSE
 
   # Check for perfect compliance
@@ -231,10 +241,10 @@ ddml_late <- function(y, D, Z, X,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          subsamples = cf_indxs$subsamples_byD[[2]],
-                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
+                          subsamples = indxs$subsamples_byD[[2]],
+                          cv_subsamples = indxs$cv_subsamples_byD[[2]],
                           silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X))
   }#IFELSE
 
   # Compute estimates of E[Z|X]
@@ -242,8 +252,8 @@ ddml_late <- function(y, D, Z, X,
                      learners = learners_ZX, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights_ZX,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = F,
                      silent = silent, progress = "E[Z|X]: ")
 
@@ -258,11 +268,11 @@ ddml_late <- function(y, D, Z, X,
   l_X_byZ <- extrapolate_CEF(D = Z,
                              CEF_res_byD = list(list(y_X_Z0_res, d=0),
                                                 list(y_X_Z1_res, d=1)),
-                             aux_indxs = aux_indxs)
+                             aux_indx = indxs$aux_indx)
   p_X_byZ <- extrapolate_CEF(D = Z,
                              CEF_res_byD = list(list(D_X_Z0_res, d=0),
                                                 list(D_X_Z1_res, d=1)),
-                             aux_indxs = aux_indxs)
+                             aux_indx = indxs$aux_indx)
   r_X <- Z_X_res$oos_fitted
 
   # Trim propensity scores, return warnings

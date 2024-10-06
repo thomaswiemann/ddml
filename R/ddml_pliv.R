@@ -74,7 +74,7 @@
 #'             the instrument. See also [AER::ivreg()] for details.}
 #'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
 #'             \code{cluster_variable}, \code{subsamples},
-#'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
+#'             \code{cv_subsamples},\code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
 #' @export
@@ -119,7 +119,7 @@ ddml_pliv <- function(y, D, Z, X,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
                       subsamples = NULL,
-                      cv_subsamples_list = NULL,
+                      cv_subsamples = NULL,
                       silent = FALSE) {
   # Data parameters
   nobs <- length(y)
@@ -127,28 +127,31 @@ ddml_pliv <- function(y, D, Z, X,
   ncustom <- ncol(custom_ensemble_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)
 
-  # Check for multivariate endogenous variables
+  # Check for multivariate endogenous variables & instruments
   D <- as.matrix(D)
   nD <- ncol(D)
-
-  # Check for multivariate instruments
   Z <- as.matrix(Z)
   nZ <- ncol(Z)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples = subsamples,
-                                   cv_subsamples_list = cv_subsamples_list)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- !shortstack &
+    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function")
+
+  # Create crossfitting and cv tuples
+  indxs <- get_all_indx(cluster_variable = cluster_variable,
+                        sample_folds = sample_folds, cv_folds = cv_folds,
+                        subsamples = subsamples,
+                        cv_subsamples = cv_subsamples,
+                        compute_cv_indices = w_cv)
 
   # Compute estimates of E[y|X]
   y_X_res <- get_CEF(y, X,
                      learners = learners, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
                      silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[Z|X], loop through instruments
@@ -160,9 +163,9 @@ ddml_pliv <- function(y, D, Z, X,
                                  shortstack = shortstack,
                                  custom_ensemble_weights =
                                    custom_ensemble_weights_ZX,
-                                 subsamples = cf_indxs$subsamples,
-                                 cv_subsamples_list =
-                                   cf_indxs$cv_subsamples_list,
+                                 subsamples = indxs$subsamples,
+                                 cv_subsamples =
+                                   indxs$cv_subsamples,
                                  silent = silent,
                                  progress = paste0("E[Z", k, "|X]: "))
   }#FOR
@@ -176,9 +179,9 @@ ddml_pliv <- function(y, D, Z, X,
                                  shortstack = shortstack,
                                  custom_ensemble_weights =
                                    custom_ensemble_weights_DX,
-                                 subsamples = cf_indxs$subsamples,
-                                 cv_subsamples_list =
-                                   cf_indxs$cv_subsamples_list,
+                                 subsamples = indxs$subsamples,
+                                 cv_subsamples =
+                                   indxs$cv_subsamples,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
@@ -252,7 +255,7 @@ ddml_pliv <- function(y, D, Z, X,
                    iv_fit = iv_fit,
                    cluster_variable = cluster_variable,
                    subsamples = subsamples,
-                   cv_subsamples_list = cv_subsamples_list,
+                   cv_subsamples = cv_subsamples,
                    ensemble_type = ensemble_type)
 
   # Amend class and return
