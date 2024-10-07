@@ -8,8 +8,8 @@
 #'
 #' @details \code{ddml_policy} provides a double/debiased machine learning
 #'     estimator for the expected value of a multi-action policy
-#'     \eqn{\pi:\operatorname{supp} X \to \operatorname{supp} D = \{d_1, \ldots, d_K\}} given
-#'     by
+#'     \eqn{\pi:\operatorname{supp} X \to \operatorname{supp} D = \{d_1, \ldots, d_K\}}
+#'     given by
 #'
 #' \eqn{E[Y(\pi(X))],}
 #'
@@ -21,9 +21,8 @@
 #' @param policy The policy-assigned treatment variable.
 #' @param policy_levels A vector of the unique values the policy. These are the
 #'     treatment levels that the reduced form functions will be estimated for.
-#' @param sampling_weights A vector of sampling weights \eqn{\omega_i} used for
-#'     aggregating scores. Note: \code{sampling_weights} are not automatically
-#'     normalized to integrate to one.
+#' @param omega A vector of sampling weights \eqn{\omega_i} used for
+#'     aggregating scores.
 #' @param subsamples_byD List of lists corresponding to the unique treatment
 #'     levels. Each list contains vectors with sample indices for
 #'     cross-fitting.
@@ -53,9 +52,9 @@
 #'         \item{\code{oos_pred}}{List of arrays, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples_byD}
-#'             \code{cv_subsamples_byD},
-#'             \code{ensemble_type}}{Pass-through of
+#'             \code{subsamples},\code{subsamples_byD},
+#'             \code{cv_subsamples},\code{cv_subsamples_byD},
+#'             \code{ensemble_type},\code{omega}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
 #' @export
@@ -77,34 +76,49 @@ ddml_policy <- function(y, D, X,
                         custom_ensemble_weights = NULL,
                         custom_ensemble_weights_DX = custom_ensemble_weights,
                         cluster_variable = seq_along(y),
-                        sampling_weights = rep(1, length(y)),
+                        stratify = TRUE,
+                        balance_on = "clusters",
+                        subsamples = NULL,
                         subsamples_byD = NULL,
+                        cv_subsamples = NULL,
                         cv_subsamples_byD = NULL,
                         oos_pred = NULL,
                         trim = 0.01,
+                        omega = rep(1, length(y)),
                         silent = FALSE) {
 
   # Data parameters
   nobs <- length(y)
   n_policy_levels <- length(policy_levels)
-  is_policy <- rep(list(NULL), n_policy_levels)
+  is_D <- rep(list(NULL), n_policy_levels)
   for (d in 1:n_policy_levels) {
-    is_policy[[d]] <- which(D == policy_levels[d])
+    is_D[[d]] <- which(D == policy_levels[d])
   }#FOR
 
   # Was oos_pred passed. If so, jump straight to policy evaluation.
   if (is.null(oos_pred)) {
 
-    # Create sample and cv-fold tuples
-    cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
-                                     D = D,
-                                     sample_folds = sample_folds,
-                                     cv_folds = cv_folds,
-                                     subsamples_byD = subsamples_byD,
-                                     cv_subsamples_byD = cv_subsamples_byD)
+    # Check whether ddml uses conventional stacking w/ data driven weights
+    w_cv <- !shortstack &
+      any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+      (class(learners[[1]]) != "function" |
+         class(learners_DX[[1]]) != "function")
 
-    # Create tuple for extrapolated fitted values
-    aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, D)
+    # Create crossfitting and cv tuples
+    indxs <- get_all_indx(cluster_variable = cluster_variable,
+                          sample_folds = sample_folds, cv_folds = cv_folds,
+                          D = D, by_D = TRUE, stratify = stratify,
+                          balance_on = balance_on,
+                          subsamples = subsamples,
+                          subsamples_byD = subsamples_byD,
+                          cv_subsamples = cv_subsamples,
+                          cv_subsamples_byD = cv_subsamples_byD,
+                          compute_cv_indices = w_cv,
+                          compute_aux_X_indices = TRUE)
+    subsamples = indxs$subsamples
+    subsamples_byD = indxs$subsamples_byD
+    cv_subsamples  = indxs$cv_subsamples
+    cv_subsamples_byD = indxs$cv_subsamples_byD
 
     # Print to progress to console
     if (!silent) cat("DDML estimation in progress. \n")
@@ -112,19 +126,20 @@ ddml_policy <- function(y, D, X,
     # Compute est. of E[y|D=d,X] for all policy values d
     y_Dd_X_res_list <- rep(list(NULL), n_policy_levels)
     for (d in 1:n_policy_levels) {
-      y_Dd_X_res_list[[d]]$fit <- get_CEF(y[is_policy[[d]]],
-                                          X[is_policy[[d]], , drop = F],
+      y_Dd_X_res_list[[d]]$fit <- get_CEF(y[is_D[[d]]],
+                                          X[is_D[[d]], , drop = F],
                                           learners = learners,
                                           ensemble_type = ensemble_type,
                                           shortstack = shortstack,
                                           custom_ensemble_weights =
                                             custom_ensemble_weights,
                                           subsamples =
-                                            cf_indxs$subsamples_byD[[d]],
-                                          cv_subsamples_list =
-                                            cf_indxs$cv_subsamples_byD[[d]],
+                                            indxs$subsamples_byD[[d]],
+                                          cv_subsamples =
+                                            indxs$cv_subsamples_byD[[d]],
                                           auxiliary_X =
-                                            get_auxiliary_X(aux_indxs[[d]], X),
+                                            get_auxiliary_X(indxs$aux_indx[[d]],
+                                                            X),
                                           silent = silent,
                                           progress = paste0("E[Y|D=",
                                                             policy_levels[d],
@@ -136,15 +151,15 @@ ddml_policy <- function(y, D, X,
     D_X_res_list <- rep(list(NULL), n_policy_levels - 1)
     for (d in 1:(n_policy_levels - 1)) {
       # Pr(D=d|X)
-      D_X_res_list[[d]] <- ddml:::get_CEF(1 * (D == policy_levels[d]), X,
+      D_X_res_list[[d]] <- get_CEF(1 * (D == policy_levels[d]), X,
                                           learners = learners_DX,
                                           ensemble_type = ensemble_type,
                                           shortstack = shortstack,
                                           custom_ensemble_weights =
                                             custom_ensemble_weights_DX,
-                                          subsamples = cf_indxs$subsamples,
-                                          cv_subsamples_list =
-                                            cf_indxs$cv_subsamples_list,
+                                          subsamples = indxs$subsamples,
+                                          cv_subsamples =
+                                            indxs$cv_subsamples,
                                           silent = silent,
                                           progress = paste0("Pr[D=",
                                                             policy_levels[d],
@@ -158,11 +173,10 @@ ddml_policy <- function(y, D, X,
     # Check whether multiple ensembles are computed simultaneously
     multiple_ensembles <- nensb > 1
 
-
     # Construct reduced form variables
     g_X_Dd <- extrapolate_CEF(D = D,
                               CEF_res_byD = y_Dd_X_res_list,
-                              aux_indxs = aux_indxs)
+                              aux_indx = indxs$aux_indx)
     m_X <- array(0, dim = c(nobs, nensb, n_policy_levels))
     for (d in 1:(n_policy_levels-1)) {
       m_X[ , , d] <- D_X_res_list[[d]]$oos_fitted
@@ -172,6 +186,7 @@ ddml_policy <- function(y, D, X,
     # If oos_pred was passed, simply collect the reduced form variables
     g_X_Dd <- oos_pred$EY_Dd_X
     m_X <- oos_pred$EDd_X
+    nensb <- dim(m_X)[2]
   }#IFELSE
 
   # Trim propensity scores, return warnings
@@ -182,9 +197,8 @@ ddml_policy <- function(y, D, X,
                              trim, ensemble_type)
   }#FOR
 
-  # Compute the profit using the constructed variables
+  # Compute the score using the constructed reduced form variables
   y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  #D_copy <- matrix(rep(D, nensb), nobs, nensb)
   psi_b <- matrix(rep(0, nobs * nensb), nobs, nensb)
   for (d in 1:n_policy_levels) {
     policy_copy <-
@@ -193,13 +207,17 @@ ddml_policy <- function(y, D, X,
     psi_b <- psi_b + policy_copy *
       (Dd_copy * (y_copy - g_X_Dd[, , d]) / m_X_tr[, , d] + g_X_Dd[, , d])
   }#FOR
+  psi_a <- matrix(-1, nobs, nensb)
+
+  # Scale the scores by omega (optional)
+  if (!identical(omega, rep(1, nobs))) {
+    psi_b <- sweep(psi_b, 1, omega, "*")
+    psi_a <- sweep(psi_a, 1, omega, "*")
+  }#IF
 
   # Policy value
-  policy_value <- colMeans(psi_b)
+  policy_value <- -colMeans(psi_b) / colMeans(psi_a)
   names(policy_value) <- ensemble_type
-
-  # Also set psi_a scores for easier computation of summary.ddml_policy
-  psi_a <- matrix(-1, nobs, nensb)
 
   # Organize complementary ensemble output
   weights <- mspe <- list(NULL)
@@ -230,9 +248,11 @@ ddml_policy <- function(y, D, X,
                    learners = learners,
                    learners_DX = learners_DX,
                    cluster_variable = cluster_variable,
-                   subsamples_byD = cf_indxs$subsamples_byD,
-                   cv_subsamples_byD = cf_indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type)
+                   subsamples = subsamples,
+                   subsamples_byD = subsamples_byD,
+                   cv_subsamples  = cv_subsamples,
+                   cv_subsamples_byD = cv_subsamples_byD,
+                   ensemble_type = ensemble_type, omega = omega)
 
   # Print estimation progress
   if (!silent) cat("DDML estimation completed. \n")

@@ -22,7 +22,7 @@ ddml_fpliv(
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
   subsamples = NULL,
-  cv_subsamples_list = NULL,
+  cv_subsamples = NULL,
   silent = FALSE
 )
 }
@@ -108,7 +108,7 @@ have the same number of columns.}
 
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
+\item{cv_subsamples}{List of lists, each corresponding to a subsample
 containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
@@ -131,7 +131,7 @@ regression of \eqn{Y - \hat{E}[Y\vert X]} on
 \eqn{\hat{E}[D\vert X,Z] - \hat{E}[D\vert X]} as the instrument.}
 \item{\code{learners},\code{learners_DX},\code{learners_DXZ},
 \code{cluster_variable},\code{subsamples},
-\code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
+\code{cv_subsamples},\code{ensemble_type}}{Pass-through of
 selected user-provided arguments. See above.}
 }
 }

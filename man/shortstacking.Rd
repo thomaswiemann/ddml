@@ -14,6 +14,7 @@ shortstacking(
   custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
   subsamples = NULL,
+  cluster_variable = seq_along(y),
   silent = FALSE,
   progress = NULL,
   auxiliary_X = NULL,
@@ -80,6 +81,8 @@ estimation results corresponding the custom ensemble specification.}
 predictions should also be computed.}
 
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
+
+\item{cluster_variable}{A vector of cluster indices.}
 
 \item{silent}{Boolean to silence estimation updates.}
 

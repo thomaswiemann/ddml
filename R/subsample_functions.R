@@ -247,23 +247,23 @@ get_cf_indices_stratified <- function(cluster_variable, sample_folds, D,
   # Create crossfit indices
   if (cluster) {
 
-    #' The below code assigns clusters to the sample folds.
-    #'
-    #' The procedure is aimed to improve balance (wrt to clusters or
-    #'     observations per fold) in settings where D might not be constant
-    #'     within a cluster. In this case, clusters contribute to multiple
-    #'     by-treatment folds.
-    #'
-    #' To achieve better balance in the by-treatment subsamples, fold assignment
-    #'     is done in iterative  fashion, by first assigning clusters with
-    #'     higher treatment counts (e.g., more exposed treatment levels or more
-    #'     observations). At every step, cluster imbalance is calculated, and
-    #'     clusters are assigned to the cluster that increases imbalance the
-    #'     least.
-    #'
-    #' Once clusters are assigned to sample folds, the subsamples and
-    #'     subsamples_byD lists are created by mapping the assigned folds to
-    #'     the sample indices in the data.
+    # The below code assigns clusters to the sample folds.
+    #
+    # The procedure is aimed to improve balance (wrt to clusters or
+    #     observations per fold) in settings where D might not be constant
+    #     within a cluster. In this case, clusters contribute to multiple
+    #     by-treatment folds.
+    #
+    # To achieve better balance in the by-treatment subsamples, fold assignment
+    #     is done in iterative  fashion, by first assigning clusters with
+    #     higher treatment counts (e.g., more exposed treatment levels or more
+    #     observations). At every step, cluster imbalance is calculated, and
+    #     clusters are assigned to the cluster that increases imbalance the
+    #     least.
+    #
+    # Once clusters are assigned to sample folds, the subsamples and
+    #     subsamples_byD lists are created by mapping the assigned folds to
+    #     the sample indices in the data.
 
     # Get the list of unique clusters
     clusters <- unique(cluster_variable)
@@ -373,14 +373,14 @@ get_cf_indices_stratified <- function(cluster_variable, sample_folds, D,
 
   } else {
 
-    #' When observations are not clustered, stratified sampling is much easier.
-    #'     The below code first creates random subsamples by treatment level.
-    #'     Then, the by-treatment level subsamples are combined to create the
-    #'     overall subsamples.
-    #'
-    #'     Note: This approach is not possible in the clustered setting because
-    #'     clusters are of varying lengths (affecting balance) and might be
-    #'     associated with multiple treatment levels.
+    # When observations are not clustered, stratified sampling is much easier.
+    #     The below code first creates random subsamples by treatment level.
+    #     Then, the by-treatment level subsamples are combined to create the
+    #     overall subsamples.
+    #
+    #     Note: This approach is not possible in the clustered setting because
+    #     clusters are of varying lengths (affecting balance) and might be
+    #     associated with multiple treatment levels.
 
     # First, create subsamples by treatment level
     is_D <- rep(list(NULL), nD_levels)

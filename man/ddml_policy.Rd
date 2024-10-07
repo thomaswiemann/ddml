@@ -19,17 +19,22 @@ ddml_policy(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
+  stratify = TRUE,
+  balance_on = "clusters",
+  subsamples = NULL,
   subsamples_byD = NULL,
+  cv_subsamples = NULL,
   cv_subsamples_byD = NULL,
   oos_pred = NULL,
   trim = 0.01,
+  omega = rep(1, length(y)),
   silent = FALSE
 )
 }
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{The observed discrete treatment variable.}
+\item{D}{The observed discrete (potentially multi-valued) treatment variable.}
 
 \item{X}{A (sparse) matrix of control variables.}
 
@@ -99,9 +104,14 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 
 \item{cluster_variable}{A vector of cluster indices.}
 
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
+
 \item{subsamples_byD}{List of lists corresponding to the unique treatment
 levels. Each list contains vectors with sample indices for
 cross-fitting.}
+
+\item{cv_subsamples}{List of lists, each corresponding to a subsample
+containing vectors with subsample indices for cross-validation.}
 
 \item{cv_subsamples_byD}{List of lists, each corresponding to one of the
 unique treatment levels. Each of the lists contains lists, each
@@ -115,6 +125,9 @@ re-estimation of the nuisance functions.}
 
 \item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
 \code{trim} and \code{1-trim}.}
+
+\item{omega}{A vector of sampling weights \eqn{\omega_i} used for
+aggregating scores.}
 
 \item{silent}{Boolean to silence estimation updates.}
 }
@@ -136,9 +149,9 @@ of scores. Used in \code{\link[=summary.ddml_policy]{summary.ddml_policy()}}.}
 \item{\code{oos_pred}}{List of arrays, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-\code{subsamples_byD}
-\code{cv_subsamples_byD},
-\code{ensemble_type}}{Pass-through of
+\code{subsamples},\code{subsamples_byD},
+\code{cv_subsamples},\code{cv_subsamples_byD},
+\code{ensemble_type},\code{omega}}{Pass-through of
 selected user-provided arguments. See above.}
 }
 }
@@ -148,8 +161,8 @@ Estimators of the expected value of a multi-action policy.
 \details{
 \code{ddml_policy} provides a double/debiased machine learning
 estimator for the expected value of a multi-action policy
-\eqn{\pi:\operatorname{supp} X \to \operatorname{supp} D = \{d_1, \ldots, d_K\}} given
-by
+\eqn{\pi:\operatorname{supp} X \to \operatorname{supp} D = \{d_1, \ldots, d_K\}}
+given by
 
 \eqn{E[Y(\pi(X))],}
 
