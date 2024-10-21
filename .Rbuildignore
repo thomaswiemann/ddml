@@ -20,3 +20,4 @@
 ^.direnv$
 ^CRAN-SUBMISSION$
 ^debugging$
+^debugger$
