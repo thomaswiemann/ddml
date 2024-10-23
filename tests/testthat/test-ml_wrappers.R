@@ -11,20 +11,6 @@ test_that("mdl_glmnet with cv is working", {
   expect_equal(length(fitted), 100)
 })#TEST_THAT
 
-test_that("mdl_glmnet logit predicts probabilities", {
-  # Simulate a small dataset
-  nobs <- 100
-  X <- matrix(rnorm(nobs*50), nobs, 50) # Simulate features
-  y <- 1 * (X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(nobs) > 0.5)
-  # Estimate the learner
-  mdl_fit <- mdl_glmnet(y, X, family = binomial)
-  # Check methods predict()
-  fitted <- predict(mdl_fit, newdata = X)
-  # Check output with expectations
-  expect_true(max(fitted) <= 1)
-  expect_true(min(fitted) >= 0)
-})#TEST_THAT
-
 test_that("mdl_glmnet w/o cv is working", {
   # Simulate a small dataset
   nobs <- 100
@@ -74,4 +60,26 @@ test_that("mdl_ranger is working", {
   # Check output with expectations
   expect_equal(length(fitted_reg), 100)
   expect_equal(length(fitted_probability), 100)
+})#TEST_THAT
+
+test_that("ML wrappers predict probabilities for binary outcomes", {
+  # Simulate a small dataset
+  nobs <- 1000
+  X <- matrix(rnorm(nobs*10), nobs, 10) # Simulate features
+  y <- 1 * (X %*% (runif(10) * (runif(10) < 0.1)) + rnorm(nobs) > 0.5)
+  # Estimate the learner
+  glm_fit <- mdl_glm(y, X, family = binomial)
+  glmnet_fit <- mdl_glmnet(y, X, family = binomial)
+  xgboost_fit <- mdl_xgboost(y, X, objective = "binary:logistic",
+                             eval_metric = "logloss")
+  ranger_fit <- mdl_ranger(y, X, probability = TRUE)
+  # Check methods predict()
+  fitted_glm <- ddml:::predict.mdl_glm(glm_fit, newdata = X)
+  fitted_glmnet <- ddml:::predict.mdl_glmnet(glmnet_fit, newdata = X)
+  fitted_xgboost <- ddml:::predict.mdl_xgboost(xgboost_fit, newdata = X)
+  fitted_ranger <- ddml:::predict.mdl_ranger(ranger_fit, newdata = X)
+  fitted <- cbind(fitted_glm, fitted_glmnet, fitted_xgboost, fitted_ranger)
+  # Check output with expectations
+  expect_true(max(fitted) <= 1)
+  expect_true(min(fitted) >= 0)
 })#TEST_THAT

@@ -48,7 +48,7 @@ mdl_glmnet <- function(y, X,
 }#MDL_GLMNET
 
 # Prediction method for mdl_glmnet
-predict.mdl_glmnet <- function(object, newdata = NULL){
+predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
   cv <- "cv.glmnet" %in% class(object)
   class(object) <- class(object)[-1]
@@ -59,14 +59,14 @@ predict.mdl_glmnet <- function(object, newdata = NULL){
     # Predict using glmnet prediction method
     fitted <- stats::predict(object$glmnet.fit, newx = newdata,
                              s = object$lambda[which_lambda],
-                             type = "response")
+                             type = "response", ...)
   } else {
     # Determine least regularizing lambda
     which_lambda <- length(object$lambda)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object, newx = newdata,
                              s = object$lambda[which_lambda],
-                             type = "response")
+                             type = "response", ...)
   }#IFELSE
 
   return(fitted)
@@ -173,10 +173,10 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Predict using randomForest prediction method
   if (object$treetype == "Probability estimation") {
     #stats::predict(object, data = newdata, ...)$predictions[, 2]
-    stats::predict(object, data = newdata,)$predictions[, 2]
+    stats::predict(object, data = newdata, ...)$predictions[, 2]
   } else if (object$treetype == "Regression") {
     #stats::predict(object, data = newdata, ...)$predictions
-    stats::predict(object, data = newdata)$predictions
+    stats::predict(object, data = newdata, ...)$predictions
   } else {
     warning("mdl_ranger is only designed for regression and probability forests")
     stats::predict(object, data = newdata, ...)$predictions
