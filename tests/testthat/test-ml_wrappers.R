@@ -11,6 +11,20 @@ test_that("mdl_glmnet with cv is working", {
   expect_equal(length(fitted), 100)
 })#TEST_THAT
 
+test_that("mdl_glmnet logit predicts probabilities", {
+  # Simulate a small dataset
+  nobs <- 100
+  X <- matrix(rnorm(nobs*50), nobs, 50) # Simulate features
+  y <- 1 * (X %*% (10*runif(50) * (runif(50) < 0.1)) + rnorm(nobs) > 0.5)
+  # Estimate the learner
+  mdl_fit <- mdl_glmnet(y, X, family = binomial)
+  # Check methods predict()
+  fitted <- predict(mdl_fit, newdata = X)
+  # Check output with expectations
+  expect_true(max(fitted) <= 1)
+  expect_true(min(fitted) >= 0)
+})#TEST_THAT
+
 test_that("mdl_glmnet w/o cv is working", {
   # Simulate a small dataset
   nobs <- 100

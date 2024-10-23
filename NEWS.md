@@ -1,5 +1,8 @@
 # ddml (development version)
 
+* Allows for stacking with no positive stacking weights.
+* Fixes ``ddml::mdl_glmnet`` predictions for binomial regression.
+
 # ddml 0.3.0
 
 * Implements one-way clustered inference.

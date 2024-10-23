@@ -58,13 +58,15 @@ predict.mdl_glmnet <- function(object, newdata = NULL){
     which_lambda <- which.min(object$cvm)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object$glmnet.fit, newx = newdata,
-                             s = object$lambda[which_lambda])
+                             s = object$lambda[which_lambda],
+                             type = "response")
   } else {
     # Determine least regularizing lambda
     which_lambda <- length(object$lambda)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object, newx = newdata,
-                             s = object$lambda[which_lambda])
+                             s = object$lambda[which_lambda],
+                             type = "response")
   }#IFELSE
 
   return(fitted)
