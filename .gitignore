@@ -8,4 +8,5 @@ inst/doc
 /Meta/
 .direnv
 /debugging/
+/debugger
 tests/testthat/stuff.RData
