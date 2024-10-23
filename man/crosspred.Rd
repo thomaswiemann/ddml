@@ -9,14 +9,15 @@ crosspred(
   X,
   Z = NULL,
   learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "average",
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
   compute_predictions_bylearner = FALSE,
+  cluster_variable = seq_along(y),
   subsamples = NULL,
-  cv_subsamples_list = NULL,
+  cv_subsamples = NULL,
   silent = FALSE,
   progress = NULL,
   auxiliary_X = NULL
@@ -88,9 +89,11 @@ predictions should also be computed.}
 predictions should also be computed for each learner (rather than the
 entire ensemble).}
 
+\item{cluster_variable}{A vector of cluster indices.}
+
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
-\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
+\item{cv_subsamples}{List of lists, each corresponding to a subsample
 containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}

@@ -95,7 +95,8 @@ test_that("ddml_plm computes with multiple ensemble procedures & sparse mats", {
                         args = list(alpha = 0.5)),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  ddml_plm_fit <- ddml_plm(y, D, as(X, "sparseMatrix"),
+  X <- as(X, "sparseMatrix")
+  ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",
                                              "nnls1",
@@ -107,6 +108,7 @@ test_that("ddml_plm computes with multiple ensemble procedures & sparse mats", {
   # Check output with expectations
   expect_equal(length(ddml_plm_fit$coef), 5)
 })#TEST_THAT
+
 test_that("ddml_plm computes w/ an ensemble procedure & shortstacking", {
   # Simulate small dataset
   nobs <- 200
@@ -280,7 +282,6 @@ test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
   learners <- list(list(fun = mdl_glmnet,
                         args = list(alpha = 0.5)),
                    list(fun = ols))
-  # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
                            ensemble_type = c("ols", "nnls",

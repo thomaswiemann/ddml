@@ -54,6 +54,7 @@ test_that("ddml_ate computes with an ensemble procedure", {
   # Define arguments
   learners <- list(list(fun = ols),
                    list(fun = ols))
+
   # Compute DDML PLM estimator
   expect_warning({
     ddml_ate_fit <- ddml_ate(y, D, X,

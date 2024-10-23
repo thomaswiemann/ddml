@@ -38,6 +38,7 @@ test_that("crosspred computes with ensemble procedures", {
   learners <- list(list(fun = ols),
                  list(fun = ols),
                  list(fun = ols))
+
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, X, Z,
                              learners,

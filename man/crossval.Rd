@@ -9,7 +9,8 @@ crossval(
   X,
   Z = NULL,
   learners,
-  cv_folds = 5,
+  cv_folds = 10,
+  cluster_variable = seq_along(y),
   cv_subsamples = NULL,
   silent = FALSE,
   progress = NULL
@@ -42,6 +43,8 @@ results in inclusion of all predictive variables in \code{X} (and/or
 \code{Z}).}
 
 \item{cv_folds}{Number of folds used for cross-validation.}
+
+\item{cluster_variable}{A vector of cluster indices.}
 
 \item{cv_subsamples}{List of vectors with sample indices for
 cross-validation.}
