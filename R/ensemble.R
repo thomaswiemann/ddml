@@ -10,6 +10,22 @@ ensemble <- function(y, X, Z = NULL,
                      progress = NULL) {
   # Data parameters
   nlearners <- length(learners)
+  # Check if y is constant
+  if (length(unique(y)) == 1) {
+    warning(paste("Outcome variable y is constant. Ensemble will return",
+                   "mean(y) for all predictions."))
+    # Return minimal output needed for predictions
+    output <- list(
+      mdl_fits = NULL,
+      weights = NULL,
+      learners = learners,
+      cv_results = NULL,
+      mean_y = mean(y),
+      constant_y = TRUE
+    )
+    class(output) <- "ensemble"
+    return(output)
+  }#IF
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(y, X, Z,
                                 type = type, learners = learners,
@@ -50,7 +66,7 @@ ensemble <- function(y, X, Z = NULL,
   # Organize and return output
   output <- list(mdl_fits = mdl_fits, weights = weights,
                  learners = learners, cv_results = cv_results,
-                 mean_y = mean(y))
+                 mean_y = mean(y), constant_y = FALSE)
   class(output) <- "ensemble"
   return(output)
 }#ENSEMBLE
@@ -60,7 +76,11 @@ ensemble <- function(y, X, Z = NULL,
 # Prediction method for ensemble
 predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   # Data parameters
-  nlearners <- length(object$mdl_fits)
+  nlearners <- length(object$learners)
+  # If y was constant, return mean_y for all observations
+  if (!is.null(object$constant_y) && object$constant_y) {
+    return(matrix(object$mean_y, nrow(newdata), nlearners))
+  }#IF
   # Check for excluded learners
   mdl_include <- which(rowSums(abs(object$weights)) > 0)
   if (length(mdl_include) == 0) {
