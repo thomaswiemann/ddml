@@ -35,8 +35,8 @@ ols_fit$coef
 }
 \seealso{
 Other ml_wrapper: 
-\code{\link{mdl_glmnet}()},
 \code{\link{mdl_glm}()},
+\code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},
 \code{\link{mdl_xgboost}()}
 }

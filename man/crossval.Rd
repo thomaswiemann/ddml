@@ -11,6 +11,10 @@ crossval(
   learners,
   cv_folds = 5,
   cv_subsamples = NULL,
+  parallel = FALSE,
+  num.cores = NULL,
+  parallel.export = NULL,
+  parallel.packages = NULL,
   silent = FALSE,
   progress = NULL
 )
@@ -46,6 +50,22 @@ results in inclusion of all predictive variables in \code{X} (and/or
 \item{cv_subsamples}{List of vectors with sample indices for
 cross-validation.}
 
+\item{parallel}{Logical indicating whether to use parallel processing.}
+
+\item{num.cores}{Integer number of cores to use for parallel execution.
+Defaults to \code{NULL}, which uses \code{parallel::detectCores()}.}
+
+\item{parallel.export}{Optional character vector of names of objects
+(functions or data) in the calling environment to be explicitly
+exported to the parallel workers. This is necessary for globally defined
+helper functions or S3 methods used by custom learners.
+Example: \code{parallel.export = c("my_custom_learner", "predict.my_custom_learner")}.}
+
+\item{parallel.packages}{Optional character vector of additional package names
+to be loaded on the parallel workers (using \code{library()}). Required if
+custom learners or their methods depend on functions from these packages.
+Example: \code{parallel.packages = "gbm"}.}
+
 \item{silent}{Boolean to silence estimation updates.}
 
 \item{progress}{String to print before learner and cv fold progress.}
@@ -66,20 +86,78 @@ See above.}
 Estimator of the mean squared prediction error of
 different learners using cross-validation.
 }
+\section{Parallel Processing using the \code{parallel} package}{
+
+When \code{parallel = TRUE}, this function uses the base R \code{parallel} package
+via a PSOCK cluster. This requires explicit exporting of necessary objects and
+loading of packages onto the worker nodes.
+in the \code{parallel.export} argument. Ensure these objects exist in the
+environment where \code{crossval} is called.
+\item \strong{Packages:} Packages required by custom learners (e.g., \code{gbm} if
+using \code{gbm::gbm.fit}) must be specified in the \code{parallel.packages}
+argument. Base packages \code{stats} and \code{methods} are loaded automatically.
+}
+Reproducibility is handled using \code{parallel::clusterSetRNGStream}. Output from
+parallel workers is typically not displayed. If parallel setup fails, execution
+falls back to sequential processing with a warning.
+}
+
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
 y = AE98[, "worked"]
 X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 
-# Compare ols, lasso, and ridge using 4-fold cross-validation
-cv_res <- crossval(y, X,
-                   learners = list(list(fun = ols),
-                                   list(fun = mdl_glmnet),
-                                   list(fun = mdl_glmnet,
-                                        args = list(alpha = 0))),
-                   cv_folds = 4,
-                   silent = TRUE)
-cv_res$mspe
+# Compare ols, lasso, and ridge using 4-fold cross-validation (sequentially)
+cv_res_seq <- crossval(y, X,
+                       learners = list(list(fun = ols),
+                                       list(fun = mdl_glmnet),
+                                       list(fun = mdl_glmnet,
+                                            args = list(alpha = 0))),
+                       cv_folds = 4,
+                       silent = TRUE)
+cv_res_seq$mspe
+
+# --- Example using parallel package ---
+
+# Define a custom learner (e.g., requires 'gbm' package and S3 method)
+library(gbm)
+mdl_gbm <- function(y, X, ...) {
+  fit <- gbm::gbm.fit(x = X, y = y, ...)
+  class(fit) <- c("mdl_gbm_wrapper_class", class(fit))
+  return(fit)
+}
+predict.mdl_gbm <- function(object, newdata, ...) {
+  class(object) <- class(object)[-1L]
+  stats::predict(object, newdata = newdata, type = "response",
+                 n.trees = object$n.trees, ...)
+}
+
+learners_custom <- list(list(fun = ols), # ols from ddml package
+                        list(fun = mdl_gbm, # Function defined globally
+                             args = list(n.trees = 100, verbose = FALSE)))
+
+# Run in parallel using 2 cores
+# Export the globally defined functions, load the needed package 'gbm'
+set.seed(123) # Set seed for reproducibility with clusterSetRNGStream
+cv_res_par <- crossval(y = y, X = X,
+                       learners = learners_custom,
+                       cv_folds = 4,
+                       parallel = TRUE,
+                       num.cores = 2,
+                       parallel.export = c("mdl_gbm", "predict.mdl_gbm"),
+                       parallel.packages = "gbm",
+                       silent = TRUE) # Progress reporting disabled
+print(cv_res_par$mspe)
+
+# Compare with sequential (set seed again for identical fold generation)
+set.seed(123)
+cv_res_seq <- crossval(y = y, X = X,
+                       learners = learners_custom,
+                       cv_folds = 4,
+                       parallel = FALSE,
+                       silent = TRUE)
+print(cv_res_seq$mspe)
+print(all.equal(cv_res_seq$mspe, cv_res_par$mspe))
 }
 \seealso{
 Other utilities: 

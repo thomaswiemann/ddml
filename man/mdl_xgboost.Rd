@@ -43,8 +43,8 @@ Discovery and Data Mining, 785–794.
 \code{\link[xgboost:xgb.train]{xgboost::xgboost()}}
 
 Other ml_wrapper: 
-\code{\link{mdl_glmnet}()},
 \code{\link{mdl_glm}()},
+\code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},
 \code{\link{ols}()}
 }

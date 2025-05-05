@@ -2,6 +2,7 @@
 % Please edit documentation in R/ddml.R
 \docType{package}
 \name{ddml}
+\alias{ddml-package}
 \alias{ddml}
 \title{ddml: Double/Debiased Machine Learning in R}
 \description{
@@ -15,4 +16,24 @@ data generating process.
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
 structural parameters." The Econometrics Journal, 21(1), C1-C68.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/thomaswiemann/ddml}
+  \item \url{https://thomaswiemann.com/ddml/}
+  \item Report bugs at \url{https://github.com/thomaswiemann/ddml/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Thomas Wiemann \email{wiemann@uchicago.edu}
+
+Authors:
+\itemize{
+  \item Achim Ahrens
+  \item Christian B Hansen
+  \item Mark E Schaffer
+}
+
 }

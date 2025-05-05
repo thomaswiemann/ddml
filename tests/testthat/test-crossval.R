@@ -82,3 +82,49 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   expect_equal(all(round(cv_res$oos_resid[, 1], 3) ==
                      round(cv_res$oos_resid[, 2], 3)), TRUE)
 })#TEST_THAT
+
+# --- Test Parallel Execution and Consistency ---
+
+test_that("crossval runs in parallel and matches sequential results", {
+  # Setup using included AE98 data (subset for speed)
+  set.seed(456)
+  nobs_test <- 500 # Use a subset of AE98
+  sample_idx <- sample(nrow(AE98), nobs_test)
+  y_test <- AE98[sample_idx, "worked"]
+  X_test <- AE98[sample_idx, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+  nlearners_test <- 1
+  cvfolds_test <- 4
+
+  # Define a seed for consistent fold generation
+  test_seed <- 987
+
+  learners_test_simple <- list(
+    list(fun = ols) # Simple OLS learner from ddml
+  )
+
+  # Run sequentially
+  set.seed(test_seed)
+  cv_res_seq <- crossval(y = y_test, X = X_test, Z = NULL,
+                         learners = learners_test_simple,
+                         cv_folds = cvfolds_test,
+                         parallel = FALSE,
+                         silent = TRUE)
+
+  # Run in parallel (2 cores)
+  set.seed(test_seed)
+  cv_res_par <- crossval(y = y_test, X = X_test, Z = NULL,
+                         learners = learners_test_simple,
+                         cv_folds = cvfolds_test,
+                         parallel = TRUE,
+                         num.cores = 2,
+                         silent = TRUE)
+
+  # --- Check Parallel Output Structure ---
+  expect_type(cv_res_par, "list")
+  expect_named(cv_res_par, c("mspe", "oos_resid", "cv_subsamples"))
+
+  # --- Check Consistency between Sequential and Parallel ---
+  expect_equal(cv_res_seq$mspe, cv_res_par$mspe, tolerance = 1e-9)
+  expect_equal(cv_res_seq$oos_resid, cv_res_par$oos_resid, tolerance = 1e-9)
+  expect_equal(cv_res_seq$cv_subsamples, cv_res_par$cv_subsamples)
+})#TEST_THAT
