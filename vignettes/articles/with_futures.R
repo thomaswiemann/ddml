@@ -46,6 +46,36 @@ learners <- list(
         args = list(distribution  = "bernoulli",
                     n.trees = 500,
                     interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
+                    verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables, # OLS using all variables
+  list(fun = mdl_gbm,
+        args = list(distribution  = "bernoulli",
+                    n.trees = 500,
+                    interaction.depth = 1,
                     verbose = FALSE)), # OLS using intercept + true non-zero vars, # OLS using all variables
   list(fun = mdl_gbm,
         args = list(distribution  = "bernoulli",
@@ -65,7 +95,7 @@ set.seed(456) # Set seed before sequential run
 time_seq <- system.time({
   cv_res_seq <- crossval(y, X, Z = NULL,
                          learners = learners,
-                         cv_folds = 10,
+                         cv_folds = 2,
                          parallel = FALSE,
                          silent = FALSE, # Show progress
                          progress = "Sequential CV: ")
@@ -80,7 +110,7 @@ set.seed(456) # Reset seed to get same folds as sequential run
 time_par <- system.time({
   cv_res_par <- crossval(y, X, Z = NULL,
                          learners = learners,
-                         cv_folds = 10,
+                         cv_folds = 2,
                          parallel = TRUE,
                          num.cores = 4,
                          parallel.export = c("mdl_gbm", "predict.mdl_gbm"),
