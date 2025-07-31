@@ -256,7 +256,7 @@ ddml_fpliv <- function(y, D, Z, X,
                       shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
             # Remove "average" oos_fitted and weights
             D_X_res_list[[k]]$oos_fitted <- D_X_res_list[[k]]$oos_fitted[, -1]
-            D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1, ,
+            D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1,
                                                                    drop = F]
           }#IFELSE
 
