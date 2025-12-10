@@ -165,8 +165,8 @@ fpliv_fit <- ddml_fpliv(y, D, Z, X,
 summary(fpliv_fit)
 }
 \references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
-machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
+Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
