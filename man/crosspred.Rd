@@ -154,8 +154,8 @@ dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
 dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
 }
 \references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
-machine learning in Stata." \url{https://arxiv.org/abs/2301.09397}
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
+Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }

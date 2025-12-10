@@ -141,7 +141,7 @@ Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
 Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging
-and double machine learning.” <https://arxiv.org/abs/2401.01645>
+and double machine learning.” Journal of Applied Econometrics, 40(3): 249-269.
 
 Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply:
 Evidence from Exogenous Variation in Family Size.” American Economic

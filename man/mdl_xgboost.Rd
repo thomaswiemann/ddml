@@ -2,31 +2,32 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_xgboost}
 \alias{mdl_xgboost}
-\title{Wrapper for \code{\link[xgboost:xgb.train]{xgboost::xgboost()}}.}
+\title{Wrapper for \code{\link[xgboost:xgboost]{xgboost::xgboost()}}.}
 \usage{
-mdl_xgboost(y, X, nrounds = 500, verbose = 0, ...)
+mdl_xgboost(y, X, nrounds = 500, verbosity = 0, ...)
 }
 \arguments{
 \item{y}{The outcome variable.}
 
 \item{X}{The (sparse) feature matrix.}
 
-\item{nrounds}{max number of boosting iterations.}
+\item{nrounds}{Number of boosting iterations / rounds.
 
-\item{verbose}{If 0, xgboost will stay silent. If 1, it will print information about performance.
-If 2, some additional information will be printed out.
-Note that setting \code{verbose > 0} automatically engages the
-\code{cb.print.evaluation(period=1)} callback function.}
+Note that the number of default boosting rounds here is not automatically tuned, and different
+problems will have vastly different optimal numbers of boosting rounds.}
+
+\item{verbosity}{Verbosity of printing messages. Valid values of 0 (silent), 1 (warning),
+2 (info), and 3 (debug).}
 
 \item{...}{Additional arguments passed to \code{xgboost}. See
-\code{\link[xgboost:xgb.train]{xgboost::xgboost()}} for a complete list of arguments.}
+\code{\link[xgboost:xgboost]{xgboost::xgboost()}} for a complete list of arguments.}
 }
 \value{
 \code{mdl_xgboost} returns an object of S3 class \code{mdl_xgboost}
-as a simple mask to the return object of \code{\link[xgboost:xgb.train]{xgboost::xgboost()}}.
+as a simple mask to the return object of \code{\link[xgboost:xgboost]{xgboost::xgboost()}}.
 }
 \description{
-Simple wrapper for \code{\link[xgboost:xgb.train]{xgboost::xgboost()}} with some changes to the
+Simple wrapper for \code{\link[xgboost:xgboost]{xgboost::xgboost()}} with some changes to the
 default arguments.
 }
 \examples{
@@ -40,11 +41,11 @@ Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
 Discovery and Data Mining, 785–794.
 }
 \seealso{
-\code{\link[xgboost:xgb.train]{xgboost::xgboost()}}
+\code{\link[xgboost:xgboost]{xgboost::xgboost()}}
 
 Other ml_wrapper: 
-\code{\link{mdl_glmnet}()},
 \code{\link{mdl_glm}()},
+\code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},
 \code{\link{ols}()}
 }

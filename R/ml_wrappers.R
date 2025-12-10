@@ -47,7 +47,7 @@ mdl_glmnet <- function(y, X,
   return(mdl_fit)
 }#MDL_GLMNET
 
-# Prediction method for mdl_glmnet
+#' @exportS3Method
 predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
   cv <- "cv.glmnet" %in% class(object)
@@ -103,23 +103,21 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 #'                            nrounds = 1)
 #' class(xgboost_fit)
 mdl_xgboost <- function(y, X,
-                        nrounds = 500, verbose = 0,
+                        nrounds = 500, verbosity = 0,
                         ...){
   # Compute xgboost
-  mdl_fit <- xgboost::xgboost(data = X, label = y,
+  mdl_fit <- xgboost::xgboost(x = X, y = y,
                               nrounds = nrounds,
-                              verbose = verbose, ...)
+                              verbosity = verbosity, ...)
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_xgboost", class(mdl_fit))
   return(mdl_fit)
 }#MDL_XGBOOST
 
-# Prediction method for mdl_xgboost
+#' @exportS3Method
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
-  # Predict using xgb.Booster prediction method. Note that 'predict.xgb.Booster'
-  #     is not an exported object from 'namespace:xgboost', hence the less ideal
-  #     fix.
-  class(object) <- class(object)[2]
+  # Predict using xgb.Booster prediction method.
+  class(object) <- class(object)[-1]
   stats::predict(object, newdata, ...)
 }#PREDICT.MDL_XGBOOST
 
@@ -163,7 +161,7 @@ mdl_ranger <- function(y, X, ...){
   return(mdl_fit)
 }#MDL_RANGER
 
-# Prediction method for mdl_ranger
+#' @exportS3Method
 predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Assign column names to newdata if none are given
   if (is.null(colnames(newdata))) {
@@ -213,7 +211,7 @@ mdl_glm <- function(y, X, ...) {
   return(glm_fit) # return fitted glm object
 }#MDL_GLM
 
-# Prediction method for mdl_glm
+#' @exportS3Method
 predict.mdl_glm <- function(object, newdata, ...) {
   df <- data.frame(newdata) # transform data from matrices to data.frame
   stats::predict.glm(object, df, type = "response", ...)

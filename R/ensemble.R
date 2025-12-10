@@ -73,7 +73,7 @@ ensemble <- function(y, X, Z = NULL,
 
 # Complementary methods ========================================================
 
-# Prediction method for ensemble
+#' @exportS3Method
 predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   # Data parameters
   nlearners <- length(object$learners)
