@@ -52,7 +52,7 @@ ols <- function(y, X,
 
 # Complementary methods ========================================================
 
-# Constructed fitted values
+#' @exportS3Method
 predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix
   if (is.null(newdata)) {

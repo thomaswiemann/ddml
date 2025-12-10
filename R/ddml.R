@@ -1,8 +1,5 @@
 #' ddml: Double/Debiased Machine Learning in R
 #'
-#' @docType package
-#' @name ddml
-#'
 #' @description Estimate common causal parameters using double/debiased machine
 #'     learning as proposed by Chernozhukov et al. (2018).
 #'     'ddml' simplifies estimation based on (short-)stacking, which leverages
@@ -13,4 +10,6 @@
 #' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 #'     Robins J (2018). "Double/debiased machine learning for treatment and
 #'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-NULL
+#'
+#' @keywords internal
+"_PACKAGE"
