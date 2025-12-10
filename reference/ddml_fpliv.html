@@ -14,7 +14,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -237,8 +237,8 @@ and \(g_0\) is an unknown nuisance function.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
-machine learning in Stata." <a href="https://arxiv.org/abs/2301.09397" class="external-link">https://arxiv.org/abs/2301.09397</a></p>
+    <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
+Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.</p>
 <p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
 structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
@@ -248,10 +248,10 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="summary.ddml_plm.html">summary.ddml_fpliv()</a></code>, <code><a href="https://rdrr.io/pkg/AER/man/ivreg.html" class="external-link">AER::ivreg()</a></code></p>
 <p>Other ddml:
-<code><a href="ddml_ate.html">ddml_ate</a>()</code>,
-<code><a href="ddml_late.html">ddml_late</a>()</code>,
-<code><a href="ddml_pliv.html">ddml_pliv</a>()</code>,
-<code><a href="ddml_plm.html">ddml_plm</a>()</code></p></div>
+<code><a href="ddml_ate.html">ddml_ate()</a></code>,
+<code><a href="ddml_late.html">ddml_late()</a></code>,
+<code><a href="ddml_pliv.html">ddml_pliv()</a></code>,
+<code><a href="ddml_plm.html">ddml_plm()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -273,9 +273,9 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> , , single base learner</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error  t value Pr(&gt;|t|)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) -6.75e-05     0.0069 -0.00979    0.992</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -1.40e-01     0.1818 -0.77195    0.440</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept)  0.000466    0.00691  0.0675    0.946</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> D_r         -0.179025    0.17248 -1.0380    0.299</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>
@@ -288,7 +288,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

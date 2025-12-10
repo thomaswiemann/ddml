@@ -1,0 +1,112 @@
+# Computational Benefits of Short-Stacking
+
+## Introduction
+
+This article illustrates the computational advantages of short-stacking
+over conventional stacking for estimation of structural parameters using
+double/debiased machine learning. See also Ahrens et
+al. ([2024a](https://arxiv.org/abs/2301.09397),
+[2024b](https://arxiv.org/abs/2401.01645)) for further discussion of
+short-stacking.
+
+## Estimation with Stacking and Short-Stacking
+
+We apply `ddml` to the included random subsample of 5,000 observations
+from the data of Angrist & Evans (1998). The data contains information
+on the labor supply of mothers, their children, as well as demographic
+data. See
+[`?AE98`](https://www.thomaswiemann.com/ddml/reference/AE98.md) for
+details.
+
+``` r
+# Load ddml and set seed
+library(ddml)
+set.seed(221945)
+
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+```
+
+For a comparison of run-times, we consider the following three
+estimators for the nuisance parameters arising in estimation of the
+local average treatment effect (LATE):
+
+1.  Gradient boosting as the single base learner (see
+    [`?mdl_xgboost`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md))
+2.  Short-stacking with linear regression (see
+    [`?ols`](https://www.thomaswiemann.com/ddml/reference/ols.md)),
+    lasso (see
+    [`?mdl_glmnet`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md)),
+    and gradient boosting
+3.  Stacking with linear regression, lasso, and gradient boosting
+
+``` r
+time_singlelearner <- system.time({
+  late_fit <- ddml_late(y, D, Z, X,
+                        learners = list(what = mdl_xgboost,
+                                        args = list(nrounds = 100,
+                                                    max_depth = 1)),
+                        sample_folds = 10,
+                        silent = TRUE)
+  })#SYSTEM.TIME
+
+time_shortstacking <- system.time({
+  late_fit <- ddml_late(y, D, Z, X,
+                        learners = list(list(fun = ols),
+                                        list(fun = mdl_glmnet),
+                                        list(fun = mdl_xgboost,
+                                             args = list(nrounds = 100,
+                                                         max_depth = 1))),
+                        ensemble_type = 'nnls1',
+                        shortstack = TRUE,
+                        sample_folds = 10,
+                        silent = TRUE)
+  })#SYSTEM.TIME
+
+time_stacking <- system.time({
+  late_fit <- ddml_late(y, D, Z, X,
+                        learners = list(list(fun = ols),
+                                        list(fun = mdl_glmnet),
+                                        list(fun = mdl_xgboost,
+                                             args = list(nrounds = 100,
+                                                         max_depth = 1))),
+                        ensemble_type = 'nnls1',
+                        shortstack = FALSE,
+                        sample_folds = 10,
+                        cv_folds = 10,
+                        silent = TRUE)
+  })#SYSTEM.TIME
+```
+
+Both stacking and short-stacking construct weighted averages of the
+considered base learners to minimize the out-of-sample mean squared
+prediction error (MSPE). The difference between the two approaches lies
+in the construction of the MSPE: While stacking runs cross-validation in
+each cross-fitting sample fold, short-stacking directly uses the
+out-of-sample predictions arising in the cross-fitting step of
+double/debiased machine learning estimators. As the run-times below
+show, this results in a substantially reduced computational burden:
+
+``` r
+cat("Time single learner:", time_singlelearner[1], "\n")
+#> Time single learner: 10.39
+cat("Time short-stacking:", time_shortstacking[1], "\n")
+#> Time short-stacking: 12.83
+cat("Time stacking:      ", time_stacking[1])
+#> Time stacking:       117.98
+```
+
+## References
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
+Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging
+and double machine learning.” <https://arxiv.org/abs/2401.01645>
+
+Angrist J, Evans W (1998). “Children and Their Parents’ Labor Supply:
+Evidence from Exogenous Variation in Family Size.” American Economic
+Review, 88(3), 450-477.

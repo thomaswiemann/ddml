@@ -16,7 +16,7 @@ default arguments."><!-- Copyright (c) 2000-2023 etracker GmbH. All rights reser
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,19 +47,19 @@ default arguments."><!-- Copyright (c) 2000-2023 etracker GmbH. All rights reser
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Wrapper for <code><a href="https://rdrr.io/pkg/xgboost/man/xgb.train.html" class="external-link">xgboost::xgboost()</a></code>.</h1>
+      <h1>Wrapper for <code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code>.</h1>
       <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/R/ml_wrappers.R" class="external-link"><code>R/ml_wrappers.R</code></a></small>
       <div class="d-none name"><code>mdl_xgboost.Rd</code></div>
     </div>
 
     <div class="ref-description section level2">
-    <p>Simple wrapper for <code><a href="https://rdrr.io/pkg/xgboost/man/xgb.train.html" class="external-link">xgboost::xgboost()</a></code> with some changes to the
+    <p>Simple wrapper for <code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code> with some changes to the
 default arguments.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mdl_xgboost</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, nrounds <span class="op">=</span> <span class="fl">500</span>, verbose <span class="op">=</span> <span class="fl">0</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mdl_xgboost</span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, nrounds <span class="op">=</span> <span class="fl">500</span>, verbosity <span class="op">=</span> <span class="fl">0</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,25 +75,25 @@ default arguments.</p>
 
 
 <dt id="arg-nrounds">nrounds<a class="anchor" aria-label="anchor" href="#arg-nrounds"></a></dt>
-<dd><p>max number of boosting iterations.</p></dd>
+<dd><p>Number of boosting iterations / rounds.</p>
+<p>Note that the number of default boosting rounds here is not automatically tuned, and different
+problems will have vastly different optimal numbers of boosting rounds.</p></dd>
 
 
-<dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>If 0, xgboost will stay silent. If 1, it will print information about performance.
-If 2, some additional information will be printed out.
-Note that setting <code>verbose &gt; 0</code> automatically engages the
-<code>cb.print.evaluation(period=1)</code> callback function.</p></dd>
+<dt id="arg-verbosity">verbosity<a class="anchor" aria-label="anchor" href="#arg-verbosity"></a></dt>
+<dd><p>Verbosity of printing messages. Valid values of 0 (silent), 1 (warning),
+2 (info), and 3 (debug).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to <code>xgboost</code>. See
-<code><a href="https://rdrr.io/pkg/xgboost/man/xgb.train.html" class="external-link">xgboost::xgboost()</a></code> for a complete list of arguments.</p></dd>
+<code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code> for a complete list of arguments.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>mdl_xgboost</code> returns an object of S3 class <code>mdl_xgboost</code>
-as a simple mask to the return object of <code><a href="https://rdrr.io/pkg/xgboost/man/xgb.train.html" class="external-link">xgboost::xgboost()</a></code>.</p>
+as a simple mask to the return object of <code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -103,12 +103,12 @@ Discovery and Data Mining, 785–794.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/xgboost/man/xgb.train.html" class="external-link">xgboost::xgboost()</a></code></p>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code></p>
 <p>Other ml_wrapper:
-<code><a href="mdl_glmnet.html">mdl_glmnet</a>()</code>,
-<code><a href="mdl_glm.html">mdl_glm</a>()</code>,
-<code><a href="mdl_ranger.html">mdl_ranger</a>()</code>,
-<code><a href="ols.html">ols</a>()</code></p></div>
+<code><a href="mdl_glm.html">mdl_glm()</a></code>,
+<code><a href="mdl_glmnet.html">mdl_glmnet()</a></code>,
+<code><a href="mdl_ranger.html">mdl_ranger()</a></code>,
+<code><a href="ols.html">ols()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -116,7 +116,7 @@ Discovery and Data Mining, 785–794.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">xgboost_fit</span> <span class="op">&lt;-</span> <span class="fu">mdl_xgboost</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span>, <span class="fl">50</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                           nrounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">xgboost_fit</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "mdl_xgboost" "xgb.Booster"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "mdl_xgboost" "xgboost"     "xgb.Booster"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -128,7 +128,7 @@ Discovery and Data Mining, 785–794.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

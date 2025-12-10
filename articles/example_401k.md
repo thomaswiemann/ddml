@@ -1,0 +1,374 @@
+# Example on the Effect of 401k Participation
+
+## Introduction
+
+This article illustrates key features of `ddml` by estimating the effect
+of 401k participation on retirement savings. In particular, the example
+showcases the following features:
+
+- Estimation using a single machine learner
+- Estimation using multiple machine learners via short-stacking
+- Estimation using multiple machine learners *and* different sets of
+  control variables
+- Estimation using different sets of machine learners for continuous and
+  binary outcome and treatment variables
+
+After introduction of the data, the article illustrates each above
+feature in turn.
+
+``` r
+library(ddml)
+set.seed(2410072)
+```
+
+## Data construction
+
+The 401K data considered here is from the Survey of Income and Program
+Participation (SIPP) from the year 1991. We use the data taken from the
+application in [Chernozhukov et
+al. (2018)](https://academic.oup.com/ectj/article/21/1/C1/5056401s%7D).
+
+``` r
+SIPP91 <- readRDS("data/SIPP91.rds")
+```
+
+The endogenous variable of interest is an indicator equal to 1 if the
+person participates in a 401k. We are interested in estimating its
+effect on net financial assets and control for various individual
+characteristics (e.g., age and income).
+
+``` r
+nobs <- nrow(SIPP91)
+y <- as.matrix(SIPP91$net_tfa)
+D <- as.matrix(SIPP91$p401)
+X <- as.matrix(SIPP91[, c("age", "inc", "educ", "fsize",
+                      "marr", "twoearn", "db", "pira", "hown")])
+```
+
+## Estimation using a Single Machine Learner
+
+The simplest double/debiased machine learning estimator for the causal
+effect of 401k participation on financial assets considers a single
+machine learner to (nonparametrically) control for individual
+characteristics. We consider gradient boosting in the code snippet below
+(see
+[`?ddml_plm`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+and
+[`?mdl_xgboost`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md)
+for details).
+
+A comparison with a simple multiple linear regression estimate indicates
+a difference in the point estimates of about one standard deviation,
+suggesting that there are at least some non-linearities present in the
+data.
+
+``` r
+# PLM with gradient boosting
+xgboost_fit <- ddml_plm(y = y, D = D, X = X,
+                        learners = list(what = mdl_xgboost,
+                                        args = list(nrounds = 300)),
+                        sample_folds = 10,
+                        silent = T)
+summary(xgboost_fit)
+#> PLM estimation results: 
+#>  
+#> , , single base learner
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -224        626  -0.357 7.21e-01
+#> D_r            13916       1604   8.678 4.03e-18
+
+# Comparison to multiple linear regression
+lm_fit <- lm(y ~ D + X)
+summary(lm_fit)
+#>     Estimate   Std. Error      t value     Pr(>|t|) 
+#> 1.160089e+04 1.345117e+03 8.624444e+00 7.428141e-18
+```
+
+## Estimation using Multiple Machine Learners
+
+Instead of considering just a single – and possibly ill-tuned – machine
+learner to control for covariates, it is often helpful to combine a
+diverse set of learners. The code snippet below considers a set of six
+learners (see
+[`?ols`](https://www.thomaswiemann.com/ddml/reference/ols.md),
+[`?mdl_glmnet`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md),
+[`?mdl_ranger`](https://www.thomaswiemann.com/ddml/reference/mdl_ranger.md)
+for details). The learners are combined to minimize out-of-sample mean
+square prediction error in the reduced form of the outcome and the
+endogenous variable on the controls, respectively. To reduce the
+computational burden, we consider short-stacking (see also
+`vignette("stacking")`).
+
+The estimate is nearly identical to the estimate using just gradient
+boosting.
+
+``` r
+# Specify set of learners
+learners <- list(list(fun = ols),
+                 list(fun = mdl_glmnet),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 4)),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 12)),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 100)),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 300)))
+
+# PLM with short-stacking
+stacking_fit <- ddml_plm(y = y, D = D, X = X,
+                         learners = learners,
+                         ensemble_type = "nnls",
+                         sample_folds = 10,
+                         shortstack = T,
+                         silent = T)
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)    -1627        538   -3.03 2.48e-03
+#> D_r            13636       1526    8.94 4.04e-19
+```
+
+To better understand which machine learners contribute to the final
+estimate, we can take a look at the assigned stacking weights. Each row
+corresponds to a base-learner (in chronological order) while the columns
+indicate the corresponding reduced form. The weights show that the two
+random forest estimators contribute the most in both reduced forms,
+followed by the lasso estimator. Neither gradient boosting nor linear
+regression are assigned substantial weight.
+
+``` r
+sapply(stacking_fit$weights, round, 4)
+#>         y_X   D1_X
+#> [1,] 0.0048 0.0197
+#> [2,] 0.2113 0.2817
+#> [3,] 0.2973 0.3400
+#> [4,] 0.5770 0.3504
+#> [5,] 0.0000 0.0000
+#> [6,] 0.0000 0.0238
+```
+
+## Estimation with Different Sets of Control Variables
+
+The large weight assigned to random forests suggests that
+non-linearities and potential interactions may be important. While
+random forests and gradient boosting adaptively constructs such
+non-linearities, linear methods such as the lasso need to pre-specify
+these variables to capture more complex patterns in the data. A better
+set of machine learners to consider would thus consider different sets
+of variables for different machine learners:
+
+- linear regression and lasso with an extended set of control variables
+- random forests and gradient boosting with the original set of control
+  variables
+
+We extend the control variables using a simple third-order polynomial
+expansion of the non-binary control variables (with interactions). These
+are combine with the original control variables. In addition, we
+construct to sets of indices that reference the two sets of controls.
+
+``` r
+X_series <- poly(X[, c("age", "inc", "educ", "fsize")], degree = 3)
+X_c <- cbind(X, X_series)
+X_baseline <- 1:dim(X)[2] # baseline variables and indicators
+X_extended <- 5:dim(X_c)[2] # indicators & series expansion
+```
+
+`ddml` supports passing different sets of control variables to different
+base learners via the `assign_X` argument, which includes the
+column-indices corresponding to the desired variables of the control
+matrix.
+
+``` r
+# Specify base learners with different sets of controls
+learners <- list(list(fun = ols,
+                      assign_X = X_baseline),
+                 list(fun = ols,
+                      assign_X = X_extended),
+                 list(fun = mdl_glmnet,
+                      assign_X = X_extended),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 4),
+                      assign_X = X_baseline),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 12),
+                      assign_X = X_baseline),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 100),
+                      assign_X = X_baseline),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 300),
+                      assign_X = X_baseline))
+
+# PLM with short-stacking
+stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
+                         learners = learners,
+                         ensemble_type = "nnls",
+                         sample_folds = 10,
+                         shortstack = T,
+                         silent = T)
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -512        533  -0.961 3.37e-01
+#> D_r            14363       1500   9.575 1.02e-21
+```
+
+To assess whether the additional effort in expanding the control
+variables had an effect on the composition of the reduced form
+estimates, we can again inspect the stacking weights. Indeed, the new
+base learner that combines lasso with the polynomial expansion of the
+controls is assigned the largest weight, followed by the random forest
+estimators.
+
+``` r
+sapply(stacking_fit$weights, round, 4)
+#>         y_X   D1_X
+#> [1,] 0.0176 0.0000
+#> [2,] 0.0000 0.1219
+#> [3,] 0.7368 0.4056
+#> [4,] 0.0000 0.1693
+#> [5,] 0.2702 0.2613
+#> [6,] 0.0022 0.0522
+#> [7,] 0.0000 0.0048
+```
+
+## Estimation with Continious and Binary Outcome and Treatment Variables
+
+Thus far, we have considered the same set of base learners for the
+reduced form of the outcome on controls and the reduced form of the
+endogenous variable on the controls. In contrast to net financial assets
+which is (approximately) continuous, participating in a 401k is a binary
+indicator. It may thus sensible to consider reduced form estimators with
+support on the unit-interval for the latter reduced form. For example,
+we could consider logistic regression instead of linear regression.
+
+Equipped with the included `mdl_glm` wrapper for generalized linear
+models (see also
+[`?mdl_glm`](https://www.thomaswiemann.com/ddml/reference/mdl_glm.md)),
+we now specify a second set of base-learners for the reduced form of the
+binary endogenous variable of interest on the controls. As in the
+previous section, we consider different sets of control variables as
+well. When estimating the double/debiased machine learning estimator, we
+pass the second set of base learners via the `learners_DX` argument.
+
+``` r
+# Specify an additional set of learners for the reduced form E[D|X]
+learners_DX <- list(list(fun = mdl_glm,
+                         args = list(family = "binomial"),
+                      assign_X = X_baseline),
+                 list(fun = mdl_glm,
+                         args = list(family = "binomial"),
+                      assign_X = X_extended),
+                 list(fun = mdl_glmnet,
+                      args = list(family = "binomial"),
+                      assign_X = X_extended),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 4),
+                      assign_X = X_baseline),
+                 list(fun = mdl_ranger,
+                      args = list(num.trees = 250,
+                                  max.depth = 12),
+                      assign_X = X_baseline),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 100),
+                      assign_X = X_baseline),
+                 list(fun = mdl_xgboost,
+                      args = list(nrounds = 300),
+                      assign_X = X_baseline))
+
+# PLM with short-stacking and different sets of learners
+stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
+                         learners = learners,
+                         learners_DX = learners_DX,
+                         ensemble_type = "nnls",
+                         sample_folds = 10,
+                         shortstack = T,
+                         silent = T)
+summary(stacking_fit)
+#> PLM estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -487        535   -0.91 3.63e-01
+#> D_r            14097       1484    9.50 2.07e-21
+```
+
+The weights associated with the new base learners are now slightly
+larger:
+
+``` r
+sapply(stacking_fit$weights, round, 4)
+#>         y_X   D1_X
+#> [1,] 0.0132 0.0627
+#> [2,] 0.0000 0.2663
+#> [3,] 0.7411 0.0086
+#> [4,] 0.0000 0.4221
+#> [5,] 0.2690 0.2552
+#> [6,] 0.0000 0.0000
+#> [7,] 0.0000 0.0302
+```
+
+## Bonus: Instrumental Variable Estimation
+
+Instead of considering the partially linear regression model, we may
+also be interested in an instrumental variable approach. A commonly used
+instrument for participation in a 401k is 401k *eligibility*.
+
+The below code-snippet estimates the partially linear IV model using the
+two sets of machine learners introduced in previous sections. Because
+the instrument is binary, we use the generalized linear models to
+estimate the reduced form of 401k eligibility on the controls.
+
+``` r
+# 401k eligibility as the instrument
+Z <- as.matrix(SIPP91$e401)
+
+# PLIV with short-stacking and different sets of learners
+stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
+                         learners = learners,
+                         learners_DX = learners_DX,
+                         learners_ZX = learners_DX,
+                         ensemble_type = "nnls",
+                         sample_folds = 10,
+                         shortstack = T,
+                         silent = T)
+summary(stacking_IV_fit)
+#> PLIV estimation results: 
+#>  
+#> , , nnls
+#> 
+#>             Estimate Std. Error t value Pr(>|t|)
+#> (Intercept)     -776        531   -1.46 1.44e-01
+#> D_r            12987       1872    6.94 3.97e-12
+
+# Stacking weights associated with each base learner
+sapply(stacking_IV_fit$weights, round, 4)
+#>         y_X   D1_X   Z1_X
+#> [1,] 0.0000 0.0647 0.0000
+#> [2,] 0.0000 0.2271 0.2414
+#> [3,] 0.7474 0.0080 0.0157
+#> [4,] 0.0000 0.4030 0.5337
+#> [5,] 0.2953 0.3036 0.2501
+#> [6,] 0.0000 0.0351 0.0000
+#> [7,] 0.0000 0.0000 0.0000
+```
+
+## References
+
+Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+Robins J (2018). “Double/debiased machine learning for treatment and
+structural parameters.” The Econometrics Journal, 21(1), C1-C68.

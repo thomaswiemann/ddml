@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -173,7 +173,7 @@ article</a>).</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_lm</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%"><p class="caption">
 Diff-in-Diff Estimates.
 </p>
 </div>
@@ -212,7 +212,7 @@ effects:</p>
 <span><span class="co">#&gt; Estimation Method:  Doubly Robust</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_lm</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
 Dynamic Treatment Effect Estimates.
 </p>
 </div>
@@ -347,7 +347,7 @@ and pass it via the <code>est_method</code> argument:</p>
 <span><span class="co"># plot the coefficients</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_xgboost</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%"><p class="caption">
 xgboost-based Diff-in-Diff Estimates.
 </p>
 </div>
@@ -386,7 +386,7 @@ of) dynamic average treatment effects:</p>
 <span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_xgboost</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
 xgboost-based Dynamic Treatment Effect Estimates.
 </p>
 </div>
@@ -520,7 +520,7 @@ our shortstacking estimator:</p>
 <span><span class="co"># plot the coefficients</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%"><p class="caption">
 Stacking-based Diff-in-Diff Estimates.
 </p>
 </div>
@@ -561,7 +561,7 @@ variables, may show starker difference in the final estimates.</p>
 <span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
 <span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures%2Funnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
+<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
 Stacking-based Dynamic Treatment Effect Estimates.
 </p>
 </div>
@@ -587,7 +587,7 @@ difference-in-difference models.” The Econometrics Journal, 177-191.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

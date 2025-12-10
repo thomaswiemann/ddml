@@ -1,0 +1,267 @@
+# Constructing a User-Provided Base Learner
+
+## Introduction
+
+This article illustrates how users can write their own base learners.
+The necessary requirements for a base learner to be compatible with
+`ddml` are minimal:
+
+1.  An estimation function that takes an outcome vector `y` and a
+    feature matrix `X` and returns a fitted model object as an S3 class
+2.  A `predict` method for the above S3 class that takes a feature
+    matrix `newdata` and returns a numerical vector of predictions
+
+We outline the requirements on two concrete examples:
+
+1.  A simple wrapper for `gbm::gbm.fit()` for generalized boosted
+    regression
+2.  A more extensive wrapper for neural networks based on
+    [`keras`](https://cran.r-project.org/web/packages/keras/index.html)
+
+To test our wrappers, we apply them to the included random subsample of
+5,000 observations from the data of Angrist & Evans (1998). See
+[`?AE98`](https://www.thomaswiemann.com/ddml/reference/AE98.md) for
+details.
+
+``` r
+# Load ddml and set seed
+library(ddml)
+set.seed(75039)
+
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+```
+
+## A Wrapper for `gbm::gbm.fit()`
+
+We begin with writing an estimation function that takes named arguments
+`y` and `X` and returns a fitted model object. To allow for arguments to
+be passed from the wrapper to `gbm::gbm.fit()`, we also make use of the
+`...` argument.
+
+``` r
+# Load gbm
+library(gbm)
+
+# Write gbm wrapper
+mdl_gbm <- function(y, X, ...) {
+  gbm_fit <- gbm.fit(x = X, y = y, ...) # fit gbm
+  class(gbm_fit) <- c("mdl_gbm", class(gbm_fit)) # append class
+  return(gbm_fit) # return fitted gbm object
+}#MDL_GBM
+```
+
+Note that by default, predicted values from `gbm::predict.gbm()` do not
+return values on the scale of the outcome variable (see
+`?gbm::predict.gbm()`). It is therefore important to also construct a
+simple prediction method for the `mdl_gbm` object:
+
+``` r
+# Write prediction method for gbm.wrapper
+predict.mdl_gbm <- function(object, newdata, ...) {
+  class(object) <- class(object)[-1] # remove mdl_gbm from the class list
+  predict(object, newdata, type = "response", n.trees = object$n.trees)
+}#MDL_GBM
+```
+
+As a simple test, we check the class of the object returned by the
+wrapper and the prediction method we constructed:
+
+``` r
+# Estimate gbm
+gbm_fit <- mdl_gbm(y, X,
+                   distribution  = "bernoulli",
+                   n.trees = 1000,
+                   interaction.depth = 6,
+                   verbose = FALSE)
+# Compute predictions
+fitted_values <- predict(gbm_fit, X)
+# Check class
+class(gbm_fit)
+#> [1] "mdl_gbm" "gbm"
+class(fitted_values)
+#> [1] "numeric"
+```
+
+The classes are what we expected. The wrapper should now be compatible
+with the `ddml` machinery. As a final test, we estimate the local
+average treatment effect. (Computation can take a while, feel free to
+set `n.trees` or `interaction.depth` to a smaller value for this test.)
+
+``` r
+# Use the new gbm base learner
+learner_gbm <-  list(what = mdl_gbm,
+                     args = list(distribution  = "bernoulli",
+                                 n.trees = 1000,
+                                 interaction.depth = 6,
+                                 verbose = FALSE))
+
+# Estimate ddml_late
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learner_gbm,
+                      sample_folds = 10,
+                      silent = TRUE)
+summary(late_fit)
+#> LATE estimation results: 
+#>  
+#>   Estimate Std. Error t value Pr(>|t|)
+#>     -0.236       0.19   -1.24    0.214
+```
+
+All works well!
+
+## A Wrapper for Neural Networks based on `keras`
+
+We now consider an example using the neural network implementation of
+the `keras` package. See this [guide to keras
+basics](https://tensorflow.rstudio.com/guides/keras/basics) for an
+excellent introduction to neural networks in R.
+
+``` r
+# Load keras
+library(keras)
+```
+
+The requirements for the wrapper to be compatible with `ddml` are the
+same as before, however, because estimating a neural network is more
+involved, we need to write a more extensive wrapper. In particular, our
+wrapper for the `keras` package has four components:
+
+1.  Building the neural network architecture
+2.  Compiling the neural network object
+3.  Estimating the neural network
+4.  Appending the class of the returned object (to write a custom
+    `predict` method)
+
+The wrapper below allows for custom specification of a feed-forward
+neural network architecture using the relu activation function. Of
+course, much more involved architectures are also supported (feel free
+to experiment!).
+
+``` r
+mdl_keras <- function(y, X,
+                      units = 10, nhidden = 1,
+                      optimizer_fun = "rmsprop",
+                      loss = "mse",
+                      epochs = 10,
+                      batch_size = min(1000, length(y)),
+                      validation_split = 0,
+                      callbacks = NULL,
+                      steps_per_epoch = NULL,
+                      metrics = c("mae"),
+                      verbose = 0) {
+
+  # Data parameters
+  nobs <- length(y)
+
+  # Normalize data
+  std_y <- c(mean(y), sd(y))
+  std_X <- apply(X, 2, function(x) c(mean(x), max(sd(x), 1e-3)))
+  y <- (y - std_y[1])/std_y[2]
+  X <- X - matrix(replicate(nobs, std_X[1, , drop = F]),
+    nrow = nobs, byrow = T)
+  X <- X / matrix(replicate(nobs, std_X[2, , drop = F]),
+    nrow = nobs, byrow = T)
+
+  # ===============================================
+  # ADJUST THIS PART FOR DIFFERENT ARCHITECTURES ==
+
+  # Construct neural network architecture
+  nnet <- keras_model_sequential()
+  for (k in 1:nhidden) {
+    nnet <- nnet %>%
+      layer_dense(units = units, use_bias = T,
+                  activation = "relu")
+  }#FOR
+  nnet <- nnet %>%
+    layer_dense(units = 1, use_bias = T)
+
+  # ===============================================
+  # ===============================================
+
+  # Compile neural net
+  nnet %>% keras::compile(optimizer = optimizer_fun,
+                           loss = loss,
+                           metrics = metrics)
+
+  # Fit neural net
+  nnet %>% keras::fit(X, y,
+                       epochs = epochs,
+                       batch_size = batch_size,
+                       validation_split = validation_split,
+                       callbacks = callbacks,
+                       steps_per_epoch = steps_per_epoch,
+                       verbose = verbose)
+
+  # Add standardization to object
+  nnet$std_y <- std_y
+  nnet$std_X <- std_X
+
+  # Append class
+  class(nnet) <- c("mdl_keras", class(nnet))
+
+  # Return fitted object
+  return(nnet)
+}#MDL_KERAS
+```
+
+The prediction method for our fitted object ensures the predictions are
+returned as a numerical vector:
+
+``` r
+predict.mdl_keras <- function(object, newdata){
+  # Standardize newdata
+  nobs <- nrow(newdata)
+  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = F]),
+    nrow = nobs, byrow = T)
+  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = F]),
+    nrow = nobs, byrow = T)
+  # Predict data and output as matrix
+  class(object) <- class(object)[-1] # Not a pretty solution...
+  fitted <- as.numeric(predict(object, newdata))
+  # Re-standardize to output and return
+  object$std_y[2] * fitted + object$std_y[1]
+}#PREDICT.MDL_KERAS
+```
+
+To test the wrapper, we again estimate the local average treatment
+effect. In addition to the architecture, it is important to properly
+tune the optimization algorithm. `callback_list` helps with specifying
+learning rate adjustments and defines the early stopping rule.
+
+``` r
+# Specify callbacks
+callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
+                                               patience = 15,
+                                               restore_best_weights = T),
+                       callback_reduce_lr_on_plateau(monitor = "val_loss",
+                                                     factor = 1/10,
+                                                     patience = 10,
+                                                     verbose = F))
+
+# Use the neural network base learner
+learner_keras = list(what = mdl_keras,
+                     args = list(units = 10, nhidden = 1,
+                                 epochs = 100,
+                                 verbose = F,
+                                 validation_split = 0.1,
+                                 callbacks = callbacks_list))
+
+# Estimate ddml_late
+late_fit <- ddml_late(y, D, Z, X,
+                      learners = learner_keras,
+                      sample_folds = 10,
+                      silent = T)
+#> Warning in trim_propensity_scores(r_X, trim, ensemble_type): : 2 propensity
+#> scores were trimmed.
+summary(late_fit)
+#> LATE estimation results: 
+#>  
+#>   Estimate Std. Error t value Pr(>|t|)
+#>     -0.187      0.189  -0.989    0.322
+```
+
+All works well!
