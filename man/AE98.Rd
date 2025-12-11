@@ -25,7 +25,7 @@ Hispanic.}
 }
 }
 \source{
-\url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/11288}
+\doi{10.7910/DVN/4W9GW2}
 }
 \usage{
 AE98

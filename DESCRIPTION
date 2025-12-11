@@ -6,7 +6,7 @@ Authors@R: c(
     person("Achim", "Ahrens", role = "aut"),
     person("Christian B", "Hansen", role = "aut"),
     person("Mark E", "Schaffer", role = "aut"),
-    person("Thomas", "Wiemann", role = c("aut", "cre"), email = "wiemann@uchicago.edu"))
+    person("Thomas", "Wiemann", role = c("aut", "cre"), email = "thomas.wiemann@chicagobooth.edu"))
 Description: Estimate common causal parameters using double/debiased machine 
     learning as proposed by Chernozhukov et al. (2018) <doi:10.1111/ectj.12097>. 
     'ddml' simplifies estimation based on (short-)stacking as discussed in 

@@ -27,7 +27,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Thomas Wiemann \email{wiemann@uchicago.edu}
+\strong{Maintainer}: Thomas Wiemann \email{thomas.wiemann@chicagobooth.edu}
 
 Authors:
 \itemize{

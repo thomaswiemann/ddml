@@ -26,5 +26,5 @@
 #'     Evidence from Exogenous Variation in Family Size." American Economic
 #'     Review, 88(3), 450-477.
 #'
-#' @source \url{https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/11288}
+#' @source \doi{10.7910/DVN/4W9GW2}
 "AE98"
