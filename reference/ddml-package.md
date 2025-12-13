@@ -23,7 +23,7 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Thomas Wiemann <wiemann@uchicago.edu>
+**Maintainer**: Thomas Wiemann <thomas.wiemann@chicagobooth.edu>
 
 Authors:
 

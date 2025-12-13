@@ -2,6 +2,8 @@
 
 ## ddml 0.3.1
 
+CRAN release: 2025-12-11
+
 - Updates internals of
   [`ddml::mdl_xgboost()`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md)
   with new `xgboost` syntax.
