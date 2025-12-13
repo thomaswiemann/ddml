@@ -13,7 +13,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/thomaswiemann/ddml/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/thomaswiemann/ddml/blob/v0.3.1/DESCRIPTION)
 
 Ahrens A, Hansen C, Schaffer M, Wiemann T (2025). *ddml: Double/Debiased
 Machine Learning*. R package version 0.3.1,
