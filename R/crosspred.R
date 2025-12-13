@@ -92,7 +92,7 @@
 #'
 #' @references
 #' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
+#'    Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 #'
 #' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
