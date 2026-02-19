@@ -134,7 +134,7 @@ ddml_ate <- function(y, D, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|D=0,X]
-  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = F],
+  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
@@ -144,7 +144,7 @@ ddml_ate <- function(y, D, X,
                         auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|D=1,X]
-  y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = F],
+  y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,

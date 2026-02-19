@@ -9,3 +9,6 @@ inst/doc
 .direnv
 /debugging/
 /debugger
+.cursor/
+.discussion/
+GEMINI.md

@@ -42,7 +42,7 @@ compute_inf_results_by_ensemble <- function(fit_obj, cluster_variable, ...) {
   std_errors <- sqrt(diag(Sigma))
   t_values <- fit_obj$coefficients / std_errors
   p_values <-  2 * vapply(abs(t_values), stats::pnorm,
-                          FUN.VALUE = 1, lower.tail = F)
+                          FUN.VALUE = 1, lower.tail = FALSE)
 
   # Store results in a matrix
   inf_results <- array(0, dim = c(ncoef, 4, 1))
@@ -95,7 +95,7 @@ compute_interactive_inf_results_by_ensemble <- function(coef, psi_a, psi_b,
   std_error <- sqrt(mean(scores^2) / nobs) / abs(mean(psi_a))
   t_values <- coef / std_error
   p_value <-  2 * vapply(abs(t_values), stats::pnorm,
-                         FUN.VALUE = 1, lower.tail = F)
+                         FUN.VALUE = 1, lower.tail = FALSE)
   # Store results in a matrix
   inf_results <- c(coef, std_error, t_values, p_value)
   # Return results

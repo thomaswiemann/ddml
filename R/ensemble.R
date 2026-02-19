@@ -171,7 +171,7 @@ ensemble_weights <- function(y, X, Z = NULL,
       weights[, k] <- ols(y, oos_fitted, const = FALSE)$coef
     } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
-      mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = F])
+      mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = FALSE])
       mdl_min <- (1:nlearners)[mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1

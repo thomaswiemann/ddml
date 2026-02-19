@@ -154,7 +154,7 @@ ddml_pliv <- function(y, D, Z, X,
   # Compute estimates of E[Z|X], loop through instruments
   Z_X_res_list <- list()
   for (k in 1:nZ) {
-    Z_X_res_list[[k]] <- get_CEF(Z[, k, drop = F], X,
+    Z_X_res_list[[k]] <- get_CEF(Z[, k, drop = FALSE], X,
                                  learners = learners_ZX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,
@@ -170,7 +170,7 @@ ddml_pliv <- function(y, D, Z, X,
   # Compute estimates of E[D|X], loop through endogenous variables
   D_X_res_list <- list()
   for (k in 1:nD) {
-    D_X_res_list[[k]] <- get_CEF(D[, k, drop = F], X,
+    D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
                                  learners = learners_DX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,

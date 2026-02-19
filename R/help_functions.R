@@ -28,7 +28,7 @@ trim_propensity_scores <- function(m_X, trim, ensemble_type) {
   # Data parameter
   nensb <- length(ensemble_type)
   # Trim by ensemble type
-  for (j in length(nensb)) {
+  for (j in seq_len(nensb)) {
     indx_trim_0 <- which(m_X[, j] <= trim)
     indx_trim_1 <- which(m_X[, j] >= 1 - trim)
     ntrim <- length(c(indx_trim_0, indx_trim_1))

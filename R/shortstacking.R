@@ -146,7 +146,7 @@ shortstacking <- function (y, X, Z = NULL,
       new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
       for (i in 1:nensb) {
         for (k in 1:sample_folds) {
-          new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = F]
+          new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = FALSE]
         }#FOR
       }#FOR
       is_fitted <- new_is_fitted

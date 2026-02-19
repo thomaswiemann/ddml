@@ -211,8 +211,8 @@ crosspred <- function(y, X, Z = NULL,
       }#IF
 
       # Compute ensemble
-      mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = F],
-                          Z[-subsamples[[k]], , drop = F],
+      mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = FALSE],
+                          Z[-subsamples[[k]], , drop = FALSE],
                           ensemble_type, learners,
                           cv_folds, cv_subsamples_list[[k]],
                           custom_weights = custom_ensemble_weights,
@@ -222,9 +222,9 @@ crosspred <- function(y, X, Z = NULL,
       oos_fitted[subsamples[[k]], ] <-
         as.numeric(predict.ensemble(mdl_fit,
                            newdata = X[subsamples[[k]], ,
-                                    drop = F],
+                                    drop = FALSE],
                            newZ = Z[subsamples[[k]], ,
-                                    drop = F]))
+                                    drop = FALSE]))
 
       # Record ensemble weights
       weights[, , k] <- mdl_fit$weights
@@ -243,8 +243,8 @@ crosspred <- function(y, X, Z = NULL,
                                                  Z[-subsamples[[k]], ]))
       } else if (calc_ensemble) {
         is_fitted[[k]] <- predict.ensemble(mdl_fit,
-                                  newdata = X[-subsamples[[k]], ,drop = F],
-                                  newZ = Z[-subsamples[[k]], , drop = F])
+                                  newdata = X[-subsamples[[k]], ,drop = FALSE],
+                                  newZ = Z[-subsamples[[k]], , drop = FALSE])
       }#IFELSE
     }#IF
     # Compute auxilliary predictions (optional)
@@ -258,13 +258,13 @@ crosspred <- function(y, X, Z = NULL,
       mdl_fit$weights <- diag(1, nlearners)
       oos_fitted_bylearner[subsamples[[k]], ] <-
         as.numeric(predict.ensemble(mdl_fit,
-                                    newdata = X[subsamples[[k]], , drop = F],
-                                    newZ = Z[subsamples[[k]], , drop = F]))
+                                    newdata = X[subsamples[[k]], , drop = FALSE],
+                                    newZ = Z[subsamples[[k]], , drop = FALSE]))
       # Compute in-sample predictions (optional)
       if (compute_insample_predictions) {
         is_fitted_bylearner[[k]] <-
-          predict.ensemble(mdl_fit, newdata = X[-subsamples[[k]], ,drop = F],
-                           newZ = Z[-subsamples[[k]], , drop = F])
+          predict.ensemble(mdl_fit, newdata = X[-subsamples[[k]], ,drop = FALSE],
+                           newZ = Z[-subsamples[[k]], , drop = FALSE])
       }#IF
       # Compute auxilliary predictions by learner (optional)
       if (!is.null(auxiliary_X)) {
@@ -279,7 +279,7 @@ crosspred <- function(y, X, Z = NULL,
     new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
     for (i in 1:nensb) {
       for (k in 1:sample_folds) {
-        new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = F]
+        new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = FALSE]
       }#FOR
     }#FOR
     is_fitted <- new_is_fitted

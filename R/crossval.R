@@ -96,7 +96,7 @@ crossval <- function(y, X, Z = NULL,
   # Compile residual matrix
   oos_resid <- unlist(cv_res)
   oos_resid <- matrix(oos_resid, nobs, nlearners)
-  oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSE]
+  oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSEALSE]
 
   # Compute MSPE by learner
   mspe <- colMeans(oos_resid^2)
@@ -123,14 +123,14 @@ crossval_compute <- function(test_sample, learner,
   # Compute model for this fold
   #     Note: this is effectively copying the data -- improvement needed.
   mdl_fun$args$y <- y[-test_sample]
-  mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = F],
-                          Z[-test_sample, assign_Z, drop = F])
+  mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = FALSE],
+                          Z[-test_sample, assign_Z, drop = FALSE])
   mdl_fit <- do.call(do.call, mdl_fun)
 
   # Compute out of sample residuals
   oos_fitted <- stats::predict(mdl_fit,
-                               cbind(X[test_sample, assign_X, drop = F],
-                                     Z[test_sample, assign_Z, drop = F]))
+                               cbind(X[test_sample, assign_X, drop = FALSE],
+                                     Z[test_sample, assign_Z, drop = FALSE]))
   oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
 
   # Return residuals and cv_Z

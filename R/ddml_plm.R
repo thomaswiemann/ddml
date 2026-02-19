@@ -183,7 +183,7 @@ ddml_plm <- function(y, D, X,
   # Compute estimates of E[D|X], loop through endogenous variables
   D_X_res_list <- list()
   for (k in 1:nD) {
-    D_X_res_list[[k]] <- get_CEF(D[, k, drop = F], X,
+    D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
                                  learners = learners_DX,
                                  ensemble_type = ensemble_type,
                                  shortstack = shortstack,
@@ -338,7 +338,7 @@ summary.ddml_plm <- function(object, ...) {
 #'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as
 #'     returned by [ddml::summary.ddml_plm()], [ddml::summary.ddml_pliv()],
 #'     and [ddml::summary.ddml_fpliv()], respectively.
-#' @param digits Number of significant digits used for priniting.
+#' @param digits Number of significant digits used for printing.
 #' @param ... Currently unused.
 #'
 #' @return NULL.

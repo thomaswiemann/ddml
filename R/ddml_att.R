@@ -33,7 +33,7 @@ ddml_att <- function(y, D, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|D=0,X]
-  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = F],
+  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,

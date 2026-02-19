@@ -195,7 +195,7 @@ generate_subsamples <- function(nobs, sample_folds) {
   sample_groups <- sample(sampleframe, size=nobs, replace=F)
   subsamples <- sapply(1:sample_folds,
                        function(x) {which(sample_groups == x)},
-                       simplify = F)
+                       simplify = FALSE)
   subsamples
 }#GENERATE_SUBSAMPLES
 

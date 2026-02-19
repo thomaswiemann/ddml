@@ -67,7 +67,7 @@
 #' # Construct variables from the included Angrist & Evans (1998) data
 #' y = AE98[, "worked"]
 #' D = AE98[, "morekids"]
-#' Z = AE98[, "samesex", drop = FALSE]
+#' Z = AE98[, "samesex", drop = FALSEALSE]
 #' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 #'
 #' # Estimate the partially linear IV model using a single base learner: Ridge.
@@ -118,14 +118,14 @@ ddml_fpliv <- function(y, D, Z, X,
                      custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = cf_indxs$subsamples,
                      cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                     compute_insample_predictions = F,
+                     compute_insample_predictions = FALSE,
                      silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
   D_XZ_res_list <- list()
   for (k in 1:nD) {
-    D_XZ_res_list[[k]] <- get_CEF(D[, k, drop = F], X, Z,
+    D_XZ_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X, Z,
                                   learners = learners_DXZ,
                                   ensemble_type = ensemble_type,
                                   shortstack = shortstack,
@@ -143,7 +143,7 @@ ddml_fpliv <- function(y, D, Z, X,
   if (!enforce_LIE) {
     D_X_res_list <- list()
     for (k in 1:nD) {
-      D_X_res_list[[k]] <- get_CEF(D[, k, drop = F], X, Z = NULL,
+      D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X, Z = NULL,
                                    learners = learners_DX,
                                    ensemble_type = ensemble_type,
                                    shortstack = shortstack,
@@ -152,7 +152,7 @@ ddml_fpliv <- function(y, D, Z, X,
                                    subsamples = cf_indxs$subsamples,
                                    cv_subsamples_list =
                                      cf_indxs$cv_subsamples_list,
-                                   compute_insample_predictions = F,
+                                   compute_insample_predictions = FALSE,
                                    silent = silent,
                                    progress = paste0("E[D", k, "|X]: "))
     }#FOR
@@ -180,7 +180,7 @@ ddml_fpliv <- function(y, D, Z, X,
                   shortstack = shortstack,
                   subsamples = cf_indxs$subsamples,
                   cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                  compute_insample_predictions = F,
+                  compute_insample_predictions = FALSE,
                   silent = silent,
                   progress = paste0("E[D", k, "|X]: "),
                   shortstack_y = D_XZ_res_list[[k]]$oos_fitted)
@@ -236,7 +236,7 @@ ddml_fpliv <- function(y, D, Z, X,
                       shortstack = shortstack,
                       subsamples = cf_indxs$subsamples,
                       cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                      compute_insample_predictions = F,
+                      compute_insample_predictions = FALSE,
                       silent = silent,
                       progress = progress_jk,
                       shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
@@ -247,17 +247,17 @@ ddml_fpliv <- function(y, D, Z, X,
                       ensemble_type = "average",
                       shortstack = shortstack,
                       custom_ensemble_weights =
-                        custom_ensemble_weights_DX[, j - nensb_raw, drop = F],
+                        custom_ensemble_weights_DX[, j - nensb_raw, drop = FALSE],
                       subsamples = cf_indxs$subsamples,
                       cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                      compute_insample_predictions = F,
+                      compute_insample_predictions = FALSE,
                       silent = silent,
                       progress = progress_jk,
                       shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
             # Remove "average" oos_fitted and weights
             D_X_res_list[[k]]$oos_fitted <- D_X_res_list[[k]]$oos_fitted[, -1]
             D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1, ,
-                                                                   drop = F]
+                                                                   drop = FALSE]
           }#IFELSE
 
 

@@ -105,7 +105,7 @@
 #'     Robins J (2018). "Double/debiased machine learning for treatment and
 #'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
 #'
-#' Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+#' Imbens G, Angrist J (1994). "Identification and Estimation of Local Average
 #'     Treatment Effects." Econometrica, 62(2), 467-475.
 #'
 #' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
@@ -176,7 +176,7 @@ ddml_late <- function(y, D, Z, X,
   if (!silent) cat("DDML estimation in progress. \n")
 
   # Compute estimates of E[y|Z=0,X]
-  y_X_Z0_res <- get_CEF(y[is_Z0], X[is_Z0, , drop = F],
+  y_X_Z0_res <- get_CEF(y[is_Z0], X[is_Z0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
@@ -186,7 +186,7 @@ ddml_late <- function(y, D, Z, X,
                         auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
 
   # Compute estimates of E[y|Z=1,X]
-  y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
+  y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
@@ -205,14 +205,14 @@ ddml_late <- function(y, D, Z, X,
     if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=0,X]
-    D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = F],
+    D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = FALSE],
                           learners = learners_DXZ,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
                           subsamples = cf_indxs$subsamples_byD[[1]],
                           cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
-                          silent = silent, progress = "E[Y|Z=0,X]: ",
+                          silent = silent, progress = "E[D|Z=0,X]: ",
                           auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
   }#IFELSE
 
@@ -226,14 +226,14 @@ ddml_late <- function(y, D, Z, X,
     if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
   } else {
     # Compute estimates of E[D|Z=1,X]
-    D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = F],
+    D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = FALSE],
                           learners = learners_DXZ,
                           ensemble_type = ensemble_type,
                           shortstack = shortstack,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
                           subsamples = cf_indxs$subsamples_byD[[2]],
                           cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
-                          silent = silent, progress = "E[Y|Z=0,X]: ",
+                          silent = silent, progress = "E[D|Z=1,X]: ",
                           auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
   }#IFELSE
 
@@ -244,7 +244,7 @@ ddml_late <- function(y, D, Z, X,
                      custom_ensemble_weights = custom_ensemble_weights_ZX,
                      subsamples = cf_indxs$subsamples,
                      cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                     compute_insample_predictions = F,
+                     compute_insample_predictions = FALSE,
                      silent = silent, progress = "E[Z|X]: ")
 
   # Update ensemble type to account for (optional) custom weights
