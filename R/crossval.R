@@ -30,7 +30,18 @@
 #' @param cv_folds Number of folds used for cross-validation.
 #' @param cv_subsamples List of vectors with sample indices for
 #'     cross-validation.
-#' @param progress String to print before learner and cv fold progress.
+#' @param parallel An optional named list with parallel processing
+#'     options. When \code{NULL} (the default), computation is
+#'     sequential. Supported fields:
+#'     \describe{
+#'         \item{\code{cores}}{Number of cores to use.}
+#'         \item{\code{export}}{Character vector of object names to
+#'             export to parallel workers (for custom learners that
+#'             reference global objects).}
+#'         \item{\code{packages}}{Character vector of additional
+#'             package names to load on workers (for custom learners
+#'             that use packages not imported by \code{ddml}).}
+#'     }
 #'
 #' @return \code{crossval} returns a list containing the following components:
 #'     \describe{
@@ -64,7 +75,13 @@ crossval <- function(y, X, Z = NULL,
                      cluster_variable = seq_along(y),
                      cv_subsamples = NULL,
                      silent = FALSE,
-                     progress = NULL) {
+                     parallel = NULL) {
+  # Unpack parallel options
+  p <- parse_parallel(parallel)
+  num_cores <- p$num_cores
+  parallel_export <- p$export
+  parallel_packages <- p$packages
+
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)
@@ -77,23 +94,41 @@ crossval <- function(y, X, Z = NULL,
   cv_folds <- length(cv_subsamples)
   nobs <- length(unlist(cv_subsamples)) # In case subsamples are user-provided
 
-  # Compute out-of-sample errors
-  cv_res <- sapply(1:(cv_folds * nlearners), function(x) {
-    # Select model and cv-fold for this job
-    j <- ceiling(x / cv_folds) # jth model
-    i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
+  # Define the computation function
+  cv_fun <- function(x) {
+    j <- ceiling(x / cv_folds)
+    i <- x - cv_folds * (ceiling(x / cv_folds) - 1)
     fold_x <- cv_subsamples[[i]]
-    # Print progress
-    if (!silent) {
-      cat(paste0("\r", progress,
-                 "learner ", j, "/", nlearners,
-                 ", cv fold ", i, "/", cv_folds))
-    }#IF
-    # Compute model for this fold
     crossval_compute(test_sample = fold_x,
                      learner = learners[[j]],
                      y, X, Z)
-  })#SAPPLY
+  }#CV_FUN
+
+  # Compute out-of-sample errors
+  njobs <- cv_folds * nlearners
+  cl <- NULL
+  if (num_cores > 1) {
+    cl <- tryCatch(
+      setup_parallel_cluster(num_cores, parallel_export,
+                             parallel_packages),
+      error = function(e) {
+        warning("Parallel setup failed: ",
+                conditionMessage(e),
+                ". Falling back to sequential.",
+                call. = FALSE)
+        NULL
+      }
+    )
+    if (!is.null(cl))
+      on.exit(parallel::stopCluster(cl), add = TRUE)
+  }#IF
+
+  if (silent) {
+    op <- pbapply::pboptions(type = "none")
+    on.exit(pbapply::pboptions(op), add = TRUE)
+  }#IF
+  cv_res <- pbapply::pbsapply(seq_len(njobs), cv_fun,
+                              cl = cl)
 
   # Compile residual matrix
   oos_resid <- unlist(cv_res)
@@ -113,28 +148,31 @@ crossval <- function(y, X, Z = NULL,
 # Complementary functions ======================================================
 crossval_compute <- function(test_sample, learner,
                              y, X, Z = NULL) {
-  # Check whether X, Z assignment has been specified. If not, include all.
-  if (is.null(learner$assign_X)) learner$assign_X <- 1:ncol(X)
-  if (is.null(learner$assign_Z) & !is.null(Z)) learner$assign_Z <- 1:ncol(Z)
+  if (is.null(learner$assign_X)) learner$assign_X <- seq_len(ncol(X))
+  if (is.null(learner$assign_Z) && !is.null(Z))
+    learner$assign_Z <- seq_len(ncol(Z))
 
-  # Extract model arguments
   mdl_fun <- list(what = learner$fun, args = learner$args)
   assign_X <- learner$assign_X
   assign_Z <- learner$assign_Z
 
-  # Compute model for this fold
-  #     Note: this is effectively copying the data -- improvement needed.
   mdl_fun$args$y <- y[-test_sample]
   mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = FALSE],
                           Z[-test_sample, assign_Z, drop = FALSE])
-  mdl_fit <- do.call(do.call, mdl_fun)
 
-  # Compute out of sample residuals
+  mdl_fit <- tryCatch(
+    do.call(do.call, mdl_fun),
+    error = function(e) {
+      stop("Learner fitting failed: ", conditionMessage(e),
+           call. = FALSE)
+    }
+  )
+
   oos_fitted <- stats::predict(mdl_fit,
-                               cbind(X[test_sample, assign_X, drop = FALSE],
-                                     Z[test_sample, assign_Z, drop = FALSE]))
+                               cbind(X[test_sample, assign_X,
+                                       drop = FALSE],
+                                     Z[test_sample, assign_Z,
+                                       drop = FALSE]))
   oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
-
-  # Return residuals and cv_Z
   return(oos_resid)
 }#CROSSVAL_COMPUTE

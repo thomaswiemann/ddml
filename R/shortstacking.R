@@ -8,6 +8,18 @@
 #' @param shortstack_y Optional vector of the outcome variable to form
 #'     short-stacking predictions for. Base learners are always trained on
 #'     \code{y}.
+#' @param parallel An optional named list with parallel processing
+#'     options. When \code{NULL} (the default), computation is
+#'     sequential. Supported fields:
+#'     \describe{
+#'         \item{\code{cores}}{Number of cores to use.}
+#'         \item{\code{export}}{Character vector of object names to
+#'             export to parallel workers (for custom learners that
+#'             reference global objects).}
+#'         \item{\code{packages}}{Character vector of additional
+#'             package names to load on workers (for custom learners
+#'             that use packages not imported by \code{ddml}).}
+#'     }
 #'
 #' @return \code{shortstack} returns a list containing the following components:
 #'     \describe{
@@ -62,19 +74,18 @@
 #'                                 silent = TRUE)
 #' dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
 #' dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
-shortstacking <- function (y, X, Z = NULL,
-                           learners,
-                           sample_folds = 2,
-                           ensemble_type = "average",
-                           custom_ensemble_weights = NULL,
-                           compute_insample_predictions = FALSE,
-                           subsamples = NULL,
-                           cluster_variable = seq_along(y),
-                           silent = FALSE,
-                           progress = NULL,
-                           auxiliary_X = NULL,
-                           shortstack_y = y) {
-
+shortstacking <- function(y, X, Z = NULL,
+                          learners,
+                          sample_folds = 2,
+                          ensemble_type = "average",
+                          custom_ensemble_weights = NULL,
+                          compute_insample_predictions = FALSE,
+                          subsamples = NULL,
+                          cluster_variable = seq_along(y),
+                          silent = FALSE,
+                          auxiliary_X = NULL,
+                          shortstack_y = y,
+                          parallel = NULL) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
@@ -99,11 +110,13 @@ shortstacking <- function (y, X, Z = NULL,
   res <- crosspred(y, X, Z,
                    learners = learners,
                    ensemble_type = "average",
-                   compute_insample_predictions = compute_insample_predictions,
+                   compute_insample_predictions =
+                     compute_insample_predictions,
                    compute_predictions_bylearner = TRUE,
                    subsamples = subsamples,
-                   silent = silent, progress = progress,
-                   auxiliary_X = auxiliary_X)
+                   silent = silent,
+                   auxiliary_X = auxiliary_X,
+                   parallel = parallel)
 
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()

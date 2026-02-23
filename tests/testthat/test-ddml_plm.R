@@ -314,3 +314,29 @@ test_that("ddml_plm backward-compat cv_subsamples_list works with message", {
              silent = TRUE),
     "cv_subsamples_list has been renamed")
 })#TEST_THAT
+
+test_that("ddml_plm computes with parallel", {
+  skip_on_cran()
+  skip_if_not_installed("parallel")
+  set.seed(42)
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs * 39), nobs, 39))
+  D <- X %*% runif(40) + rnorm(nobs)
+  y <- D + X %*% runif(40) + rnorm(nobs)
+  learners <- list(what = ols)
+  splits <- get_sample_splits(seq_len(nobs), sample_folds = 3)
+  # Sequential
+  res_seq <- ddml_plm(y, D, X,
+                      learners = learners,
+                      sample_folds = 3,
+                      subsamples = splits$subsamples,
+                      silent = T)
+  # Parallel
+  res_par <- ddml_plm(y, D, X,
+                      learners = learners,
+                      sample_folds = 3,
+                      subsamples = splits$subsamples,
+                      silent = T,
+                      parallel = list(cores = 2))
+  expect_equal(res_par$coef, res_seq$coef)
+})#TEST_THAT

@@ -6,8 +6,7 @@ ensemble <- function(y, X, Z = NULL,
                      cv_subsamples = NULL,
                      cv_results = NULL,
                      custom_weights = NULL,
-                     silent = FALSE,
-                     progress = NULL) {
+                     silent = FALSE) {
   # Data parameters
   nlearners <- length(learners)
   # Check if y is constant
@@ -33,7 +32,7 @@ ensemble <- function(y, X, Z = NULL,
                                 cv_subsamples = cv_subsamples,
                                 cv_results = cv_results,
                                 custom_weights = custom_weights,
-                                silent = silent, progress = progress)
+                                silent = silent)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
   # Check for excluded learners
@@ -120,8 +119,7 @@ ensemble_weights <- function(y, X, Z = NULL,
                              cv_subsamples = NULL,
                              cv_results = NULL,
                              custom_weights = NULL,
-                             silent = FALSE,
-                             progress = NULL) {
+                             silent = FALSE) {
   # Data parameters
   nlearners <- length(learners)
   ncustom <- ncol(custom_weights)
@@ -137,7 +135,7 @@ ensemble_weights <- function(y, X, Z = NULL,
                            learners = learners,
                            cv_folds = cv_folds,
                            cv_subsamples = cv_subsamples,
-                           silent = silent, progress = progress)
+                           silent = silent)
   }#IF
   # Compute weights for each ensemble type
   weights <- matrix(0, nlearners, ntype + ncustom)

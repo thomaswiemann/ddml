@@ -82,3 +82,24 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   expect_equal(all(round(cv_res$oos_resid[, 1], 3) ==
                      round(cv_res$oos_resid[, 2], 3)), TRUE)
 })#TEST_THAT
+
+test_that("crossval returns identical results with parallel", {
+  skip_on_cran()
+  skip_if_not_installed("parallel")
+  set.seed(42)
+  nobs <- 100
+  X <- cbind(1, matrix(rnorm(nobs * 39), nobs, 39))
+  y <- X %*% runif(40) + rnorm(nobs)
+  learners <- list(list(fun = ols),
+                   list(fun = ols))
+  cv_subs <- generate_subsamples(nobs, 3)
+  # Sequential
+  res_seq <- crossval(y, X, learners = learners,
+                      cv_subsamples = cv_subs, silent = T)
+  # Parallel
+  res_par <- crossval(y, X, learners = learners,
+                      cv_subsamples = cv_subs, silent = T,
+                      parallel = list(cores = 2))
+  expect_equal(res_par$mspe, res_seq$mspe)
+  expect_equal(res_par$oos_resid, res_seq$oos_resid)
+})#TEST_THAT

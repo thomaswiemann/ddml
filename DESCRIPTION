@@ -29,15 +29,17 @@ Imports:
     MASS,
     Matrix,
     nnls,
+    pbapply,
     quadprog,
     glmnet,
     ranger,
     xgboost
 Suggests: 
-    sandwich,
     covr,
-    testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    parallel,
+    rmarkdown,
+    sandwich,
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

@@ -129,3 +129,33 @@ test_that("crosspred computes auxilliary predictions", {
   # Check output with expectations
   expect_equal(dim(crosspred_res$auxiliary_fitted[[1]]), c(length(y), 5))
 })#TEST_THAT
+
+test_that("crosspred returns identical results with parallel", {
+  skip_on_cran()
+  skip_if_not_installed("parallel")
+  set.seed(42)
+  nobs <- 100
+  X <- cbind(1, matrix(rnorm(nobs * 39), nobs, 39))
+  y <- X %*% runif(40) + rnorm(nobs)
+  learners <- list(list(fun = ols),
+                   list(fun = ols))
+  splits <- get_sample_splits(seq_len(nobs),
+                              sample_folds = 3, cv_folds = 3)
+  # Sequential
+  res_seq <- crosspred(y, X, learners = learners,
+                       ensemble_type = "average",
+                       sample_folds = 3, cv_folds = 3,
+                       subsamples = splits$subsamples,
+                       cv_subsamples = splits$cv_subsamples,
+                       silent = T)
+  # Parallel
+  res_par <- crosspred(y, X, learners = learners,
+                       ensemble_type = "average",
+                       sample_folds = 3, cv_folds = 3,
+                       subsamples = splits$subsamples,
+                       cv_subsamples = splits$cv_subsamples,
+                       silent = T,
+                       parallel = list(cores = 2))
+  expect_equal(res_par$oos_fitted, res_seq$oos_fitted)
+  expect_equal(res_par$weights, res_seq$weights)
+})#TEST_THAT

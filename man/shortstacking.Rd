@@ -16,9 +16,9 @@ shortstacking(
   subsamples = NULL,
   cluster_variable = seq_along(y),
   silent = FALSE,
-  progress = NULL,
   auxiliary_X = NULL,
-  shortstack_y = y
+  shortstack_y = y,
+  parallel = NULL
 )
 }
 \arguments{
@@ -47,8 +47,8 @@ such that it predicts a named input \code{y} using a named input
 \code{X}.}
 \item{\code{args} Optional arguments to be passed to \code{fun}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to predictive variables in \code{X} that are passed to
-the base learner.}
+corresponding to predictive variables in \code{X} that are
+passed to the base learner.}
 \item{\code{assign_Z} An optional vector of column indices
 corresponding to predictive in \code{Z} that are passed to the
 base learner.}
@@ -86,8 +86,6 @@ predictions should also be computed.}
 
 \item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{String to print before learner and cv fold progress.}
-
 \item{auxiliary_X}{An optional list of matrices of length
 \code{sample_folds}, each containing additional observations to calculate
 predictions for.}
@@ -95,6 +93,19 @@ predictions for.}
 \item{shortstack_y}{Optional vector of the outcome variable to form
 short-stacking predictions for. Base learners are always trained on
 \code{y}.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{shortstack} returns a list containing the following components:

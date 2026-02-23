@@ -9,45 +9,50 @@ get_CEF <- function(y, X, Z = NULL,
                     subsamples,
                     cv_subsamples,
                     silent = FALSE,
-                    progress = NULL,
+                    label = NULL,
                     auxiliary_X = NULL,
-                    shortstack_y = y) {
+                    shortstack_y = y,
+                    parallel = NULL) {
+  t0 <- proc.time()[3]
+
+  if (!is.null(label)) {
+    info_msg("  Estimating ", label, "...", silent = silent)
+  }#IF
+
   # Compute CEF
   if (shortstack) {
     res <- shortstacking(y, X, Z,
                          learners = learners,
                          ensemble_type = ensemble_type,
-                         custom_ensemble_weights = custom_ensemble_weights,
+                         custom_ensemble_weights =
+                           custom_ensemble_weights,
                          compute_insample_predictions =
                            compute_insample_predictions,
                          subsamples = subsamples,
-                         silent = silent, progress = progress,
+                         silent = silent,
                          auxiliary_X = auxiliary_X,
-                         shortstack_y = shortstack_y)
+                         shortstack_y = shortstack_y,
+                         parallel = parallel)
   } else {
     res <- crosspred(y, X, Z,
                      learners = learners,
                      ensemble_type = ensemble_type,
-                     custom_ensemble_weights = custom_ensemble_weights,
+                     custom_ensemble_weights =
+                       custom_ensemble_weights,
                      compute_insample_predictions =
                        compute_insample_predictions,
                      compute_predictions_bylearner =
                        compute_predictions_bylearner,
                      subsamples = subsamples,
                      cv_subsamples = cv_subsamples,
-                     silent = silent, progress = progress,
-                     auxiliary_X = auxiliary_X)
+                     silent = silent,
+                     auxiliary_X = auxiliary_X,
+                     parallel = parallel)
   }#IFELSE
-  update_progress(silent)
 
   # Return estimates
   return(res)
 }#GET_CEF
-
-# Utility to print progress to console
-update_progress <- function(silent) {
-  if (!silent) cat(" -- Done! \n")
-}#UPDATE_PROGRESS
 
 # Construct CEF from auxiliary_X
 extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {

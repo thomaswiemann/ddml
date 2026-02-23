@@ -17,7 +17,8 @@ ddml_att <- function(y, D, X,
                      cv_subsamples = NULL,
                      cv_subsamples_byD = NULL,
                      trim = 0.01,
-                     silent = FALSE) {
+                     silent = FALSE,
+                     parallel = NULL) {
   # Data parameters
   nobs <- length(y)
   is_D0 <- which(D == 0)
@@ -39,8 +40,16 @@ ddml_att <- function(y, D, X,
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  # Estimation start
+  t0 <- proc.time()[3]
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }
+  info_msg("ddml_att: estimating (", mode_str, ")",
+           silent = silent)
 
   # Compute estimates of E[y|D=0,X]
   y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = FALSE],
@@ -49,8 +58,9 @@ ddml_att <- function(y, D, X,
                         custom_ensemble_weights = custom_ensemble_weights,
                         subsamples = indxs$subsamples_byD[[1]],
                         cv_subsamples = indxs$cv_subsamples_byD[[1]],
-                        silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
+                        silent = silent, label = "E[Y|D=0,X]",
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
+                        parallel = parallel)
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
@@ -59,7 +69,8 @@ ddml_att <- function(y, D, X,
                      custom_ensemble_weights = custom_ensemble_weights_DX,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, progress = "E[D|X]: ")
+                     silent = silent, label = "E[D|X]",
+                     parallel = parallel)
 
   # Compute estimates of E[D] -- simple computation of averages here
   D_res <- get_CEF(D, matrix(1, nobs, 1),
@@ -68,7 +79,9 @@ ddml_att <- function(y, D, X,
                    shortstack = FALSE,
                    cv_subsamples = NULL,
                    subsamples = indxs$subsamples,
-                   silent = TRUE)
+                   silent = TRUE,
+                   label = "E[D]",
+                   parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
   ensemble_type <- dimnames(y_X_D0_res$weights)[[2]]
@@ -118,8 +131,10 @@ ddml_att <- function(y, D, X,
                    cv_subsamples_byD = indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type)
 
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
+  # Print estimation completion
+  elapsed <- round(proc.time()[3] - t0, 1)
+  info_msg("ddml_att: completed in ", elapsed, "s",
+           silent = silent)
 
   # Amend class and return
   class(ddml_fit) <- "ddml_att"
