@@ -26,7 +26,8 @@ ddml_late(
   cv_subsamples = NULL,
   cv_subsamples_byZ = NULL,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL
 )
 }
 \arguments{
@@ -127,6 +128,19 @@ for cross-validation.}
 \code{trim} and \code{1-trim}.}
 
 \item{silent}{Boolean to silence estimation updates.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{ddml_late} returns an object of S3 class

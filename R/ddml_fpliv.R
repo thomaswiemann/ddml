@@ -93,7 +93,8 @@ ddml_fpliv <- function(y, D, Z, X,
                        subsamples = NULL,
                        cv_subsamples = NULL,
                        cv_subsamples_list = NULL,
-                       silent = FALSE) {
+                       silent = FALSE,
+                       parallel = NULL) {
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
@@ -123,8 +124,16 @@ ddml_fpliv <- function(y, D, Z, X,
                              cv_subsamples = cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  # Estimation start
+  t0 <- proc.time()[3]
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }
+  info_msg("ddml_fpliv: estimating (", mode_str, ")",
+           silent = silent)
 
   # Compute estimates of E[y|X]
   y_X_res <- get_CEF(y, X, Z = NULL,
@@ -134,12 +143,13 @@ ddml_fpliv <- function(y, D, Z, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = FALSE,
-                     silent = silent, progress = "E[Y|X]: ")
+                     silent = silent, label = "E[Y|X]",
+                     parallel = parallel)
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
   D_XZ_res_list <- list()
-  for (k in 1:nD) {
+  for (k in seq_len(nD)) {
     D_XZ_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X, Z,
                                   learners = learners_DXZ,
                                   ensemble_type = ensemble_type,
@@ -149,16 +159,20 @@ ddml_fpliv <- function(y, D, Z, X,
                                   subsamples = indxs$subsamples,
                                   cv_subsamples =
                                     indxs$cv_subsamples,
-                                  compute_insample_predictions = enforce_LIE,
+                                  compute_insample_predictions =
+                                    enforce_LIE,
                                   silent = silent,
-                                  progress = paste0("E[D", k, "|X,Z]: "))
+                                  label = paste0("E[D", k,
+                                                 "|X,Z]"),
+                                  parallel = parallel)
   }#FOR
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {
     D_X_res_list <- list()
-    for (k in 1:nD) {
-      D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X, Z = NULL,
+    for (k in seq_len(nD)) {
+      D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
+                                   Z = NULL,
                                    learners = learners_DX,
                                    ensemble_type = ensemble_type,
                                    shortstack = shortstack,
@@ -167,9 +181,12 @@ ddml_fpliv <- function(y, D, Z, X,
                                    subsamples = indxs$subsamples,
                                    cv_subsamples =
                                      indxs$cv_subsamples,
-                                   compute_insample_predictions = FALSE,
+                                   compute_insample_predictions =
+                                     FALSE,
                                    silent = silent,
-                                   progress = paste0("E[D", k, "|X]: "))
+                                   label = paste0("E[D", k,
+                                                  "|X]"),
+                                   parallel = parallel)
     }#FOR
   }#IF
 
@@ -187,7 +204,7 @@ ddml_fpliv <- function(y, D, Z, X,
     #     used for the calculation of the estimates of E[D|X].
     if (enforce_LIE) {
       D_X_res_list <- list()
-      for (k in 1:nD) {
+      for (k in seq_len(nD)) {
         D_X_res_list[[k]] <-
           get_CEF(D_XZ_res_list[[k]]$is_fitted, X, Z = NULL,
                   learners = learners_DX,
@@ -197,8 +214,9 @@ ddml_fpliv <- function(y, D, Z, X,
                   cv_subsamples = indxs$cv_subsamples,
                   compute_insample_predictions = FALSE,
                   silent = silent,
-                  progress = paste0("E[D", k, "|X]: "),
-                  shortstack_y = D_XZ_res_list[[k]]$oos_fitted)
+                  label = paste0("E[D", k, "|X]"),
+                  shortstack_y = D_XZ_res_list[[k]]$oos_fitted,
+                  parallel = parallel)
       }#FOR
     }#IFELSE
 
@@ -238,8 +256,9 @@ ddml_fpliv <- function(y, D, Z, X,
       #     Otherwise use the previously calculated estimates of E[D|X].
       if (enforce_LIE) {
         D_X_res_list <- list()
-        for (k in 1:nD) {
-          progress_jk <- paste0("E[D", k, "|X] (", ensemble_type[j], "): ")
+        for (k in seq_len(nD)) {
+          label_jk <- paste0("E[D", k, "|X] (",
+                             ensemble_type[j], ")")
 
           # Check whether j is a custom ensemble specification. Necessary to
           #     assign correct corresponding custom_weights vector.
@@ -253,8 +272,9 @@ ddml_fpliv <- function(y, D, Z, X,
                       cv_subsamples = indxs$cv_subsamples,
                       compute_insample_predictions = FALSE,
                       silent = silent,
-                      progress = progress_jk,
-                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
+                      label = label_jk,
+                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j],
+                      parallel = parallel)
           } else { # j is a custom specification
             D_X_res_list[[k]] <-
               get_CEF(D_XZ_res_list[[k]]$is_fitted[[j]], X, Z = NULL,
@@ -267,8 +287,9 @@ ddml_fpliv <- function(y, D, Z, X,
                       cv_subsamples = indxs$cv_subsamples,
                       compute_insample_predictions = FALSE,
                       silent = silent,
-                      progress = progress_jk,
-                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j])
+                      label = label_jk,
+                      shortstack_y = D_XZ_res_list[[k]]$oos_fitted[, j],
+                      parallel = parallel)
             # Remove "average" oos_fitted and weights
             D_X_res_list[[k]]$oos_fitted <- D_X_res_list[[k]]$oos_fitted[, -1]
             D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1, ,
@@ -331,8 +352,10 @@ ddml_fpliv <- function(y, D, Z, X,
                    ensemble_type = ensemble_type,
                    enforce_LIE = enforce_LIE)
 
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
+  # Print estimation completion
+  elapsed <- round(proc.time()[3] - t0, 1)
+  info_msg("ddml_fpliv: completed in ", elapsed, "s",
+           silent = silent)
 
   # Amend class and return
   class(ddml_fit) <- "ddml_fpliv"

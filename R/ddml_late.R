@@ -159,7 +159,8 @@ ddml_late <- function(y, D, Z, X,
                       cv_subsamples = NULL,
                       cv_subsamples_byZ = NULL,
                       trim = 0.01,
-                      silent = FALSE) {
+                      silent = FALSE,
+                      parallel = NULL) {
   # Data parameters
   nobs <- length(y)
   is_Z0 <- which(Z == 0)
@@ -181,8 +182,16 @@ ddml_late <- function(y, D, Z, X,
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, Z)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  # Estimation start
+  t0 <- proc.time()[3]
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }
+  info_msg("ddml_late: estimating (", mode_str, ")",
+           silent = silent)
 
   # Compute estimates of E[y|Z=0,X]
   y_X_Z0_res <- get_CEF(y[is_Z0], X[is_Z0, , drop = FALSE],
@@ -191,8 +200,9 @@ ddml_late <- function(y, D, Z, X,
                         custom_ensemble_weights = custom_ensemble_weights,
                         subsamples = indxs$subsamples_byD[[1]],
                         cv_subsamples = indxs$cv_subsamples_byD[[1]],
-                        silent = silent, progress = "E[Y|Z=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
+                        silent = silent, label = "E[Y|Z=0,X]",
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
+                        parallel = parallel)
 
   # Compute estimates of E[y|Z=1,X]
   y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = FALSE],
@@ -201,17 +211,18 @@ ddml_late <- function(y, D, Z, X,
                         custom_ensemble_weights = custom_ensemble_weights,
                         subsamples = indxs$subsamples_byD[[2]],
                         cv_subsamples = indxs$cv_subsamples_byD[[2]],
-                        silent = silent, progress = "E[Y|Z=1,X]: ",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X))
+                        silent = silent, label = "E[Y|Z=1,X]",
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
+                        parallel = parallel)
 
   # Check for perfect non-compliance
   if (all(D[Z==0] == 0)) {
-    # Artificially construct values for subsample with Z=0
     D_X_Z0_res <- list(NULL)
     D_X_Z0_res$oos_fitted <- rep(0, length(is_Z0))
     D_X_Z0_res$auxiliary_fitted <-
       lapply(y_X_Z0_res$auxiliary_fitted, function (x) {x * 0})
-    if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
+    info_msg("  E[D|Z=0,X] .......... skipped ",
+             "(perfect non-compliance)", silent = silent)
   } else {
     # Compute estimates of E[D|Z=0,X]
     D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = FALSE],
@@ -221,18 +232,19 @@ ddml_late <- function(y, D, Z, X,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
                           subsamples = indxs$subsamples_byD[[1]],
                           cv_subsamples = indxs$cv_subsamples_byD[[1]],
-                          silent = silent, progress = "E[D|Z=0,X]: ",
-                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
+                          silent = silent, label = "E[D|Z=0,X]",
+                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
+                          parallel = parallel)
   }#IFELSE
 
   # Check for perfect compliance
   if (all(D[Z==1] == 1)) {
-    # Artificially construct values for subsample with Z=0
     D_X_Z1_res <- list(NULL)
     D_X_Z1_res$oos_fitted <- rep(0, nobs - length(is_Z0))
     D_X_Z1_res$auxiliary_fitted <-
       lapply(y_X_Z1_res$auxiliary_fitted, function (x) {x * 0})
-    if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
+    info_msg("  E[D|Z=1,X] .......... skipped ",
+             "(perfect compliance)", silent = silent)
   } else {
     # Compute estimates of E[D|Z=1,X]
     D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = FALSE],
@@ -242,8 +254,9 @@ ddml_late <- function(y, D, Z, X,
                           custom_ensemble_weights = custom_ensemble_weights_DXZ,
                           subsamples = indxs$subsamples_byD[[2]],
                           cv_subsamples = indxs$cv_subsamples_byD[[2]],
-                          silent = silent, progress = "E[D|Z=1,X]: ",
-                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X))
+                          silent = silent, label = "E[D|Z=1,X]",
+                          auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
+                          parallel = parallel)
   }#IFELSE
 
   # Compute estimates of E[Z|X]
@@ -254,7 +267,8 @@ ddml_late <- function(y, D, Z, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = FALSE,
-                     silent = silent, progress = "E[Z|X]: ")
+                     silent = silent, label = "E[Z|X]",
+                     parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
   ensemble_type <- dimnames(y_X_Z0_res$weights)[[2]]
@@ -323,8 +337,10 @@ ddml_late <- function(y, D, Z, X,
                    cv_subsamples_byZ = indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type)
 
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
+  # Print estimation completion
+  elapsed <- round(proc.time()[3] - t0, 1)
+  info_msg("ddml_late: completed in ", elapsed, "s",
+           silent = silent)
 
   # Amend class and return
   class(ddml_fit) <- "ddml_late"

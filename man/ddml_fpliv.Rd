@@ -24,7 +24,8 @@ ddml_fpliv(
   subsamples = NULL,
   cv_subsamples = NULL,
   cv_subsamples_list = NULL,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL
 )
 }
 \arguments{
@@ -115,6 +116,19 @@ containing vectors with subsample indices for cross-validation.}
 \item{cv_subsamples_list}{Deprecated; use \code{cv_subsamples} instead.}
 
 \item{silent}{Boolean to silence estimation updates.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{ddml_fpliv} returns an object of S3 class

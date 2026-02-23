@@ -20,8 +20,8 @@ crosspred(
   cv_subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = FALSE,
-  progress = NULL,
-  auxiliary_X = NULL
+  auxiliary_X = NULL,
+  parallel = NULL
 )
 }
 \arguments{
@@ -50,8 +50,8 @@ such that it predicts a named input \code{y} using a named input
 \code{X}.}
 \item{\code{args} Optional arguments to be passed to \code{fun}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to predictive variables in \code{X} that are passed to
-the base learner.}
+corresponding to predictive variables in \code{X} that are
+passed to the base learner.}
 \item{\code{assign_Z} An optional vector of column indices
 corresponding to predictive in \code{Z} that are passed to the
 base learner.}
@@ -101,11 +101,22 @@ containing vectors with subsample indices for cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{String to print before learner and cv fold progress.}
-
 \item{auxiliary_X}{An optional list of matrices of length
 \code{sample_folds}, each containing additional observations to calculate
 predictions for.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{crosspred} returns a list containing the following components:
@@ -116,7 +127,8 @@ order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
+\item{\code{is_fitted}}{When
+\code{compute_insample_predictions = TRUE}.
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
@@ -126,11 +138,12 @@ out-of-sample predictions, each column corresponding to a base
 learner (in chronological order).}
 \item{\code{is_fitted_bylearner}}{When
 \code{compute_insample_predictions = TRUE} and
-\code{compute_predictions_bylearner = TRUE}, a list of matrices with
-in-sample predictions by sample fold.}
-\item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
-not \code{NULL} and \code{compute_predictions_bylearner = TRUE}, a
-list of matrices with additional predictions for each learner.}
+\code{compute_predictions_bylearner = TRUE}, a list of matrices
+with in-sample predictions by sample fold.}
+\item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X}
+is not \code{NULL} and
+\code{compute_predictions_bylearner = TRUE}, a list of
+matrices with additional predictions for each learner.}
 }
 }
 \description{

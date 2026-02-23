@@ -1,5 +1,6 @@
 # ddml 0.3.1
 
+* Adds support for parallel computation in `crosspred()`, `crossval()`, and `shortstacking()` via the `parallel` parameter. Updates progress reporting using `pbapply`.
 * Adds stratified cross-fitting to ``ddml_ate()``, ``ddml_att()``, and
   ``ddml_late()`` via the ``stratify`` parameter.
   Stratified splitting is now the default.

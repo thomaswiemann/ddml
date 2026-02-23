@@ -76,6 +76,18 @@
 #'     containing vectors with subsample indices for cross-validation.
 #' @param cv_subsamples_list Deprecated; use \code{cv_subsamples} instead.
 #' @param silent Boolean to silence estimation updates.
+#' @param parallel An optional named list with parallel processing
+#'     options. When \code{NULL} (the default), computation is
+#'     sequential. Supported fields:
+#'     \describe{
+#'         \item{\code{cores}}{Number of cores to use.}
+#'         \item{\code{export}}{Character vector of object names to
+#'             export to parallel workers (for custom learners that
+#'             reference global objects).}
+#'         \item{\code{packages}}{Character vector of additional
+#'             package names to load on workers (for custom learners
+#'             that use packages not imported by \code{ddml}).}
+#'     }
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
 #'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
@@ -151,7 +163,8 @@ ddml_plm <- function(y, D, X,
                      subsamples = NULL,
                      cv_subsamples = NULL,
                      cv_subsamples_list = NULL,
-                     silent = FALSE) {
+                     silent = FALSE,
+                     parallel = NULL) {
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
@@ -184,8 +197,16 @@ ddml_plm <- function(y, D, X,
                              cv_subsamples = cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  # Estimation start
+  t0 <- proc.time()[3]
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }
+  info_msg("ddml_plm: estimating (", mode_str, ")",
+           silent = silent)
 
   # Compute estimates of E[y|X]
   y_X_res <- get_CEF(y, X,
@@ -195,11 +216,12 @@ ddml_plm <- function(y, D, X,
                      custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, progress = "E[Y|X]: ")
+                     silent = silent, label = "E[Y|X]",
+                     parallel = parallel)
 
   # Compute estimates of E[D|X], loop through endogenous variables
   D_X_res_list <- list()
-  for (k in 1:nD) {
+  for (k in seq_len(nD)) {
     D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
                                  learners = learners_DX,
                                  ensemble_type = ensemble_type,
@@ -210,7 +232,9 @@ ddml_plm <- function(y, D, X,
                                  cv_subsamples =
                                    indxs$cv_subsamples,
                                  silent = silent,
-                                 progress = paste0("E[D", k, "|X]: "))
+                                 label = paste0("E[D", k,
+                                                "|X]"),
+                                 parallel = parallel)
   }#FOR
 
   # Update ensemble type to account for (optional) custom weights
@@ -280,8 +304,10 @@ ddml_plm <- function(y, D, X,
                    cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type)
 
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
+  # Print estimation completion
+  elapsed <- round(proc.time()[3] - t0, 1)
+  info_msg("ddml_plm: completed in ", elapsed, "s",
+           silent = silent)
 
   # Amend class and return
   class(ddml_fit) <- "ddml_plm"

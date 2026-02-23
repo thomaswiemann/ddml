@@ -13,7 +13,7 @@ crossval(
   cluster_variable = seq_along(y),
   cv_subsamples = NULL,
   silent = FALSE,
-  progress = NULL
+  parallel = NULL
 )
 }
 \arguments{
@@ -51,7 +51,18 @@ cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{String to print before learner and cv fold progress.}
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{crossval} returns a list containing the following components:
