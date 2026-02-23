@@ -293,3 +293,24 @@ test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
   # Check output with expectations
   expect_equal(length(ddml_plm_fit$coef), 10)
 })#TEST_THAT
+
+test_that("ddml_plm backward-compat cv_subsamples_list works with message", {
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs * 5), nobs, 5))
+  D <- rnorm(nobs)
+  y <- D + X %*% runif(6) + rnorm(nobs)
+  # Pre-generate splits
+  splits <- get_sample_splits(seq_len(nobs),
+                              sample_folds = 3, cv_folds = 3)
+  learners <- list(list(fun = ols), list(fun = ols))
+  # Call with deprecated cv_subsamples_list — should emit message
+  expect_message(
+    ddml_plm(y, D, X,
+             learners = learners,
+             ensemble_type = "ols",
+             sample_folds = 3,
+             subsamples = splits$subsamples,
+             cv_subsamples_list = splits$cv_subsamples,
+             silent = TRUE),
+    "cv_subsamples_list has been renamed")
+})#TEST_THAT

@@ -48,7 +48,7 @@
 #'             \eqn{\hat{E}[D\vert X,Z] - \hat{E}[D\vert X]} as the instrument.}
 #'         \item{\code{learners},\code{learners_DX},\code{learners_DXZ},
 #'             \code{cluster_variable},\code{subsamples},
-#'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
+#'             \code{cv_subsamples},\code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
 #' @export
@@ -67,7 +67,7 @@
 #' # Construct variables from the included Angrist & Evans (1998) data
 #' y = AE98[, "worked"]
 #' D = AE98[, "morekids"]
-#' Z = AE98[, "samesex", drop = FALSEALSE]
+#' Z = AE98[, "samesex", drop = FALSE]
 #' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 #'
 #' # Estimate the partially linear IV model using a single base learner: Ridge.
@@ -91,8 +91,17 @@ ddml_fpliv <- function(y, D, Z, X,
                        custom_ensemble_weights_DX = custom_ensemble_weights,
                        cluster_variable = seq_along(y),
                        subsamples = NULL,
+                       cv_subsamples = NULL,
                        cv_subsamples_list = NULL,
                        silent = FALSE) {
+  # Backward compatibility for renamed parameter
+  if (!is.null(cv_subsamples_list)) {
+    if (!is.null(cv_subsamples))
+      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
+    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
+    cv_subsamples <- cv_subsamples_list
+  }#IF
+
   # Data parameters
   nobs <- length(y)
   nensb_raw <- length(ensemble_type) # number of ensembles w/o custom weights
@@ -101,12 +110,18 @@ ddml_fpliv <- function(y, D, Z, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples = subsamples,
-                                   cv_subsamples_list = cv_subsamples_list)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- !shortstack &
+    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function")
+
+  # Create crossfitting and cv tuples
+  indxs <- get_sample_splits(cluster_variable = cluster_variable,
+                             sample_folds = sample_folds,
+                             cv_folds = if (w_cv) cv_folds,
+                             subsamples = subsamples,
+                             cv_subsamples = cv_subsamples)
+  check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -116,8 +131,8 @@ ddml_fpliv <- function(y, D, Z, X,
                      learners = learners, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = FALSE,
                      silent = silent, progress = "E[Y|X]: ")
 
@@ -131,9 +146,9 @@ ddml_fpliv <- function(y, D, Z, X,
                                   shortstack = shortstack,
                                   custom_ensemble_weights =
                                     custom_ensemble_weights_DXZ,
-                                  subsamples = cf_indxs$subsamples,
-                                  cv_subsamples_list =
-                                    cf_indxs$cv_subsamples_list,
+                                  subsamples = indxs$subsamples,
+                                  cv_subsamples =
+                                    indxs$cv_subsamples,
                                   compute_insample_predictions = enforce_LIE,
                                   silent = silent,
                                   progress = paste0("E[D", k, "|X,Z]: "))
@@ -149,9 +164,9 @@ ddml_fpliv <- function(y, D, Z, X,
                                    shortstack = shortstack,
                                    custom_ensemble_weights =
                                      custom_ensemble_weights_DX,
-                                   subsamples = cf_indxs$subsamples,
-                                   cv_subsamples_list =
-                                     cf_indxs$cv_subsamples_list,
+                                   subsamples = indxs$subsamples,
+                                   cv_subsamples =
+                                     indxs$cv_subsamples,
                                    compute_insample_predictions = FALSE,
                                    silent = silent,
                                    progress = paste0("E[D", k, "|X]: "))
@@ -178,8 +193,8 @@ ddml_fpliv <- function(y, D, Z, X,
                   learners = learners_DX,
                   ensemble_type = ensemble_type,
                   shortstack = shortstack,
-                  subsamples = cf_indxs$subsamples,
-                  cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                  subsamples = indxs$subsamples,
+                  cv_subsamples = indxs$cv_subsamples,
                   compute_insample_predictions = FALSE,
                   silent = silent,
                   progress = paste0("E[D", k, "|X]: "),
@@ -234,8 +249,8 @@ ddml_fpliv <- function(y, D, Z, X,
                       learners = learners_DX,
                       ensemble_type = ensemble_type[j],
                       shortstack = shortstack,
-                      subsamples = cf_indxs$subsamples,
-                      cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                      subsamples = indxs$subsamples,
+                      cv_subsamples = indxs$cv_subsamples,
                       compute_insample_predictions = FALSE,
                       silent = silent,
                       progress = progress_jk,
@@ -248,8 +263,8 @@ ddml_fpliv <- function(y, D, Z, X,
                       shortstack = shortstack,
                       custom_ensemble_weights =
                         custom_ensemble_weights_DX[, j - nensb_raw, drop = FALSE],
-                      subsamples = cf_indxs$subsamples,
-                      cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                      subsamples = indxs$subsamples,
+                      cv_subsamples = indxs$cv_subsamples,
                       compute_insample_predictions = FALSE,
                       silent = silent,
                       progress = progress_jk,
@@ -312,7 +327,7 @@ ddml_fpliv <- function(y, D, Z, X,
                    iv_fit = iv_fit,
                    cluster_variable = cluster_variable,
                    subsamples = subsamples,
-                   cv_subsamples_list = cv_subsamples_list,
+                   cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type,
                    enforce_LIE = enforce_LIE)
 

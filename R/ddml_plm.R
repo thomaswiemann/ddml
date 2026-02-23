@@ -72,8 +72,9 @@
 #'     \code{custom_ensemble_weights_DX} must have the same number of columns.
 #' @param cluster_variable A vector of cluster indices.
 #' @param subsamples List of vectors with sample indices for cross-fitting.
-#' @param cv_subsamples_list List of lists, each corresponding to a subsample
+#' @param cv_subsamples List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
+#' @param cv_subsamples_list Deprecated; use \code{cv_subsamples} instead.
 #' @param silent Boolean to silence estimation updates.
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
@@ -91,7 +92,7 @@
 #'             stage regression of \eqn{Y - \hat{E}[Y|X]} on
 #'             \eqn{D - \hat{E}[D|X]}.}
 #'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples}, \code{cv_subsamples_list},
+#'             \code{subsamples}, \code{cv_subsamples},
 #'             \code{ensemble_type}}{Pass-through of selected user-provided
 #'             arguments. See above.}
 #'     }
@@ -148,8 +149,17 @@ ddml_plm <- function(y, D, X,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
                      subsamples = NULL,
+                     cv_subsamples = NULL,
                      cv_subsamples_list = NULL,
                      silent = FALSE) {
+  # Backward compatibility for renamed parameter
+  if (!is.null(cv_subsamples_list)) {
+    if (!is.null(cv_subsamples))
+      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
+    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
+    cv_subsamples <- cv_subsamples_list
+  }#IF
+
   # Data parameters
   nobs <- length(y)
   ncustom <- ncol(custom_ensemble_weights)
@@ -160,12 +170,19 @@ ddml_plm <- function(y, D, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples = subsamples,
-                                   cv_subsamples_list = cv_subsamples_list)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- !shortstack &
+    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function" |
+     class(learners_DX[[1]]) != "function")
+
+  # Create crossfitting and cv tuples
+  indxs <- get_sample_splits(cluster_variable = cluster_variable,
+                             sample_folds = sample_folds,
+                             cv_folds = if (w_cv) cv_folds,
+                             subsamples = subsamples,
+                             cv_subsamples = cv_subsamples)
+  check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -176,8 +193,8 @@ ddml_plm <- function(y, D, X,
                      ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
                      silent = silent, progress = "E[Y|X]: ")
 
   # Compute estimates of E[D|X], loop through endogenous variables
@@ -189,9 +206,9 @@ ddml_plm <- function(y, D, X,
                                  shortstack = shortstack,
                                  custom_ensemble_weights =
                                    custom_ensemble_weights_DX,
-                                 subsamples = cf_indxs$subsamples,
-                                 cv_subsamples_list =
-                                   cf_indxs$cv_subsamples_list,
+                                 subsamples = indxs$subsamples,
+                                 cv_subsamples =
+                                   indxs$cv_subsamples,
                                  silent = silent,
                                  progress = paste0("E[D", k, "|X]: "))
   }#FOR
@@ -259,8 +276,8 @@ ddml_plm <- function(y, D, X,
                    learners_DX = learners_DX,
                    ols_fit = ols_fit,
                    cluster_variable = cluster_variable,
-                   subsamples = cf_indxs$subsamples,
-                   cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                   subsamples = indxs$subsamples,
+                   cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress

@@ -18,7 +18,10 @@ ddml_ate(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
+  stratify = TRUE,
+  subsamples = NULL,
   subsamples_byD = NULL,
+  cv_subsamples = NULL,
   cv_subsamples_byD = NULL,
   trim = 0.01,
   silent = FALSE
@@ -37,7 +40,10 @@ ddml_att(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
+  stratify = TRUE,
+  subsamples = NULL,
   subsamples_byD = NULL,
+  cv_subsamples = NULL,
   cv_subsamples_byD = NULL,
   trim = 0.01,
   silent = FALSE
@@ -111,9 +117,17 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 
 \item{cluster_variable}{A vector of cluster indices.}
 
+\item{stratify}{Boolean for stratified cross-fitting: if \code{TRUE},
+subsamples are constructed to be balanced across treatment levels.}
+
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
+
 \item{subsamples_byD}{List of two lists corresponding to the two treatment
 levels. Each list contains vectors with sample indices for
 cross-fitting.}
+
+\item{cv_subsamples}{List of lists, each corresponding to a subsample
+containing vectors with subsample indices for cross-validation.}
 
 \item{cv_subsamples_byD}{List of two lists, each corresponding to one of the
 two treatment levels. Each of the two lists contains lists, each
@@ -145,8 +159,7 @@ of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}} or
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-\code{subsamples_D0},\code{subsamples_D1},
-\code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
+\code{subsamples_byD},\code{cv_subsamples_byD},
 \code{ensemble_type}}{Pass-through of
 selected user-provided arguments. See above.}
 }

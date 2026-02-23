@@ -14,6 +14,7 @@ shortstacking(
   custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
   subsamples = NULL,
+  cluster_variable = seq_along(y),
   silent = FALSE,
   progress = NULL,
   auxiliary_X = NULL,
@@ -81,6 +82,8 @@ predictions should also be computed.}
 
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
 
+\item{cluster_variable}{A vector of cluster indices.}
+
 \item{silent}{Boolean to silence estimation updates.}
 
 \item{progress}{String to print before learner and cv fold progress.}
@@ -102,7 +105,7 @@ order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+\item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
@@ -110,7 +113,7 @@ a list of matrices with in-sample predictions by sample fold.}
 out-of-sample predictions, each column corresponding to a base
 learner (in chronological order).}
 \item{\code{is_fitted_bylearner}}{When
-\code{compute_insample_predictions = T}, a list of matrices with
+\code{compute_insample_predictions = TRUE}, a list of matrices with
 in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 not \code{NULL}, a

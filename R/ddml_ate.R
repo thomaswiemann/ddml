@@ -36,6 +36,8 @@
 #'     two treatment levels. Each of the two lists contains lists, each
 #'     corresponding to a subsample and contains vectors with subsample indices
 #'     for cross-validation.
+#' @param stratify Boolean for stratified cross-fitting: if \code{TRUE},
+#'     subsamples are constructed to be balanced across treatment levels.
 #' @param trim Number in (0, 1) for trimming the estimated propensity scores at
 #'     \code{trim} and \code{1-trim}.
 #'
@@ -58,8 +60,7 @@
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples_D0},\code{subsamples_D1},
-#'             \code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
+#'             \code{subsamples_byD},\code{cv_subsamples_byD},
 #'             \code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
@@ -112,7 +113,10 @@ ddml_ate <- function(y, D, X,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
+                     stratify = TRUE,
+                     subsamples = NULL,
                      subsamples_byD = NULL,
+                     cv_subsamples = NULL,
                      cv_subsamples_byD = NULL,
                      trim = 0.01,
                      silent = FALSE) {
@@ -120,15 +124,22 @@ ddml_ate <- function(y, D, X,
   nobs <- length(y)
   is_D0 <- which(D == 0)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = D,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples_byD = subsamples_byD,
-                                   cv_subsamples_byD = cv_subsamples_byD)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- !shortstack &
+    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function")
 
-  # Create tuple for extrapolated fitted values
-  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, D)
+  # Create crossfitting and cv tuples
+  indxs <- get_sample_splits(cluster_variable = cluster_variable,
+                             sample_folds = sample_folds,
+                             cv_folds = if (w_cv) cv_folds,
+                             D = D, stratify = stratify,
+                             subsamples = subsamples,
+                             subsamples_byD = subsamples_byD,
+                             cv_subsamples = cv_subsamples,
+                             cv_subsamples_byD = cv_subsamples_byD)
+  check_subsamples(indxs$subsamples, indxs$subsamples_byD,
+                   stratify, D)
 
   # Print to progress to console
   if (!silent) cat("DDML estimation in progress. \n")
@@ -138,28 +149,28 @@ ddml_ate <- function(y, D, X,
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[1]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
+                        subsamples = indxs$subsamples_byD[[1]],
+                        cv_subsamples = indxs$cv_subsamples_byD[[1]],
                         silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X))
 
   # Compute estimates of E[y|D=1,X]
   y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = FALSE],
                         learners = learners, ensemble_type = ensemble_type,
                         shortstack = shortstack,
                         custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[2]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
+                        subsamples = indxs$subsamples_byD[[2]],
+                        cv_subsamples = indxs$cv_subsamples_byD[[2]],
                         silent = silent, progress = "E[Y|D=1,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X))
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
                      learners = learners_DX, ensemble_type = ensemble_type,
                      shortstack = shortstack,
                      custom_ensemble_weights = custom_ensemble_weights_DX,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
                      silent = silent, progress = "E[D|X]: ")
 
   # Update ensemble type to account for (optional) custom weights
@@ -173,7 +184,7 @@ ddml_ate <- function(y, D, X,
   g_X_byD <- extrapolate_CEF(D = D,
                              CEF_res_byD = list(list(y_X_D0_res, d=0),
                                                 list(y_X_D1_res, d=1)),
-                             aux_indxs = aux_indxs)
+                             aux_indx = indxs$aux_indx)
   m_X <- D_X_res$oos_fitted
 
   # Trim propensity scores, return warnings
@@ -213,8 +224,8 @@ ddml_ate <- function(y, D, X,
                    learners = learners,
                    learners_DX = learners_DX,
                    cluster_variable = cluster_variable,
-                   subsamples_byD = subsamples_byD,
-                   cv_subsamples_byD = cv_subsamples_byD,
+                   subsamples_byD = indxs$subsamples_byD,
+                   cv_subsamples_byD = indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type)
 
   # Print estimation progress

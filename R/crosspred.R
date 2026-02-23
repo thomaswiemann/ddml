@@ -58,8 +58,9 @@
 #'     predictions should also be computed for each learner (rather than the
 #'     entire ensemble).
 #' @param subsamples List of vectors with sample indices for cross-fitting.
-#' @param cv_subsamples_list List of lists, each corresponding to a subsample
+#' @param cv_subsamples List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
+#' @param cv_subsamples_list Deprecated; use \code{cv_subsamples} instead.
 #' @param auxiliary_X An optional list of matrices of length
 #'     \code{sample_folds}, each containing additional observations to calculate
 #'     predictions for.
@@ -72,20 +73,20 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
 #'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{oos_fitted_bylearner}}{When
-#'             \code{compute_predictions_bylearner = T}, a matrix of
+#'             \code{compute_predictions_bylearner = TRUE}, a matrix of
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
 #'         \item{\code{is_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = T} and
-#'             \code{compute_predictions_bylearner = T}, a list of matrices with
+#'             \code{compute_insample_predictions = TRUE} and
+#'             \code{compute_predictions_bylearner = TRUE}, a list of matrices with
 #'             in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
-#'             not \code{NULL} and \code{compute_predictions_bylearner = T}, a
+#'             not \code{NULL} and \code{compute_predictions_bylearner = TRUE}, a
 #'             list of matrices with additional predictions for each learner.}
 #'     }
 #' @export
@@ -120,17 +121,27 @@
 #' dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
 crosspred <- function(y, X, Z = NULL,
                       learners,
-                      sample_folds = 2,
+                      sample_folds = 10,
                       ensemble_type = "average",
-                      cv_folds = 5,
+                      cv_folds = 10,
                       custom_ensemble_weights = NULL,
                       compute_insample_predictions = FALSE,
                       compute_predictions_bylearner = FALSE,
+                      cluster_variable = seq_along(y),
                       subsamples = NULL,
+                      cv_subsamples = NULL,
                       cv_subsamples_list = NULL,
                       silent = FALSE,
                       progress = NULL,
                       auxiliary_X = NULL) {
+  # Backward compatibility for renamed parameter
+  if (!is.null(cv_subsamples_list)) {
+    if (!is.null(cv_subsamples))
+      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
+    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
+    cv_subsamples <- cv_subsamples_list
+  }#IF
+
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
@@ -138,21 +149,20 @@ crosspred <- function(y, X, Z = NULL,
   ncustom <- ncol(custom_ensemble_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)
   nensb <- length(ensemble_type) + ncustom
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
-  sample_folds <- length(subsamples)
+  # Check whether ddml uses conventional stacking w/ data driven weights
+  w_cv <- any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
+    (class(learners[[1]]) != "function")
 
-  # Create cv-subsamples tuple
-  if (is.null(cv_subsamples_list)) {
-    cv_subsamples_list <- rep(list(NULL), sample_folds)
-    for (k in 1:sample_folds) {
-      nobs_k <- nobs - length(subsamples[[k]])
-      cv_subsamples_list[[k]] <- generate_subsamples(nobs_k, cv_folds)
-    }# FOR
-  }#IF
-  cv_folds <- length(cv_subsamples_list[[1]])
+  # Create crossfitting and cv tuples
+  indxs <- get_sample_splits(cluster_variable = cluster_variable,
+                             sample_folds = sample_folds,
+                             cv_folds = if (w_cv) cv_folds,
+                             subsamples = subsamples,
+                             cv_subsamples = cv_subsamples)
+  subsamples <- indxs$subsamples
+  cv_subsamples <- indxs$cv_subsamples
+  sample_folds <- length(subsamples)
+  cv_folds <- if (!is.null(cv_subsamples)) length(cv_subsamples[[1]]) else 0L
 
   # Initialize output matrices
   oos_fitted <- matrix(0, nobs, nensb^(calc_ensemble))
@@ -214,7 +224,7 @@ crosspred <- function(y, X, Z = NULL,
       mdl_fit <- ensemble(y_, X[-subsamples[[k]], , drop = FALSE],
                           Z[-subsamples[[k]], , drop = FALSE],
                           ensemble_type, learners,
-                          cv_folds, cv_subsamples_list[[k]],
+                          cv_folds, cv_subsamples[[k]],
                           custom_weights = custom_ensemble_weights,
                           silent = silent,
                           progress = paste0(progress_k, ", "))

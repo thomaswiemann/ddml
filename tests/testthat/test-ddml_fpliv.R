@@ -341,16 +341,18 @@ test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute LIE-conform DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                               learners,
-                               ensemble_type = c("ols", "nnls",
-                                                 "singlebest", "average"),
-                               cv_folds = 3,
-                               sample_folds = 5,
-                               silent = T)
+  suppressWarnings({
+    ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
+                                 learners,
+                                 ensemble_type = c("ols", "nnls",
+                                                   "singlebest", "average"),
+                                 cv_folds = 3,
+                                 sample_folds = 5,
+                                 silent = T)
+  })
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 8)
-  })#TEST_THAT
+})#TEST_THAT
 
 test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
   # Simulate small dataset

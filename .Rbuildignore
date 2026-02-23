@@ -21,3 +21,6 @@
 ^CRAN-SUBMISSION$
 ^debugging$
 ^debugger$
+^\.cursor$
+^\.discussion$
+^GEMINI\.md$

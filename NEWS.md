@@ -1,5 +1,15 @@
 # ddml 0.3.1
 
+* Adds stratified cross-fitting to ``ddml_ate()``, ``ddml_att()``, and
+  ``ddml_late()`` via the ``stratify`` parameter.
+  Stratified splitting is now the default.
+* Adds ``cluster_variable`` to ``crossval()``, ``crosspred()``, and
+  ``shortstacking()`` for cluster-aware sample splitting.
+* Renames ``cv_subsamples_list`` to ``cv_subsamples``. The old name
+  still works with a deprecation message.
+* Replaces internal ``get_all_indx()`` with ``get_sample_splits()``.
+* Warns when any cross-fitting training set has fewer than 100
+  observations.
 * Updates internals of ``ddml::mdl_xgboost()`` with new ``xgboost`` syntax.
 * Fixes ``ddml::ddml_fpliv()`` with custom weights.
 * Allows for stacking with no positive stacking weights.

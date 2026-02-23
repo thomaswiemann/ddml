@@ -88,7 +88,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
     #warning("None of the learners are assigned positive stacking weights.")
   }#IF
   # Calculate fitted values for each model
-  first_fit <- T
+  first_fit <- TRUE
   for (m in 1:nlearners) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
@@ -103,7 +103,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
     # Initialize matrix of fitted values
     if (first_fit) {
       fitted_mat <- matrix(0, length(fitted), nlearners)
-      first_fit <- F
+      first_fit <- FALSE
     }#IF
     fitted_mat[, m] <- methods::as(fitted, "matrix")
   }#FOR

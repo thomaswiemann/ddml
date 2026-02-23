@@ -18,7 +18,7 @@
 returned by \code{\link[=summary.ddml_plm]{summary.ddml_plm()}}, \code{\link[=summary.ddml_pliv]{summary.ddml_pliv()}},
 and \code{\link[=summary.ddml_fpliv]{summary.ddml_fpliv()}}, respectively.}
 
-\item{digits}{Number of significant digits used for priniting.}
+\item{digits}{Number of significant digits used for printing.}
 
 \item{...}{Currently unused.}
 }

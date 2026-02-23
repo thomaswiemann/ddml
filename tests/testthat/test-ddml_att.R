@@ -7,9 +7,30 @@ test_that("ddml_att computes with a single model", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners = learners,
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = T)
+  })
+  # Check output with expectations
+  expect_equal(length(ddml_att_fit$att), 1)
+})#TEST_THAT
+
+test_that("ddml_att computes with stratify = FALSE", {
+  # Simulate small dataset
+  nobs <- 200
+  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
+  D_tld <-  X %*% runif(40) + rnorm(nobs)
+  D <- 1 * (D_tld > mean(D_tld))
+  y <- D + X %*% runif(40) + rnorm(nobs)
+  # Define arguments
+  learners <- list(what = ols)
+  suppressWarnings({
+    ddml_att_fit <- ddml_att(y, D, X,
+                             learners = learners,
+                             stratify = FALSE,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
@@ -32,7 +53,7 @@ test_that("ddml_att computes with a single model and dependence", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners = learners,
                              cluster_variable = cluster_variable,
@@ -55,7 +76,7 @@ test_that("ddml_att computes with an ensemble procedure", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners = learners,
                              ensemble_type = "ols",
@@ -78,7 +99,7 @@ test_that("ddml_att computes w/ multiple ensembles + custom weights", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners,
                              ensemble_type = c("ols", "nnls",
@@ -103,7 +124,7 @@ test_that("ddml_att computes w/ multp ensembles, custom weights + shortstack", {
   learners <- list(list(fun = ols),
                    list(fun = ols))
   # Compute DDML PLM estimator
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners,
                              ensemble_type = c("ols", "average"),
@@ -126,7 +147,7 @@ test_that("summary.ddml_att computes with a single model", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners = learners,
                              cv_folds = 3,
@@ -154,7 +175,7 @@ test_that("summary.ddml_att computes with a single model and dependence", {
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners = learners,
                              cluster_variable = cluster_variable,
@@ -179,7 +200,7 @@ test_that("summary.ddml_att computes with multiple ensemble procedures", {
   # Define arguments
   learners <- list(list(fun = ols))
   # Compute DDML PLM estimator
-  expect_warning({
+  suppressWarnings({
     ddml_att_fit <- ddml_att(y, D, X,
                              learners,
                              ensemble_type = c("ols", "nnls",

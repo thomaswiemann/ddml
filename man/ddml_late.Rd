@@ -20,7 +20,10 @@ ddml_late(
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_ZX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
+  stratify = TRUE,
+  subsamples = NULL,
   subsamples_byZ = NULL,
+  cv_subsamples = NULL,
   cv_subsamples_byZ = NULL,
   trim = 0.01,
   silent = FALSE
@@ -103,9 +106,17 @@ have the same number of columns.}
 
 \item{cluster_variable}{A vector of cluster indices.}
 
+\item{stratify}{Boolean for stratified cross-fitting: if \code{TRUE},
+subsamples are constructed to be balanced across treatment levels.}
+
+\item{subsamples}{List of vectors with sample indices for cross-fitting.}
+
 \item{subsamples_byZ}{List of two lists corresponding to the two instrument
 levels. Each list contains vectors with sample indices for
 cross-fitting.}
+
+\item{cv_subsamples}{List of lists, each corresponding to a subsample
+containing vectors with subsample indices for cross-validation.}
 
 \item{cv_subsamples_byZ}{List of two lists, each corresponding to one of the
 two instrument levels. Each of the two lists contains lists, each
@@ -135,9 +146,8 @@ of scores. Used in \code{\link[=summary.ddml_late]{summary.ddml_late()}}.}
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
-\code{cluster_variable},\code{subsamples_Z0},
-\code{subsamples_Z1},\code{cv_subsamples_list_Z0},
-\code{cv_subsamples_list_Z1},\code{ensemble_type}}{Pass-through
+\code{cluster_variable},\code{subsamples_byZ},
+\code{cv_subsamples_byZ},\code{ensemble_type}}{Pass-through
 of selected user-provided arguments. See above.}
 }
 }
@@ -205,7 +215,7 @@ Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
 Robins J (2018). "Double/debiased machine learning for treatment and
 structural parameters." The Econometrics Journal, 21(1), C1-C68.
 
-Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+Imbens G, Angrist J (1994). "Identification and Estimation of Local Average
 Treatment Effects." Econometrica, 62(2), 467-475.
 
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.

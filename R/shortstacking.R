@@ -17,7 +17,7 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
+#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
 #'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
@@ -25,7 +25,7 @@
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
 #'         \item{\code{is_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = T}, a list of matrices with
+#'             \code{compute_insample_predictions = TRUE}, a list of matrices with
 #'             in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 #'             not \code{NULL}, a
@@ -69,6 +69,7 @@ shortstacking <- function (y, X, Z = NULL,
                            custom_ensemble_weights = NULL,
                            compute_insample_predictions = FALSE,
                            subsamples = NULL,
+                           cluster_variable = seq_along(y),
                            silent = FALSE,
                            progress = NULL,
                            auxiliary_X = NULL,
@@ -84,10 +85,11 @@ shortstacking <- function (y, X, Z = NULL,
     stop("shortstacking cannot be estimated with a single learner.")
   }#IF
 
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
+  # Create crossfitting tuples
+  indxs <- get_sample_splits(cluster_variable,
+                             sample_folds = sample_folds,
+                             subsamples = subsamples)
+  subsamples <- indxs$subsamples
   sample_folds <- length(subsamples)
   ncustom <- ncol(custom_ensemble_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)
@@ -105,7 +107,7 @@ shortstacking <- function (y, X, Z = NULL,
 
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()
-  fakecv$oos_resid <- kronecker(shortstack_y, t(rep(1, nlearners))) -
+  fakecv$oos_resid <- matrix(shortstack_y, nobs, nlearners) -
     res$oos_fitted_bylearner
   weights <- ensemble_weights(shortstack_y, X, learners = learners,
                               type = ensemble_type,
@@ -129,7 +131,8 @@ shortstacking <- function (y, X, Z = NULL,
   if (compute_insample_predictions) {
     for (k in 1:sample_folds) {
       # Compute shortstacking weights in-sample
-      fakecv_k$oos_resid <- kronecker(y[-subsamples[[k]]], t(rep(1, nlearners))) -
+      nobs_k <- length(y[-subsamples[[k]]])
+      fakecv_k$oos_resid <- matrix(y[-subsamples[[k]]], nobs_k, nlearners) -
         res$is_fitted_bylearner[[k]]
       weights_k <- ensemble_weights(y[-subsamples[[k]]], X[-subsamples[[k]], ],
                                     learners = learners,
@@ -154,7 +157,7 @@ shortstacking <- function (y, X, Z = NULL,
   }#IF
 
   # Compute mspe
-  mspe <- colMeans((kronecker(shortstack_y, t(rep(1, nensb))) - oos_fitted)^2)
+  mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - oos_fitted)^2)
 
   # return shortstacking output
   output <- list(oos_fitted = oos_fitted,
