@@ -226,7 +226,8 @@ test_that("summary.ddml_late computes with a single model", {
   inf_res <- summary(ddml_late_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 4)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_late computes with a single model and dependence", {
@@ -257,5 +258,6 @@ test_that("summary.ddml_late computes with a single model and dependence", {
   inf_res <- summary(ddml_late_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 4)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT

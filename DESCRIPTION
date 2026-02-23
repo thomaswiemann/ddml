@@ -33,13 +33,15 @@ Imports:
     quadprog,
     glmnet,
     ranger,
-    xgboost
+    xgboost,
+    generics
 Suggests: 
     covr,
     knitr,
     parallel,
     rmarkdown,
     sandwich,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    texreg
 Config/testthat/edition: 3
 VignetteBuilder: knitr

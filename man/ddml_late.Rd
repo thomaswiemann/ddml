@@ -156,7 +156,7 @@ ensemble procedure.}
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
 \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-of scores. Used in \code{\link[=summary.ddml_late]{summary.ddml_late()}}.}
+of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
@@ -235,7 +235,7 @@ Treatment Effects." Econometrica, 62(2), 467-475.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
-\code{\link[=summary.ddml_late]{summary.ddml_late()}}
+\code{\link[=summary.ddml]{summary.ddml()}}
 
 Other ddml: 
 \code{\link{ddml_ate}()},

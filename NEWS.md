@@ -8,13 +8,15 @@
   ``shortstacking()`` for cluster-aware sample splitting.
 * Renames ``cv_subsamples_list`` to ``cv_subsamples``. The old name
   still works with a deprecation message.
-* Replaces internal ``get_all_indx()`` with ``get_sample_splits()``.
 * Warns when any cross-fitting training set has fewer than 100
   observations.
 * Updates internals of ``ddml::mdl_xgboost()`` with new ``xgboost`` syntax.
 * Fixes ``ddml::ddml_fpliv()`` with custom weights.
 * Allows for stacking with no positive stacking weights.
-* Fixes ``ddml::mdl_glmnet`` predictions for binomial regression.
+* Updates inference and generic S3 methods (`coef`, `vcov`, `confint`, `summary`, `print`).
+* Adds compatibility with `broom` (`tidy`, `glance`) and `texreg` (`extract.ddml`) for standardizing estimation output tables.
+* Adds `mdl_bigGLM` sparse-matrix unpenalized regression wrapper using `glmnet`.
+* Fixes `mdl_xgboost` for binary classification with numeric outcomes.
 
 # ddml 0.3.0
 

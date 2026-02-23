@@ -1,4 +1,34 @@
-# Stacking estimator using combinations of base learners.
+#' Stacking estimator using combinations of base learners
+#'
+#' @family utilities
+#'
+#' @description Computes an ensemble of learners based on the specified
+#'     aggregation type and computes cross-validated out-of-sample
+#'     predictions to inform the weights.
+#'
+#' @param y The outcome variable.
+#' @param X The feature matrix.
+#' @param Z Optional instrumental variables matrix.
+#' @param type A character string indicating the type of ensemble to compute.
+#'     Default is \code{"average"}.
+#' @param learners A list of base learners.
+#' @param cv_folds Number of cross-validation folds.
+#' @param cv_subsamples Optional list of subsamples for cross-validation.
+#' @param cv_results Optional pre-computed cross-validation results.
+#' @param custom_weights Optional custom weights matrix.
+#' @param silent A boolean indicating whether to suppress progress messages.
+#'
+#' @return An object of class \code{ensemble} containing:
+#'     \item{mdl_fits}{List of fitted base learners.}
+#'     \item{weights}{Computed ensemble weights.}
+#'     \item{learners}{The base learners used.}
+#'     \item{cv_results}{Cross-validation results if computed.}
+#'     \item{mean_y}{Mean of the outcome variable.}
+#'     \item{constant_y}{Boolean indicating if y is constant.}
+#' @export
+#'
+#' @examples
+#' # Not run
 ensemble <- function(y, X, Z = NULL,
                      type = "average",
                      learners,
@@ -112,6 +142,33 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 }#PREDICT.ENSEMBLE
 
 # Complementary functions ======================================================
+
+#' Compute Stacking Weights for Base Learners
+#'
+#' @family utilities
+#'
+#' @description Computes the stacking weights for an ensemble of base learners
+#'     using cross-validated out-of-sample predictions.
+#'
+#' @param y The outcome variable.
+#' @param X The feature matrix.
+#' @param Z Optional instrumental variables matrix.
+#' @param type A character string or vector indicating the type(s) of ensemble
+#'     weights to compute. Default is \code{"average"}.
+#' @param learners A list of base learners.
+#' @param cv_folds Number of cross-validation folds.
+#' @param cv_subsamples Optional list of subsamples for cross-validation.
+#' @param cv_results Optional pre-computed cross-validation results.
+#' @param custom_weights Optional custom weights matrix.
+#' @param silent A boolean indicating whether to suppress progress messages.
+#'
+#' @return A list containing:
+#'     \item{weights}{A matrix of computed ensemble weights.}
+#'     \item{cv_results}{Cross-validation results used for computing weights.}
+#' @export
+#'
+#' @examples
+#' # Not run
 ensemble_weights <- function(y, X, Z = NULL,
                              type = "average",
                              learners,

@@ -2,7 +2,7 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()]
+#' @seealso [ddml::summary.ddml()]
 #'
 #' @description Estimators of the average treatment effect and the average
 #'     treatment effect on the treated.
@@ -67,8 +67,7 @@
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml_ate()] or
-#'             [ddml::summary.ddml_att()].}
+#'             of scores. Used in [ddml::summary.ddml()].}
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
@@ -223,8 +222,17 @@ ddml_ate <- function(y, D, X,
   ate <- colMeans(psi_b)
   names(ate) <- ensemble_type
 
-  # Also set psi_a scores for easier computation of summary.ddml_ate
+  # Also set psi_a scores for easier computation of summary.ddml
   psi_a <- matrix(-1, nobs, nensb)
+
+  # Compute scores and Jacobian from psi_a/psi_b
+  scores <- lapply(seq_len(nensb), function(j) {
+    as.matrix(psi_a[, j] * ate[j] + psi_b[, j])
+  })
+  J_list <- lapply(seq_len(nensb), function(j) {
+    as.matrix(mean(psi_a[, j]))
+  })
+  coef_names <- "ATE"
 
   # Organize complementary ensemble output
   weights <- list(y_X_D0 = y_X_D0_res$weights,
@@ -249,8 +257,18 @@ ddml_ate <- function(y, D, X,
                    learners_DX = learners_DX,
                    cluster_variable = cluster_variable,
                    subsamples_byD = indxs$subsamples_byD,
-                   cv_subsamples_byD = indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type)
+                   cv_subsamples_byD =
+                     indxs$cv_subsamples_byD,
+                   ensemble_type = ensemble_type,
+                   coefficients = ate,
+                   scores = scores,
+                   J = J_list,
+                   coef_names = coef_names,
+                   nobs = nobs,
+                   sample_folds = sample_folds,
+                   cv_folds = if (shortstack) NULL
+                     else cv_folds,
+                   shortstack = shortstack)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
@@ -258,85 +276,6 @@ ddml_ate <- function(y, D, X,
            silent = silent)
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_ate"
+  class(ddml_fit) <- c("ddml_ate", "ddml")
   return(ddml_fit)
 }#DDML_ATE
-
-#' Inference Methods for Treatment Effect Estimators.
-#'
-#' @description Inference methods for treatment effect estimators. By default,
-#'     standard errors are heteroskedasiticty-robust. If the \code{ddml}
-#'     estimator was computed using a \code{cluster_variable}, the standard
-#'     errors are also cluster-robust by default.
-#'
-#' @param object An object of class \code{ddml_ate}, \code{ddml_att}, and
-#'     \code{ddml_late}, as fitted by [ddml::ddml_ate()], [ddml::ddml_att()],
-#'     and [ddml::ddml_late()], respectively.
-#' @param ... Currently unused.
-#'
-#' @return A matrix with inference results.
-#'
-#' @export
-#'
-#' @examples
-#' # Construct variables from the included Angrist & Evans (1998) data
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
-#'
-#' # Estimate the average treatment effect using a single base learner, ridge.
-#' ate_fit <- ddml_ate(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 2,
-#'                     silent = TRUE)
-#' summary(ate_fit)
-summary.ddml_ate <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- " "
-  # Compute and return inference results
-  coefficients <- organize_interactive_inf_results(coef = object$ate,
-                                                   psi_a = object$psi_a,
-                                                   psi_b = object$psi_b,
-                                                   ensemble_type =
-                                                     object$ensemble_type,
-                                                   cluster_variable =
-                                                     object$cluster_variable)
-  class(coefficients) <- c("summary.ddml_ate", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_ATE
-
-#' Print Methods for Treatment Effect Estimators.
-#'
-#' @description Print methods for treatment effect estimators.
-#'
-#' @param x An object of class \code{summary.ddml_ate},
-#'     \code{summary.ddml_att}, and \code{ddml_late}, as returned by
-#'     [ddml::summary.ddml_ate()], [ddml::summary.ddml_att()], and
-#'     [ddml::summary.ddml_late()], respectively.
-#' @param digits The number of significant digits used for printing.
-#' @param ... Currently unused.
-#'
-#' @return NULL.
-#'
-#' @export
-#'
-#' @examples
-#' # Construct variables from the included Angrist & Evans (1998) data
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
-#'
-#' # Estimate the average treatment effect using a single base learner, ridge.
-#' ate_fit <- ddml_ate(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 2,
-#'                     silent = TRUE)
-#' summary(ate_fit)
-print.summary.ddml_ate <- function(x, digits = 3, ...) {
-  cat("ATE estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_ATE

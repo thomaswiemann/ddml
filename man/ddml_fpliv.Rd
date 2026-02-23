@@ -192,7 +192,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
-\code{\link[=summary.ddml_fpliv]{summary.ddml_fpliv()}}, \code{\link[AER:ivreg]{AER::ivreg()}}
+\code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[AER:ivreg]{AER::ivreg()}}
 
 Other ddml: 
 \code{\link{ddml_ate}()},

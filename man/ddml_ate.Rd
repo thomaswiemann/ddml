@@ -169,8 +169,7 @@ ensemble procedure.}
 base learner (in chronological order) computed by the
 cross-validation step in the ensemble construction.}
 \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}} or
-\code{\link[=summary.ddml_att]{summary.ddml_att()}}.}
+of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
 \item{\code{oos_pred}}{List of matrices, providing the reduced form
 predicted values.}
 \item{\code{learners},\code{learners_DX},\code{cluster_variable},
@@ -243,7 +242,7 @@ structural parameters." The Econometrics Journal, 21(1), C1-C68.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
-\code{\link[=summary.ddml_ate]{summary.ddml_ate()}}, \code{\link[=summary.ddml_att]{summary.ddml_att()}}
+\code{\link[=summary.ddml]{summary.ddml()}}
 
 Other ddml: 
 \code{\link{ddml_fpliv}()},

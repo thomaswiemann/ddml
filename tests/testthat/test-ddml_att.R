@@ -158,7 +158,8 @@ test_that("summary.ddml_att computes with a single model", {
   inf_res <- summary(ddml_att_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 4)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_att computes with a single model and dependence", {
@@ -187,7 +188,8 @@ test_that("summary.ddml_att computes with a single model and dependence", {
   inf_res <- summary(ddml_att_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 4)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_att computes with multiple ensemble procedures", {
@@ -213,5 +215,6 @@ test_that("summary.ddml_att computes with multiple ensemble procedures", {
   inf_res <- summary(ddml_att_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 16)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 4))
 })#TEST_THAT

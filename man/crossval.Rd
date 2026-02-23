@@ -98,6 +98,8 @@ cv_res$mspe
 \seealso{
 Other utilities: 
 \code{\link{crosspred}()},
+\code{\link{ensemble}()},
+\code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}
 }
 \concept{utilities}

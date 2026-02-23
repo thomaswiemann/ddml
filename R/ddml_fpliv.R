@@ -2,7 +2,7 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_fpliv()], [AER::ivreg()]
+#' @seealso [ddml::summary.ddml()], [AER::ivreg()]
 #'
 #' @description Estimator for the flexible partially linear IV model.
 #'
@@ -230,6 +230,15 @@ ddml_fpliv <- function(y, D, Z, X,
 
     # Organize complementary ensemble output
     coef <- stats::coef(iv_fit)[-1]
+
+    # Compute scores and Jacobian
+    D_r_mat <- as.matrix(D_r)
+    V_r_mat <- as.matrix(V_r)
+    D_hat <- stats::lm.fit(V_r_mat, D_r_mat)$fitted.values
+    e <- as.vector(y_r - D_r_mat %*% coef)
+    scores <- list(D_hat * e)
+    J_list <- list(-crossprod(D_hat, D_r_mat) / nobs)
+    coef_names <- names(coef)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
@@ -237,6 +246,8 @@ ddml_fpliv <- function(y, D, Z, X,
     # Iterate over ensemble type. Compute DDML IV estimate for each.
     coef <- matrix(0, nD, nensb)
     iv_fit <- rep(list(1), nensb)
+    scores <- vector("list", nensb)
+    J_list <- vector("list", nensb)
     nlearners <- length(learners)
     nlearners_DX <- length(learners_DX); nlearners_DXZ <- length(learners_DXZ)
     # Assign names for more legible output
@@ -318,10 +329,21 @@ ddml_fpliv <- function(y, D, Z, X,
       # Organize complementary ensemble output
       coef[, j] <- stats::coef(iv_fit_j)[-1]
       iv_fit[[j]] <- iv_fit_j
+
+      # Compute scores and Jacobian
+      D_r_mat <- as.matrix(D_r)
+      V_r_mat <- as.matrix(V_r)
+      D_hat <- stats::lm.fit(V_r_mat, D_r_mat)$fitted.values
+      e_j <- as.vector(y_r - D_r_mat %*% coef[, j])
+      scores[[j]] <- D_hat * e_j
+      J_list[[j]] <- -crossprod(D_hat, D_r_mat) / nobs
+
       if (enforce_LIE) {
         for (k in 1:nD) weights_DX[[k]][, j, ] <- D_X_res_list[[k]]$weights
       }#IF
     }#FOR
+    rownames(coef) <- names(iv_fit[[1]]$coefficients)[-1]
+    coef_names <- rownames(coef)
   }#IF
 
   # Store complementary ensemble output
@@ -350,7 +372,16 @@ ddml_fpliv <- function(y, D, Z, X,
                    subsamples = subsamples,
                    cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type,
-                   enforce_LIE = enforce_LIE)
+                   enforce_LIE = enforce_LIE,
+                   coefficients = coef,
+                   scores = scores,
+                   J = J_list,
+                   coef_names = coef_names,
+                   nobs = nobs,
+                   sample_folds = sample_folds,
+                   cv_folds = if (shortstack) NULL
+                     else cv_folds,
+                   shortstack = shortstack)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
@@ -358,32 +389,7 @@ ddml_fpliv <- function(y, D, Z, X,
            silent = silent)
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_fpliv"
+  class(ddml_fit) <- c("ddml_fpliv", "ddml")
   return(ddml_fit)
 }#DDML_FPLIV
 
-#' @rdname summary.ddml_plm
-#'
-#' @export
-summary.ddml_fpliv <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- "single base learner"
-  # Compute and print inference results
-  coefficients <- organize_inf_results(fit_obj_list = object$iv_fit,
-                                       ensemble_type = object$ensemble_type,
-                                       cluster_variable =
-                                         object$cluster_variable,
-                                       ...)
-  class(coefficients) <- c("summary.ddml_fpliv", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_FPLIV
-
-#' @rdname print.summary.ddml_plm
-#'
-#' @export
-print.summary.ddml_fpliv <- function(x, digits = 3, ...) {
-  cat("FPLIV estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_FPLIV

@@ -192,10 +192,11 @@ test_that("summary.ddml_plm computes with a single model", {
                            cv_folds = 3,
                            sample_folds = 3,
                            silent = T)
-  inf_res <- summary(ddml_plm_fit, type = "HC1")
+  inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 8)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with a single model and dependence", {
@@ -218,7 +219,8 @@ test_that("summary.ddml_plm computes with a single model and dependence", {
   inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 8)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with multiple ensemble procedures", {
@@ -242,10 +244,11 @@ test_that("summary.ddml_plm computes with multiple ensemble procedures", {
                            custom_ensemble_weights = diag(1, length(learners)),
                            sample_folds = 3,
                            silent = T)
-  inf_res <- summary(ddml_plm_fit, type = "HC1")
+  inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(inf_res), 8 * 7)
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$inf_results), c(1, 4, 7))
 })#TEST_THAT
 
 test_that("ddml_plm computes with an ensemble procedure and multivariate D", {

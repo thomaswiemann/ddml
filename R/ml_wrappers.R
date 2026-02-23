@@ -106,9 +106,13 @@ mdl_xgboost <- function(y, X,
                         nrounds = 500, verbosity = 0,
                         ...){
   # Compute xgboost
-  mdl_fit <- xgboost::xgboost(x = X, y = y,
-                              nrounds = nrounds,
-                              verbosity = verbosity, ...)
+  dots <- list(...)
+  if (is.null(dots$params$objective) && is.null(dots$objective) && is.factor(y) && length(levels(y)) == 2) {
+    dots$objective <- "binary:logistic"
+  }#IF
+  mdl_fit <- do.call(xgboost::xgboost,
+                     c(list(x = X, y = y, nrounds = nrounds,
+                            verbosity = verbosity), dots))
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_xgboost", class(mdl_fit))
   return(mdl_fit)
@@ -216,3 +220,38 @@ predict.mdl_glm <- function(object, newdata, ...) {
   df <- data.frame(newdata) # transform data from matrices to data.frame
   stats::predict.glm(object, df, type = "response", ...)
 }#PREDICT.MDL_GLM
+
+# bigGLM =======================================================================
+
+#' Wrapper for [glmnet::bigGlm()].
+#'
+#' @family ml_wrapper
+#'
+#' @seealso [glmnet::bigGlm()]
+#'
+#' @description Simple wrapper for [glmnet::bigGlm()], designed for sparse matrices.
+#'
+#' @param y The outcome variable.
+#' @param X The (sparse) feature matrix.
+#' @param ... Additional arguments passed to \code{bigGlm}. See
+#'     [glmnet::bigGlm()] for a complete list of arguments.
+#'
+#' @return \code{mdl_bigGLM} returns an object of S3 class \code{mdl_bigGLM}.
+#' @export
+#'
+#' @examples
+#' bigglm_fit <- mdl_bigGLM(rnorm(100), matrix(rnorm(1000), 100, 10))
+#' class(bigglm_fit)
+mdl_bigGLM <- function(y, X, ...) {
+  mdl_fit <- glmnet::bigGlm(x = X, y = y, ...)
+  mdl_fit <- list(fitted_coef = stats::coef(mdl_fit))
+  class(mdl_fit) <- c("mdl_bigGLM", class(mdl_fit))
+  return(mdl_fit)
+}#MDL_BIGGLM
+
+#' @exportS3Method
+predict.mdl_bigGLM <- function(object, newdata = NULL, ...) {
+  beta <- object$fitted_coef
+  fitted <- newdata %*% beta[2:nrow(beta), , drop = FALSE] + beta[1, 1]
+  fitted[, 1]
+}#PREDICT.MDL_BIGGLM

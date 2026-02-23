@@ -109,6 +109,15 @@ ddml_att <- function(y, D, X,
   att <- -colMeans(psi_b) / colMeans(psi_a)
   names(att) <- ensemble_type
 
+  # Compute scores and Jacobian from psi_a/psi_b
+  scores <- lapply(seq_len(nensb), function(j) {
+    as.matrix(psi_a[, j] * att[j] + psi_b[, j])
+  })
+  J_list <- lapply(seq_len(nensb), function(j) {
+    as.matrix(mean(psi_a[, j]))
+  })
+  coef_names <- "ATT"
+
   # Organize complementary ensemble output
   weights <- list(y_X_D0 = y_X_D0_res$weights,
                   D_X = D_X_res$weights)
@@ -128,8 +137,18 @@ ddml_att <- function(y, D, X,
                    learners_DX = learners_DX,
                    cluster_variable = cluster_variable,
                    subsamples_byD = indxs$subsamples_byD,
-                   cv_subsamples_byD = indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type)
+                   cv_subsamples_byD =
+                     indxs$cv_subsamples_byD,
+                   ensemble_type = ensemble_type,
+                   coefficients = att,
+                   scores = scores,
+                   J = J_list,
+                   coef_names = coef_names,
+                   nobs = nobs,
+                   sample_folds = sample_folds,
+                   cv_folds = if (shortstack) NULL
+                     else cv_folds,
+                   shortstack = shortstack)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
@@ -137,34 +156,6 @@ ddml_att <- function(y, D, X,
            silent = silent)
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_att"
+  class(ddml_fit) <- c("ddml_att", "ddml")
   return(ddml_fit)
 }#DDML_ATT
-
-#' @rdname summary.ddml_ate
-#'
-#' @export
-summary.ddml_att <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- " "
-  # Compute and print inference results
-  coefficients <- organize_interactive_inf_results(coef = object$att,
-                                                   psi_a = object$psi_a,
-                                                   psi_b = object$psi_b,
-                                                   ensemble_type =
-                                                     object$ensemble_type,
-                                                   cluster_variable =
-                                                     object$cluster_variable)
-  class(coefficients) <- c("summary.ddml_att", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_ATT
-
-#' @rdname print.summary.ddml_ate
-#'
-#' @export
-print.summary.ddml_att <- function(x, digits = 3, ...) {
-  cat("ATT estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_ATT

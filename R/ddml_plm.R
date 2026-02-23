@@ -2,7 +2,7 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_plm()]
+#' @seealso [ddml::summary.ddml()]
 #'
 #' @description Estimator for the partially linear model.
 #'
@@ -256,6 +256,13 @@ ddml_plm <- function(y, D, X,
 
     # Organize complementary ensemble output
     coef <- stats::coef(ols_fit)[-1]
+
+    # Compute scores and Jacobian
+    D_r_mat <- as.matrix(D_r)
+    e <- as.vector(y_r - D_r_mat %*% coef)
+    scores <- list(D_r_mat * e)
+    J_list <- list(-crossprod(D_r_mat) / nobs)
+    coef_names <- names(coef)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.
@@ -263,6 +270,8 @@ ddml_plm <- function(y, D, X,
     # Iterate over ensemble type. Compute DDML estimate for each.
     coef <- matrix(0, nD, nensb)
     mspe <- ols_fit <- rep(list(1), nensb)
+    scores <- vector("list", nensb)
+    J_list <- vector("list", nensb)
     nlearners <- length(learners); nlearners_DX <- length(learners_DX)
 
     # Compute coefficients for each ensemble
@@ -279,11 +288,18 @@ ddml_plm <- function(y, D, X,
       # Organize complementary ensemble output
       coef[, j] <- stats::coef(ols_fit_j)[-1]
       ols_fit[[j]] <- ols_fit_j
+
+      # Compute scores and Jacobian
+      D_r_mat <- as.matrix(D_r)
+      e_j <- as.vector(y_r - D_r_mat %*% coef[, j])
+      scores[[j]] <- D_r_mat * e_j
+      J_list[[j]] <- -crossprod(D_r_mat) / nobs
     }#FOR
 
     # Assign names for more legible output
     colnames(coef) <- names(ols_fit) <- dimnames(y_X_res$weights)[[2]]
     rownames(coef) <- names(ols_fit_j$coefficients)[-1]
+    coef_names <- rownames(coef)
   }#IF
 
   # Store complementary ensemble output
@@ -302,7 +318,16 @@ ddml_plm <- function(y, D, X,
                    cluster_variable = cluster_variable,
                    subsamples = indxs$subsamples,
                    cv_subsamples = indxs$cv_subsamples,
-                   ensemble_type = ensemble_type)
+                   ensemble_type = ensemble_type,
+                   coefficients = coef,
+                   scores = scores,
+                   J = J_list,
+                   coef_names = coef_names,
+                   nobs = nobs,
+                   sample_folds = sample_folds,
+                   cv_folds = if (shortstack) NULL
+                     else cv_folds,
+                   shortstack = shortstack)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
@@ -310,99 +335,7 @@ ddml_plm <- function(y, D, X,
            silent = silent)
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_plm"
+  class(ddml_fit) <- c("ddml_plm", "ddml")
   return(ddml_fit)
 }#DDML_PLM
 
-#' Inference Methods for Partially Linear Estimators.
-#'
-#' @seealso [sandwich::vcovHC()], [sandwich::vcovCL()]
-#'
-#' @description Inference methods for partially linear estimators. Simple
-#'     wrapper for [sandwich::vcovHC()] and [sandwich::vcovCL()]. Default
-#'     standard errors are heteroskedasiticty-robust. If the \code{ddml}
-#'     estimator was computed using a \code{cluster_variable}, the standard
-#'     errors are also cluster-robust by default.
-#'
-#' @param object An object of class \code{ddml_plm}, \code{ddml_pliv}, or
-#'     \code{ddml_fpliv} as fitted by [ddml::ddml_plm()], [ddml::ddml_pliv()],
-#'     and [ddml::ddml_fpliv()], respectively.
-#' @param ... Additional arguments passed to \code{vcovHC} and \code{vcovCL}.
-#'     See [sandwich::vcovHC()] and [sandwich::vcovCL()] for a complete list of
-#'     arguments.
-#'
-#' @return An array with inference results for each \code{ensemble_type}.
-#'
-#' @references
-#' Zeileis A (2004). "Econometric Computing with HC and HAC Covariance Matrix
-#'     Estimators.” Journal of Statistical Software, 11(10), 1-17.
-#'
-#' Zeileis A (2006). “Object-Oriented Computation of Sandwich Estimators.”
-#'     Journal of Statistical Software, 16(9), 1-16.
-#'
-#' Zeileis A, Köll S, Graham N (2020). “Various Versatile Variances: An
-#'     Object-Oriented Implementation of Clustered Covariances in R.” Journal of
-#'     Statistical Software, 95(1), 1-36.
-#'
-#' @export
-#'
-#' @examples
-#' # Construct variables from the included Angrist & Evans (1998) data
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
-#'
-#' # Estimate the partially linear model using a single base learner, ridge.
-#' plm_fit <- ddml_plm(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 2,
-#'                     silent = TRUE)
-#' summary(plm_fit)
-summary.ddml_plm <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- "single base learner"
-  # Compute and print inference results
-  coefficients <- organize_inf_results(fit_obj_list = object$ols_fit,
-                                       ensemble_type = object$ensemble_type,
-                                       cluster_variable =
-                                         object$cluster_variable,
-                                       ...)
-  class(coefficients) <- c("summary.ddml_plm", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_PLM
-
-#' Print Methods for Treatment Effect Estimators.
-#'
-#' @description Print methods for treatment effect estimators.
-#'
-#' @param x An object of class \code{summary.ddml_plm},
-#'     \code{summary.ddml_pliv}, and \code{summary.ddml_fpliv}, as
-#'     returned by [ddml::summary.ddml_plm()], [ddml::summary.ddml_pliv()],
-#'     and [ddml::summary.ddml_fpliv()], respectively.
-#' @param digits Number of significant digits used for printing.
-#' @param ... Currently unused.
-#'
-#' @return NULL.
-#'
-#' @export
-#'
-#' @examples
-#' # Construct variables from the included Angrist & Evans (1998) data
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
-#'
-#' # Estimate the partially linear model using a single base learner, ridge.
-#' plm_fit <- ddml_plm(y, D, X,
-#'                     learners = list(what = mdl_glmnet,
-#'                                     args = list(alpha = 0)),
-#'                     sample_folds = 2,
-#'                     silent = TRUE)
-#' summary(plm_fit)
-print.summary.ddml_plm <- function(x, digits = 3, ...) {
-  cat("PLM estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_PLM

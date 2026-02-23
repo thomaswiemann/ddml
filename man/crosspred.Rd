@@ -181,6 +181,8 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 \seealso{
 Other utilities: 
 \code{\link{crossval}()},
+\code{\link{ensemble}()},
+\code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}
 }
 \concept{utilities}

@@ -2,7 +2,7 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml_late()]
+#' @seealso [ddml::summary.ddml()]
 #'
 #' @description Estimator of the local average treatment effect.
 #'
@@ -86,7 +86,7 @@
 #'             base learner (in chronological order) computed by the
 #'             cross-validation step in the ensemble construction.}
 #'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml_late()].}
+#'             of scores. Used in [ddml::summary.ddml()].}
 #'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
 #'             predicted values.}
 #'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
@@ -306,6 +306,15 @@ ddml_late <- function(y, D, Z, X,
   late <- -numerator / denominator
   names(late) <- ensemble_type
 
+  # Compute scores and Jacobian from psi_a/psi_b
+  scores <- lapply(seq_len(nensb), function(j) {
+    as.matrix(psi_a[, j] * late[j] + psi_b[, j])
+  })
+  J_list <- lapply(seq_len(nensb), function(j) {
+    as.matrix(mean(psi_a[, j]))
+  })
+  coef_names <- "LATE"
+
   # Organize complementary ensemble output
   weights <- list(y_X_Z0 = y_X_Z0_res$weights,
                   y_X_Z1 = y_X_Z1_res$weights,
@@ -334,8 +343,18 @@ ddml_late <- function(y, D, Z, X,
                    learners_ZX = learners_ZX,
                    cluster_variable = cluster_variable,
                    subsamples_byZ = indxs$subsamples_byD,
-                   cv_subsamples_byZ = indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type)
+                   cv_subsamples_byZ =
+                     indxs$cv_subsamples_byD,
+                   ensemble_type = ensemble_type,
+                   coefficients = late,
+                   scores = scores,
+                   J = J_list,
+                   coef_names = coef_names,
+                   nobs = nobs,
+                   sample_folds = sample_folds,
+                   cv_folds = if (shortstack) NULL
+                     else cv_folds,
+                   shortstack = shortstack)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
@@ -343,35 +362,6 @@ ddml_late <- function(y, D, Z, X,
            silent = silent)
 
   # Amend class and return
-  class(ddml_fit) <- "ddml_late"
+  class(ddml_fit) <- c("ddml_late", "ddml")
   return(ddml_fit)
 }#DDML_LATE
-
-#' @rdname summary.ddml_ate
-#'
-#' @export
-summary.ddml_late <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- " "
-  # Compute and print inference results
-  coefficients <- organize_interactive_inf_results(coef = object$late,
-                                                   psi_a = object$psi_a,
-                                                   psi_b = object$psi_b,
-                                                   ensemble_type =
-                                                     object$ensemble_type,
-                                                   cluster_variable =
-                                                     object$cluster_variable)
-  class(coefficients) <- c("summary.ddml_late", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_LATE
-
-#' @rdname print.summary.ddml_ate
-#'
-#' @export
-print.summary.ddml_late <- function(x, digits = 3, ...) {
-  cat("LATE estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_LATE
-
