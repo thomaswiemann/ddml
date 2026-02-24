@@ -12,7 +12,9 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = TRUE
+  eval = TRUE,
+  warning = FALSE,
+  message = FALSE
 )
 ```
 
@@ -136,8 +138,8 @@ lasso_fit <- ddml_fpliv(y, D = D,
                         Z = ZL, X = XL,
                         learners = learner,
                         sample_folds = 10,
-                        silent = T)
-round(summary(lasso_fit)[2, , 1], 4)
+                        silent = TRUE)
+summary(lasso_fit)
 ```
 
 # Estimating the Flexible Partially Linear IV Model with Multiple Learners
@@ -183,10 +185,10 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            Z = Z_c, X = X_c,
                            learners = learners,
                            ensemble_type = c("nnls1"),
-                           shortstack = T,
+                           shortstack = TRUE,
                            sample_folds = 10,
-                           silent = T)
-t(round(summary(stacking_fit), 4)[2, , ])
+                           silent = TRUE)
+summary(stacking_fit)
 ```
 Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
 
@@ -263,10 +265,10 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         Z = Zr_, X = Xr_,
                         learners = learner,
                         ensemble_type = c("nnls1"),
-                        shortstack = T,
+                        shortstack = TRUE,
                         sample_folds = 10,
-                        silent = T)
-round(summary(stacking_r_fit)[2, , 1], 4)
+                        silent = TRUE)
+summary(stacking_r_fit)
 ```
 
 The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.

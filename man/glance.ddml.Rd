@@ -2,18 +2,32 @@
 % Please edit documentation in R/tidy.R
 \name{glance.ddml}
 \alias{glance.ddml}
-\title{Glance at a ddml object}
+\title{Glance at a ddml Object}
 \usage{
 \method{glance}{ddml}(x, ...)
 }
 \arguments{
 \item{x}{A \code{ddml} object.}
 
-\item{...}{Additional arguments.}
+\item{...}{Currently unused.}
 }
 \value{
-A one-row data.frame with model metadata.
+A one-row \code{data.frame} with columns
+\code{nobs}, \code{sample_folds}, \code{shortstack},
+\code{ensemble_type}, and \code{model_type}.
 }
 \description{
-Glance at a ddml object
+Returns a one-row summary of model-level statistics,
+compatible with \pkg{modelsummary} and the \pkg{broom}
+ecosystem.
 }
+\seealso{
+Other ddml: 
+\code{\link{ddml_ate}()},
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_pliv}()},
+\code{\link{ddml_plm}()},
+\code{\link{tidy.ddml}()}
+}
+\concept{ddml}

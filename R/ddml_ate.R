@@ -132,6 +132,14 @@ ddml_ate <- function(y, D, X,
                      trim = 0.01,
                      silent = FALSE,
                      parallel = NULL) {
+  # Validate inputs
+  validate_inputs(y = y, D = D, X = X, learners = learners,
+                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  ensemble_type = ensemble_type, trim = trim,
+                  require_binary_D = TRUE)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
+
   # Data parameters
   nobs <- length(y)
   is_D0 <- which(D == 0)
@@ -197,11 +205,10 @@ ddml_ate <- function(y, D, X,
                      parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_D0_res$weights)[[2]]
-  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
-
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensb_info <- update_ensemble_info(y_X_D0_res$weights)
+  ensemble_type <- ensb_info$ensemble_type
+  nensb <- ensb_info$nensb
+  multiple_ensembles <- ensb_info$multiple_ensembles
 
   # Construct reduced form variables
   g_X_byD <- extrapolate_CEF(D = D,
@@ -214,16 +221,26 @@ ddml_ate <- function(y, D, X,
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
 
   # Compute the ATE using the constructed variables
-  y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  psi_b <- D_copy * (y_copy - g_X_byD[, , 2]) / m_X_tr -
-    (1 - D_copy) * (y_copy -  g_X_byD[, , 1]) / (1 - m_X_tr) +
-    g_X_byD[, , 2] - g_X_byD[, , 1]
-  ate <- colMeans(psi_b)
-  names(ate) <- ensemble_type
-
-  # Also set psi_a scores for easier computation of summary.ddml
-  psi_a <- matrix(-1, nobs, nensb)
+  if (!multiple_ensembles) {
+    g0 <- g_X_byD[, , 1]
+    g1 <- g_X_byD[, , 2]
+    m <- as.vector(m_X_tr)
+    psi_b <- matrix(
+      D * (y - g1) / m - (1 - D) * (y - g0) / (1 - m) + g1 - g0,
+      nobs, 1)
+    ate <- mean(psi_b)
+    names(ate) <- ensemble_type
+    psi_a <- matrix(-1, nobs, 1)
+  } else {
+    y_copy <- matrix(rep(y, nensb), nobs, nensb)
+    D_copy <- matrix(rep(D, nensb), nobs, nensb)
+    psi_b <- D_copy * (y_copy - g_X_byD[, , 2]) / m_X_tr -
+      (1 - D_copy) * (y_copy - g_X_byD[, , 1]) / (1 - m_X_tr) +
+      g_X_byD[, , 2] - g_X_byD[, , 1]
+    ate <- colMeans(psi_b)
+    names(ate) <- ensemble_type
+    psi_a <- matrix(-1, nobs, nensb)
+  }#IFELSE
 
   # Compute scores and Jacobian from psi_a/psi_b
   scores <- lapply(seq_len(nensb), function(j) {

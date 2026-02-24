@@ -4,10 +4,16 @@
 \alias{summary.ddml}
 \title{Summary for DDML Estimators}
 \usage{
-\method{summary}{ddml}(object, ...)
+\method{summary}{ddml}(object, type = "HC1", ...)
 }
 \arguments{
 \item{object}{An object of class \code{ddml}.}
+
+\item{type}{Character string specifying the
+variance-covariance estimator. One of \code{"HC1"}
+(default, degrees-of-freedom corrected), \code{"HC0"}
+(uncorrected), or \code{"HC3"} (score-based leverage
+adjustment for finite-sample robustness).}
 
 \item{...}{Currently unused.}
 }

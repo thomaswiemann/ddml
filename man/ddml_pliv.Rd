@@ -197,6 +197,8 @@ Other ddml:
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
-\code{\link{ddml_plm}()}
+\code{\link{ddml_plm}()},
+\code{\link{glance.ddml}()},
+\code{\link{tidy.ddml}()}
 }
 \concept{ddml}

@@ -4,13 +4,19 @@
 \alias{vcov.ddml}
 \title{Variance-Covariance Matrix for DDML Estimators}
 \usage{
-\method{vcov}{ddml}(object, ensemble_idx = 1, ...)
+\method{vcov}{ddml}(object, ensemble_idx = 1, type = "HC1", ...)
 }
 \arguments{
 \item{object}{An object of class \code{ddml}.}
 
 \item{ensemble_idx}{Integer index of the ensemble type to
 use. Defaults to 1 (first ensemble type).}
+
+\item{type}{Character string specifying the
+variance-covariance estimator. One of \code{"HC1"}
+(default, degrees-of-freedom corrected), \code{"HC0"}
+(uncorrected), or \code{"HC3"} (score-based leverage
+adjustment for finite-sample robustness).}
 
 \item{...}{Currently unused.}
 }

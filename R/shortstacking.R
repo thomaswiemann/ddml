@@ -133,7 +133,7 @@ shortstacking <- function(y, X, Z = NULL,
   # Compute auxilliary predictions (optional)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   if (!is.null(auxiliary_X)) {
-    for (k in 1:sample_folds) {
+    for (k in seq_len(sample_folds)) {
       auxiliary_fitted[[k]] <- res$auxiliary_fitted_bylearner[[k]] %*% weights
     }#FOR
   }#if
@@ -142,7 +142,7 @@ shortstacking <- function(y, X, Z = NULL,
   is_fitted <- rep(list(NULL), sample_folds)
   fakecv_k <- list()
   if (compute_insample_predictions) {
-    for (k in 1:sample_folds) {
+    for (k in seq_len(sample_folds)) {
       # Compute shortstacking weights in-sample
       nobs_k <- length(y[-subsamples[[k]]])
       fakecv_k$oos_resid <- matrix(y[-subsamples[[k]]], nobs_k, nlearners) -
@@ -160,8 +160,8 @@ shortstacking <- function(y, X, Z = NULL,
     if (nensb > 1) {
       # Loop over each ensemble type to creat list of is_fitted's
       new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
-      for (i in 1:nensb) {
-        for (k in 1:sample_folds) {
+      for (i in seq_len(nensb)) {
+        for (k in seq_len(sample_folds)) {
           new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = FALSE]
         }#FOR
       }#FOR

@@ -2,22 +2,56 @@
 % Please edit documentation in R/tidy.R
 \name{tidy.ddml}
 \alias{tidy.ddml}
-\title{Tidy a ddml object}
+\title{Tidy a ddml Object}
 \usage{
-\method{tidy}{ddml}(x, conf.int = FALSE, conf.level = 0.95, ...)
+\method{tidy}{ddml}(
+  x,
+  ensemble_idx = 1,
+  conf.int = FALSE,
+  conf.level = 0.95,
+  type = "HC1",
+  ...
+)
 }
 \arguments{
 \item{x}{A \code{ddml} object.}
 
-\item{conf.int}{Logical indicating whether or not to include a confidence interval.}
+\item{ensemble_idx}{Integer index of the ensemble type to
+report. Defaults to 1 (first ensemble type). Set to
+\code{NULL} to return results for all ensemble types.}
 
-\item{conf.level}{The confidence level to use.}
+\item{conf.int}{Logical. Include confidence interval
+columns? Default \code{FALSE}.}
 
-\item{...}{Additional arguments passed to summary method.}
+\item{conf.level}{Confidence level for intervals.
+Default 0.95.}
+
+\item{type}{Character string specifying the
+variance-covariance estimator. One of \code{"HC1"}
+(default), \code{"HC0"}, or \code{"HC3"}.}
+
+\item{...}{Currently unused.}
 }
 \value{
-A data.frame containing tidy coefficients per ensemble type.
+A \code{data.frame} with columns \code{term},
+\code{estimate}, \code{std.error}, \code{statistic},
+\code{p.value}, and \code{ensemble_type}. If
+\code{conf.int = TRUE}, also \code{conf.low} and
+\code{conf.high}.
 }
 \description{
-Tidy a ddml object
+Extracts coefficient estimates, standard errors, test
+statistics, and p-values from a \code{ddml} estimator in a
+format compatible with \pkg{modelsummary} and the
+\pkg{broom} ecosystem.
 }
+\seealso{
+Other ddml: 
+\code{\link{ddml_ate}()},
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_pliv}()},
+\code{\link{ddml_plm}()},
+\code{\link{glance.ddml}()}
+}
+\concept{ddml}

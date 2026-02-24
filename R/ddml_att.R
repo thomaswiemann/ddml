@@ -19,6 +19,14 @@ ddml_att <- function(y, D, X,
                      trim = 0.01,
                      silent = FALSE,
                      parallel = NULL) {
+  # Validate inputs
+  validate_inputs(y = y, D = D, X = X, learners = learners,
+                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  ensemble_type = ensemble_type, trim = trim,
+                  require_binary_D = TRUE)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
+
   # Data parameters
   nobs <- length(y)
   is_D0 <- which(D == 0)
@@ -84,11 +92,10 @@ ddml_att <- function(y, D, X,
                    parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_D0_res$weights)[[2]]
-  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
-
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensb_info <- update_ensemble_info(y_X_D0_res$weights)
+  ensemble_type <- ensb_info$ensemble_type
+  nensb <- ensb_info$nensb
+  multiple_ensembles <- ensb_info$multiple_ensembles
 
   # Construct reduced form variables
   g_X_D0<- extrapolate_CEF(D = D,
@@ -100,14 +107,27 @@ ddml_att <- function(y, D, X,
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
 
   # Compute the ATT using the constructed variables
-  y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
-  psi_b <- D_copy * (y_copy - g_X_D0) / p_copy -
-    m_X_tr * (1 - D_copy) * (y_copy - g_X_D0) / (p_copy * (1 - m_X_tr))
-  psi_a <- -D_copy / p_copy
-  att <- -colMeans(psi_b) / colMeans(psi_a)
-  names(att) <- ensemble_type
+  if (!multiple_ensembles) {
+    p <- as.vector(D_res$oos_fitted)
+    g0 <- as.vector(g_X_D0)
+    m <- as.vector(m_X_tr)
+    psi_b <- matrix(
+      D * (y - g0) / p - m * (1 - D) * (y - g0) / (p * (1 - m)),
+      nobs, 1)
+    psi_a <- matrix(-D / p, nobs, 1)
+    att <- -mean(psi_b) / mean(psi_a)
+    names(att) <- ensemble_type
+  } else {
+    y_copy <- matrix(rep(y, nensb), nobs, nensb)
+    D_copy <- matrix(rep(D, nensb), nobs, nensb)
+    p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
+    psi_b <- D_copy * (y_copy - g_X_D0) / p_copy -
+      m_X_tr * (1 - D_copy) * (y_copy - g_X_D0) /
+      (p_copy * (1 - m_X_tr))
+    psi_a <- -D_copy / p_copy
+    att <- -colMeans(psi_b) / colMeans(psi_a)
+    names(att) <- ensemble_type
+  }#IFELSE
 
   # Compute scores and Jacobian from psi_a/psi_b
   scores <- lapply(seq_len(nensb), function(j) {

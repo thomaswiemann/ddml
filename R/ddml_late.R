@@ -161,6 +161,15 @@ ddml_late <- function(y, D, Z, X,
                       trim = 0.01,
                       silent = FALSE,
                       parallel = NULL) {
+  # Validate inputs
+  validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
+                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  ensemble_type = ensemble_type, trim = trim,
+                  require_binary_D = FALSE)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DXZ, learners_DXZ)
+  validate_custom_weights(custom_ensemble_weights_ZX, learners_ZX)
+
   # Data parameters
   nobs <- length(y)
   is_Z0 <- which(Z == 0)
@@ -271,11 +280,10 @@ ddml_late <- function(y, D, Z, X,
                      parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_Z0_res$weights)[[2]]
-  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
-
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensb_info <- update_ensemble_info(y_X_Z0_res$weights)
+  ensemble_type <- ensb_info$ensemble_type
+  nensb <- ensb_info$nensb
+  multiple_ensembles <- ensb_info$multiple_ensembles
 
   # Construct reduced form variables
   l_X_byZ <- extrapolate_CEF(D = Z,
@@ -291,20 +299,34 @@ ddml_late <- function(y, D, Z, X,
   # Trim propensity scores, return warnings
   r_X_tr <- trim_propensity_scores(r_X, trim, ensemble_type)
 
-  # Compute the ATE using the constructed variables
-  y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
-  psi_b <- Z_copy * (y_copy - l_X_byZ[, , 2]) / r_X_tr -
-    (1 - Z_copy) * (y_copy - l_X_byZ[, , 1]) / (1 - r_X_tr) +
-    l_X_byZ[, , 2] - l_X_byZ[, , 1]
-  psi_a <- -(Z_copy * (D_copy - p_X_byZ[, , 2]) / r_X_tr -
-    (1 - Z_copy) * (D_copy - p_X_byZ[, , 1]) / (1 - r_X_tr) +
-      p_X_byZ[, , 2] - p_X_byZ[, , 1])
-  numerator <- colMeans(psi_b)
-  denominator <- colMeans(psi_a)
-  late <- -numerator / denominator
-  names(late) <- ensemble_type
+  # Compute the LATE using the constructed variables
+  if (!multiple_ensembles) {
+    l0 <- l_X_byZ[, , 1]
+    l1 <- l_X_byZ[, , 2]
+    p0 <- p_X_byZ[, , 1]
+    p1 <- p_X_byZ[, , 2]
+    r <- as.vector(r_X_tr)
+    psi_b <- matrix(
+      Z * (y - l1) / r - (1 - Z) * (y - l0) / (1 - r) + l1 - l0,
+      nobs, 1)
+    psi_a <- matrix(
+      -(Z * (D - p1) / r - (1 - Z) * (D - p0) / (1 - r) + p1 - p0),
+      nobs, 1)
+    late <- -mean(psi_b) / mean(psi_a)
+    names(late) <- ensemble_type
+  } else {
+    y_copy <- matrix(rep(y, nensb), nobs, nensb)
+    D_copy <- matrix(rep(D, nensb), nobs, nensb)
+    Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
+    psi_b <- Z_copy * (y_copy - l_X_byZ[, , 2]) / r_X_tr -
+      (1 - Z_copy) * (y_copy - l_X_byZ[, , 1]) / (1 - r_X_tr) +
+      l_X_byZ[, , 2] - l_X_byZ[, , 1]
+    psi_a <- -(Z_copy * (D_copy - p_X_byZ[, , 2]) / r_X_tr -
+      (1 - Z_copy) * (D_copy - p_X_byZ[, , 1]) /
+      (1 - r_X_tr) + p_X_byZ[, , 2] - p_X_byZ[, , 1])
+    late <- -colMeans(psi_b) / colMeans(psi_a)
+    names(late) <- ensemble_type
+  }#IFELSE
 
   # Compute scores and Jacobian from psi_a/psi_b
   scores <- lapply(seq_len(nensb), function(j) {

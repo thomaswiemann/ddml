@@ -21,6 +21,9 @@ generics::glance
 #'     columns? Default \code{FALSE}.
 #' @param conf.level Confidence level for intervals.
 #'     Default 0.95.
+#' @param type Character string specifying the
+#'     variance-covariance estimator. One of \code{"HC1"}
+#'     (default), \code{"HC0"}, or \code{"HC3"}.
 #' @param ... Currently unused.
 #'
 #' @return A \code{data.frame} with columns \code{term},
@@ -31,9 +34,11 @@ generics::glance
 #'
 #' @family ddml
 #' @export
+#' @method tidy ddml
 tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
-                      conf.level = 0.95, ...) {
-  s <- summary(x)
+                      conf.level = 0.95,
+                      type = "HC1", ...) {
+  s <- summary(x, type = type)
   inf <- s$inf_results
   nensb <- dim(inf)[3]
   p <- dim(inf)[1]
@@ -82,6 +87,7 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
 #'
 #' @family ddml
 #' @export
+#' @method glance ddml
 glance.ddml <- function(x, ...) {
   data.frame(
     nobs = x$nobs,

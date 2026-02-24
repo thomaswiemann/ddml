@@ -173,6 +173,7 @@ crossval_compute <- function(test_sample, learner,
                                        drop = FALSE],
                                      Z[test_sample, assign_Z,
                                        drop = FALSE]))
-  oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
+  if (!is.matrix(oos_fitted)) oos_fitted <- as.matrix(oos_fitted)
+  oos_resid <- y[test_sample] - oos_fitted
   return(oos_resid)
 }#CROSSVAL_COMPUTE

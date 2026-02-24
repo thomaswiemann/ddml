@@ -1,5 +1,7 @@
 compute_ddml_variance <- function(scores, J,
-                                 cluster_variable = NULL) {
+                                 cluster_variable = NULL,
+                                 type = "HC1") {
+  type <- match.arg(type, c("HC0", "HC1", "HC3"))
   sc <- as.matrix(scores)
   J_j <- as.matrix(J)
   p <- ncol(sc)
@@ -13,11 +15,24 @@ compute_ddml_variance <- function(scores, J,
 
   n_eff <- nrow(sc)
 
-  # HC1 sandwich variance
-  meat <- crossprod(sc) / n_eff
-  J_inv <- solve(J_j)
-  V <- J_inv %*% meat %*% t(J_inv) *
-    n_eff / (n_eff - p) / n_eff
+  if (type == "HC3") {
+    PtP_inv <- solve(crossprod(sc))
+    h <- rowSums((sc %*% PtP_inv) * sc)
+    sc <- sc / (1 - h)
+    meat <- crossprod(sc) / n_eff
+    J_inv <- solve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) / n_eff
+  } else if (type == "HC1") {
+    meat <- crossprod(sc) / n_eff
+    J_inv <- solve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) *
+      n_eff / (n_eff - p) / n_eff
+  } else {
+    # HC0
+    meat <- crossprod(sc) / n_eff
+    J_inv <- solve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) / n_eff
+  }#IFELSE
 
   V
 }#COMPUTE_DDML_VARIANCE
@@ -25,7 +40,8 @@ compute_ddml_variance <- function(scores, J,
 compute_ddml_inference <- function(coefficients, scores, J,
                                   coef_names = NULL,
                                   ensemble_type,
-                                  cluster_variable = NULL) {
+                                  cluster_variable = NULL,
+                                  type = "HC1") {
   nensb <- length(ensemble_type)
   p <- NCOL(scores[[1]])
 
@@ -39,7 +55,8 @@ compute_ddml_inference <- function(coefficients, scores, J,
     }#IFELSE
 
     V <- compute_ddml_variance(scores[[j]], J[[j]],
-                              cluster_variable)
+                              cluster_variable,
+                              type = type)
     se <- sqrt(diag(V))
     t_val <- theta_j / se
     p_val <- 2 * stats::pnorm(abs(t_val),

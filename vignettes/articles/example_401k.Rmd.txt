@@ -63,7 +63,7 @@ xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                         learners = list(what = mdl_xgboost,
                                         args = list(nrounds = 300)),
                         sample_folds = 10,
-                        silent = T)
+                        silent = TRUE)
 summary(xgboost_fit)
 
 # Comparison to multiple linear regression
@@ -97,8 +97,8 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          learners = learners,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
@@ -153,8 +153,8 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
@@ -202,8 +202,8 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners_DX = learners_DX,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
@@ -231,8 +231,8 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          learners_ZX = learners_DX,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_IV_fit)
 
 # Stacking weights associated with each base learner

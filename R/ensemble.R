@@ -72,7 +72,7 @@ ensemble <- function(y, X, Z = NULL,
   }#IF
   # Compute fit for each included model
   mdl_fits <- rep(list(NULL), nlearners)
-  for (m in 1:nlearners) {
+  for (m in seq_len(nlearners)) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
     # Check whether X, Z assignment has been specified. If not, include all.
@@ -118,7 +118,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   }#IF
   # Calculate fitted values for each model
   first_fit <- TRUE
-  for (m in 1:nlearners) {
+  for (m in seq_len(nlearners)) {
     # Skip model if not assigned positive weight
     if (!(m %in% mdl_include)) next
     # Get assign_X and assing_Z
@@ -196,7 +196,7 @@ ensemble_weights <- function(y, X, Z = NULL,
   }#IF
   # Compute weights for each ensemble type
   weights <- matrix(0, nlearners, ntype + ncustom)
-  for (k in 1:ntype) {
+  for (k in seq_len(ntype)) {
     if (type[k] == "average") {
       # Assign 1 to all included learners and normalize
       weights[, k] <- 1
@@ -227,7 +227,7 @@ ensemble_weights <- function(y, X, Z = NULL,
     } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
       mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = FALSE])
-      mdl_min <- (1:nlearners)[mdl_min]
+      mdl_min <- (seq_len(nlearners))[mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1
     }#IFELSE

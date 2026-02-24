@@ -141,10 +141,10 @@ mdl_keras <- function(y, X,
   std_y <- c(mean(y), sd(y))
   std_X <- apply(X, 2, function(x) c(mean(x), max(sd(x), 1e-3)))
   y <- (y - std_y[1])/std_y[2]
-  X <- X - matrix(replicate(nobs, std_X[1, , drop = F]),
-    nrow = nobs, byrow = T)
-  X <- X / matrix(replicate(nobs, std_X[2, , drop = F]),
-    nrow = nobs, byrow = T)
+  X <- X - matrix(replicate(nobs, std_X[1, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
+  X <- X / matrix(replicate(nobs, std_X[2, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
 
   # ===============================================
   # ADJUST THIS PART FOR DIFFERENT ARCHITECTURES ==
@@ -153,11 +153,11 @@ mdl_keras <- function(y, X,
   nnet <- keras_model_sequential()
   for (k in 1:nhidden) {
     nnet <- nnet %>%
-      layer_dense(units = units, use_bias = T,
+      layer_dense(units = units, use_bias = TRUE,
                   activation = "relu")
   }#FOR
   nnet <- nnet %>%
-    layer_dense(units = 1, use_bias = T)
+    layer_dense(units = 1, use_bias = TRUE)
 
   # ===============================================
   # ===============================================
@@ -194,10 +194,10 @@ The prediction method for our fitted object ensures the predictions are returned
 predict.mdl_keras <- function(object, newdata){
   # Standardize newdata
   nobs <- nrow(newdata)
-  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = F]),
-    nrow = nobs, byrow = T)
-  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = F]),
-    nrow = nobs, byrow = T)
+  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
+  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
   # Predict data and output as matrix
   class(object) <- class(object)[-1] # Not a pretty solution...
   fitted <- as.numeric(predict(object, newdata))
@@ -213,17 +213,17 @@ To test the wrapper, we again estimate the local average treatment effect. In ad
 # Specify callbacks
 callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                                patience = 15,
-                                               restore_best_weights = T),
+                                               restore_best_weights = TRUE),
                        callback_reduce_lr_on_plateau(monitor = "val_loss",
                                                      factor = 1/10,
                                                      patience = 10,
-                                                     verbose = F))
+                                                     verbose = FALSE))
 
 # Use the neural network base learner
 learner_keras = list(what = mdl_keras,
                      args = list(units = 10, nhidden = 1,
                                  epochs = 100,
-                                 verbose = F,
+                                 verbose = FALSE,
                                  validation_split = 0.1,
                                  callbacks = callbacks_list))
 
@@ -231,7 +231,7 @@ learner_keras = list(what = mdl_keras,
 late_fit <- ddml_late(y, D, Z, X,
                       learners = learner_keras,
                       sample_folds = 10,
-                      silent = T)
+                      silent = TRUE)
 summary(late_fit)
 ```
 

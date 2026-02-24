@@ -95,6 +95,14 @@ ddml_fpliv <- function(y, D, Z, X,
                        cv_subsamples_list = NULL,
                        silent = FALSE,
                        parallel = NULL) {
+  # Validate inputs
+  validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
+                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  ensemble_type = ensemble_type)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DXZ, learners_DXZ)
+  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
+
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
@@ -148,54 +156,38 @@ ddml_fpliv <- function(y, D, Z, X,
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
-  D_XZ_res_list <- list()
-  for (k in seq_len(nD)) {
-    D_XZ_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X, Z,
-                                  learners = learners_DXZ,
-                                  ensemble_type = ensemble_type,
-                                  shortstack = shortstack,
-                                  custom_ensemble_weights =
-                                    custom_ensemble_weights_DXZ,
-                                  subsamples = indxs$subsamples,
-                                  cv_subsamples =
-                                    indxs$cv_subsamples,
-                                  compute_insample_predictions =
-                                    enforce_LIE,
-                                  silent = silent,
-                                  label = paste0("E[D", k,
-                                                 "|X,Z]"),
-                                  parallel = parallel)
-  }#FOR
+  D_XZ_res_list <- compute_CEF_list(
+    D, X, Z = Z, learners = learners_DXZ,
+    ensemble_type = ensemble_type,
+    shortstack = shortstack,
+    custom_ensemble_weights = custom_ensemble_weights_DXZ,
+    subsamples = indxs$subsamples,
+    cv_subsamples = indxs$cv_subsamples,
+    compute_insample_predictions = enforce_LIE,
+    silent = silent,
+    label_prefix = "E[D", label_suffix = "|X,Z]",
+    parallel = parallel)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {
-    D_X_res_list <- list()
-    for (k in seq_len(nD)) {
-      D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
-                                   Z = NULL,
-                                   learners = learners_DX,
-                                   ensemble_type = ensemble_type,
-                                   shortstack = shortstack,
-                                   custom_ensemble_weights =
-                                     custom_ensemble_weights_DX,
-                                   subsamples = indxs$subsamples,
-                                   cv_subsamples =
-                                     indxs$cv_subsamples,
-                                   compute_insample_predictions =
-                                     FALSE,
-                                   silent = silent,
-                                   label = paste0("E[D", k,
-                                                  "|X]"),
-                                   parallel = parallel)
-    }#FOR
+    D_X_res_list <- compute_CEF_list(
+      D, X, Z = NULL, learners = learners_DX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_DX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      compute_insample_predictions = FALSE,
+      silent = silent,
+      label_prefix = "E[D", label_suffix = "|X]",
+      parallel = parallel)
   }#IF
 
   # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_res$weights)[[2]]
-  nensb <- length(ensemble_type)
-
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensb_info <- update_ensemble_info(y_X_res$weights)
+  ensemble_type <- ensb_info$ensemble_type
+  nensb <- ensb_info$nensb
+  multiple_ensembles <- ensb_info$multiple_ensembles
 
   # If a single ensemble is calculated, no loops are required.
   if (!multiple_ensembles) {
@@ -262,7 +254,7 @@ ddml_fpliv <- function(y, D, Z, X,
     }#IF
 
     # Compute coefficients for each ensemble
-    for (j in 1:nensb) {
+    for (j in seq_len(nensb)) {
       # When the LIE is enforced, compute LIE-conform estimates of E[D|X].
       #     Otherwise use the previously calculated estimates of E[D|X].
       if (enforce_LIE) {
@@ -339,7 +331,7 @@ ddml_fpliv <- function(y, D, Z, X,
       J_list[[j]] <- -crossprod(D_hat, D_r_mat) / nobs
 
       if (enforce_LIE) {
-        for (k in 1:nD) weights_DX[[k]][, j, ] <- D_X_res_list[[k]]$weights
+        for (k in seq_len(nD)) weights_DX[[k]][, j, ] <- D_X_res_list[[k]]$weights
       }#IF
     }#FOR
     rownames(coef) <- names(iv_fit[[1]]$coefficients)[-1]
@@ -349,7 +341,7 @@ ddml_fpliv <- function(y, D, Z, X,
   # Store complementary ensemble output
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
-  for (k in 1:nD){
+  for (k in seq_len(nD)){
     if (enforce_LIE & multiple_ensembles) {
       weights[[paste0("D", k, "_X")]] <- weights_DX[[k]]
     } else {
@@ -357,7 +349,7 @@ ddml_fpliv <- function(y, D, Z, X,
     }#IFELSE
     #mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
   }#FOR
-  for (k in 1:nD){
+  for (k in seq_len(nD)){
     weights[[paste0("D", k, "_XZ")]] <- D_XZ_res_list[[k]]$weights
     mspe[[paste0("D", k, "_XZ")]] <- D_XZ_res_list[[k]]$mspe
   }#FOR

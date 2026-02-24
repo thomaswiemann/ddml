@@ -123,6 +123,14 @@ ddml_pliv <- function(y, D, Z, X,
                       cv_subsamples_list = NULL,
                       silent = FALSE,
                       parallel = NULL) {
+  # Validate inputs
+  validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
+                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  ensemble_type = ensemble_type)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
+  validate_custom_weights(custom_ensemble_weights_ZX, learners_ZX)
+
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
@@ -133,9 +141,6 @@ ddml_pliv <- function(y, D, Z, X,
 
   # Data parameters
   nobs <- length(y)
-  nlearners <- length(learners)
-  ncustom <- ncol(custom_ensemble_weights)
-  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
 
   # Check for multivariate endogenous variables
   D <- as.matrix(D)
@@ -180,47 +185,34 @@ ddml_pliv <- function(y, D, Z, X,
                      parallel = parallel)
 
   # Compute estimates of E[Z|X], loop through instruments
-  Z_X_res_list <- list()
-  for (k in seq_len(nZ)) {
-    Z_X_res_list[[k]] <- get_CEF(Z[, k, drop = FALSE], X,
-                                 learners = learners_ZX,
-                                 ensemble_type = ensemble_type,
-                                 shortstack = shortstack,
-                                 custom_ensemble_weights =
-                                   custom_ensemble_weights_ZX,
-                                 subsamples = indxs$subsamples,
-                                 cv_subsamples =
-                                   indxs$cv_subsamples,
-                                 silent = silent,
-                                 label = paste0("E[Z", k,
-                                                "|X]"),
-                                 parallel = parallel)
-  }#FOR
+  Z_X_res_list <- compute_CEF_list(
+    Z, X, learners = learners_ZX,
+    ensemble_type = ensemble_type,
+    shortstack = shortstack,
+    custom_ensemble_weights = custom_ensemble_weights_ZX,
+    subsamples = indxs$subsamples,
+    cv_subsamples = indxs$cv_subsamples,
+    silent = silent,
+    label_prefix = "E[Z", label_suffix = "|X]",
+    parallel = parallel)
 
   # Compute estimates of E[D|X], loop through endogenous variables
-  D_X_res_list <- list()
-  for (k in seq_len(nD)) {
-    D_X_res_list[[k]] <- get_CEF(D[, k, drop = FALSE], X,
-                                 learners = learners_DX,
-                                 ensemble_type = ensemble_type,
-                                 shortstack = shortstack,
-                                 custom_ensemble_weights =
-                                   custom_ensemble_weights_DX,
-                                 subsamples = indxs$subsamples,
-                                 cv_subsamples =
-                                   indxs$cv_subsamples,
-                                 silent = silent,
-                                 label = paste0("E[D", k,
-                                                "|X]"),
-                                 parallel = parallel)
-  }#FOR
+  D_X_res_list <- compute_CEF_list(
+    D, X, learners = learners_DX,
+    ensemble_type = ensemble_type,
+    shortstack = shortstack,
+    custom_ensemble_weights = custom_ensemble_weights_DX,
+    subsamples = indxs$subsamples,
+    cv_subsamples = indxs$cv_subsamples,
+    silent = silent,
+    label_prefix = "E[D", label_suffix = "|X]",
+    parallel = parallel)
 
   # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_res$weights)[[2]]
-  nensb <- length(ensemble_type)
-
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensb_info <- update_ensemble_info(y_X_res$weights)
+  ensemble_type <- ensb_info$ensemble_type
+  nensb <- ensb_info$nensb
+  multiple_ensembles <- ensb_info$multiple_ensembles
 
   # If a single ensemble is calculated, no loops are required.
   if (!multiple_ensembles) {
@@ -257,7 +249,7 @@ ddml_pliv <- function(y, D, Z, X,
     nlearners_DX <- length(learners_DX); nlearners_ZX <- length(learners_ZX)
 
     # Compute coefficients for each ensemble
-    for (j in 1:nensb) {
+    for (j in seq_len(nensb)) {
       # Residualize
       y_r <- y - y_X_res$oos_fitted[, j]
       D_r <- D - get_oosfitted(D_X_res_list, j)
@@ -287,11 +279,11 @@ ddml_pliv <- function(y, D, Z, X,
   # Store complementary ensemble output
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
-  for (k in 1:nD){
+  for (k in seq_len(nD)){
     weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
     mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
   }#FOR
-  for (k in 1:nZ){
+  for (k in seq_len(nZ)){
     weights[[paste0("Z", k, "_X")]] <- Z_X_res_list[[k]]$weights
     mspe[[paste0("Z", k, "_X")]] <- Z_X_res_list[[k]]$mspe
   }#FOR
