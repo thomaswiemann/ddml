@@ -28,7 +28,23 @@
 #' @export
 #'
 #' @examples
-#' # Not run
+#' \donttest{
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#'
+#' # Fit an ensemble of ols, lasso, and ridge
+#' ens_fit = ensemble(y, X,
+#'                    type = "nnls",
+#'                    learners = list(list(fun = ols),
+#'                                   list(fun = mdl_glmnet),
+#'                                   list(fun = mdl_glmnet,
+#'                                        args = list(alpha = 0))),
+#'                    cv_folds = 5,
+#'                    silent = TRUE)
+#' ens_fit$weights
+#' predict(ens_fit, newdata = X)[1:5]
+#' }
 ensemble <- function(y, X, Z = NULL,
                      type = "average",
                      learners,
@@ -168,7 +184,19 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 #' @export
 #'
 #' @examples
-#' # Not run
+#' \donttest{
+#' y = AE98[, "worked"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#'
+#' # Compute stacking weights via NNLS
+#' ew = ensemble_weights(y, X,
+#'                       type = "nnls",
+#'                       learners = list(list(fun = ols),
+#'                                      list(fun = mdl_glmnet)),
+#'                       cv_folds = 5,
+#'                       silent = TRUE)
+#' ew$weights
+#' }
 ensemble_weights <- function(y, X, Z = NULL,
                              type = "average",
                              learners,

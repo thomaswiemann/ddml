@@ -1,4 +1,18 @@
-# Wrapper for [ddml::crosspred()] and [ddml::shortstacking()].
+# Estimate a conditional expectation function via cross-fitting.
+#
+# Dispatches to crosspred() (standard stacking) or shortstacking()
+# depending on the shortstack flag. Returns out-of-sample fitted
+# values, ensemble weights, and MSPE.
+#
+# @param y Outcome vector.
+# @param X Feature matrix (may be sparse).
+# @param Z Optional instrument matrix.
+# @param learners List of base learner specifications.
+# @param ensemble_type Character vector of ensemble types.
+# @param shortstack Logical; use short-stacking if TRUE.
+# @param subsamples List of sample fold indices.
+# @param cv_subsamples List of cross-validation fold indices.
+# @param parallel Optional list with parallel config.
 get_CEF <- function(y, X, Z = NULL,
                     learners,
                     ensemble_type,
@@ -54,7 +68,14 @@ get_CEF <- function(y, X, Z = NULL,
   return(res)
 }#GET_CEF
 
-# Construct CEF from auxiliary_X
+# Extrapolate CEF predictions across treatment levels.
+#
+# For each level d of D, populates out-of-sample and auxiliary
+# predictions into an (nobs x nensb x nlevels) array.
+#
+# @param D Treatment vector.
+# @param CEF_res_byD List of get_CEF results, one per D level.
+# @param aux_indx Auxiliary sample indices for extrapolation.
 extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   # Data parameters
   nCEF <- length(CEF_res_byD)

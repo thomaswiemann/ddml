@@ -169,15 +169,22 @@ shortstacking <- function(y, X, Z = NULL,
     }#IF
   }#IF
 
-  # Compute mspe
+  # Compute mspe and r-squared
   mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - oos_fitted)^2)
+  y_var <- as.numeric(stats::var(shortstack_y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_,
+                                                   length(mspe))
+
+  # Per-learner OOS residuals (already computed for weight estimation)
+  oos_resid_bylearner <- as.matrix(fakecv$oos_resid)
 
   # return shortstacking output
   output <- list(oos_fitted = oos_fitted,
-                 weights = weights, mspe = mspe,
+                 weights = weights, mspe = mspe, r2 = r2,
                  is_fitted = is_fitted,
                  auxiliary_fitted = auxiliary_fitted,
                  oos_fitted_bylearner = res$oos_fitted_bylearner,
+                 oos_resid_bylearner = oos_resid_bylearner,
                  is_fitted_bylearner = res$is_fitted_bylearner,
                  auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)

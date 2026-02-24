@@ -338,20 +338,29 @@ ddml_fpliv <- function(y, D, Z, X,
     coef_names <- rownames(coef)
   }#IF
 
-  # Store complementary ensemble output
+  # Ensemble metrics and per-learner residuals
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
+  r2 <- list(y_X = y_X_res$r2)
+  oos_resid_bylearner <- list(
+    y_X = y_X_res$oos_resid_bylearner)
   for (k in seq_len(nD)){
     if (enforce_LIE & multiple_ensembles) {
       weights[[paste0("D", k, "_X")]] <- weights_DX[[k]]
     } else {
-      weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
+      weights[[paste0("D", k, "_X")]] <-
+        D_X_res_list[[k]]$weights
     }#IFELSE
-    #mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
   }#FOR
   for (k in seq_len(nD)){
-    weights[[paste0("D", k, "_XZ")]] <- D_XZ_res_list[[k]]$weights
-    mspe[[paste0("D", k, "_XZ")]] <- D_XZ_res_list[[k]]$mspe
+    weights[[paste0("D", k, "_XZ")]] <-
+      D_XZ_res_list[[k]]$weights
+    mspe[[paste0("D", k, "_XZ")]] <-
+      D_XZ_res_list[[k]]$mspe
+    r2[[paste0("D", k, "_XZ")]] <-
+      D_XZ_res_list[[k]]$r2
+    oos_resid_bylearner[[paste0("D", k, "_XZ")]] <-
+      D_XZ_res_list[[k]]$oos_resid_bylearner
   }#FOR
 
   # Organize output
@@ -373,7 +382,10 @@ ddml_fpliv <- function(y, D, Z, X,
                    sample_folds = sample_folds,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
-                   shortstack = shortstack)
+                   shortstack = shortstack,
+                   oos_resid_bylearner =
+                     oos_resid_bylearner,
+                   r2 = r2)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)

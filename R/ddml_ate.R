@@ -251,20 +251,25 @@ ddml_ate <- function(y, D, X,
   })
   coef_names <- "ATE"
 
-  # Organize complementary ensemble output
+  # Ensemble metrics
   weights <- list(y_X_D0 = y_X_D0_res$weights,
                   y_X_D1 = y_X_D1_res$weights,
                   D_X = D_X_res$weights)
-
-  # Store complementary ensemble output
   mspe <- list(y_X_D0 = y_X_D0_res$mspe,
                y_X_D1 = y_X_D1_res$mspe,
                D_X = D_X_res$mspe)
+  r2 <- list(y_X_D0 = y_X_D0_res$r2,
+             y_X_D1 = y_X_D1_res$r2,
+             D_X = D_X_res$r2)
 
-  # Organize reduced form predicted values
+  # Predictions and per-learner residuals
   oos_pred <- list(EY_D0_X = g_X_byD[, , 1],
                    EY_D1_X = g_X_byD[, , 2],
                    ED_X = m_X)
+  oos_resid_bylearner <- list(
+    y_X_D0 = y_X_D0_res$oos_resid_bylearner,
+    y_X_D1 = y_X_D1_res$oos_resid_bylearner,
+    D_X = D_X_res$oos_resid_bylearner)
 
   # Organize output
   ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
@@ -285,7 +290,10 @@ ddml_ate <- function(y, D, X,
                    sample_folds = sample_folds,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
-                   shortstack = shortstack)
+                   shortstack = shortstack,
+                   oos_resid_bylearner =
+                     oos_resid_bylearner,
+                   r2 = r2)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)

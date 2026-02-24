@@ -23,3 +23,16 @@ An object of class \code{summary.ddml}.
 \description{
 Summary for DDML Estimators
 }
+\examples{
+\donttest{
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace")]
+plm_fit = ddml_plm(y, D, X,
+                    learners = list(what = ols),
+                    sample_folds = 2, silent = TRUE)
+summary(plm_fit)
+summary(plm_fit, type = "HC3")
+}
+
+}

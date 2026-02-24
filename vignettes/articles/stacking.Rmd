@@ -82,11 +82,11 @@ Both stacking and short-stacking construct weighted averages of the considered b
 
 ```r
 cat("Time single learner:", time_singlelearner[1], "\n")
-#> Time single learner: 10.39
+#> Time single learner: 3.95
 cat("Time short-stacking:", time_shortstacking[1], "\n")
-#> Time short-stacking: 12.83
+#> Time short-stacking: 7.47
 cat("Time stacking:      ", time_stacking[1])
-#> Time stacking:       117.98
+#> Time stacking:       75.75
 ```
 
 # References
@@ -97,6 +97,6 @@ Double/debiased machine learning in Stata.” Stata Journal, 24(1):
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). "Model averaging and double machine learning." <https://arxiv.org/abs/2401.01645>
 
-Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence 
+Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence
     from Exogenous Variation in Family Size." American Economic
     Review, 88(3), 450-477.

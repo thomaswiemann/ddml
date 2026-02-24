@@ -18,7 +18,9 @@ use. Defaults to 1 (first ensemble type).}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
-(default), \code{"HC0"}, or \code{"HC3"}.}
+(default, degrees-of-freedom corrected), \code{"HC0"}
+(uncorrected), or \code{"HC3"} (score-based leverage
+adjustment for finite-sample robustness).}
 
 \item{...}{Currently unused.}
 }
@@ -27,4 +29,17 @@ A matrix with columns for lower and upper bounds.
 }
 \description{
 Confidence Intervals for DDML Estimators
+}
+\examples{
+\donttest{
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace")]
+plm_fit = ddml_plm(y, D, X,
+                    learners = list(what = ols),
+                    sample_folds = 2, silent = TRUE)
+confint(plm_fit)
+confint(plm_fit, level = 0.90)
+}
+
 }

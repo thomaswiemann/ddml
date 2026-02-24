@@ -138,16 +138,21 @@ ddml_att <- function(y, D, X,
   })
   coef_names <- "ATT"
 
-  # Organize complementary ensemble output
+  # Ensemble metrics
   weights <- list(y_X_D0 = y_X_D0_res$weights,
                   D_X = D_X_res$weights)
-
-  # Store complementary ensemble output
   mspe <- list(y_X_D0 = y_X_D0_res$mspe,
                D_X = D_X_res$mspe)
+  r2 <- list(y_X_D0 = y_X_D0_res$r2,
+             D_X = D_X_res$r2)
 
-  # Organize reduced form predicted values
-  oos_pred <- list(EY_D0_X = g_X_D0, ED_X = m_X, ED = D_res$oos_fitted)
+  # Predictions and per-learner residuals
+  oos_pred <- list(EY_D0_X = g_X_D0,
+                   ED_X = m_X,
+                   ED = D_res$oos_fitted)
+  oos_resid_bylearner <- list(
+    y_X_D0 = y_X_D0_res$oos_resid_bylearner,
+    D_X = D_X_res$oos_resid_bylearner)
 
   # Organize output
   ddml_fit <- list(att = att, weights = weights, mspe = mspe,
@@ -168,7 +173,10 @@ ddml_att <- function(y, D, X,
                    sample_folds = sample_folds,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
-                   shortstack = shortstack)
+                   shortstack = shortstack,
+                   oos_resid_bylearner =
+                     oos_resid_bylearner,
+                   r2 = r2)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)

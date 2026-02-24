@@ -32,6 +32,18 @@ generics::glance
 #'     \code{conf.int = TRUE}, also \code{conf.low} and
 #'     \code{conf.high}.
 #'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' tidy(plm_fit)
+#' tidy(plm_fit, conf.int = TRUE)
+#' }
+#'
 #' @family ddml
 #' @export
 #' @method tidy ddml
@@ -84,6 +96,17 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
 #' @return A one-row \code{data.frame} with columns
 #'     \code{nobs}, \code{sample_folds}, \code{shortstack},
 #'     \code{ensemble_type}, and \code{model_type}.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' glance(plm_fit)
+#' }
 #'
 #' @family ddml
 #' @export

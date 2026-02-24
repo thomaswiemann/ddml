@@ -337,24 +337,35 @@ ddml_late <- function(y, D, Z, X,
   })
   coef_names <- "LATE"
 
-  # Organize complementary ensemble output
+  # Ensemble metrics
   weights <- list(y_X_Z0 = y_X_Z0_res$weights,
                   y_X_Z1 = y_X_Z1_res$weights,
                   D_X_Z0 = D_X_Z0_res$weights,
                   D_X_Z1 = D_X_Z1_res$weights,
                   Z_X = Z_X_res$weights)
-
-  # Store complementary ensemble output
   mspe <- list(y_X_Z0 = y_X_Z0_res$mspe,
                y_X_Z1 = y_X_Z1_res$mspe,
                D_X_Z0 = D_X_Z0_res$mspe,
                D_X_Z1 = D_X_Z1_res$mspe,
                Z_X = Z_X_res$mspe)
+  r2 <- list(y_X_Z0 = y_X_Z0_res$r2,
+             y_X_Z1 = y_X_Z1_res$r2,
+             D_X_Z0 = D_X_Z0_res$r2,
+             D_X_Z1 = D_X_Z1_res$r2,
+             Z_X = Z_X_res$r2)
 
-  # Organize reduced form predicted values
-  oos_pred <- list(EY_Z0_X = l_X_byZ[, , 1], EY_Z1_X = l_X_byZ[, , 2],
-                   ED_Z0_X = p_X_byZ[, , 1], ED_Z1_X = p_X_byZ[, , 2],
+  # Predictions and per-learner residuals
+  oos_pred <- list(EY_Z0_X = l_X_byZ[, , 1],
+                   EY_Z1_X = l_X_byZ[, , 2],
+                   ED_Z0_X = p_X_byZ[, , 1],
+                   ED_Z1_X = p_X_byZ[, , 2],
                    EZ_X = r_X)
+  oos_resid_bylearner <- list(
+    y_X_Z0 = y_X_Z0_res$oos_resid_bylearner,
+    y_X_Z1 = y_X_Z1_res$oos_resid_bylearner,
+    D_X_Z0 = D_X_Z0_res$oos_resid_bylearner,
+    D_X_Z1 = D_X_Z1_res$oos_resid_bylearner,
+    Z_X = Z_X_res$oos_resid_bylearner)
 
   # Organize output
   ddml_fit <- list(late = late, weights = weights, mspe = mspe,
@@ -376,7 +387,10 @@ ddml_late <- function(y, D, Z, X,
                    sample_folds = sample_folds,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
-                   shortstack = shortstack)
+                   shortstack = shortstack,
+                   oos_resid_bylearner =
+                     oos_resid_bylearner,
+                   r2 = r2)
 
   # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)

@@ -61,21 +61,46 @@ xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                         learners = list(what = mdl_xgboost,
                                         args = list(nrounds = 300)),
                         sample_folds = 10,
-                        silent = T)
+                        silent = TRUE)
 summary(xgboost_fit)
-#> PLM estimation results: 
-#>  
-#> , , single base learner
+#> DDML estimation: Partially Linear Model 
+#> Obs: 9915   Folds: 10
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)     -224        626  -0.357 7.21e-01
-#> D_r            13916       1604   8.678 4.03e-18
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r    12780       1526    8.38   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 # Comparison to multiple linear regression
 lm_fit <- lm(y ~ D + X)
 summary(lm_fit)
-#>     Estimate   Std. Error      t value     Pr(>|t|) 
-#> 1.160089e+04 1.345117e+03 8.624444e+00 7.428141e-18
+#> 
+#> Call:
+#> lm(formula = y ~ D + X)
+#> 
+#> Residuals:
+#>     Min      1Q  Median      3Q     Max 
+#> -507235  -17014   -2134   10406 1430000 
+#> 
+#> Coefficients:
+#>               Estimate Std. Error t value Pr(>|t|)    
+#> (Intercept) -3.343e+04  4.265e+03  -7.837  5.1e-15 ***
+#> D            1.160e+04  1.345e+03   8.624  < 2e-16 ***
+#> Xage         6.351e+02  5.938e+01  10.696  < 2e-16 ***
+#> Xinc         9.143e-01  3.015e-02  30.330  < 2e-16 ***
+#> Xeduc       -6.190e+02  2.278e+02  -2.717 0.006597 ** 
+#> Xfsize      -1.007e+03  4.487e+02  -2.245 0.024776 *  
+#> Xmarr        9.172e+02  1.791e+03   0.512 0.608532    
+#> Xtwoearn    -1.936e+04  1.572e+03 -12.312  < 2e-16 ***
+#> Xdb         -4.915e+03  1.335e+03  -3.683 0.000232 ***
+#> Xpira        2.892e+04  1.464e+03  19.748  < 2e-16 ***
+#> Xhown        8.830e+02  1.320e+03   0.669 0.503420    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> 
+#> Residual standard error: 55580 on 9904 degrees of freedom
+#> Multiple R-squared:  0.2352,	Adjusted R-squared:  0.2344 
+#> F-statistic: 304.6 on 10 and 9904 DF,  p-value: < 2.2e-16
 ```
 
 # Estimation using Multiple Machine Learners
@@ -105,16 +130,16 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          learners = learners,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
-#> PLM estimation results: 
-#>  
-#> , , nnls
+#> DDML estimation: Partially Linear Model 
+#> Obs: 9915   Folds: 10  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)    -1627        538   -3.03 2.48e-03
-#> D_r            13636       1526    8.94 4.04e-19
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r    13700       1523    8.99   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
@@ -122,12 +147,12 @@ To better understand which machine learners contribute to the final estimate, we
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.0048 0.0197
-#> [2,] 0.2113 0.2817
-#> [3,] 0.2973 0.3400
-#> [4,] 0.5770 0.3504
-#> [5,] 0.0000 0.0000
-#> [6,] 0.0000 0.0238
+#> [1,] 0.2186 0.2850
+#> [2,] 0.0000 0.0000
+#> [3,] 0.1822 0.3859
+#> [4,] 0.6671 0.2911
+#> [5,] 0.0000 0.0548
+#> [6,] 0.0000 0.0000
 ```
 
 # Estimation with Different Sets of Control Variables
@@ -178,16 +203,16 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
-#> PLM estimation results: 
-#>  
-#> , , nnls
+#> DDML estimation: Partially Linear Model 
+#> Obs: 9915   Folds: 10  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)     -512        533  -0.961 3.37e-01
-#> D_r            14363       1500   9.575 1.02e-21
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r    14133       1480    9.55   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
@@ -196,13 +221,13 @@ To assess whether the additional effort in expanding the control variables had a
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.0176 0.0000
-#> [2,] 0.0000 0.1219
-#> [3,] 0.7368 0.4056
-#> [4,] 0.0000 0.1693
-#> [5,] 0.2702 0.2613
-#> [6,] 0.0022 0.0522
-#> [7,] 0.0000 0.0048
+#> [1,] 0.0000 0.0115
+#> [2,] 0.0593 0.2018
+#> [3,] 0.7312 0.3289
+#> [4,] 0.0000 0.1304
+#> [5,] 0.2274 0.3153
+#> [6,] 0.0134 0.0205
+#> [7,] 0.0000 0.0000
 ```
 
 # Estimation with Continious and Binary Outcome and Treatment Variables
@@ -244,16 +269,16 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners_DX = learners_DX,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
-#> PLM estimation results: 
-#>  
-#> , , nnls
+#> DDML estimation: Partially Linear Model 
+#> Obs: 9915   Folds: 10  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)     -487        535   -0.91 3.63e-01
-#> D_r            14097       1484    9.50 2.07e-21
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r    14163       1484    9.54   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The weights associated with the new base learners are now slightly larger:
@@ -263,13 +288,13 @@ The weights associated with the new base learners are now slightly larger:
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.0132 0.0627
-#> [2,] 0.0000 0.2663
-#> [3,] 0.7411 0.0086
-#> [4,] 0.0000 0.4221
-#> [5,] 0.2690 0.2552
-#> [6,] 0.0000 0.0000
-#> [7,] 0.0000 0.0302
+#> [1,] 0.0000 0.0539
+#> [2,] 0.0000 0.3156
+#> [3,] 0.7097 0.1155
+#> [4,] 0.0403 0.3328
+#> [5,] 0.2102 0.1297
+#> [6,] 0.0818 0.0643
+#> [7,] 0.0000 0.0000
 ```
 
 # Bonus: Instrumental Variable Estimation
@@ -290,27 +315,27 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          learners_ZX = learners_DX,
                          ensemble_type = "nnls",
                          sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_IV_fit)
-#> PLIV estimation results: 
-#>  
-#> , , nnls
+#> DDML estimation: Partially Linear IV Model 
+#> Obs: 9915   Folds: 10  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)     -776        531   -1.46 1.44e-01
-#> D_r            12987       1872    6.94 3.97e-12
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r    12711       1892    6.72  1.8e-11 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 # Stacking weights associated with each base learner
 sapply(stacking_IV_fit$weights, round, 4)
 #>         y_X   D1_X   Z1_X
-#> [1,] 0.0000 0.0647 0.0000
-#> [2,] 0.0000 0.2271 0.2414
-#> [3,] 0.7474 0.0080 0.0157
-#> [4,] 0.0000 0.4030 0.5337
-#> [5,] 0.2953 0.3036 0.2501
-#> [6,] 0.0000 0.0351 0.0000
-#> [7,] 0.0000 0.0000 0.0000
+#> [1,] 0.0000 0.0190 0.0000
+#> [2,] 0.0000 0.1696 0.4500
+#> [3,] 0.8302 0.2829 0.0000
+#> [4,] 0.0000 0.2693 0.3186
+#> [5,] 0.1681 0.2410 0.2291
+#> [6,] 0.0290 0.0188 0.0000
+#> [7,] 0.0000 0.0105 0.0131
 ```
 
 

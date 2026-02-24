@@ -233,7 +233,9 @@ crosspred <- function(y, X, Z = NULL,
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   auxiliary_fitted_bylearner <- rep(list(NULL), sample_folds)
   mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
-  colnames(mspe) <- paste("sample fold ", seq_len(sample_folds))
+  r2 <- matrix(NA_real_, nlearners^(calc_ensemble), sample_folds)
+  colnames(mspe) <- colnames(r2) <-
+    paste("sample fold ", seq_len(sample_folds))
   weights <- array(0, dim = c(nlearners, nensb, sample_folds))
 
   for (res in fold_results) {
@@ -241,6 +243,7 @@ crosspred <- function(y, X, Z = NULL,
     oos_fitted[res$oos_indices, ] <- res$oos_fitted_rows
     if (!is.null(res$weights_k)) weights[, , k] <- res$weights_k
     if (!is.null(res$mspe_k)) mspe[, k] <- res$mspe_k
+    if (!is.null(res$r2_k)) r2[, k] <- res$r2_k
     is_fitted[[k]] <- res$is_fitted_k
     auxiliary_fitted[[k]] <- res$auxiliary_fitted_k
     if (!is.null(res$oos_fitted_bylearner_rows)) {
@@ -270,13 +273,21 @@ crosspred <- function(y, X, Z = NULL,
     }#FOR
     is_fitted <- new_is_fitted
   }#IF
+  # Compute per-learner OOS residuals (not computed for FPLIV w/ LIE...)
+  oos_resid_bylearner <- if (is.numeric(y) && !is.list(y)) {
+    drop(y) - oos_fitted_bylearner
+  } else {
+    NULL
+  }#IFELSE
+
   # Organize and return output
-  if (!calc_ensemble) weights <- mspe <- NULL
+  if (!calc_ensemble) weights <- mspe <- r2 <- NULL
   output <- list(oos_fitted = oos_fitted,
-                 weights = weights, mspe = mspe,
+                 weights = weights, mspe = mspe, r2 = r2,
                  is_fitted = is_fitted,
                  auxiliary_fitted = auxiliary_fitted,
                  oos_fitted_bylearner = oos_fitted_bylearner,
+                 oos_resid_bylearner = oos_resid_bylearner,
                  is_fitted_bylearner = is_fitted_bylearner,
                  auxiliary_fitted_bylearner = auxiliary_fitted_bylearner)
   return(output)
@@ -327,6 +338,11 @@ crosspred_compute_fold <- function(
   weights_k <- if (calc_ensemble) mdl_fit$weights else NULL
   mspe_k <- if (calc_ensemble && !is.null(mdl_fit$cv_res)) {
     mdl_fit$cv_res$mspe
+  } else {
+    NULL
+  }
+  r2_k <- if (calc_ensemble && !is.null(mdl_fit$cv_res)) {
+    mdl_fit$cv_res$r2
   } else {
     NULL
   }
@@ -384,6 +400,7 @@ crosspred_compute_fold <- function(
     oos_fitted_rows = oos_fitted_rows,
     weights_k = weights_k,
     mspe_k = mspe_k,
+    r2_k = r2_k,
     weight_colnames = weight_colnames,
     is_fitted_k = is_fitted_k,
     auxiliary_fitted_k = auxiliary_fitted_k,

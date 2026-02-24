@@ -18,3 +18,16 @@ Named vector (single ensemble) or matrix
 \description{
 Extract Model Coefficients
 }
+\examples{
+\donttest{
+# Fit a PLM and extract coefficients
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace")]
+plm_fit = ddml_plm(y, D, X,
+                    learners = list(what = ols),
+                    sample_folds = 2, silent = TRUE)
+coef(plm_fit)
+}
+
+}

@@ -59,10 +59,11 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>   Estimate Std. Error t value Pr(>|t|)
-#>     -0.244      0.196   -1.25    0.213
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 3
+#> 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.244      0.196   -1.25     0.21
 ```
 (Note that estimation here is based on a random subsample of 5,000 observations. The results can thus not readily be compared to those in Angrist & Evans (1998).)
 
@@ -98,10 +99,11 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>       Estimate Std. Error t value Pr(>|t|)
-#> nnls1   -0.212      0.188   -1.12    0.261
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 3  Stacking: short-stack
+#> 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.223      0.187    -1.2     0.23
 ```
 
 It is often insightful to see which base learners contribute the most to the final reduced form estimates. The below snippet shows the weights for the reduced forms $E[Y|Z=0,X]$ and $E[Y|Z=1,X]$:
@@ -110,14 +112,14 @@ It is often insightful to see which base learners contribute the most to the fin
 cat("Stacking weights for E[Y|Z=0, X]: \n")
 #> Stacking weights for E[Y|Z=0, X]:
 t(late_fit$weights$y_X_Z0)
-#>           [,1]      [,2]      [,3]
-#> nnls1 0.228205 0.5782117 0.1935833
+#>            [,1] [,2]      [,3]
+#> nnls1 0.9668285    0 0.0331715
 
 cat("Stacking weights for E[Y|Z=1, X]: \n")
 #> Stacking weights for E[Y|Z=1, X]:
 t(late_fit$weights$y_X_Z1)
-#>            [,1]      [,2]      [,3]
-#> nnls1 0.2389935 0.6920264 0.0689801
+#>       [,1]      [,2]      [,3]
+#> nnls1    0 0.8027662 0.1972338
 ```
 
 # Estimation using Different Types of Short-Stacking
@@ -141,13 +143,24 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 3,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>            Estimate Std. Error t value Pr(>|t|)
-#> nnls         -0.232      0.190   -1.22    0.222
-#> singlebest   -0.232      0.190   -1.22    0.223
-#> ols          -0.237      0.190   -1.24    0.214
-#> average      -0.223      0.188   -1.18    0.237
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 3  Stacking: short-stack
+#> 
+#> Ensemble type: nnls 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.231      0.187   -1.24     0.22
+#> 
+#> Ensemble type: singlebest 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.229      0.187   -1.22     0.22
+#> 
+#> Ensemble type: ols 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.231      0.187   -1.23     0.22
+#> 
+#> Ensemble type: average 
+#>      Estimate Std. Error t value Pr(>|t|)
+#> LATE   -0.229      0.189   -1.21     0.23
 ```
 
 # References

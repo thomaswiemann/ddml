@@ -6,6 +6,18 @@
 #' @return Named vector (single ensemble) or matrix
 #'     (multiple ensembles).
 #'
+#' @examples
+#' \donttest{
+#' # Fit a PLM and extract coefficients
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' coef(plm_fit)
+#' }
+#'
 #' @export
 coef.ddml <- function(object, ...) {
   cf <- object$coefficients
@@ -29,6 +41,18 @@ coef.ddml <- function(object, ...) {
 #'
 #' @return A p x p variance-covariance matrix.
 #'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' vcov(plm_fit)
+#' vcov(plm_fit, type = "HC3")
+#' }
+#'
 #' @export
 vcov.ddml <- function(object, ensemble_idx = 1,
                       type = "HC1", ...) {
@@ -46,14 +70,22 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 #' @param object An object of class \code{ddml}.
 #' @param parm Not used (included for generic compatibility).
 #' @param level Confidence level. Default 0.95.
-#' @param ensemble_idx Integer index of the ensemble type to
-#'     use. Defaults to 1 (first ensemble type).
-#' @param type Character string specifying the
-#'     variance-covariance estimator. One of \code{"HC1"}
-#'     (default), \code{"HC0"}, or \code{"HC3"}.
+#' @inheritParams vcov.ddml
 #' @param ... Currently unused.
 #'
 #' @return A matrix with columns for lower and upper bounds.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' confint(plm_fit)
+#' confint(plm_fit, level = 0.90)
+#' }
 #'
 #' @importFrom stats vcov
 #' @export
@@ -89,6 +121,18 @@ confint.ddml <- function(object, parm, level = 0.95,
 #' @param ... Currently unused.
 #'
 #' @return An object of class \code{summary.ddml}.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' summary(plm_fit)
+#' summary(plm_fit, type = "HC3")
+#' }
 #'
 #' @export
 summary.ddml <- function(object, type = "HC1", ...) {

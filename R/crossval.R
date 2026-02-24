@@ -135,11 +135,14 @@ crossval <- function(y, X, Z = NULL,
   oos_resid <- matrix(oos_resid, nobs, nlearners)
   oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSE]
 
-  # Compute MSPE by learner
+  # Compute MSPE and R-squared by learner
   mspe <- colMeans(oos_resid^2)
+  y_var <- as.numeric(stats::var(y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_,
+                                                   length(mspe))
 
   # Organize and return output
-  output <- list(mspe = mspe,
+  output <- list(mspe = mspe, r2 = r2,
                  oos_resid = oos_resid,
                  cv_subsamples = cv_subsamples)
   return(output)

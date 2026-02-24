@@ -12,7 +12,9 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = requireNamespace("Matrix")
+  eval = requireNamespace("Matrix"),
+  warning = FALSE,
+  message = FALSE
 )
 ```
 

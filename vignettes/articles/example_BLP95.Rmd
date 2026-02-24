@@ -149,10 +149,15 @@ lasso_fit <- ddml_fpliv(y, D = D,
                         Z = ZL, X = XL,
                         learners = learner,
                         sample_folds = 10,
-                        silent = T)
-round(summary(lasso_fit)[2, , 1], 4)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>    -0.1473     0.0090   -16.3142     0.0000
+                        silent = TRUE)
+summary(lasso_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 10
+#> 
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r -0.14723    0.00901   -16.3   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 # Estimating the Flexible Partially Linear IV Model with Multiple Learners
@@ -199,12 +204,17 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            Z = Z_c, X = X_c,
                            learners = learners,
                            ensemble_type = c("nnls1"),
-                           shortstack = T,
+                           shortstack = TRUE,
                            sample_folds = 10,
-                           silent = T)
-t(round(summary(stacking_fit), 4)[2, , ])
-#>      Estimate Std. Error  t value Pr(>|t|)
-#> [1,]  -0.0982     0.0092 -10.7008        0
+                           silent = TRUE)
+summary(stacking_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 10  Stacking: short-stack
+#> 
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r -0.08145    0.00764   -10.7   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
 
@@ -213,13 +223,13 @@ To better understand the composition of the final estimator, it is often useful 
 
 ```r
 sapply(stacking_fit$weights, round, 4)
-#>         y_X D1_X  D1_XZ
-#> [1,] 0.0000 0.00 0.0000
-#> [2,] 0.0000 0.00 0.0000
-#> [3,] 0.0000 0.00 0.0000
-#> [4,] 0.0000 0.00 0.0000
-#> [5,] 0.4394 0.45 0.3804
-#> [6,] 0.5606 0.55 0.6196
+#>         y_X   D1_X  D1_XZ
+#> [1,] 0.0000 0.0000 0.0000
+#> [2,] 0.0002 0.0000 0.0000
+#> [3,] 0.0000 0.0000 0.0000
+#> [4,] 0.0000 0.0000 0.0000
+#> [5,] 0.4305 0.4593 0.3068
+#> [6,] 0.5693 0.5407 0.6932
 ```
 
 # Elasticities
@@ -254,11 +264,11 @@ Double/debiased machine learning estimates using only a single lasso base learne
 ```r
 # ddml-lasso implied number of products with inelastic demand
 compute_inelastic_demand(lasso_fit$coef)
-#> [1] 596
+#> [1] 598
 
 # ddml-stacking implied number of products with inelastic demand
 compute_inelastic_demand(stacking_fit$coef)
-#> [1] 1417
+#> [1] 1608
 ```
 
 # Bonus: Post-Lasso Estimates without Sample-Splitting
@@ -308,12 +318,17 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         Z = Zr_, X = Xr_,
                         learners = learner,
                         ensemble_type = c("nnls1"),
-                        shortstack = T,
+                        shortstack = TRUE,
                         sample_folds = 10,
-                        silent = T)
-round(summary(stacking_r_fit)[2, , 1], 4)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>    -0.1044     0.0128    -8.1682     0.0000
+                        silent = TRUE)
+summary(stacking_r_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 10  Stacking: short-stack
+#> 
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r  -0.1079     0.0104   -10.4   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
@@ -321,9 +336,9 @@ The similarity of the coefficient estimates to the initial stacking estimates su
 
 ```r
 sapply(stacking_r_fit$weights, round, 4)
-#>       y_X   D1_X  D1_XZ
-#> [1,] 0.08 0.1287 0.0439
-#> [2,] 0.92 0.8713 0.9561
+#>         y_X   D1_X  D1_XZ
+#> [1,] 0.3116 0.1618 0.0621
+#> [2,] 0.6884 0.8382 0.9379
 ```
 
 The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.
