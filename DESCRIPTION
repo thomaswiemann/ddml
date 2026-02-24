@@ -41,7 +41,6 @@ Suggests:
     parallel,
     rmarkdown,
     sandwich,
-    testthat (>= 3.0.0),
-    texreg
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

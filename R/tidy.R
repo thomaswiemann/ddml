@@ -6,23 +6,46 @@ generics::tidy
 #' @export
 generics::glance
 
-#' Tidy a ddml object
+#' Tidy a ddml Object
 #'
-#' @param x A `ddml` object.
-#' @param conf.int Logical indicating whether or not to include a confidence interval.
-#' @param conf.level The confidence level to use.
-#' @param ... Additional arguments passed to summary method.
+#' Extracts coefficient estimates, standard errors, test
+#' statistics, and p-values from a \code{ddml} estimator in a
+#' format compatible with \pkg{modelsummary} and the
+#' \pkg{broom} ecosystem.
 #'
-#' @return A data.frame containing tidy coefficients per ensemble type.
+#' @param x A \code{ddml} object.
+#' @param ensemble_idx Integer index of the ensemble type to
+#'     report. Defaults to 1 (first ensemble type). Set to
+#'     \code{NULL} to return results for all ensemble types.
+#' @param conf.int Logical. Include confidence interval
+#'     columns? Default \code{FALSE}.
+#' @param conf.level Confidence level for intervals.
+#'     Default 0.95.
+#' @param ... Currently unused.
+#'
+#' @return A \code{data.frame} with columns \code{term},
+#'     \code{estimate}, \code{std.error}, \code{statistic},
+#'     \code{p.value}, and \code{ensemble_type}. If
+#'     \code{conf.int = TRUE}, also \code{conf.low} and
+#'     \code{conf.high}.
+#'
+#' @family ddml
 #' @export
-tidy.ddml <- function(x, conf.int = FALSE, conf.level = 0.95, ...) {
+tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
+                      conf.level = 0.95, ...) {
   s <- summary(x)
   inf <- s$inf_results
   nensb <- dim(inf)[3]
   p <- dim(inf)[1]
 
+  if (is.null(ensemble_idx)) {
+    j_seq <- seq_len(nensb)
+  } else {
+    j_seq <- ensemble_idx
+  }#IFELSE
+
   rows <- list()
-  for (j in seq_len(nensb)) {
+  for (j in j_seq) {
     for (k in seq_len(p)) {
       row <- data.frame(
         term = dimnames(inf)[[1]][k],
@@ -44,12 +67,20 @@ tidy.ddml <- function(x, conf.int = FALSE, conf.level = 0.95, ...) {
   do.call(rbind, rows)
 }#TIDY.DDML
 
-#' Glance at a ddml object
+#' Glance at a ddml Object
 #'
-#' @param x A `ddml` object.
-#' @param ... Additional arguments.
+#' Returns a one-row summary of model-level statistics,
+#' compatible with \pkg{modelsummary} and the \pkg{broom}
+#' ecosystem.
 #'
-#' @return A one-row data.frame with model metadata.
+#' @param x A \code{ddml} object.
+#' @param ... Currently unused.
+#'
+#' @return A one-row \code{data.frame} with columns
+#'     \code{nobs}, \code{sample_folds}, \code{shortstack},
+#'     \code{ensemble_type}, and \code{model_type}.
+#'
+#' @family ddml
 #' @export
 glance.ddml <- function(x, ...) {
   data.frame(
