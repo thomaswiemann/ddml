@@ -7,7 +7,7 @@ test_that("tidy and glance broom formatters work correctly", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(5) + rnorm(nobs)
   
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_ate(y, D, X,
                     learners = learners,
@@ -51,7 +51,7 @@ test_that("tidy respects type argument", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_ate(y, D, X,
                     learners = learners,

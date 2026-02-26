@@ -36,9 +36,9 @@
 #' # Fit an ensemble of ols, lasso, and ridge
 #' ens_fit = ensemble(y, X,
 #'                    type = "nnls",
-#'                    learners = list(list(fun = ols),
-#'                                   list(fun = mdl_glmnet),
-#'                                   list(fun = mdl_glmnet,
+#'                    learners = list(list(what = ols),
+#'                                   list(what = mdl_glmnet),
+#'                                   list(what = mdl_glmnet,
 #'                                        args = list(alpha = 0))),
 #'                    cv_folds = 5,
 #'                    silent = TRUE)
@@ -53,6 +53,9 @@ ensemble <- function(y, X, Z = NULL,
                      cv_results = NULL,
                      custom_weights = NULL,
                      silent = FALSE) {
+  # Normalize learner specs
+  learners <- normalize_learners(learners)
+
   # Data parameters
   nlearners <- length(learners)
   # Check if y is constant
@@ -98,7 +101,8 @@ ensemble <- function(y, X, Z = NULL,
       learners[[m]]$assign_Z <- 1:ncol(Z)
     # Else fit on data. Begin by selecting the model constructor and the
     #     variable assignment.
-    mdl_fun <- list(what = learners[[m]]$fun, args = learners[[m]]$args)
+    mdl_fun <- list(what = learners[[m]]$what,
+                    args = learners[[m]]$args)
     assign_X <- learners[[m]]$assign_X
     assign_Z <- learners[[m]]$assign_Z
     # Then fit the model
@@ -191,8 +195,8 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 #' # Compute stacking weights via NNLS
 #' ew = ensemble_weights(y, X,
 #'                       type = "nnls",
-#'                       learners = list(list(fun = ols),
-#'                                      list(fun = mdl_glmnet)),
+#'                       learners = list(list(what = ols),
+#'                                      list(what = mdl_glmnet)),
 #'                       cv_folds = 5,
 #'                       silent = TRUE)
 #' ew$weights

@@ -7,7 +7,7 @@ test_that("ddml_fpliv computes with a single model", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(list(what = ols))
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                sample_folds = 3,
@@ -31,7 +31,7 @@ test_that("ddml_fpliv computes with a single model and dependence", {
   D <- Z + X %*% runif(40) + eps
   y <- D + X %*% runif(40) + 0.1 * eps + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols))
+  learners <- list(list(what = ols))
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                cluster_variable = cluster_variable,
@@ -50,8 +50,8 @@ test_that("ddml_fpliv computes with an ensemble procedure", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -72,8 +72,8 @@ test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -95,8 +95,8 @@ test_that("ddml_fpliv computes with multiple ensemble procedures", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -119,8 +119,8 @@ test_that("ddml_fpliv computes with custom weights", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -143,8 +143,8 @@ test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -167,8 +167,8 @@ test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D,
                                Z = as(Z, "sparseMatrix"),
@@ -192,13 +192,13 @@ test_that("ddml_fpliv computes with different sets of learners", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
-  learners_DXZ <- list(list(fun = ols),
-                       list(fun = ols))
-  learners_DX <- list(list(fun = ols),
-                      list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
+  learners_DXZ <- list(list(what = ols),
+                       list(what = ols))
+  learners_DX <- list(list(what = ols),
+                      list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -223,8 +223,8 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -248,8 +248,8 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -293,8 +293,8 @@ test_that("ddml_fpliv computes with an ensemble procedure, multi D", {
   D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1], rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -315,8 +315,8 @@ test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
   D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1], rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -339,8 +339,8 @@ test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
               X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   suppressWarnings({
     ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
@@ -364,8 +364,8 @@ test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
   D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1], rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,

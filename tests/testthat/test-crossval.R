@@ -4,7 +4,7 @@ test_that("crossval_compute returns residuals (w/o instruments)", {
   y <- 1 + X %*% (10*runif(100) * (runif(100) < 0.05)) + rnorm(100)
   # Define arguments
   test_sample <- sample(1:length(y), 33)
-  learner <- list(fun = ols)
+  learner <- list(what = ols)
   # Compute cross-validation instance
   oos_resid <- crossval_compute(test_sample, learner,
                                 y, X, Z = NULL)
@@ -18,9 +18,9 @@ test_that("crossval returns residuals by learner (w/o instruments)", {
   nonzero_X <- (runif(100) < 0.05)
   y <- X %*% (10*runif(100) * nonzero_X) + rnorm(100)
   # Define arguments
-  learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = ols,
+  learners <- list(list(what = ols),
+                 list(what = ols),
+                 list(what = ols,
                       assign_X = which(nonzero_X)))
   # Compute cross-validation instance
   cv_res <- crossval(y, X, Z = NULL,
@@ -52,9 +52,9 @@ test_that("crossval returns residuals by learner in correct order", {
   }#FOR
   # Compute cross-validation with crossval using the same subsamples
   cv_res <- crossval(y, X,
-                     learners = list(list(fun = ols,
+                     learners = list(list(what = ols,
                                           assign_X = 1:5),
-                                     list(fun = ols,
+                                     list(what = ols,
                                           assign_X = 1:10)),
                      cv_subsamples = subsample_list,
                      silent = T)
@@ -70,9 +70,9 @@ test_that("crossval returns residuals by learner (w/ instruments)", {
   Z <- matrix(rnorm(100*10), 100, 10)
   D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(100)
   # Define arguments
-  learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = mdl_glmnet))
+  learners <- list(list(what = ols),
+                 list(what = ols),
+                 list(what = mdl_glmnet))
   # Compute cross-validation instance
   cv_res <- crossval(D, X, Z,
                      learners,
@@ -90,8 +90,8 @@ test_that("crossval returns identical results with parallel", {
   nobs <- 100
   X <- cbind(1, matrix(rnorm(nobs * 39), nobs, 39))
   y <- X %*% runif(40) + rnorm(nobs)
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   cv_subs <- generate_subsamples(nobs, 3)
   # Sequential
   res_seq <- crossval(y, X, learners = learners,

@@ -49,6 +49,42 @@ trim_propensity_scores <- function(m_X, trim, ensemble_type) {
   m_X
 }#TRIM_PROPENSITY_SCORES
 
+# Detect whether learners is a single-learner spec or stacking.
+# Single: list(what = fn, args = ...) — first element is not a list.
+# Stacking: list(list(what = fn), list(what = fn2)) — first element is a list.
+is_single_learner <- function(learners) {
+  is.list(learners) && !is.list(learners[[1]])
+}#IS_SINGLE_LEARNER
+
+# Ensure all learner specs have $what set.
+# Accepts $fun as deprecated alias. Removes $fun after resolving.
+normalize_learners <- function(learners) {
+  resolve <- function(l) {
+    if (!is.null(l$what)) return(l$what)
+    if (!is.null(l$fun)) {
+      if (is.null(getOption("ddml.fun_deprecated_warned"))) {
+        message("Note: 'fun' in learner specifications ",
+                "is deprecated. Use 'what' instead.")
+        options(ddml.fun_deprecated_warned = TRUE)
+      }#IF
+      return(l$fun)
+    }#IF
+    stop("Learner must have a 'what' or 'fun' element.",
+         call. = FALSE)
+  }#RESOLVE
+
+  if (is_single_learner(learners)) {
+    learners$what <- resolve(learners)
+    learners$fun <- NULL
+    return(learners)
+  }#IF
+  for (i in seq_along(learners)) {
+    learners[[i]]$what <- resolve(learners[[i]])
+    learners[[i]]$fun <- NULL
+  }#FOR
+  learners
+}#NORMALIZE_LEARNERS
+
 # Input validation checks for DDML estimators
 validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL, learners = NULL,
                             sample_folds = NULL, cv_folds = NULL,
@@ -92,14 +128,17 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL, learners = N
     if (!is.list(learners)) {
       stop("learners must be a list.")
     } else {
-      is_single <- "what" %in% names(learners)
+      is_single <- is_single_learner(learners)
       if (!is_single) {
         for (l in learners) {
-          if (!is.list(l) || !"fun" %in% names(l)) {
-            stop("learners structure is invalid.")
-          }
-        }
-      }
+          if (!is.list(l) ||
+              (is.null(l$what) && is.null(l$fun))) {
+            stop("Each stacking learner must have a ",
+                 "'what' or 'fun' element.",
+                 call. = FALSE)
+          }#IF
+        }#FOR
+      }#IF
     }
   }
 
@@ -135,7 +174,7 @@ validate_custom_weights <- function(custom_weights, learners) {
     stop("custom_ensemble_weights must be numeric.")
   }
   custom_weights <- as.matrix(custom_weights)
-  n_learners <- if ("what" %in% names(learners)) 1 else length(learners)
+  n_learners <- if (is_single_learner(learners)) 1 else length(learners)
   if (nrow(custom_weights) != n_learners) {
     stop("Number of rows in custom_ensemble_weights must match the number of base learners.")
   }

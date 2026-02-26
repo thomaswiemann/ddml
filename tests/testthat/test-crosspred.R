@@ -35,9 +35,9 @@ test_that("crosspred computes with ensemble procedures", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                 list(fun = ols),
-                 list(fun = ols))
+  learners <- list(list(what = ols),
+                 list(what = ols),
+                 list(what = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, X, Z,
                              learners,
@@ -60,9 +60,9 @@ test_that("crosspred computes with ensemble procedures & custom weights", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
   # Define custom weights
   custom_ensemble_weights <- diag(1, length(learners))
   colnames(custom_ensemble_weights) <- c("mdl_ols1", "mdl_ols2", "mdl_ols3")
@@ -89,8 +89,8 @@ test_that("crosspred computes with ensemble procedures and sparse matrices", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                 list(fun = ols))
+  learners <- list(list(what = ols),
+                 list(what = ols))
   # Compute cross-sample predictions
   crosspred_res <- crosspred(y, as(X, "sparseMatrix"),
                              as(Z, "sparseMatrix"),
@@ -113,9 +113,9 @@ test_that("crosspred computes auxilliary predictions", {
   X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
   y <-  X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
   # Compute cross-sample and auxilliary predictions
   crosspred_res <- crosspred(y, X,
                              learners = learners,
@@ -137,8 +137,8 @@ test_that("crosspred returns identical results with parallel", {
   nobs <- 100
   X <- cbind(1, matrix(rnorm(nobs * 39), nobs, 39))
   y <- X %*% runif(40) + rnorm(nobs)
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   splits <- get_sample_splits(seq_len(nobs),
                               sample_folds = 3, cv_folds = 3)
   # Sequential

@@ -156,26 +156,26 @@ set_X <- 1:ncol(X); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
 set_Z <- 1:ncol(Z); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 # Base learners
-learners <- list(list(fun = ols, # ols with the baseline set
+learners <- list(list(what = ols, # ols with the baseline set
                       assign_X = set_X,
                       assign_Z = set_Z),
-                 list(fun = ols, # ols with the extended set
+                 list(what = ols, # ols with the extended set
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_glmnet, # lasso with the extended set
+                 list(what = mdl_glmnet, # lasso with the extended set
                       args = list(alpha = 1),
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_glmnet, # ridge with the extended set
+                 list(what = mdl_glmnet, # ridge with the extended set
                       args = list(alpha = 0),
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_ranger, # random forests with the baseline set
+                 list(what = mdl_ranger, # random forests with the baseline set
                       args = list(num.trees = 1000,
                                   min.node.size = 10),
                       assign_X = set_X,
                       assign_Z = set_Z),
-                 list(fun = mdl_xgboost, # boosted trees with the baseline set
+                 list(what = mdl_xgboost, # boosted trees with the baseline set
                       args = list(nrounds = 300),
                       assign_X = set_X,
                       assign_Z = set_Z))
@@ -256,8 +256,8 @@ From the stacking weights above, we know that the double/debaised machine learni
 
 ```{r}
 # Base learner
-learner <- list(list(fun = ols),
-                list(fun = mdl_xgboost,
+learner <- list(list(what = ols),
+                list(what = mdl_xgboost,
                      args = list(nrounds = 300)))
 
 # Compute short-stacked IV estimate

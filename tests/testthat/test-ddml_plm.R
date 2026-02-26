@@ -45,9 +45,9 @@ test_that("ddml_plm computes with an ensemble procedure", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners = learners,
@@ -67,9 +67,9 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
@@ -91,9 +91,9 @@ test_that("ddml_plm computes with multiple ensemble procedures & sparse mats", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, as(X, "sparseMatrix"),
                            learners,
@@ -114,9 +114,9 @@ test_that("ddml_plm computes w/ an ensemble procedure & shortstacking", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners = learners,
@@ -136,9 +136,9 @@ test_that("ddml_plm computes w/ multiple ensemble procedures & shortstacking", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
@@ -160,8 +160,8 @@ test_that("ddml_plm computes w/ ensemble procedures & custom weights", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
@@ -230,9 +230,9 @@ test_that("summary.ddml_plm computes with multiple ensemble procedures", {
   D <-  X %*% runif(40) + rnorm(nobs)
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
@@ -258,9 +258,9 @@ test_that("ddml_plm computes with an ensemble procedure and multivariate D", {
   D <-  cbind(X %*% runif(40) + rnorm(nobs), rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners = learners,
@@ -280,9 +280,9 @@ test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
   D <-  cbind(X %*% runif(40) + rnorm(nobs), rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = mdl_glmnet,
+  learners <- list(list(what = mdl_glmnet,
                         args = list(alpha = 0.5)),
-                   list(fun = ols))
+                   list(what = ols))
   # Compute DDML PLM estimator
   ddml_plm_fit <- ddml_plm(y, D, X,
                            learners,
@@ -305,7 +305,7 @@ test_that("ddml_plm backward-compat cv_subsamples_list works with message", {
   # Pre-generate splits
   splits <- get_sample_splits(seq_len(nobs),
                               sample_folds = 3, cv_folds = 3)
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   # Call with deprecated cv_subsamples_list — should emit message
   expect_message(
     ddml_plm(y, D, X,

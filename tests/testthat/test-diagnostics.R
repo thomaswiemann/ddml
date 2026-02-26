@@ -31,7 +31,7 @@ test_that("diagnostics works with PLM multiple learners", {
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_plm(y, D, X,
                     learners = learners,
@@ -83,7 +83,7 @@ test_that("diagnostics with CVC", {
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_plm(y, D, X,
                     learners = learners,
@@ -136,7 +136,7 @@ test_that("diagnostics r2 matches manual calculation", {
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_plm(y, D, X,
                     learners = learners,

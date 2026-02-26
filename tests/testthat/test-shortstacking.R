@@ -5,9 +5,9 @@ test_that("shortstacking computes with ensemble procedures & custom weights", {
   Z <- matrix(rnorm(nobs*10), nobs, 10) # overidentified
   y <-  X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
   # Compute cross-sample predictions
   shortstacking_res <- shortstacking(y, X, Z,
                              learners,

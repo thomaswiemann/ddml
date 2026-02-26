@@ -62,9 +62,9 @@
 #'
 #' # Compare ols, lasso, and ridge using 4-fold cross-validation
 #' cv_res <- crossval(y, X,
-#'                    learners = list(list(fun = ols),
-#'                                    list(fun = mdl_glmnet),
-#'                                    list(fun = mdl_glmnet,
+#'                    learners = list(list(what = ols),
+#'                                    list(what = mdl_glmnet),
+#'                                    list(what = mdl_glmnet,
 #'                                         args = list(alpha = 0))),
 #'                    cv_folds = 4,
 #'                    silent = TRUE)
@@ -81,6 +81,9 @@ crossval <- function(y, X, Z = NULL,
   num_cores <- p$num_cores
   parallel_export <- p$export
   parallel_packages <- p$packages
+
+  # Normalize learner specs: resolve fun/what before parallel dispatch
+  learners <- normalize_learners(learners)
 
   # Data parameters
   nobs <- length(y)
@@ -155,7 +158,7 @@ crossval_compute <- function(test_sample, learner,
   if (is.null(learner$assign_Z) && !is.null(Z))
     learner$assign_Z <- seq_len(ncol(Z))
 
-  mdl_fun <- list(what = learner$fun, args = learner$args)
+  mdl_fun <- list(what = learner$what, args = learner$args)
   assign_X <- learner$assign_X
   assign_Z <- learner$assign_Z
 

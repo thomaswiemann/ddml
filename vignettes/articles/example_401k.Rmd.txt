@@ -81,17 +81,17 @@ The estimate is nearly identical to the estimate using just gradient boosting.
 
 ```{r}
 # Specify set of learners
-learners <- list(list(fun = ols),
-                 list(fun = mdl_glmnet),
-                 list(fun = mdl_ranger,
+learners <- list(list(what = ols),
+                 list(what = mdl_glmnet),
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 4)),
-                 list(fun = mdl_ranger,
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 12)),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 100)),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 300)))
 
 # PLM with short-stacking
@@ -129,24 +129,24 @@ X_extended <- 5:dim(X_c)[2] # indicators & series expansion
 
 ```{r}
 # Specify base learners with different sets of controls
-learners <- list(list(fun = ols,
+learners <- list(list(what = ols,
                       assign_X = X_baseline),
-                 list(fun = ols,
+                 list(what = ols,
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 12),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 100),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 300),
                       assign_X = X_baseline))
 
@@ -174,27 +174,27 @@ Equipped with the included ``mdl_glm`` wrapper for generalized linear models (se
 
 ```{r}
 # Specify an additional set of learners for the reduced form E[D|X]
-learners_DX <- list(list(fun = mdl_glm,
+learners_DX <- list(list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_baseline),
-                 list(fun = mdl_glm,
+                 list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
+                 list(what = mdl_ranger,
                       args = list(num.trees = 250,
                                   max.depth = 12),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 100),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
+                 list(what = mdl_xgboost,
                       args = list(nrounds = 300),
                       assign_X = X_baseline))
 

@@ -76,9 +76,9 @@ Since the statistical properties of machine learners depend heavily on the under
 - gradient boosting (see ``?mdl_xgboost``)
 
 ```{r}
-learners_multiple <- list(list(fun = ols),
-                          list(fun = mdl_glmnet),
-                          list(fun = mdl_xgboost,
+learners_multiple <- list(list(what = ols),
+                          list(what = mdl_glmnet),
+                          list(what = mdl_xgboost,
                                args = list(nrounds = 10,
                                            max_depth = 1)))
 ```

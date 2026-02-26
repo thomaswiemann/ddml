@@ -6,7 +6,7 @@ test_that("standard S3 generic methods work correctly", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_ate(y, D, X,
                     learners = learners,
@@ -51,7 +51,7 @@ test_that("type argument threads through S3 methods", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(5) + rnorm(nobs)
 
-  learners <- list(list(fun = ols), list(fun = ols))
+  learners <- list(list(what = ols), list(what = ols))
   suppressWarnings({
     fit <- ddml_ate(y, D, X,
                     learners = learners,
@@ -106,10 +106,12 @@ test_that("type works with PLM estimator", {
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  fit <- ddml_plm(y, D, X,
-                  learners = list(what = ols),
-                  sample_folds = 2,
-                  silent = TRUE)
+  suppressWarnings({
+    fit <- ddml_plm(y, D, X,
+                    learners = list(what = ols),
+                    sample_folds = 2,
+                    silent = TRUE)
+  })
 
   V_hc0 <- vcov(fit, type = "HC0")
   V_hc1 <- vcov(fit, type = "HC1")

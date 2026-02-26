@@ -65,8 +65,8 @@
 #' #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #' #     learner are also calculated.
 #' shortstack_res <- shortstacking(y, X,
-#'                                 learners = list(list(fun = ols),
-#'                                                 list(fun = mdl_glmnet)),
+#'                                 learners = list(list(what = ols),
+#'                                                 list(what = mdl_glmnet)),
 #'                                 ensemble_type = c("average",
 #'                                                   "nnls1",
 #'                                                   "singlebest"),
@@ -91,7 +91,7 @@ shortstacking <- function(y, X, Z = NULL,
   nlearners <- length(learners)
 
   # Throw error if no ensemble is estimated
-  calc_ensemble <- !("what" %in% names(learners))
+  calc_ensemble <- !is_single_learner(learners)
   if (!calc_ensemble) {
     stop("shortstacking cannot be estimated with a single learner.")
   }#IF

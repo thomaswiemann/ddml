@@ -104,8 +104,8 @@ test_that("ddml_late computes with an ensemble procedure", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLM estimator
   suppressWarnings({
     ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -129,8 +129,8 @@ test_that("ddml_late computes w/ multiple ensembles & custom weights", {
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLM estimator
   suppressWarnings({
     ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -158,8 +158,8 @@ test_that("ddml_late computes with multiple ensemble procedures + perfect compli
   D[Z == 1] <- 1 # perfect compliance
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLM estimator
   suppressWarnings({
     ddml_late_fit <- ddml_late(y, D, Z, X,
@@ -185,8 +185,8 @@ test_that("ddml_late computes w/ mult ensembles, custom weights, & shortstack", 
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLM estimator
   suppressWarnings({
     ddml_late_fit <- ddml_late(y, D, Z, X,

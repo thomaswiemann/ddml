@@ -104,9 +104,9 @@
 #' weights_everylearner <- diag(1, 3)
 #' colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 #' ate_fit <- ddml_ate(y, D, X,
-#'                     learners = list(list(fun = ols),
-#'                                     list(fun = mdl_glmnet),
-#'                                     list(fun = mdl_glmnet,
+#'                     learners = list(list(what = ols),
+#'                                     list(what = mdl_glmnet),
+#'                                     list(what = mdl_glmnet,
 #'                                          args = list(alpha = 0))),
 #'                     ensemble_type = 'nnls',
 #'                     custom_ensemble_weights = weights_everylearner,

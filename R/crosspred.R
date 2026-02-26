@@ -122,8 +122,8 @@
 #' #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #' #     learner are also calculated.
 #' crosspred_res <- crosspred(y, X,
-#'                            learners = list(list(fun = ols),
-#'                                            list(fun = mdl_glmnet)),
+#'                            learners = list(list(what = ols),
+#'                                            list(what = mdl_glmnet)),
 #'                            ensemble_type = c("average",
 #'                                              "nnls1",
 #'                                              "singlebest"),
@@ -162,10 +162,13 @@ crosspred <- function(y, X, Z = NULL,
     cv_subsamples <- cv_subsamples_list
   }#IF
 
+  # Normalize learner specs before parallel dispatch
+  learners <- normalize_learners(learners)
+
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
-  calc_ensemble <- !("what" %in% names(learners))
+  calc_ensemble <- !is_single_learner(learners)
   ncustom <- ncol(custom_ensemble_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)
   nensb <- length(ensemble_type) + ncustom

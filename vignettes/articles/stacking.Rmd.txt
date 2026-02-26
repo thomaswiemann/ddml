@@ -57,9 +57,9 @@ time_singlelearner <- system.time({
 
 time_shortstacking <- system.time({
   late_fit <- ddml_late(y, D, Z, X,
-                        learners = list(list(fun = ols),
-                                        list(fun = mdl_glmnet),
-                                        list(fun = mdl_xgboost,
+                        learners = list(list(what = ols),
+                                        list(what = mdl_glmnet),
+                                        list(what = mdl_xgboost,
                                              args = list(nrounds = 100,
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',
@@ -70,9 +70,9 @@ time_shortstacking <- system.time({
 
 time_stacking <- system.time({
   late_fit <- ddml_late(y, D, Z, X,
-                        learners = list(list(fun = ols),
-                                        list(fun = mdl_glmnet),
-                                        list(fun = mdl_xgboost,
+                        learners = list(list(what = ols),
+                                        list(what = mdl_glmnet),
+                                        list(what = mdl_xgboost,
                                              args = list(nrounds = 100,
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',

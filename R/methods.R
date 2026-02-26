@@ -137,7 +137,7 @@ confint.ddml <- function(object, parm, level = 0.95,
 #' @export
 summary.ddml <- function(object, type = "HC1", ...) {
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
-  single_learner <- ("what" %in% names(object$learners))
+  single_learner <- is_single_learner(object$learners)
   ens_type <- if (single_learner) {
     "single base learner"
   } else {

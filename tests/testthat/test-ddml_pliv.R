@@ -51,8 +51,8 @@ test_that("ddml_pliv computes with an ensemble procedure", {
   D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
@@ -73,8 +73,8 @@ test_that("ddml_pliv computes with multiple ensemble procedures", {
   D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
@@ -98,14 +98,14 @@ test_that("ddml_pliv computes with different sets of learners", {
   D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
-  learners_ZX <- list(list(fun = ols),
-                      list(fun = ols))
-  learners_DX <- list(list(fun = ols),
-                      list(fun = ols),
-                      list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
+  learners_ZX <- list(list(what = ols),
+                      list(what = ols))
+  learners_DX <- list(list(what = ols),
+                      list(what = ols),
+                      list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
@@ -130,14 +130,14 @@ test_that("ddml_pliv computes with different sets of learners & shortstack", {
   D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols),
-                   list(fun = ols))
-  learners_ZX <- list(list(fun = ols),
-                      list(fun = ols))
-  learners_DX <- list(list(fun = ols),
-                      list(fun = ols),
-                      list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols),
+                   list(what = ols))
+  learners_ZX <- list(list(what = ols),
+                      list(what = ols))
+  learners_DX <- list(list(what = ols),
+                      list(what = ols),
+                      list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
@@ -185,8 +185,8 @@ test_that("summary.ddml_pliv computes with custom ensemble weights", {
   D <-  X %*% runif(40) + Z %*% (1 + runif(1)) + UV[, 1]
   y <- D + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute DDML PLIV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
@@ -230,8 +230,8 @@ test_that("ddml_pliv computes with different ensembles and multivariate D,Z", {
   Z <- cbind(Z, rnorm(nobs))
   y <- rowSums(D) + X %*% runif(40) + UV[, 2]
   # Define arguments
-  learners <- list(list(fun = ols),
-                   list(fun = ols))
+  learners <- list(list(what = ols),
+                   list(what = ols))
   # Compute LIE-conform DDML IV estimator
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,

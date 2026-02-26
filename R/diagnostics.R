@@ -40,7 +40,7 @@ diagnostics <- function(object, cvc = FALSE,
   }#IF
 
   eq_names <- names(object$weights)
-  single_learner <- "what" %in% names(object$learners)
+  single_learner <- is_single_learner(object$learners)
   tables <- list()
 
   for (eq in eq_names) {
