@@ -306,16 +306,18 @@ test_that("ddml_plm backward-compat cv_subsamples_list works with message", {
   splits <- get_sample_splits(seq_len(nobs),
                               sample_folds = 3, cv_folds = 3)
   learners <- list(list(what = ols), list(what = ols))
-  # Call with deprecated cv_subsamples_list — should emit message
-  expect_message(
-    ddml_plm(y, D, X,
-             learners = learners,
-             ensemble_type = "ols",
-             sample_folds = 3,
-             subsamples = splits$subsamples,
-             cv_subsamples_list = splits$cv_subsamples,
-             silent = TRUE),
-    "cv_subsamples_list has been renamed")
+  # Call with deprecated cv_subsamples_list — should emit message + warning
+  expect_warning(
+    expect_message(
+      ddml_plm(y, D, X,
+               learners = learners,
+               ensemble_type = "ols",
+               sample_folds = 3,
+               splits = list(subsamples = splits$subsamples),
+               cv_subsamples_list = splits$cv_subsamples,
+               silent = TRUE),
+      "cv_subsamples_list has been renamed"),
+    "Deprecated split arguments detected")
 })#TEST_THAT
 
 test_that("ddml_plm computes with parallel", {
@@ -332,14 +334,107 @@ test_that("ddml_plm computes with parallel", {
   res_seq <- ddml_plm(y, D, X,
                       learners = learners,
                       sample_folds = 3,
-                      subsamples = splits$subsamples,
-                      silent = T)
+                      splits = list(subsamples = splits$subsamples),
+                      silent = TRUE)
   # Parallel
   res_par <- ddml_plm(y, D, X,
                       learners = learners,
                       sample_folds = 3,
-                      subsamples = splits$subsamples,
-                      silent = T,
+                      splits = list(subsamples = splits$subsamples),
+                      silent = TRUE,
                       parallel = list(cores = 2))
   expect_equal(res_par$coef, res_seq$coef)
 })#TEST_THAT
+
+test_that("ddml_plm fitted pass-through works", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  presplits <- get_sample_splits(seq_len(nobs),
+                                 sample_folds = 2,
+                                 cv_folds = 2)
+  fit <- ddml_plm(y, D, X,
+                  learners = learners,
+                  ensemble_type = "average",
+                  sample_folds = 2,
+                  splits = list(
+                    subsamples = presplits$subsamples,
+                    cv_subsamples = presplits$cv_subsamples),
+                  silent = TRUE)
+
+  # fitted should be stored with per-equation crossfit data
+  expect_true(!is.null(fit$fitted))
+  expect_true(!is.null(fit$fitted$y_X$crossfit_fitted))
+  expect_true(!is.null(fit$fitted$y_X$crossfit_resid))
+
+  # Pass-through with average ensemble reproduces exactly
+  fit2 <- ddml_plm(y, D, X,
+                   learners = learners,
+                   ensemble_type = "average",
+                   sample_folds = 2,
+                   silent = TRUE,
+                   fitted = fit$fitted,
+                   splits = fit$splits)
+  expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
+
+  # Pass-through with different ensemble gives valid result
+  fit_nnls <- ddml_plm(y, D, X,
+                       learners = learners,
+                       ensemble_type = "nnls1",
+                       sample_folds = 2,
+                       silent = TRUE,
+                       fitted = fit$fitted,
+                       splits = fit$splits)
+  expect_s3_class(fit_nnls, "ddml")
+  expect_true(is.numeric(coef(fit_nnls)))
+
+  expect_error(
+    ddml_plm(y, D, X,
+             learners = learners,
+             ensemble_type = "average",
+             sample_folds = 2,
+             silent = TRUE,
+             fitted = fit$fitted),
+    "must be supplied when 'fitted' is supplied"
+  )
+})
+
+test_that("ddml_plm legacy split args warn and still work", {
+  set.seed(101)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 4), nobs, 4)
+  D <- X %*% c(1, 0.5, 0.2, 0) + rnorm(nobs)
+  y <- D + X %*% c(0.3, 0.1, 0.4, 0.2) + rnorm(nobs)
+  learners <- list(what = ols)
+  splits <- get_sample_splits(seq_len(nobs),
+                              sample_folds = 3,
+                              cv_folds = 3)
+  fit_splits <- ddml_plm(
+    y, D, X,
+    learners = learners,
+    sample_folds = 3,
+    cv_folds = 3,
+    splits = list(
+      subsamples = splits$subsamples,
+      cv_subsamples = splits$cv_subsamples
+    ),
+    silent = TRUE
+  )
+  expect_warning(
+    fit_legacy <- ddml_plm(
+      y, D, X,
+      learners = learners,
+      sample_folds = 3,
+      cv_folds = 3,
+      subsamples = splits$subsamples,
+      cv_subsamples = splits$cv_subsamples,
+      silent = TRUE
+    ),
+    "Deprecated split arguments detected"
+  )
+  expect_equal(coef(fit_legacy), coef(fit_splits), tolerance = 1e-8)
+})

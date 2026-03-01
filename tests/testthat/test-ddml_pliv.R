@@ -244,3 +244,38 @@ test_that("ddml_pliv computes with different ensembles and multivariate D,Z", {
   # Check output with expectations
   expect_equal(length(ddml_pliv_fit$coef), 10)
 })#TEST_THAT
+
+test_that("ddml_pliv fitted pass-through works", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  Z <- matrix(rnorm(nobs * 2), nobs, 2)
+  D <- X %*% c(1, 0.5, 0) + Z %*% c(0.5, 0.3) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  fit <- ddml_pliv(y, D, Z, X,
+                   learners = learners,
+                   ensemble_type = "average",
+                   sample_folds = 2,
+                   silent = TRUE)
+
+  fit2 <- ddml_pliv(y, D, Z, X,
+                    learners = learners,
+                    ensemble_type = "average",
+                    sample_folds = 2,
+                    silent = TRUE,
+                    fitted = fit$fitted,
+                    splits = fit$splits)
+  expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
+
+  expect_error(
+    ddml_pliv(y, D, Z, X,
+              learners = learners,
+              ensemble_type = "average",
+              sample_folds = 2,
+              silent = TRUE,
+              fitted = fit$fitted),
+    "must be supplied when 'fitted' is supplied"
+  )
+})#TEST_THAT

@@ -120,7 +120,7 @@ ensemble procedures.}
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
-\item{\code{oos_fitted_bylearner}}{A matrix of
+\item{\code{crossfit_fitted}}{A matrix of
 out-of-sample predictions, each column corresponding to a base
 learner (in chronological order).}
 \item{\code{is_fitted_bylearner}}{When
@@ -148,15 +148,15 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #     learner are also calculated.
 shortstack_res <- shortstacking(y, X,
-                                learners = list(list(fun = ols),
-                                                list(fun = mdl_glmnet)),
+                                learners = list(list(what = ols),
+                                                list(what = mdl_glmnet)),
                                 ensemble_type = c("average",
                                                   "nnls1",
                                                   "singlebest"),
                                 sample_folds = 2,
                                 silent = TRUE)
 dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
-dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
+dim(shortstack_res$crossfit_fitted) # = length(y) by length(learners)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and

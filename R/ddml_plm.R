@@ -71,10 +71,10 @@
 #'     \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DX} must have the same number of columns.
 #' @param cluster_variable A vector of cluster indices.
-#' @param subsamples List of vectors with sample indices for cross-fitting.
-#' @param cv_subsamples List of lists, each corresponding to a subsample
-#'     containing vectors with subsample indices for cross-validation.
-#' @param cv_subsamples_list Deprecated; use \code{cv_subsamples} instead.
+#' @param ... Deprecated arguments (\code{subsamples},
+#'     \code{cv_subsamples}, \code{cv_subsamples_list}) are still
+#'     accepted for backward compatibility but should be replaced
+#'     with the \code{splits} argument.
 #' @param silent Boolean to silence estimation updates.
 #' @param parallel An optional named list with parallel processing
 #'     options. When \code{NULL} (the default), computation is
@@ -88,6 +88,23 @@
 #'             package names to load on workers (for custom learners
 #'             that use packages not imported by \code{ddml}).}
 #'     }
+#' @param fitted An optional named list of per-equation cross-fitted
+#'     predictions, typically obtained from a previous fit via
+#'     \code{fit$fitted}. When supplied (together with \code{splits}),
+#'     base learners are not re-fitted; only ensemble weights are
+#'     recomputed. This allows fast re-estimation with a different
+#'     \code{ensemble_type}. See the example below.
+#' @param splits An optional list of sample split objects, typically
+#'     obtained from a previous fit via \code{fit$splits}. Must be
+#'     supplied when \code{fitted} is provided. Can also be used
+#'     standalone to provide pre-computed sample folds.
+#' @param save_crossval Logical indicating whether to store the
+#'     inner cross-validation residuals used for ensemble weight
+#'     computation. Default \code{TRUE}. When \code{TRUE}, subsequent
+#'     pass-through calls with data-driven ensembles (e.g.,
+#'     \code{"nnls"}) reproduce per-fold weights exactly. Set to
+#'     \code{FALSE} to reduce object size at the cost of approximate
+#'     weight recomputation.
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
 #'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
@@ -150,6 +167,23 @@
 #'                     sample_folds = 2,
 #'                     silent = TRUE)
 #' summary(plm_fit)
+#'
+#' \donttest{
+#' # Re-estimate with a different ensemble type using pass-through
+#' #     (skips cross-fitting, only recomputes ensemble weights).
+#' plm_fit2 <- ddml_plm(y, D, X,
+#'                      learners = list(list(what = ols),
+#'                                      list(what = mdl_glmnet),
+#'                                      list(what = mdl_glmnet,
+#'                                           args = list(alpha = 0))),
+#'                      ensemble_type = 'average',
+#'                      shortstack = TRUE,
+#'                      sample_folds = 2,
+#'                      silent = TRUE,
+#'                      fitted = plm_fit$fitted,
+#'                      splits = plm_fit$splits)
+#' summary(plm_fit2)
+#' }
 ddml_plm <- function(y, D, X,
                      learners,
                      learners_DX = learners,
@@ -160,25 +194,18 @@ ddml_plm <- function(y, D, X,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
-                     subsamples = NULL,
-                     cv_subsamples = NULL,
-                     cv_subsamples_list = NULL,
                      silent = FALSE,
-                     parallel = NULL) {
+                     parallel = NULL,
+                     fitted = NULL,
+                     splits = NULL,
+                     save_crossval = TRUE,
+                     ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
                   ensemble_type = ensemble_type)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
-
-  # Backward compatibility for renamed parameter
-  if (!is.null(cv_subsamples_list)) {
-    if (!is.null(cv_subsamples))
-      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
-    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
-    cv_subsamples <- cv_subsamples_list
-  }#IF
 
   # Data parameters
   nobs <- length(y)
@@ -193,12 +220,16 @@ ddml_plm <- function(y, D, X,
     (class(learners[[1]]) != "function" |
      class(learners_DX[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(splits = splits, ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
-                             subsamples = subsamples,
-                             cv_subsamples = cv_subsamples)
+                             subsamples = splits$subsamples,
+                             cv_subsamples = splits$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   # Estimation start
@@ -221,7 +252,8 @@ ddml_plm <- function(y, D, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      silent = silent, label = "E[Y|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$y_X)
 
   # Compute estimates of E[D|X], loop through endogenous variables
   D_X_res_list <- compute_CEF_list(
@@ -233,7 +265,8 @@ ddml_plm <- function(y, D, X,
     cv_subsamples = indxs$cv_subsamples,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X]",
-    parallel = parallel)
+    parallel = parallel,
+    fitted = fitted$D_X)
 
   # Update ensemble type to account for (optional) custom weights
   ensb_info <- update_ensemble_info(y_X_res$weights)
@@ -299,22 +332,23 @@ ddml_plm <- function(y, D, X,
     coef_names <- rownames(coef)
   }#IF
 
-  # Ensemble metrics and per-learner residuals
+  # Ensemble metrics
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
   r2 <- list(y_X = y_X_res$r2)
-  oos_resid_bylearner <- list(
-    y_X = y_X_res$oos_resid_bylearner)
-  for (k in seq_len(nD)){
-    weights[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$weights
-    mspe[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$mspe
-    r2[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$r2
-    oos_resid_bylearner[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$oos_resid_bylearner
+  for (k in seq_len(nD)) {
+    eq <- paste0("D", k, "_X")
+    weights[[eq]] <- D_X_res_list[[k]]$weights
+    mspe[[eq]] <- D_X_res_list[[k]]$mspe
+    r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
+
+  fitted_export <- list(
+    y_X = build_fitted_entry(y_X_res, save_crossval),
+    D_X = build_fitted_from_list(D_X_res_list, save_crossval)
+  )
+  splits_export <- list(subsamples = indxs$subsamples,
+                        cv_subsamples = indxs$cv_subsamples)
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
@@ -334,8 +368,8 @@ ddml_plm <- function(y, D, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion

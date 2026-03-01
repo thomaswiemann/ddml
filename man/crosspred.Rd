@@ -14,7 +14,6 @@ crosspred(
   cv_folds = 10,
   custom_ensemble_weights = NULL,
   compute_insample_predictions = FALSE,
-  compute_predictions_bylearner = FALSE,
   cluster_variable = seq_along(y),
   subsamples = NULL,
   cv_subsamples = NULL,
@@ -86,10 +85,6 @@ estimation results corresponding the custom ensemble specification.}
 \item{compute_insample_predictions}{Indicator equal to 1 if in-sample
 predictions should also be computed.}
 
-\item{compute_predictions_bylearner}{Indicator equal to 1 if in-sample
-predictions should also be computed for each learner (rather than the
-entire ensemble).}
-
 \item{cluster_variable}{A vector of cluster indices.}
 
 \item{subsamples}{List of vectors with sample indices for cross-fitting.}
@@ -132,18 +127,15 @@ ensemble procedures.}
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
-\item{\code{oos_fitted_bylearner}}{When
-\code{compute_predictions_bylearner = TRUE}, a matrix of
-out-of-sample predictions, each column corresponding to a base
-learner (in chronological order).}
+\item{\code{crossfit_fitted}}{A matrix of out-of-sample
+predictions, each column corresponding to a base learner
+(in chronological order).}
 \item{\code{is_fitted_bylearner}}{When
-\code{compute_insample_predictions = TRUE} and
-\code{compute_predictions_bylearner = TRUE}, a list of matrices
-with in-sample predictions by sample fold.}
+\code{compute_insample_predictions = TRUE}, a list of matrices
+with in-sample predictions by sample fold (per learner).}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X}
-is not \code{NULL} and
-\code{compute_predictions_bylearner = TRUE}, a list of
-matrices with additional predictions for each learner.}
+is not \code{NULL}, a list of matrices with additional
+predictions for each learner.}
 }
 }
 \description{
@@ -160,17 +152,16 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #     learner are also calculated.
 crosspred_res <- crosspred(y, X,
-                           learners = list(list(fun = ols),
-                                           list(fun = mdl_glmnet)),
+                           learners = list(list(what = ols),
+                                           list(what = mdl_glmnet)),
                            ensemble_type = c("average",
                                              "nnls1",
                                              "singlebest"),
-                           compute_predictions_bylearner = TRUE,
                            sample_folds = 2,
                            cv_folds = 2,
                            silent = TRUE)
 dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
-dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
+dim(crosspred_res$crossfit_fitted) # = length(y) by length(learners)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and

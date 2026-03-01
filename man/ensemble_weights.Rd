@@ -49,7 +49,19 @@ Computes the stacking weights for an ensemble of base learners
 using cross-validated out-of-sample predictions.
 }
 \examples{
-# Not run
+\donttest{
+y = AE98[, "worked"]
+X = AE98[, c("age","agefst","black","hisp","othrace")]
+
+# Compute stacking weights via NNLS
+ew = ensemble_weights(y, X,
+                      type = "nnls",
+                      learners = list(list(what = ols),
+                                     list(what = mdl_glmnet)),
+                      cv_folds = 5,
+                      silent = TRUE)
+ew$weights
+}
 }
 \seealso{
 Other utilities: 

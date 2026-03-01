@@ -30,6 +30,13 @@
 #'     have the same number of columns.
 #' @param enforce_LIE Indicator equal to 1 if the law of iterated expectations
 #'     is enforced in the first stage.
+#' @param fitted An optional named list of per-equation cross-fitted
+#'     predictions, typically obtained via \code{fit$fitted}. Not
+#'     supported when \code{enforce_LIE = TRUE}. See
+#'     \code{\link{ddml_plm}} for details.
+#' @param save_crossval Logical; store inner cross-validation
+#'     residuals for exact weight recomputation on pass-through.
+#'     See \code{\link{ddml_plm}} for details.
 #'
 #' @return \code{ddml_fpliv} returns an object of S3 class
 #'     \code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
@@ -90,11 +97,12 @@ ddml_fpliv <- function(y, D, Z, X,
                        custom_ensemble_weights_DXZ = custom_ensemble_weights,
                        custom_ensemble_weights_DX = custom_ensemble_weights,
                        cluster_variable = seq_along(y),
-                       subsamples = NULL,
-                       cv_subsamples = NULL,
-                       cv_subsamples_list = NULL,
                        silent = FALSE,
-                       parallel = NULL) {
+                       parallel = NULL,
+                       fitted = NULL,
+                       splits = NULL,
+                       save_crossval = TRUE,
+                       ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
@@ -103,12 +111,9 @@ ddml_fpliv <- function(y, D, Z, X,
   validate_custom_weights(custom_ensemble_weights_DXZ, learners_DXZ)
   validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
 
-  # Backward compatibility for renamed parameter
-  if (!is.null(cv_subsamples_list)) {
-    if (!is.null(cv_subsamples))
-      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
-    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
-    cv_subsamples <- cv_subsamples_list
+  if (!is.null(fitted) && enforce_LIE) {
+    stop(paste("Pass-through via the 'fitted' argument is not",
+               "currently supported when enforce_LIE = TRUE."))
   }#IF
 
   # Data parameters
@@ -124,12 +129,16 @@ ddml_fpliv <- function(y, D, Z, X,
     any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
     (class(learners[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(splits = splits, ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
-                             subsamples = subsamples,
-                             cv_subsamples = cv_subsamples)
+                             subsamples = splits$subsamples,
+                             cv_subsamples = splits$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   # Estimation start
@@ -152,7 +161,8 @@ ddml_fpliv <- function(y, D, Z, X,
                      cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = FALSE,
                      silent = silent, label = "E[Y|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$y_X)
 
   # Compute estimates of E[D|X,Z]. Also calculate in-sample predictions when
   #     the LIE is enforced.
@@ -166,7 +176,8 @@ ddml_fpliv <- function(y, D, Z, X,
     compute_insample_predictions = enforce_LIE,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X,Z]",
-    parallel = parallel)
+    parallel = parallel,
+    fitted = fitted$D_XZ)
 
   # When the LIE is not enforced, estimating E[D|X] is straightforward.
   if (!enforce_LIE) {
@@ -297,10 +308,8 @@ ddml_fpliv <- function(y, D, Z, X,
             D_X_res_list[[k]]$oos_fitted <- D_X_res_list[[k]]$oos_fitted[, -1]
             D_X_res_list[[k]]$weights <- D_X_res_list[[k]]$weights[, -1, ,
                                                                    drop = FALSE]
-          }#IFELSE
-
-
-        }#FOR
+        }#IFELSE
+      }#FOR
       }#IF
 
       # Residualize
@@ -338,13 +347,11 @@ ddml_fpliv <- function(y, D, Z, X,
     coef_names <- rownames(coef)
   }#IF
 
-  # Ensemble metrics and per-learner residuals
+  # Ensemble metrics
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
   r2 <- list(y_X = y_X_res$r2)
-  oos_resid_bylearner <- list(
-    y_X = y_X_res$oos_resid_bylearner)
-  for (k in seq_len(nD)){
+  for (k in seq_len(nD)) {
     if (enforce_LIE & multiple_ensembles) {
       weights[[paste0("D", k, "_X")]] <- weights_DX[[k]]
     } else {
@@ -352,16 +359,19 @@ ddml_fpliv <- function(y, D, Z, X,
         D_X_res_list[[k]]$weights
     }#IFELSE
   }#FOR
-  for (k in seq_len(nD)){
-    weights[[paste0("D", k, "_XZ")]] <-
-      D_XZ_res_list[[k]]$weights
-    mspe[[paste0("D", k, "_XZ")]] <-
-      D_XZ_res_list[[k]]$mspe
-    r2[[paste0("D", k, "_XZ")]] <-
-      D_XZ_res_list[[k]]$r2
-    oos_resid_bylearner[[paste0("D", k, "_XZ")]] <-
-      D_XZ_res_list[[k]]$oos_resid_bylearner
+  for (k in seq_len(nD)) {
+    eq <- paste0("D", k, "_XZ")
+    weights[[eq]] <- D_XZ_res_list[[k]]$weights
+    mspe[[eq]] <- D_XZ_res_list[[k]]$mspe
+    r2[[eq]] <- D_XZ_res_list[[k]]$r2
   }#FOR
+
+  fitted_export <- list(
+    y_X = build_fitted_entry(y_X_res, save_crossval),
+    D_XZ = build_fitted_from_list(D_XZ_res_list, save_crossval)
+  )
+  splits_export <- list(subsamples = indxs$subsamples,
+                        cv_subsamples = indxs$cv_subsamples)
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
@@ -370,7 +380,7 @@ ddml_fpliv <- function(y, D, Z, X,
                    learners_DX = learners_DX,
                    iv_fit = iv_fit,
                    cluster_variable = cluster_variable,
-                   subsamples = subsamples,
+                   subsamples = indxs$subsamples,
                    cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type,
                    enforce_LIE = enforce_LIE,
@@ -383,8 +393,8 @@ ddml_fpliv <- function(y, D, Z, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion
@@ -396,4 +406,3 @@ ddml_fpliv <- function(y, D, Z, X,
   class(ddml_fit) <- c("ddml_fpliv", "ddml")
   return(ddml_fit)
 }#DDML_FPLIV
-

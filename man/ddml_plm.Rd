@@ -17,11 +17,12 @@ ddml_plm(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples = NULL,
-  cv_subsamples = NULL,
-  cv_subsamples_list = NULL,
   silent = FALSE,
-  parallel = NULL
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 }
 \arguments{
@@ -92,13 +93,6 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 
 \item{cluster_variable}{A vector of cluster indices.}
 
-\item{subsamples}{List of vectors with sample indices for cross-fitting.}
-
-\item{cv_subsamples}{List of lists, each corresponding to a subsample
-containing vectors with subsample indices for cross-validation.}
-
-\item{cv_subsamples_list}{Deprecated; use \code{cv_subsamples} instead.}
-
 \item{silent}{Boolean to silence estimation updates.}
 
 \item{parallel}{An optional named list with parallel processing
@@ -113,6 +107,31 @@ reference global objects).}
 package names to load on workers (for custom learners
 that use packages not imported by \code{ddml}).}
 }}
+
+\item{fitted}{An optional named list of per-equation cross-fitted
+predictions, typically obtained from a previous fit via
+\code{fit$fitted}. When supplied (together with \code{splits}),
+base learners are not re-fitted; only ensemble weights are
+recomputed. This allows fast re-estimation with a different
+\code{ensemble_type}. See the example below.}
+
+\item{splits}{An optional list of sample split objects, typically
+obtained from a previous fit via \code{fit$splits}. Must be
+supplied when \code{fitted} is provided. Can also be used
+standalone to provide pre-computed sample folds.}
+
+\item{save_crossval}{Logical indicating whether to store the
+inner cross-validation residuals used for ensemble weight
+computation. Default \code{TRUE}. When \code{TRUE}, subsequent
+pass-through calls with data-driven ensembles (e.g.,
+\code{"nnls"}) reproduce per-fold weights exactly. Set to
+\code{FALSE} to reduce object size at the cost of approximate
+weight recomputation.}
+
+\item{...}{Deprecated arguments (\code{subsamples},
+\code{cv_subsamples}, \code{cv_subsamples_list}) are still
+accepted for backward compatibility but should be replaced
+with the \code{splits} argument.}
 }
 \value{
 \code{ddml_plm} returns an object of S3 class
@@ -169,9 +188,9 @@ summary(plm_fit)
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 plm_fit <- ddml_plm(y, D, X,
-                    learners = list(list(fun = ols),
-                                    list(fun = mdl_glmnet),
-                                    list(fun = mdl_glmnet,
+                    learners = list(list(what = ols),
+                                    list(what = mdl_glmnet),
+                                    list(what = mdl_glmnet,
                                          args = list(alpha = 0))),
                     ensemble_type = 'nnls',
                     custom_ensemble_weights = weights_everylearner,
@@ -179,6 +198,23 @@ plm_fit <- ddml_plm(y, D, X,
                     sample_folds = 2,
                     silent = TRUE)
 summary(plm_fit)
+
+\donttest{
+# Re-estimate with a different ensemble type using pass-through
+#     (skips cross-fitting, only recomputes ensemble weights).
+plm_fit2 <- ddml_plm(y, D, X,
+                     learners = list(list(what = ols),
+                                     list(what = mdl_glmnet),
+                                     list(what = mdl_glmnet,
+                                          args = list(alpha = 0))),
+                     ensemble_type = 'average',
+                     shortstack = TRUE,
+                     sample_folds = 2,
+                     silent = TRUE,
+                     fitted = plm_fit$fitted,
+                     splits = plm_fit$splits)
+summary(plm_fit2)
+}
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and

@@ -21,11 +21,12 @@ ddml_fpliv(
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples = NULL,
-  cv_subsamples = NULL,
-  cv_subsamples_list = NULL,
   silent = FALSE,
-  parallel = NULL
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 }
 \arguments{
@@ -108,13 +109,6 @@ have the same number of columns.}
 
 \item{cluster_variable}{A vector of cluster indices.}
 
-\item{subsamples}{List of vectors with sample indices for cross-fitting.}
-
-\item{cv_subsamples}{List of lists, each corresponding to a subsample
-containing vectors with subsample indices for cross-validation.}
-
-\item{cv_subsamples_list}{Deprecated; use \code{cv_subsamples} instead.}
-
 \item{silent}{Boolean to silence estimation updates.}
 
 \item{parallel}{An optional named list with parallel processing
@@ -129,6 +123,25 @@ reference global objects).}
 package names to load on workers (for custom learners
 that use packages not imported by \code{ddml}).}
 }}
+
+\item{fitted}{An optional named list of per-equation cross-fitted
+predictions, typically obtained via \code{fit$fitted}. Not
+supported when \code{enforce_LIE = TRUE}. See
+\code{\link{ddml_plm}} for details.}
+
+\item{splits}{An optional list of sample split objects, typically
+obtained from a previous fit via \code{fit$splits}. Must be
+supplied when \code{fitted} is provided. Can also be used
+standalone to provide pre-computed sample folds.}
+
+\item{save_crossval}{Logical; store inner cross-validation
+residuals for exact weight recomputation on pass-through.
+See \code{\link{ddml_plm}} for details.}
+
+\item{...}{Deprecated arguments (\code{subsamples},
+\code{cv_subsamples}, \code{cv_subsamples_list}) are still
+accepted for backward compatibility but should be replaced
+with the \code{splits} argument.}
 }
 \value{
 \code{ddml_fpliv} returns an object of S3 class

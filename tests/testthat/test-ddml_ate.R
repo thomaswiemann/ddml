@@ -217,3 +217,84 @@ test_that("summary.ddml_ate computes with multiple ensemble procedures", {
   expect_s3_class(inf_res, "summary.ddml")
   expect_equal(dim(inf_res$inf_results), c(1, 4, 4))
 })#TEST_THAT
+
+test_that("ddml_ate fitted pass-through works", {
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D_tld <- 0.3 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.3 * X[, 1] + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  fit <- ddml_ate(y, D, X,
+                  learners = learners,
+                  ensemble_type = "average",
+                  sample_folds = 2,
+                  silent = TRUE)
+
+  # Pass-through with average ensemble reproduces exactly
+  fit2 <- ddml_ate(y, D, X,
+                   learners = learners,
+                   ensemble_type = "average",
+                   sample_folds = 2,
+                   silent = TRUE,
+                   fitted = fit$fitted,
+                   splits = fit$splits)
+  expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
+
+  expect_error(
+    ddml_ate(y, D, X,
+             learners = learners,
+             ensemble_type = "average",
+             sample_folds = 2,
+             silent = TRUE,
+             fitted = fit$fitted),
+    "must be supplied when 'fitted' is supplied"
+  )
+})
+
+test_that("ddml_ate legacy grouped split args warn and still work", {
+  set.seed(202)
+  nobs <- 600
+  X <- matrix(rnorm(nobs * 4), nobs, 4)
+  D_tld <- X %*% c(0.7, 0.2, 0.1, 0) + rnorm(nobs)
+  D <- 1 * (D_tld > mean(D_tld))
+  y <- D + X %*% c(0.2, 0.3, 0.1, 0.4) + rnorm(nobs)
+  learners <- list(what = ols)
+  splits <- get_sample_splits(
+    cluster_variable = seq_len(nobs),
+    sample_folds = 3,
+    cv_folds = 3,
+    D = D,
+    stratify = TRUE
+  )
+  fit_splits <- ddml_ate(
+    y, D, X,
+    learners = learners,
+    sample_folds = 3,
+    cv_folds = 3,
+    splits = list(
+      subsamples = splits$subsamples,
+      subsamples_byD = splits$subsamples_byD,
+      cv_subsamples = splits$cv_subsamples,
+      cv_subsamples_byD = splits$cv_subsamples_byD
+    ),
+    silent = TRUE
+  )
+  expect_warning(
+    fit_legacy <- ddml_ate(
+      y, D, X,
+      learners = learners,
+      sample_folds = 3,
+      cv_folds = 3,
+      subsamples = splits$subsamples,
+      subsamples_byD = splits$subsamples_byD,
+      cv_subsamples = splits$cv_subsamples,
+      cv_subsamples_byD = splits$cv_subsamples_byD,
+      silent = TRUE
+    ),
+    "Deprecated split arguments detected"
+  )
+  expect_equal(coef(fit_legacy), coef(fit_splits), tolerance = 1e-8)
+})

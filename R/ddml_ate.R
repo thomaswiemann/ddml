@@ -29,13 +29,14 @@
 #'
 #' @inheritParams ddml_plm
 #' @param D The binary endogenous variable of interest.
-#' @param subsamples_byD List of two lists corresponding to the two treatment
-#'     levels. Each list contains vectors with sample indices for
-#'     cross-fitting.
-#' @param cv_subsamples_byD List of two lists, each corresponding to one of the
-#'     two treatment levels. Each of the two lists contains lists, each
-#'     corresponding to a subsample and contains vectors with subsample indices
-#'     for cross-validation.
+#' @param splits An optional list of sample split objects. For
+#'     \code{ddml_ate}/\code{ddml_att}, recommended keys are
+#'     \code{subsamples}, \code{subsamples_byD}, \code{cv_subsamples},
+#'     and \code{cv_subsamples_byD}.
+#' @param ... Deprecated arguments (\code{subsamples},
+#'     \code{subsamples_byD}, \code{cv_subsamples},
+#'     \code{cv_subsamples_byD}) are still accepted for backward
+#'     compatibility but should be replaced with \code{splits}.
 #' @param stratify Boolean for stratified cross-fitting: if \code{TRUE},
 #'     subsamples are constructed to be balanced across treatment levels.
 #' @param trim Number in (0, 1) for trimming the estimated propensity scores at
@@ -52,6 +53,12 @@
 #'             package names to load on workers (for custom learners
 #'             that use packages not imported by \code{ddml}).}
 #'     }
+#' @param fitted An optional named list of per-equation cross-fitted
+#'     predictions, typically obtained via \code{fit$fitted}. See
+#'     \code{\link{ddml_plm}} for details and an example.
+#' @param save_crossval Logical; store inner cross-validation
+#'     residuals for exact weight recomputation on pass-through.
+#'     See \code{\link{ddml_plm}} for details.
 #'
 #' @return \code{ddml_ate} and \code{ddml_att} return an object of S3 class
 #'     \code{ddml_ate} and \code{ddml_att}, respectively. An object of class
@@ -125,13 +132,13 @@ ddml_ate <- function(y, D, X,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
                      stratify = TRUE,
-                     subsamples = NULL,
-                     subsamples_byD = NULL,
-                     cv_subsamples = NULL,
-                     cv_subsamples_byD = NULL,
                      trim = 0.01,
                      silent = FALSE,
-                     parallel = NULL) {
+                     parallel = NULL,
+                     fitted = NULL,
+                     splits = NULL,
+                     save_crossval = TRUE,
+                     ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
@@ -149,15 +156,20 @@ ddml_ate <- function(y, D, X,
     any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
     (class(learners[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(
+    splits = splits, by_label = "D", ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
                              D = D, stratify = stratify,
-                             subsamples = subsamples,
-                             subsamples_byD = subsamples_byD,
-                             cv_subsamples = cv_subsamples,
-                             cv_subsamples_byD = cv_subsamples_byD)
+                             subsamples = splits$subsamples,
+                             subsamples_byD = splits$subsamples_byD,
+                             cv_subsamples = splits$cv_subsamples,
+                             cv_subsamples_byD = splits$cv_subsamples_byD)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
@@ -181,7 +193,8 @@ ddml_ate <- function(y, D, X,
                         cv_subsamples = indxs$cv_subsamples_byD[[1]],
                         silent = silent, label = "E[Y|D=0,X]",
                         auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                        parallel = parallel)
+                        parallel = parallel,
+                        fitted = fitted$y_X_D0)
 
   # Compute estimates of E[y|D=1,X]
   y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = FALSE],
@@ -192,7 +205,8 @@ ddml_ate <- function(y, D, X,
                         cv_subsamples = indxs$cv_subsamples_byD[[2]],
                         silent = silent, label = "E[Y|D=1,X]",
                         auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
-                        parallel = parallel)
+                        parallel = parallel,
+                        fitted = fitted$y_X_D1)
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
@@ -202,7 +216,8 @@ ddml_ate <- function(y, D, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      silent = silent, label = "E[D|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$D_X)
 
   # Update ensemble type to account for (optional) custom weights
   ensb_info <- update_ensemble_info(y_X_D0_res$weights)
@@ -262,14 +277,24 @@ ddml_ate <- function(y, D, X,
              y_X_D1 = y_X_D1_res$r2,
              D_X = D_X_res$r2)
 
-  # Predictions and per-learner residuals
+  # Predictions
   oos_pred <- list(EY_D0_X = g_X_byD[, , 1],
                    EY_D1_X = g_X_byD[, , 2],
                    ED_X = m_X)
-  oos_resid_bylearner <- list(
-    y_X_D0 = y_X_D0_res$oos_resid_bylearner,
-    y_X_D1 = y_X_D1_res$oos_resid_bylearner,
-    D_X = D_X_res$oos_resid_bylearner)
+
+  fitted_export <- list(
+    y_X_D0 = build_fitted_entry(y_X_D0_res, save_crossval,
+                                include_auxiliary = TRUE),
+    y_X_D1 = build_fitted_entry(y_X_D1_res, save_crossval,
+                                include_auxiliary = TRUE),
+    D_X = build_fitted_entry(D_X_res, save_crossval)
+  )
+  splits_export <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byD = indxs$subsamples_byD,
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byD = indxs$cv_subsamples_byD
+  )
 
   # Organize output
   ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
@@ -291,8 +316,8 @@ ddml_ate <- function(y, D, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion

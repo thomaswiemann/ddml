@@ -33,7 +33,7 @@
 #'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{oos_fitted_bylearner}}{A matrix of
+#'         \item{\code{crossfit_fitted}}{A matrix of
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
 #'         \item{\code{is_fitted_bylearner}}{When
@@ -73,7 +73,7 @@
 #'                                 sample_folds = 2,
 #'                                 silent = TRUE)
 #' dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
-#' dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
+#' dim(shortstack_res$crossfit_fitted) # = length(y) by length(learners)
 shortstacking <- function(y, X, Z = NULL,
                           learners,
                           sample_folds = 2,
@@ -112,7 +112,6 @@ shortstacking <- function(y, X, Z = NULL,
                    ensemble_type = "average",
                    compute_insample_predictions =
                      compute_insample_predictions,
-                   compute_predictions_bylearner = TRUE,
                    subsamples = subsamples,
                    silent = silent,
                    auxiliary_X = auxiliary_X,
@@ -121,14 +120,14 @@ shortstacking <- function(y, X, Z = NULL,
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()
   fakecv$oos_resid <- matrix(shortstack_y, nobs, nlearners) -
-    res$oos_fitted_bylearner
+    res$crossfit_fitted
   weights <- ensemble_weights(shortstack_y, X, learners = learners,
                               type = ensemble_type,
                               custom_weights = custom_ensemble_weights,
                               cv_results = fakecv)$weights
 
   # Compute predictions
-  oos_fitted <- res$oos_fitted_bylearner %*% weights
+  oos_fitted <- res$crossfit_fitted %*% weights
 
   # Compute auxilliary predictions (optional)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
@@ -176,15 +175,15 @@ shortstacking <- function(y, X, Z = NULL,
                                                    length(mspe))
 
   # Per-learner OOS residuals (already computed for weight estimation)
-  oos_resid_bylearner <- as.matrix(fakecv$oos_resid)
+  crossfit_resid <- as.matrix(fakecv$oos_resid)
 
   # return shortstacking output
   output <- list(oos_fitted = oos_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
                  is_fitted = is_fitted,
                  auxiliary_fitted = auxiliary_fitted,
-                 oos_fitted_bylearner = res$oos_fitted_bylearner,
-                 oos_resid_bylearner = oos_resid_bylearner,
+                 crossfit_fitted = res$crossfit_fitted,
+                 crossfit_resid = crossfit_resid,
                  is_fitted_bylearner = res$is_fitted_bylearner,
                  auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)

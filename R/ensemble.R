@@ -84,16 +84,13 @@ ensemble <- function(y, X, Z = NULL,
                                 silent = silent)
   weights <- ens_w_res$weights
   cv_results <- ens_w_res$cv_results
-  # Check for excluded learners
-  mdl_include <- which(rowSums(abs(weights)) > 0)
-  if (length(mdl_include) == 0) {
+  # Warn if all learner weights are zero across ensemble columns
+  if (!any(rowSums(abs(weights)) > 0)) {
     warning("None of the learners are assigned positive stacking weights.")
   }#IF
-  # Compute fit for each included model
+  # Fit all base learners to keep per-learner outputs always available
   mdl_fits <- rep(list(NULL), nlearners)
   for (m in seq_len(nlearners)) {
-    # Skip model if not assigned positive weight
-    if (!(m %in% mdl_include)) next
     # Check whether X, Z assignment has been specified. If not, include all.
     if (is.null(learners[[m]]$assign_X))
       learners[[m]]$assign_X <- 1:ncol(X)
@@ -130,34 +127,18 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   if (!is.null(object$constant_y) && object$constant_y) {
     return(matrix(object$mean_y, nrow(newdata), nlearners))
   }#IF
-  # Check for excluded learners
-  mdl_include <- which(rowSums(abs(object$weights)) > 0)
-  if (length(mdl_include) == 0) {
-    fitted_ens <- matrix(object$mean_y, nrow(newdata), 1)
-    #warning("None of the learners are assigned positive stacking weights.")
-  }#IF
-  # Calculate fitted values for each model
-  first_fit <- TRUE
+  # Calculate fitted values for each learner
+  fitted_mat <- matrix(0, nrow(newdata), nlearners)
   for (m in seq_len(nlearners)) {
-    # Skip model if not assigned positive weight
-    if (!(m %in% mdl_include)) next
-    # Get assign_X and assing_Z
     assign_X <- object$learners[[m]]$assign_X
     assign_Z <- object$learners[[m]]$assign_Z
-    # Compute predictions
     fitted <- stats::predict(object$mdl_fits[[m]],
                              newdata = cbind(newdata[, assign_X],
                                              newZ[, assign_Z]))
-
-    # Initialize matrix of fitted values
-    if (first_fit) {
-      fitted_mat <- matrix(0, length(fitted), nlearners)
-      first_fit <- FALSE
-    }#IF
     fitted_mat[, m] <- methods::as(fitted, "matrix")
   }#FOR
   # Compute matrix of fitted values by ensemble type and return
-  if (length(mdl_include) > 0) fitted_ens <- fitted_mat %*% object$weights
+  fitted_ens <- fitted_mat %*% object$weights
   return(fitted_ens)
 }#PREDICT.ENSEMBLE
 

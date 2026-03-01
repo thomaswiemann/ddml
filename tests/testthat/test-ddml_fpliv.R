@@ -378,3 +378,52 @@ test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 8)
 })#TEST_THAT
+
+test_that("ddml_fpliv fitted pass-through works", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  Z <- matrix(rnorm(nobs * 2), nobs, 2)
+  D <- X %*% c(1, 0.5, 0) + Z %*% c(0.5, 0.3) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  fit <- ddml_fpliv(y, D, Z, X,
+                    learners = learners,
+                    ensemble_type = "average",
+                    enforce_LIE = FALSE,
+                    sample_folds = 2,
+                    silent = TRUE)
+
+  fit2 <- ddml_fpliv(y, D, Z, X,
+                     learners = learners,
+                     ensemble_type = "average",
+                     enforce_LIE = FALSE,
+                     sample_folds = 2,
+                     silent = TRUE,
+                     fitted = fit$fitted,
+                     splits = fit$splits)
+  expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
+
+  # Pass-through blocked when enforce_LIE = TRUE
+  expect_error(
+    ddml_fpliv(y, D, Z, X,
+               learners = learners,
+               sample_folds = 2,
+               silent = TRUE,
+               fitted = fit$fitted,
+               splits = fit$splits),
+    "not currently supported when enforce_LIE = TRUE"
+  )
+
+  # Error when fitted supplied without splits
+  expect_error(
+    ddml_fpliv(y, D, Z, X,
+               learners = learners,
+               enforce_LIE = FALSE,
+               sample_folds = 2,
+               silent = TRUE,
+               fitted = fit$fitted),
+    "must be supplied when 'fitted' is supplied"
+  )
+})#TEST_THAT

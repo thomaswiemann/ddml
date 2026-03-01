@@ -118,11 +118,12 @@ ddml_pliv <- function(y, D, Z, X,
                       custom_ensemble_weights_DX = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
-                      subsamples = NULL,
-                      cv_subsamples = NULL,
-                      cv_subsamples_list = NULL,
                       silent = FALSE,
-                      parallel = NULL) {
+                      parallel = NULL,
+                      fitted = NULL,
+                      splits = NULL,
+                      save_crossval = TRUE,
+                      ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
@@ -130,14 +131,6 @@ ddml_pliv <- function(y, D, Z, X,
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
   validate_custom_weights(custom_ensemble_weights_ZX, learners_ZX)
-
-  # Backward compatibility for renamed parameter
-  if (!is.null(cv_subsamples_list)) {
-    if (!is.null(cv_subsamples))
-      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
-    message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
-    cv_subsamples <- cv_subsamples_list
-  }#IF
 
   # Data parameters
   nobs <- length(y)
@@ -155,12 +148,16 @@ ddml_pliv <- function(y, D, Z, X,
     any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
     (class(learners[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(splits = splits, ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
-                             subsamples = subsamples,
-                             cv_subsamples = cv_subsamples)
+                             subsamples = splits$subsamples,
+                             cv_subsamples = splits$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   # Estimation start
@@ -182,7 +179,8 @@ ddml_pliv <- function(y, D, Z, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      silent = silent, label = "E[Y|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$y_X)
 
   # Compute estimates of E[Z|X], loop through instruments
   Z_X_res_list <- compute_CEF_list(
@@ -194,7 +192,8 @@ ddml_pliv <- function(y, D, Z, X,
     cv_subsamples = indxs$cv_subsamples,
     silent = silent,
     label_prefix = "E[Z", label_suffix = "|X]",
-    parallel = parallel)
+    parallel = parallel,
+    fitted = fitted$Z_X)
 
   # Compute estimates of E[D|X], loop through endogenous variables
   D_X_res_list <- compute_CEF_list(
@@ -206,7 +205,8 @@ ddml_pliv <- function(y, D, Z, X,
     cv_subsamples = indxs$cv_subsamples,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X]",
-    parallel = parallel)
+    parallel = parallel,
+    fitted = fitted$D_X)
 
   # Update ensemble type to account for (optional) custom weights
   ensb_info <- update_ensemble_info(y_X_res$weights)
@@ -276,32 +276,30 @@ ddml_pliv <- function(y, D, Z, X,
     coef_names <- rownames(coef)
   }#IF
 
-  # Ensemble metrics and per-learner residuals
+  # Ensemble metrics
   weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
   r2 <- list(y_X = y_X_res$r2)
-  oos_resid_bylearner <- list(
-    y_X = y_X_res$oos_resid_bylearner)
-  for (k in seq_len(nD)){
-    weights[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$weights
-    mspe[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$mspe
-    r2[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$r2
-    oos_resid_bylearner[[paste0("D", k, "_X")]] <-
-      D_X_res_list[[k]]$oos_resid_bylearner
+  for (k in seq_len(nD)) {
+    eq <- paste0("D", k, "_X")
+    weights[[eq]] <- D_X_res_list[[k]]$weights
+    mspe[[eq]] <- D_X_res_list[[k]]$mspe
+    r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
-  for (k in seq_len(nZ)){
-    weights[[paste0("Z", k, "_X")]] <-
-      Z_X_res_list[[k]]$weights
-    mspe[[paste0("Z", k, "_X")]] <-
-      Z_X_res_list[[k]]$mspe
-    r2[[paste0("Z", k, "_X")]] <-
-      Z_X_res_list[[k]]$r2
-    oos_resid_bylearner[[paste0("Z", k, "_X")]] <-
-      Z_X_res_list[[k]]$oos_resid_bylearner
+  for (k in seq_len(nZ)) {
+    eq <- paste0("Z", k, "_X")
+    weights[[eq]] <- Z_X_res_list[[k]]$weights
+    mspe[[eq]] <- Z_X_res_list[[k]]$mspe
+    r2[[eq]] <- Z_X_res_list[[k]]$r2
   }#FOR
+
+  fitted_export <- list(
+    y_X = build_fitted_entry(y_X_res, save_crossval),
+    D_X = build_fitted_from_list(D_X_res_list, save_crossval),
+    Z_X = build_fitted_from_list(Z_X_res_list, save_crossval)
+  )
+  splits_export <- list(subsamples = indxs$subsamples,
+                        cv_subsamples = indxs$cv_subsamples)
 
   # Organize output
   ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
@@ -310,7 +308,7 @@ ddml_pliv <- function(y, D, Z, X,
                    learners_DX = learners_DX,
                    iv_fit = iv_fit,
                    cluster_variable = cluster_variable,
-                   subsamples = subsamples,
+                   subsamples = indxs$subsamples,
                    cv_subsamples = indxs$cv_subsamples,
                    ensemble_type = ensemble_type,
                    coefficients = coef,
@@ -322,8 +320,8 @@ ddml_pliv <- function(y, D, Z, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion

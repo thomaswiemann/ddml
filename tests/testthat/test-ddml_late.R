@@ -261,3 +261,40 @@ test_that("summary.ddml_late computes with a single model and dependence", {
   expect_s3_class(inf_res, "summary.ddml")
   expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
 })#TEST_THAT
+
+test_that("ddml_late fitted pass-through works", {
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  Z_tld <- 0.3 * X[, 1] + rnorm(nobs)
+  Z <- 1 * (Z_tld > 0)
+  D_tld <- 0.3 * Z + 0.2 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.3 * X[, 1] + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  fit <- ddml_late(y, D, Z, X,
+                   learners = learners,
+                   ensemble_type = "average",
+                   sample_folds = 2,
+                   silent = TRUE)
+
+  fit2 <- ddml_late(y, D, Z, X,
+                    learners = learners,
+                    ensemble_type = "average",
+                    sample_folds = 2,
+                    silent = TRUE,
+                    fitted = fit$fitted,
+                    splits = fit$splits)
+  expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
+
+  expect_error(
+    ddml_late(y, D, Z, X,
+              learners = learners,
+              ensemble_type = "average",
+              sample_folds = 2,
+              silent = TRUE,
+              fitted = fit$fitted),
+    "must be supplied when 'fitted' is supplied"
+  )
+})#TEST_THAT

@@ -65,13 +65,14 @@
 #'     \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_ZX} must
 #'     have the same number of columns.
-#' @param subsamples_byZ List of two lists corresponding to the two instrument
-#'     levels. Each list contains vectors with sample indices for
-#'     cross-fitting.
-#' @param cv_subsamples_byZ List of two lists, each corresponding to one of the
-#'     two instrument levels. Each of the two lists contains lists, each
-#'     corresponding to a subsample and contains vectors with subsample indices
-#'     for cross-validation.
+#' @param splits An optional list of sample split objects. For
+#'     \code{ddml_late}, recommended keys are \code{subsamples},
+#'     \code{subsamples_byZ}, \code{cv_subsamples}, and
+#'     \code{cv_subsamples_byZ}.
+#' @param ... Deprecated arguments (\code{subsamples},
+#'     \code{subsamples_byZ}, \code{cv_subsamples},
+#'     \code{cv_subsamples_byZ}) are still accepted for backward
+#'     compatibility but should be replaced with \code{splits}.
 #'
 #' @return \code{ddml_late} returns an object of S3 class
 #'     \code{ddml_late}. An object of class \code{ddml_late} is a list
@@ -154,13 +155,13 @@ ddml_late <- function(y, D, Z, X,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
                       stratify = TRUE,
-                      subsamples = NULL,
-                      subsamples_byZ = NULL,
-                      cv_subsamples = NULL,
-                      cv_subsamples_byZ = NULL,
                       trim = 0.01,
                       silent = FALSE,
-                      parallel = NULL) {
+                      parallel = NULL,
+                      fitted = NULL,
+                      splits = NULL,
+                      save_crossval = TRUE,
+                      ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
@@ -179,15 +180,20 @@ ddml_late <- function(y, D, Z, X,
     any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
     (class(learners[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(
+    splits = splits, by_label = "Z", ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
                              D = Z, stratify = stratify,
-                             subsamples = subsamples,
-                             subsamples_byD = subsamples_byZ,
-                             cv_subsamples = cv_subsamples,
-                             cv_subsamples_byD = cv_subsamples_byZ)
+                             subsamples = splits$subsamples,
+                             subsamples_byD = splits$subsamples_byZ,
+                             cv_subsamples = splits$cv_subsamples,
+                             cv_subsamples_byD = splits$cv_subsamples_byZ)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, Z)
 
@@ -211,7 +217,8 @@ ddml_late <- function(y, D, Z, X,
                         cv_subsamples = indxs$cv_subsamples_byD[[1]],
                         silent = silent, label = "E[Y|Z=0,X]",
                         auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                        parallel = parallel)
+                        parallel = parallel,
+                        fitted = fitted$y_X_Z0)
 
   # Compute estimates of E[y|Z=1,X]
   y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = FALSE],
@@ -222,7 +229,8 @@ ddml_late <- function(y, D, Z, X,
                         cv_subsamples = indxs$cv_subsamples_byD[[2]],
                         silent = silent, label = "E[Y|Z=1,X]",
                         auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
-                        parallel = parallel)
+                        parallel = parallel,
+                        fitted = fitted$y_X_Z1)
 
   # Check for perfect non-compliance
   if (all(D[Z==0] == 0)) {
@@ -243,7 +251,8 @@ ddml_late <- function(y, D, Z, X,
                           cv_subsamples = indxs$cv_subsamples_byD[[1]],
                           silent = silent, label = "E[D|Z=0,X]",
                           auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                          parallel = parallel)
+                          parallel = parallel,
+                          fitted = fitted$D_X_Z0)
   }#IFELSE
 
   # Check for perfect compliance
@@ -265,7 +274,8 @@ ddml_late <- function(y, D, Z, X,
                           cv_subsamples = indxs$cv_subsamples_byD[[2]],
                           silent = silent, label = "E[D|Z=1,X]",
                           auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
-                          parallel = parallel)
+                          parallel = parallel,
+                          fitted = fitted$D_X_Z1)
   }#IFELSE
 
   # Compute estimates of E[Z|X]
@@ -277,7 +287,8 @@ ddml_late <- function(y, D, Z, X,
                      cv_subsamples = indxs$cv_subsamples,
                      compute_insample_predictions = FALSE,
                      silent = silent, label = "E[Z|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$Z_X)
 
   # Update ensemble type to account for (optional) custom weights
   ensb_info <- update_ensemble_info(y_X_Z0_res$weights)
@@ -354,18 +365,30 @@ ddml_late <- function(y, D, Z, X,
              D_X_Z1 = D_X_Z1_res$r2,
              Z_X = Z_X_res$r2)
 
-  # Predictions and per-learner residuals
+  # Predictions
   oos_pred <- list(EY_Z0_X = l_X_byZ[, , 1],
                    EY_Z1_X = l_X_byZ[, , 2],
                    ED_Z0_X = p_X_byZ[, , 1],
                    ED_Z1_X = p_X_byZ[, , 2],
                    EZ_X = r_X)
-  oos_resid_bylearner <- list(
-    y_X_Z0 = y_X_Z0_res$oos_resid_bylearner,
-    y_X_Z1 = y_X_Z1_res$oos_resid_bylearner,
-    D_X_Z0 = D_X_Z0_res$oos_resid_bylearner,
-    D_X_Z1 = D_X_Z1_res$oos_resid_bylearner,
-    Z_X = Z_X_res$oos_resid_bylearner)
+
+  fitted_export <- list(
+    y_X_Z0 = build_fitted_entry(y_X_Z0_res, save_crossval,
+                                include_auxiliary = TRUE),
+    y_X_Z1 = build_fitted_entry(y_X_Z1_res, save_crossval,
+                                include_auxiliary = TRUE),
+    D_X_Z0 = build_fitted_entry(D_X_Z0_res, save_crossval,
+                                include_auxiliary = TRUE),
+    D_X_Z1 = build_fitted_entry(D_X_Z1_res, save_crossval,
+                                include_auxiliary = TRUE),
+    Z_X = build_fitted_entry(Z_X_res, save_crossval)
+  )
+  splits_export <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byZ = indxs$subsamples_byD,
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byZ = indxs$cv_subsamples_byD
+  )
 
   # Organize output
   ddml_fit <- list(late = late, weights = weights, mspe = mspe,
@@ -388,8 +411,8 @@ ddml_late <- function(y, D, Z, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion

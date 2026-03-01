@@ -21,13 +21,13 @@ ddml_late(
   custom_ensemble_weights_ZX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
   stratify = TRUE,
-  subsamples = NULL,
-  subsamples_byZ = NULL,
-  cv_subsamples = NULL,
-  cv_subsamples_byZ = NULL,
   trim = 0.01,
   silent = FALSE,
-  parallel = NULL
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 }
 \arguments{
@@ -110,20 +110,6 @@ have the same number of columns.}
 \item{stratify}{Boolean for stratified cross-fitting: if \code{TRUE},
 subsamples are constructed to be balanced across treatment levels.}
 
-\item{subsamples}{List of vectors with sample indices for cross-fitting.}
-
-\item{subsamples_byZ}{List of two lists corresponding to the two instrument
-levels. Each list contains vectors with sample indices for
-cross-fitting.}
-
-\item{cv_subsamples}{List of lists, each corresponding to a subsample
-containing vectors with subsample indices for cross-validation.}
-
-\item{cv_subsamples_byZ}{List of two lists, each corresponding to one of the
-two instrument levels. Each of the two lists contains lists, each
-corresponding to a subsample and contains vectors with subsample indices
-for cross-validation.}
-
 \item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
 \code{trim} and \code{1-trim}.}
 
@@ -141,6 +127,24 @@ reference global objects).}
 package names to load on workers (for custom learners
 that use packages not imported by \code{ddml}).}
 }}
+
+\item{fitted}{An optional named list of per-equation cross-fitted
+predictions, typically obtained via \code{fit$fitted}. See
+\code{\link{ddml_plm}} for details and an example.}
+
+\item{splits}{An optional list of sample split objects. For
+\code{ddml_late}, recommended keys are \code{subsamples},
+\code{subsamples_byZ}, \code{cv_subsamples}, and
+\code{cv_subsamples_byZ}.}
+
+\item{save_crossval}{Logical; store inner cross-validation
+residuals for exact weight recomputation on pass-through.
+See \code{\link{ddml_plm}} for details.}
+
+\item{...}{Deprecated arguments (\code{subsamples},
+\code{subsamples_byZ}, \code{cv_subsamples},
+\code{cv_subsamples_byZ}) are still accepted for backward
+compatibility but should be replaced with \code{splits}.}
 }
 \value{
 \code{ddml_late} returns an object of S3 class
@@ -210,9 +214,9 @@ summary(late_fit)
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 late_fit <- ddml_late(y, D, Z, X,
-                      learners = list(list(fun = ols),
-                                      list(fun = mdl_glmnet),
-                                      list(fun = mdl_glmnet,
+                      learners = list(list(what = ols),
+                                      list(what = mdl_glmnet),
+                                      list(what = mdl_glmnet,
                                            args = list(alpha = 0))),
                       ensemble_type = 'nnls',
                       custom_ensemble_weights = weights_everylearner,

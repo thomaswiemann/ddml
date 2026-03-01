@@ -109,7 +109,7 @@ diagnostics <- function(object, cvc = FALSE,
 
     # CVC p-values (opt-in)
     if (cvc && !single_learner) {
-      resid <- object$oos_resid_bylearner[[eq]]
+      resid <- get_crossfit_resid_for_eq(object$fitted, eq)
       subs <- get_diag_subsamples(object, eq)
       if (!is.null(resid) && !is.null(subs) &&
           ncol(resid) > 1) {

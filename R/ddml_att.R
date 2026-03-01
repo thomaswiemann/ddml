@@ -12,13 +12,13 @@ ddml_att <- function(y, D, X,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
                      stratify = TRUE,
-                     subsamples = NULL,
-                     subsamples_byD = NULL,
-                     cv_subsamples = NULL,
-                     cv_subsamples_byD = NULL,
                      trim = 0.01,
                      silent = FALSE,
-                     parallel = NULL) {
+                     parallel = NULL,
+                     fitted = NULL,
+                     splits = NULL,
+                     save_crossval = TRUE,
+                     ...) {
   # Validate inputs
   validate_inputs(y = y, D = D, X = X, learners = learners,
                   sample_folds = sample_folds, cv_folds = cv_folds,
@@ -36,15 +36,20 @@ ddml_att <- function(y, D, X,
     any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
     (class(learners[[1]]) != "function")
 
+  # Normalize deprecated split arguments into a single splits object
+  splits <- normalize_splits(
+    splits = splits, by_label = "D", ...)
+  validate_fitted_splits_pair(fitted, splits, w_cv)
+
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
                              sample_folds = sample_folds,
                              cv_folds = if (w_cv) cv_folds,
                              D = D, stratify = stratify,
-                             subsamples = subsamples,
-                             subsamples_byD = subsamples_byD,
-                             cv_subsamples = cv_subsamples,
-                             cv_subsamples_byD = cv_subsamples_byD)
+                             subsamples = splits$subsamples,
+                             subsamples_byD = splits$subsamples_byD,
+                             cv_subsamples = splits$cv_subsamples,
+                             cv_subsamples_byD = splits$cv_subsamples_byD)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
@@ -68,7 +73,8 @@ ddml_att <- function(y, D, X,
                         cv_subsamples = indxs$cv_subsamples_byD[[1]],
                         silent = silent, label = "E[Y|D=0,X]",
                         auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                        parallel = parallel)
+                        parallel = parallel,
+                        fitted = fitted$y_X_D0)
 
   # Compute estimates of E[D|X]
   D_X_res <- get_CEF(D, X,
@@ -78,7 +84,8 @@ ddml_att <- function(y, D, X,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
                      silent = silent, label = "E[D|X]",
-                     parallel = parallel)
+                     parallel = parallel,
+                     fitted = fitted$D_X)
 
   # Compute estimates of E[D] -- simple computation of averages here
   D_res <- get_CEF(D, matrix(1, nobs, 1),
@@ -98,7 +105,7 @@ ddml_att <- function(y, D, X,
   multiple_ensembles <- ensb_info$multiple_ensembles
 
   # Construct reduced form variables
-  g_X_D0<- extrapolate_CEF(D = D,
+  g_X_D0 <- extrapolate_CEF(D = D,
                              CEF_res_byD = list(list(fit = y_X_D0_res, d = 0)),
                              aux_indx = indxs$aux_indx)[, , 1]
   m_X <- D_X_res$oos_fitted
@@ -146,13 +153,22 @@ ddml_att <- function(y, D, X,
   r2 <- list(y_X_D0 = y_X_D0_res$r2,
              D_X = D_X_res$r2)
 
-  # Predictions and per-learner residuals
+  # Predictions
   oos_pred <- list(EY_D0_X = g_X_D0,
                    ED_X = m_X,
                    ED = D_res$oos_fitted)
-  oos_resid_bylearner <- list(
-    y_X_D0 = y_X_D0_res$oos_resid_bylearner,
-    D_X = D_X_res$oos_resid_bylearner)
+
+  fitted_export <- list(
+    y_X_D0 = build_fitted_entry(y_X_D0_res, save_crossval,
+                                include_auxiliary = TRUE),
+    D_X = build_fitted_entry(D_X_res, save_crossval)
+  )
+  splits_export <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byD = indxs$subsamples_byD,
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byD = indxs$cv_subsamples_byD
+  )
 
   # Organize output
   ddml_fit <- list(att = att, weights = weights, mspe = mspe,
@@ -174,8 +190,8 @@ ddml_att <- function(y, D, X,
                    cv_folds = if (shortstack) NULL
                      else cv_folds,
                    shortstack = shortstack,
-                   oos_resid_bylearner =
-                     oos_resid_bylearner,
+                   fitted = fitted_export,
+                   splits = splits_export,
                    r2 = r2)
 
   # Print estimation completion

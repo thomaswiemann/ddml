@@ -85,6 +85,199 @@ normalize_learners <- function(learners) {
   learners
 }#NORMALIZE_LEARNERS
 
+# Build a CEF-like result from pre-computed per-learner predictions.
+# When crossval_resid + subsamples are available, recomputes
+# per-fold weights from inner-CV residuals (exact). Otherwise
+# uses sample-fold residuals (approximate, exact for shortstacking).
+build_CEF_from_crossfit <- function(y, crossfit_fitted_eq,
+                                    ensemble_type,
+                                    custom_ensemble_weights,
+                                    crossval_resid = NULL,
+                                    subsamples = NULL,
+                                    auxiliary_fitted_bylearner = NULL) {
+  nobs <- length(y)
+  cf <- as.matrix(crossfit_fitted_eq)
+  nlearners <- ncol(cf)
+  dummy_learners <- lapply(seq_len(nlearners),
+    function(i) list(what = identity))
+
+  # Per-learner OOS residuals, MSPE, and R-squared
+  oos_resid <- drop(y) - cf
+  mspe <- colMeans(oos_resid^2)
+
+  if (!is.null(crossval_resid) && !is.null(crossval_resid[[1]]) &&
+      !is.null(subsamples)) {
+    # Per-fold weight recomputation from inner-CV residuals
+    K <- length(subsamples)
+    nensb <- NULL
+    oos_fitted <- matrix(0, nobs, 1)
+    all_weights <- vector("list", K)
+    for (k in seq_len(K)) {
+      fakecv_k <- list(
+        oos_resid = crossval_resid[[k]],
+        mspe = colMeans(crossval_resid[[k]]^2))
+      ew_k <- ensemble_weights(
+        y[subsamples[[k]]], cf[subsamples[[k]], ],
+        type = ensemble_type,
+        learners = dummy_learners,
+        cv_results = fakecv_k,
+        custom_weights = custom_ensemble_weights,
+        silent = TRUE)
+      all_weights[[k]] <- ew_k$weights
+      if (is.null(nensb)) nensb <- ncol(ew_k$weights)
+      if (ncol(oos_fitted) < nensb) {
+        oos_fitted <- matrix(0, nobs, nensb)
+      }#IF
+      oos_fitted[subsamples[[k]], ] <- cf[subsamples[[k]], ] %*%
+        ew_k$weights
+    }#FOR
+    weights <- array(0, dim = c(nlearners, nensb, K))
+    for (k in seq_len(K)) weights[, , k] <- all_weights[[k]]
+  } else {
+    # Global weights from sample-fold residuals
+    fakecv <- list(oos_resid = oos_resid,
+                   mspe = mspe)
+    ew <- ensemble_weights(
+      y, cf, type = ensemble_type,
+      learners = dummy_learners,
+      cv_results = fakecv,
+      custom_weights = custom_ensemble_weights,
+      silent = TRUE)
+    weights <- ew$weights
+    oos_fitted <- cf %*% weights
+  }#IFELSE
+
+  # Fold-level auxiliary predictions (ATE/ATT/LATE extrapolation)
+  auxiliary_fitted <- NULL
+  if (!is.null(auxiliary_fitted_bylearner)) {
+    K <- length(auxiliary_fitted_bylearner)
+    auxiliary_fitted <- vector("list", K)
+    if (length(dim(weights)) == 3) {
+      for (k in seq_len(K)) {
+        auxiliary_fitted[[k]] <-
+          as.matrix(auxiliary_fitted_bylearner[[k]]) %*%
+          weights[, , k]
+      }#FOR
+    } else {
+      for (k in seq_len(K)) {
+        auxiliary_fitted[[k]] <-
+          as.matrix(auxiliary_fitted_bylearner[[k]]) %*%
+          weights
+      }#FOR
+    }#IFELSE
+  }#IF
+  y_var <- as.numeric(stats::var(y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else
+    rep(NA_real_, length(mspe))
+
+  list(oos_fitted = oos_fitted,
+       weights = weights,
+       mspe = mspe,
+       r2 = r2,
+       auxiliary_fitted = auxiliary_fitted,
+       crossfit_fitted = cf,
+       crossfit_resid = oos_resid,
+       crossval_resid = crossval_resid)
+}#BUILD_CEF_FROM_CROSSFIT
+
+validate_fitted_splits_pair <- function(fitted, splits,
+                                        w_cv = FALSE) {
+  if (is.null(fitted)) return(invisible(NULL))
+  if (is.null(splits)) {
+    stop("Argument 'splits' must be supplied when 'fitted' is supplied.")
+  }#IF
+  if (is.null(splits$subsamples)) {
+    stop("splits must contain 'subsamples' when 'fitted' is supplied.")
+  }#IF
+  if (w_cv && is.null(splits$cv_subsamples)) {
+    stop(paste("splits must contain 'cv_subsamples' for data-driven",
+               "stacking when 'fitted' is supplied."))
+  }#IF
+}#VALIDATE_FITTED_SPLITS_PAIR
+
+build_fitted_entry <- function(res, save_crossval,
+                               include_auxiliary = FALSE) {
+  entry <- list(crossfit_fitted = res$crossfit_fitted,
+                crossfit_resid = res$crossfit_resid)
+  if (save_crossval) {
+    entry$crossval_resid <- res$crossval_resid
+  }#IF
+  if (include_auxiliary) {
+    entry$auxiliary_fitted_bylearner <-
+      res$auxiliary_fitted_bylearner
+  }#IF
+  entry
+}#BUILD_FITTED_ENTRY
+
+build_fitted_from_list <- function(res_list, save_crossval) {
+  lapply(res_list, build_fitted_entry,
+         save_crossval = save_crossval)
+}#BUILD_FITTED_FROM_LIST
+
+get_crossfit_resid_for_eq <- function(fitted, eq) {
+  entry <- fitted[[eq]]
+  if (!is.null(entry) && !is.null(entry$crossfit_resid)) {
+    return(entry$crossfit_resid)
+  }#IF
+  m <- regmatches(eq, regexec("^([A-Za-z]+)(\\d+)(_\\w+)$",
+                              eq))[[1]]
+  if (length(m) == 4) {
+    group <- paste0(m[2], m[4])
+    idx <- as.integer(m[3])
+    entry <- fitted[[group]]
+    if (is.list(entry) && length(entry) >= idx) {
+      return(entry[[idx]]$crossfit_resid)
+    }#IF
+  }#IF
+  NULL
+}#GET_CROSSFIT_RESID_FOR_EQ
+
+normalize_splits <- function(splits = NULL,
+                             by_label = NULL, ...) {
+  dots <- list(...)
+  subsamples <- dots[["subsamples"]]
+  cv_subsamples <- dots[["cv_subsamples"]]
+  # Handle cv_subsamples_list (older deprecated name)
+  if (!is.null(dots[["cv_subsamples_list"]])) {
+    if (!is.null(cv_subsamples))
+      stop("Specify cv_subsamples or cv_subsamples_list, ",
+           "not both.")
+    message("Note: cv_subsamples_list has been renamed to ",
+            "cv_subsamples.")
+    cv_subsamples <- dots[["cv_subsamples_list"]]
+  }#IF
+  # Handle grouped split args (ATE/ATT/LATE)
+  subsamples_by <- NULL
+  cv_subsamples_by <- NULL
+  if (!is.null(by_label)) {
+    sub_by <- paste0("subsamples_by", by_label)
+    cv_sub_by <- paste0("cv_subsamples_by", by_label)
+    subsamples_by <- dots[[sub_by]]
+    cv_subsamples_by <- dots[[cv_sub_by]]
+  }#IF
+  legacy_used <- !is.null(subsamples) || !is.null(cv_subsamples) ||
+    !is.null(subsamples_by) || !is.null(cv_subsamples_by)
+  if (legacy_used) {
+    warning("Deprecated split arguments detected. ",
+            "Use 'splits' instead.", call. = FALSE)
+  }#IF
+  if (is.null(splits) && !legacy_used) return(NULL)
+  if (is.null(splits)) splits <- list()
+  if (!is.list(splits)) stop("'splits' must be a list.")
+  if (is.null(splits$subsamples) && !is.null(subsamples))
+    splits$subsamples <- subsamples
+  if (is.null(splits$cv_subsamples) && !is.null(cv_subsamples))
+    splits$cv_subsamples <- cv_subsamples
+  if (!is.null(by_label)) {
+    if (is.null(splits[[sub_by]]) && !is.null(subsamples_by))
+      splits[[sub_by]] <- subsamples_by
+    if (is.null(splits[[cv_sub_by]]) &&
+        !is.null(cv_subsamples_by))
+      splits[[cv_sub_by]] <- cv_subsamples_by
+  }#IF
+  splits
+}#NORMALIZE_SPLITS
+
 # Input validation checks for DDML estimators
 validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL, learners = NULL,
                             sample_folds = NULL, cv_folds = NULL,
@@ -207,10 +400,14 @@ compute_CEF_list <- function(M, X, Z = NULL,
                              compute_insample_predictions = FALSE,
                              silent = FALSE,
                              label_prefix, label_suffix,
-                             parallel = NULL) {
+                             parallel = NULL,
+                             fitted = NULL) {
   nM <- ncol(M)
   res_list <- vector("list", nM)
   for (k in seq_len(nM)) {
+    fit_k <- if (!is.null(fitted)) {
+      fitted[[k]]
+    }#IF
     res_list[[k]] <- get_CEF(
       M[, k, drop = FALSE], X, Z = Z,
       learners = learners,
@@ -223,7 +420,8 @@ compute_CEF_list <- function(M, X, Z = NULL,
         compute_insample_predictions,
       silent = silent,
       label = paste0(label_prefix, k, label_suffix),
-      parallel = parallel)
+      parallel = parallel,
+      fitted = fit_k)
   }#FOR
   res_list
 }#COMPUTE_CEF_LIST

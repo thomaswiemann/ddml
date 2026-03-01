@@ -54,7 +54,23 @@ aggregation type and computes cross-validated out-of-sample
 predictions to inform the weights.
 }
 \examples{
-# Not run
+\donttest{
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("age","agefst","black","hisp","othrace")]
+
+# Fit an ensemble of ols, lasso, and ridge
+ens_fit = ensemble(y, X,
+                   type = "nnls",
+                   learners = list(list(what = ols),
+                                  list(what = mdl_glmnet),
+                                  list(what = mdl_glmnet,
+                                       args = list(alpha = 0))),
+                   cv_folds = 5,
+                   silent = TRUE)
+ens_fit$weights
+predict(ens_fit, newdata = X)[1:5]
+}
 }
 \seealso{
 Other utilities: 

@@ -54,9 +54,6 @@
 #'     estimation results corresponding the custom ensemble specification.
 #' @param compute_insample_predictions Indicator equal to 1 if in-sample
 #'     predictions should also be computed.
-#' @param compute_predictions_bylearner Indicator equal to 1 if in-sample
-#'     predictions should also be computed for each learner (rather than the
-#'     entire ensemble).
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
@@ -90,18 +87,15 @@
 #'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{oos_fitted_bylearner}}{When
-#'             \code{compute_predictions_bylearner = TRUE}, a matrix of
-#'             out-of-sample predictions, each column corresponding to a base
-#'             learner (in chronological order).}
+#'         \item{\code{crossfit_fitted}}{A matrix of out-of-sample
+#'             predictions, each column corresponding to a base learner
+#'             (in chronological order).}
 #'         \item{\code{is_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = TRUE} and
-#'             \code{compute_predictions_bylearner = TRUE}, a list of matrices
-#'             with in-sample predictions by sample fold.}
+#'             \code{compute_insample_predictions = TRUE}, a list of matrices
+#'             with in-sample predictions by sample fold (per learner).}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X}
-#'             is not \code{NULL} and
-#'             \code{compute_predictions_bylearner = TRUE}, a list of
-#'             matrices with additional predictions for each learner.}
+#'             is not \code{NULL}, a list of matrices with additional
+#'             predictions for each learner.}
 #'     }
 #' @export
 #'
@@ -127,12 +121,11 @@
 #'                            ensemble_type = c("average",
 #'                                              "nnls1",
 #'                                              "singlebest"),
-#'                            compute_predictions_bylearner = TRUE,
 #'                            sample_folds = 2,
 #'                            cv_folds = 2,
 #'                            silent = TRUE)
 #' dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
-#' dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
+#' dim(crosspred_res$crossfit_fitted) # = length(y) by length(learners)
 crosspred <- function(y, X, Z = NULL,
                       learners,
                       sample_folds = 10,
@@ -140,7 +133,6 @@ crosspred <- function(y, X, Z = NULL,
                       cv_folds = 10,
                       custom_ensemble_weights = NULL,
                       compute_insample_predictions = FALSE,
-                      compute_predictions_bylearner = FALSE,
                       cluster_variable = seq_along(y),
                       subsamples = NULL,
                       cv_subsamples = NULL,
@@ -200,7 +192,6 @@ crosspred <- function(y, X, Z = NULL,
       calc_ensemble = calc_ensemble,
       nensb = nensb, nlearners = nlearners,
       compute_insample_predictions = compute_insample_predictions,
-      compute_predictions_bylearner = compute_predictions_bylearner,
       auxiliary_X = auxiliary_X)
   }#FOLD_FUN
 
@@ -230,7 +221,7 @@ crosspred <- function(y, X, Z = NULL,
 
   # Assemble results from fold_results list
   oos_fitted <- matrix(0, nobs, nensb^(calc_ensemble))
-  oos_fitted_bylearner <- matrix(0, nobs, nlearners)
+  crossfit_fitted <- matrix(0, nobs, nlearners)
   is_fitted <- rep(list(NULL), sample_folds)
   is_fitted_bylearner <- rep(list(NULL), sample_folds)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
@@ -241,18 +232,18 @@ crosspred <- function(y, X, Z = NULL,
     paste("sample fold ", seq_len(sample_folds))
   weights <- array(0, dim = c(nlearners, nensb, sample_folds))
 
+  crossval_resid <- rep(list(NULL), sample_folds)
   for (res in fold_results) {
     k <- res$k
     oos_fitted[res$oos_indices, ] <- res$oos_fitted_rows
     if (!is.null(res$weights_k)) weights[, , k] <- res$weights_k
     if (!is.null(res$mspe_k)) mspe[, k] <- res$mspe_k
     if (!is.null(res$r2_k)) r2[, k] <- res$r2_k
+    crossval_resid[[k]] <- res$crossval_resid_k
     is_fitted[[k]] <- res$is_fitted_k
     auxiliary_fitted[[k]] <- res$auxiliary_fitted_k
-    if (!is.null(res$oos_fitted_bylearner_rows)) {
-      oos_fitted_bylearner[res$oos_indices, ] <-
-        res$oos_fitted_bylearner_rows
-    }#IF
+    crossfit_fitted[res$oos_indices, ] <-
+      res$crossfit_fitted_rows
     is_fitted_bylearner[[k]] <- res$is_fitted_bylearner_k
     auxiliary_fitted_bylearner[[k]] <- res$auxiliary_fitted_bylearner_k
   }#FOR
@@ -277,20 +268,21 @@ crosspred <- function(y, X, Z = NULL,
     is_fitted <- new_is_fitted
   }#IF
   # Compute per-learner OOS residuals (not computed for FPLIV w/ LIE...)
-  oos_resid_bylearner <- if (is.numeric(y) && !is.list(y)) {
-    drop(y) - oos_fitted_bylearner
+  crossfit_resid <- if (is.numeric(y) && !is.list(y)) {
+    drop(y) - crossfit_fitted
   } else {
     NULL
   }#IFELSE
 
   # Organize and return output
-  if (!calc_ensemble) weights <- mspe <- r2 <- NULL
+  if (!calc_ensemble) weights <- mspe <- r2 <- crossval_resid <- NULL
   output <- list(oos_fitted = oos_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
+                 crossval_resid = crossval_resid,
                  is_fitted = is_fitted,
                  auxiliary_fitted = auxiliary_fitted,
-                 oos_fitted_bylearner = oos_fitted_bylearner,
-                 oos_resid_bylearner = oos_resid_bylearner,
+                 crossfit_fitted = crossfit_fitted,
+                 crossfit_resid = crossfit_resid,
                  is_fitted_bylearner = is_fitted_bylearner,
                  auxiliary_fitted_bylearner = auxiliary_fitted_bylearner)
   return(output)
@@ -300,7 +292,7 @@ crosspred_compute_fold <- function(
     k, y, X, Z, learners, subsamples, cv_subsamples_k,
     ensemble_type, cv_folds, custom_ensemble_weights,
     calc_ensemble, nensb, nlearners,
-    compute_insample_predictions, compute_predictions_bylearner,
+    compute_insample_predictions,
     auxiliary_X) {
 
   test_idx <- subsamples[[k]]
@@ -339,13 +331,21 @@ crosspred_compute_fold <- function(
 
   # Ensemble metadata
   weights_k <- if (calc_ensemble) mdl_fit$weights else NULL
-  mspe_k <- if (calc_ensemble && !is.null(mdl_fit$cv_res)) {
-    mdl_fit$cv_res$mspe
+  mspe_k <- if (calc_ensemble &&
+      !is.null(mdl_fit$cv_results)) {
+    mdl_fit$cv_results$mspe
   } else {
     NULL
   }
-  r2_k <- if (calc_ensemble && !is.null(mdl_fit$cv_res)) {
-    mdl_fit$cv_res$r2
+  r2_k <- if (calc_ensemble &&
+      !is.null(mdl_fit$cv_results)) {
+    mdl_fit$cv_results$r2
+  } else {
+    NULL
+  }
+  crossval_resid_k <- if (calc_ensemble &&
+      !is.null(mdl_fit$cv_results)) {
+    mdl_fit$cv_results$oos_resid
   } else {
     NULL
   }
@@ -375,27 +375,39 @@ crosspred_compute_fold <- function(
     auxiliary_fitted_k <- stats::predict(mdl_fit, auxiliary_X[[k]])
   }#IF
 
-  # By-learner predictions (optional)
-  oos_fitted_bylearner_rows <- NULL
+  # By-learner predictions
   is_fitted_bylearner_k <- NULL
   auxiliary_fitted_bylearner_k <- NULL
-  if (compute_predictions_bylearner) {
-    mdl_fit$weights <- diag(1, nlearners)
-    oos_fitted_bylearner_rows <-
-      as.numeric(predict.ensemble(mdl_fit,
-                                  newdata = X[test_idx, , drop = FALSE],
-                                  newZ = Z[test_idx, , drop = FALSE]))
+  if (!calc_ensemble) {
+    crossfit_fitted_rows <- matrix(oos_fitted_rows, ncol = 1)
     if (compute_insample_predictions) {
-      is_fitted_bylearner_k <-
-        predict.ensemble(mdl_fit,
-                         newdata = X[train_idx, , drop = FALSE],
-                         newZ = Z[train_idx, , drop = FALSE])
+      is_fitted_bylearner_k <- matrix(is_fitted_k, ncol = 1)
     }#IF
     if (!is.null(auxiliary_X)) {
-      auxiliary_fitted_bylearner_k <-
-        stats::predict(mdl_fit, auxiliary_X[[k]])
+      auxiliary_fitted_bylearner_k <- matrix(auxiliary_fitted_k, ncol = 1)
     }#IF
-  }#IF
+  } else {
+    mdl_fit_bylearner <- mdl_fit
+    mdl_fit_bylearner$weights <- diag(1, nlearners)
+    crossfit_fitted_rows <- predict.ensemble(
+      mdl_fit_bylearner,
+      newdata = X[test_idx, , drop = FALSE],
+      newZ = Z[test_idx, , drop = FALSE]
+    )
+    if (compute_insample_predictions) {
+      is_fitted_bylearner_k <- predict.ensemble(
+        mdl_fit_bylearner,
+        newdata = X[train_idx, , drop = FALSE],
+        newZ = Z[train_idx, , drop = FALSE]
+      )
+    }#IF
+    if (!is.null(auxiliary_X)) {
+      auxiliary_fitted_bylearner_k <- stats::predict(
+        mdl_fit_bylearner,
+        auxiliary_X[[k]]
+      )
+    }#IF
+  }#IFELSE
 
   list(
     k = k,
@@ -404,10 +416,11 @@ crosspred_compute_fold <- function(
     weights_k = weights_k,
     mspe_k = mspe_k,
     r2_k = r2_k,
+    crossval_resid_k = crossval_resid_k,
     weight_colnames = weight_colnames,
     is_fitted_k = is_fitted_k,
     auxiliary_fitted_k = auxiliary_fitted_k,
-    oos_fitted_bylearner_rows = oos_fitted_bylearner_rows,
+    crossfit_fitted_rows = crossfit_fitted_rows,
     is_fitted_bylearner_k = is_fitted_bylearner_k,
     auxiliary_fitted_bylearner_k = auxiliary_fitted_bylearner_k
   )

@@ -19,21 +19,37 @@ get_CEF <- function(y, X, Z = NULL,
                     shortstack,
                     custom_ensemble_weights = NULL,
                     compute_insample_predictions = FALSE,
-                    compute_predictions_bylearner = FALSE,
                     subsamples,
                     cv_subsamples,
                     silent = FALSE,
                     label = NULL,
                     auxiliary_X = NULL,
                     shortstack_y = y,
-                    parallel = NULL) {
+                    parallel = NULL,
+                    fitted = NULL) {
   t0 <- proc.time()[3]
 
   if (!is.null(label)) {
     info_msg("  Estimating ", label, "...", silent = silent)
   }#IF
 
-  # Compute CEF
+  # Use pre-computed predictions if supplied
+  if (!is.null(fitted)) {
+    if (!is.null(auxiliary_X) &&
+        is.null(fitted$auxiliary_fitted_bylearner)) {
+      stop(paste("When auxiliary predictions are required, fitted objects",
+                 "must contain 'auxiliary_fitted_bylearner'."))
+    }#IF
+    res <- build_CEF_from_crossfit(
+      y, fitted$crossfit_fitted,
+      ensemble_type, custom_ensemble_weights,
+      crossval_resid = fitted$crossval_resid,
+      subsamples = subsamples,
+      auxiliary_fitted_bylearner = fitted$auxiliary_fitted_bylearner)
+    return(res)
+  }#IF
+
+  # Compute CEF via cross-fitting
   if (shortstack) {
     res <- shortstacking(y, X, Z,
                          learners = learners,
@@ -55,8 +71,6 @@ get_CEF <- function(y, X, Z = NULL,
                        custom_ensemble_weights,
                      compute_insample_predictions =
                        compute_insample_predictions,
-                     compute_predictions_bylearner =
-                       compute_predictions_bylearner,
                      subsamples = subsamples,
                      cv_subsamples = cv_subsamples,
                      silent = silent,

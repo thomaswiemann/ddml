@@ -87,9 +87,9 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 
 # Compare ols, lasso, and ridge using 4-fold cross-validation
 cv_res <- crossval(y, X,
-                   learners = list(list(fun = ols),
-                                   list(fun = mdl_glmnet),
-                                   list(fun = mdl_glmnet,
+                   learners = list(list(what = ols),
+                                   list(what = mdl_glmnet),
+                                   list(what = mdl_glmnet,
                                         args = list(alpha = 0))),
                    cv_folds = 4,
                    silent = TRUE)
