@@ -43,6 +43,15 @@ reference:
   - ddml_pliv
   - ddml_fpliv
   - ddml_late
+- title: internal
+  contents:
+  - coef.ddml
+  - confint.ddml
+  - vcov.ddml
+  - tidy.ddml
+  - glance.ddml
+  - tidy.ddml_diagnostics
+  - ensemble_weights
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -50,11 +59,14 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
+  - mdl_bigGLM
 - title: Utilities
   contents:
   - crossval
   - crosspred
   - shortstacking
+  - ensemble
+  - diagnostics
 - title: Dataset
   contents:
   - AE98

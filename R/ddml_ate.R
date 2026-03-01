@@ -2,7 +2,9 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml()]
+#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
+#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::glance.ddml()], [ddml::diagnostics()]
 #'
 #' @description Estimators of the average treatment effect and the average
 #'     treatment effect on the treated.

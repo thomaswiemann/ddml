@@ -241,7 +241,9 @@ Treatment Effects." Econometrica, 62(2), 467-475.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
-\code{\link[=summary.ddml]{summary.ddml()}}
+\code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
+\code{\link[=confint.ddml]{confint.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
+\code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
 
 Other ddml: 
 \code{\link{ddml_ate}()},

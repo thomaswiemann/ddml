@@ -2,7 +2,10 @@
 #'
 #' @family ddml
 #'
-#' @seealso [ddml::summary.ddml()], [AER::ivreg()]
+#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
+#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::glance.ddml()], [ddml::diagnostics()],
+#'     [AER::ivreg()]
 #'
 #' @description Estimator for the partially linear IV model.
 #'
