@@ -331,26 +331,25 @@ test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
 
 test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
   # Simulate small dataset
-  nobs <- 100
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1],
-              X %*% runif(40) + Z %*% c(1, runif(9)) + rnorm(nobs))
-  y <- rowSums(D) + X %*% runif(40) + UV[, 2]
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  Z <- matrix(rnorm(nobs * 3), nobs, 3)
+  UV <- matrix(rnorm(2 * nobs), nobs, 2) %*%
+    chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <- cbind(0.3 * X[, 1] + Z %*% c(0.5, 0.3, 0.1) + UV[, 1],
+             0.2 * X[, 2] + Z %*% c(0.2, 0.4, 0.1) + rnorm(nobs))
+  y <- rowSums(D) + 0.3 * X[, 1] + UV[, 2]
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
   # Compute LIE-conform DDML IV estimator
-  suppressWarnings({
-    ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
+  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                  learners,
                                  ensemble_type = c("ols", "nnls",
                                                    "singlebest", "average"),
                                  cv_folds = 3,
                                  sample_folds = 5,
                                  silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_fpliv_fit$coef), 8)
 })#TEST_THAT

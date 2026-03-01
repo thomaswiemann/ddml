@@ -1,40 +1,36 @@
 test_that("ddml_ate computes with a single model", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes with stratify = FALSE", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              stratify = FALSE,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 1)
 })#TEST_THAT
@@ -43,64 +39,59 @@ test_that("ddml_ate computes with a single model and dependence", {
   # Simulate small dataset
   n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
-  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
+  cluster_variable <- sample(seq_len(n_cluster), nobs,
+                             replace = TRUE)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              cluster_variable = cluster_variable,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes with an ensemble procedure", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
   # Compute DDML PLM estimator
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              ensemble_type = "ols",
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes w/ multiple ensembles + custom weights", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
   # Compute DDML PLM estimator
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners,
                              ensemble_type = c("ols", "nnls",
                                                "singlebest", "average"),
@@ -108,23 +99,21 @@ test_that("ddml_ate computes w/ multiple ensembles + custom weights", {
                              custom_ensemble_weights = diag(1, 2),
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 6)
 })#TEST_THAT
 
 test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(list(what = ols))
   # Compute DDML PLM estimator
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners,
                              ensemble_type = c("ols", "nnls",
                                                "singlebest", "average"),
@@ -132,27 +121,24 @@ test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Check output with expectations
   expect_equal(length(ddml_ate_fit$ate), 4)
 })#TEST_THAT
 
 test_that("summary.ddml_ate computes with a single model", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
@@ -165,24 +151,22 @@ test_that("summary.ddml_ate computes with a single model and dependence", {
   # Simulate small dataset
   n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
-  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
+  cluster_variable <- sample(seq_len(n_cluster), nobs,
+                             replace = TRUE)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners = learners,
                              cluster_variable = cluster_variable,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
@@ -193,23 +177,21 @@ test_that("summary.ddml_ate computes with a single model and dependence", {
 
 test_that("summary.ddml_ate computes with multiple ensemble procedures", {
   # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  D_tld <-  X %*% runif(40) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(list(what = ols))
   # Compute DDML PLM estimator
-  suppressWarnings({
-    ddml_ate_fit <- ddml_ate(y, D, X,
+  ddml_ate_fit <- ddml_ate(y, D, X,
                              learners,
                              ensemble_type = c("ols", "nnls",
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = T)
-  })
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
@@ -222,9 +204,9 @@ test_that("ddml_ate fitted pass-through works", {
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 3), nobs, 3)
-  D_tld <- 0.3 * X[, 1] + rnorm(nobs)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
   D <- 1 * (D_tld > 0)
-  y <- D + 0.3 * X[, 1] + rnorm(nobs)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
   fit <- ddml_ate(y, D, X,

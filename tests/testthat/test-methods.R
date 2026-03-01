@@ -1,20 +1,18 @@
 test_that("standard S3 generic methods work correctly", {
   set.seed(42)
-  nobs <- 100
-  X <- cbind(1, matrix(rnorm(nobs * 4), nobs, 4))
-  D_tld <- X %*% runif(5) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(5) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_ate(y, D, X,
+  fit <- ddml_ate(y, D, X,
                     learners = learners,
                     ensemble_type = c("ols", "nnls"),
                     cv_folds = 2,
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   # coef
   cf <- coef(fit)
@@ -45,21 +43,19 @@ test_that("standard S3 generic methods work correctly", {
 
 test_that("type argument threads through S3 methods", {
   set.seed(42)
-  nobs <- 100
-  X <- cbind(1, matrix(rnorm(nobs * 4), nobs, 4))
-  D_tld <- X %*% runif(5) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(5) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_ate(y, D, X,
+  fit <- ddml_ate(y, D, X,
                     learners = learners,
                     ensemble_type = c("ols", "nnls"),
                     cv_folds = 2,
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   # vcov with all three types
   V_hc0 <- vcov(fit, type = "HC0")
@@ -101,17 +97,15 @@ test_that("type argument threads through S3 methods", {
 
 test_that("type works with PLM estimator", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
-                    learners = list(what = ols),
-                    sample_folds = 2,
-                    silent = TRUE)
-  })
+  fit <- ddml_plm(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2,
+                  silent = TRUE)
 
   V_hc0 <- vcov(fit, type = "HC0")
   V_hc1 <- vcov(fit, type = "HC1")

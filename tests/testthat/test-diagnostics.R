@@ -1,16 +1,14 @@
 test_that("diagnostics works with PLM single learner", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
+  fit <- ddml_plm(y, D, X,
                     learners = list(what = ols),
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   diag <- diagnostics(fit)
 
@@ -26,19 +24,17 @@ test_that("diagnostics works with PLM single learner", {
 
 test_that("diagnostics works with PLM multiple learners", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
+  fit <- ddml_plm(y, D, X,
                     learners = learners,
                     ensemble_type = c("nnls1"),
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   diag <- diagnostics(fit)
 
@@ -56,17 +52,15 @@ test_that("diagnostics works with PLM multiple learners", {
 
 test_that("tidy.ddml_diagnostics returns flat data.frame", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
+  fit <- ddml_plm(y, D, X,
                     learners = list(what = ols),
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   td <- tidy(diagnostics(fit))
 
@@ -78,19 +72,17 @@ test_that("tidy.ddml_diagnostics returns flat data.frame", {
 
 test_that("diagnostics with CVC", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
+  fit <- ddml_plm(y, D, X,
                     learners = learners,
                     ensemble_type = c("nnls1"),
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   diag <- diagnostics(fit, cvc = TRUE, bootnum = 100)
 
@@ -108,18 +100,16 @@ test_that("diagnostics with CVC", {
 
 test_that("diagnostics works with ATE", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 500
   X <- matrix(rnorm(nobs * 3), nobs, 3)
-  D_tld <- X %*% runif(3) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(3) + rnorm(nobs)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
-  suppressWarnings({
-    fit <- ddml_ate(y, D, X,
-                    learners = list(what = ols),
-                    sample_folds = 2,
-                    silent = TRUE)
-  })
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2,
+                  silent = TRUE)
 
   diag <- diagnostics(fit)
 
@@ -131,19 +121,17 @@ test_that("diagnostics works with ATE", {
 
 test_that("diagnostics r2 matches manual calculation", {
   set.seed(42)
-  nobs <- 200
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
+  fit <- ddml_plm(y, D, X,
                     learners = learners,
                     ensemble_type = "nnls1",
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   # R2 per learner per fold from crossval: 1 - mspe / var(y)
   # Check that r2 is stored and non-NULL

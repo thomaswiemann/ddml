@@ -1,21 +1,19 @@
 test_that("tidy and glance broom formatters work correctly", {
   # Generate a minimal fitted object to test the plumbing
   set.seed(42)
-  nobs <- 100
-  X <- cbind(1, matrix(rnorm(nobs * 4), nobs, 4))
-  D_tld <- X %*% runif(5) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(5) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_ate(y, D, X,
+  fit <- ddml_ate(y, D, X,
                     learners = learners,
                     ensemble_type = c("ols", "nnls"),
                     cv_folds = 2,
                     sample_folds = 2,
                     silent = TRUE)
-  })
   
   # tidy for a single ensemble
   td1 <- tidy(fit, ensemble_idx = 1)
@@ -45,21 +43,19 @@ test_that("tidy and glance broom formatters work correctly", {
 
 test_that("tidy respects type argument", {
   set.seed(42)
-  nobs <- 100
-  X <- cbind(1, matrix(rnorm(nobs * 4), nobs, 4))
-  D_tld <- X %*% runif(5) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% runif(5) + rnorm(nobs)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  suppressWarnings({
-    fit <- ddml_ate(y, D, X,
+  fit <- ddml_ate(y, D, X,
                     learners = learners,
                     ensemble_type = c("ols"),
                     cv_folds = 2,
                     sample_folds = 2,
                     silent = TRUE)
-  })
 
   td_hc0 <- tidy(fit, type = "HC0")
   td_hc1 <- tidy(fit, type = "HC1")
@@ -82,17 +78,15 @@ test_that("tidy respects type argument", {
 
 test_that("tidy works with PLM (multi-covariate D)", {
   set.seed(42)
-  nobs <- 100
+  nobs <- 300
   X <- matrix(rnorm(nobs * 3), nobs, 3)
   D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
   y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
 
-  suppressWarnings({
-    fit <- ddml_plm(y, D, X,
-                    learners = list(what = ols),
-                    sample_folds = 2,
-                    silent = TRUE)
-  })
+  fit <- ddml_plm(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2,
+                  silent = TRUE)
 
   td <- tidy(fit)
   expect_s3_class(td, "data.frame")

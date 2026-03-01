@@ -126,6 +126,7 @@
 #'                       silent = TRUE)
 #' summary(late_fit)
 #'
+#' \donttest{
 #' # Estimate the local average treatment effect using short-stacking with base
 #' #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
 #' #     to estimate the ATE using every individual base learner.
@@ -142,6 +143,7 @@
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
 #' summary(late_fit)
+#' }
 ddml_late <- function(y, D, Z, X,
                       learners,
                       learners_DXZ = learners,
