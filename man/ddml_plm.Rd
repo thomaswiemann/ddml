@@ -236,7 +236,11 @@ Other ddml:
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},
+\code{\link{ddml_rep}()},
+\code{\link{ddml_replicate}()},
 \code{\link{glance.ddml}()},
-\code{\link{tidy.ddml}()}
+\code{\link{glance.ddml_rep}()},
+\code{\link{tidy.ddml}()},
+\code{\link{tidy.ddml_rep}()}
 }
 \concept{ddml}
