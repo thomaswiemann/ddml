@@ -23,7 +23,7 @@ knitr::opts_chunk$set(
 
 This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates -- or: difference-in-difference with machine learning.
 
-For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html). For a detailed discussion of the relevant asymptotic theory for double/debiased machine learning difference-in-difference estimators see Chang (2020).
+For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html). For a detailed discussion of the relevant asymptotic theory for double/debiased machine learning difference-in-difference estimators see Chang (2020). See also Ahrens et al. (2026) for an example of staggered differences-in-differences estimated with ddml.
 
 # Estimation using ``did``'s Default Estimator
 
@@ -279,6 +279,8 @@ This diagnostic output displays the cross-validated Mean Squared Prediction Erro
 
 
 # References
+
+Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). "An Introduction to Double/Debiased Machine Learning." Journal of Economic Literature, forthcoming.
 
 Callaway B, Sant'Anna P (2021). “Difference-in-differences with multiple time periods.” Journal of Econometrics, 200-230.
 

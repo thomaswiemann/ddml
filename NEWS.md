@@ -14,6 +14,7 @@
 * Updates S3 methods (`coef`, `vcov`, `confint`, `summary`, `print`).
 * Adds `mdl_bigGLM` sparse-matrix unpenalized regression wrapper.
 * `mdl_xgboost()` auto-detects binary factor outcomes.
+* Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median or mean aggregation.
 * Fixes `ddml_fpliv()` with custom weights.
 
 # ddml 0.3.0

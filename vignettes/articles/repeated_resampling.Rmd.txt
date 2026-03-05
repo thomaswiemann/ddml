@@ -191,6 +191,8 @@ This flexibility allows ``ddml`` to scale efficiently from local laptops to mass
 
 # References
 
+Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). "An Introduction to Double/Debiased Machine Learning." *Journal of Economic Literature*, forthcoming.
+
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model Averaging and Double Machine Learning.” *Journal of Applied Econometrics*, 40(3): 249-269.
 
 Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C, Newey W, Robins J (2018). "Double/debiased machine learning for treatment and structural parameters." *The Econometrics Journal*, 21(1), C1-C68.

@@ -122,6 +122,8 @@ cvc_pairwise(resids, 1, 2, fold_ids)
 
 # References
 
+Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). "An Introduction to Double/Debiased Machine Learning." *Journal of Economic Literature*, forthcoming.
+
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." *Journal of Applied Econometrics*, 40(3): 249-269.
 
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." *American Economic Review*, 88(3), 450-477.

@@ -144,6 +144,10 @@ and
 
 ## References
 
+Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T
+(2026). “An Introduction to Double/Debiased Machine Learning.” Journal
+of Economic Literature, forthcoming.
+
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
 Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.
 
