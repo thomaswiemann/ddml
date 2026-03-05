@@ -66,16 +66,16 @@ We begin with estimating the returns to schooling using the set of 180 instrumen
 
 
 ```r
-learners_XZ <- list(list(fun = ols),
-                    list(fun = mdl_glmnet,
+learners_XZ <- list(list(what = ols),
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 180)))))
 
 stacking_180IV_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                                  Z = Z_IV180, X = X,
-                                 learners = list(list(fun = ols)),
-                                 learners_DX = list(list(fun = ols)),
+                                 learners = list(list(what = ols)),
+                                 learners_DX = list(list(what = ols)),
                                  learners_DXZ = learners_XZ,
                                  ensemble_type = c("nnls1"),
                                  shortstack = TRUE,
@@ -95,16 +95,16 @@ The exercise can be repeated with the larger set of 1530 instruments as well. Wi
 
 
 ```r
-learners_XZ <- list(list(fun = ols),
-                    list(fun = mdl_glmnet,
+learners_XZ <- list(list(what = ols),
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 1530)))))
 
 stacking_1530IV_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                                  Z = Z_IV1530, X = X,
-                                 learners = list(list(fun = ols)),
-                                 learners_DX = list(list(fun = ols)),
+                                 learners = list(list(what = ols)),
+                                 learners_DX = list(list(what = ols)),
                                  learners_DXZ = learners_XZ,
                                  ensemble_type = c("nnls1"),
                                  shortstack = TRUE,
@@ -128,24 +128,24 @@ The coefficients corresponding to the two sets of instruments are quite differen
 Z_c <- cbind(Z_IV180, Z_IV1530); colnames(Z_c) <- 1:(180 + 1530)
 set_IV180 <- 1:180; set_IV1530 <- 181:(180 + 1530)
 
-learners_XZ <- list(list(fun = ols,
+learners_XZ <- list(list(what = ols,
                          assign_Z = set_IV180),
-                    list(fun = ols,
+                    list(what = ols,
                           assign_Z = set_IV1530),
-                    list(fun = mdl_glmnet,
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 180))),
                           assign_Z = set_IV180),
-                    list(fun = mdl_glmnet,
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 1530))),
                          assign_Z = set_IV1530))
 stacking_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                            Z = Z_c, X = X,
-                           learners = list(list(fun = ols)),
-                           learners_DX = list(list(fun = ols)),
+                           learners = list(list(what = ols)),
+                           learners_DX = list(list(what = ols)),
                            learners_DXZ = learners_XZ,
                            ensemble_type = c("nnls1"),
                            shortstack = TRUE,

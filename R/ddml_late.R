@@ -328,7 +328,6 @@ ddml_late <- function(y, D, Z, X,
       -(Z * (D - p1) / r - (1 - Z) * (D - p0) / (1 - r) + p1 - p0),
       nobs, 1)
     late <- -mean(psi_b) / mean(psi_a)
-    names(late) <- ensemble_type
   } else {
     y_copy <- matrix(rep(y, nensb), nobs, nensb)
     D_copy <- matrix(rep(D, nensb), nobs, nensb)
@@ -340,7 +339,6 @@ ddml_late <- function(y, D, Z, X,
       (1 - Z_copy) * (D_copy - p_X_byZ[, , 1]) /
       (1 - r_X_tr) + p_X_byZ[, , 2] - p_X_byZ[, , 1])
     late <- -colMeans(psi_b) / colMeans(psi_a)
-    names(late) <- ensemble_type
   }#IFELSE
 
   # Compute scores and Jacobian from psi_a/psi_b
@@ -351,6 +349,9 @@ ddml_late <- function(y, D, Z, X,
     as.matrix(mean(psi_a[, j]))
   })
   coef_names <- "LATE"
+  coef <- matrix(late, nrow = 1, ncol = nensb)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ensemble_type
 
   # Ensemble metrics
   weights <- list(y_X_Z0 = y_X_Z0_res$weights,
@@ -406,7 +407,7 @@ ddml_late <- function(y, D, Z, X,
                    cv_subsamples_byZ =
                      indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type,
-                   coefficients = late,
+                   coefficients = coef,
                    scores = scores,
                    J = J_list,
                    coef_names = coef_names,

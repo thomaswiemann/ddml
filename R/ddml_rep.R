@@ -1,31 +1,5 @@
 # Internal helpers -----------------------------------------------
 
-# Extract SEs from a single ddml fit.
-extract_se <- function(object, type = "HC1") {
-  nensb <- length(object$scores)
-  p <- length(object$coef_names)
-  se_mat <- matrix(0, p, nensb)
-  for (j in seq_len(nensb)) {
-    V <- compute_ddml_variance(
-      object$scores[[j]], object$J[[j]],
-      object$cluster_variable, type = type)
-    se_mat[, j] <- sqrt(diag(V))
-  }#FOR
-  se_mat
-}#EXTRACT_SE
-
-# Ensure coefficients are always a p x nensb matrix.
-normalize_coef_matrix <- function(coefficients, p, nensb) {
-  if (is.matrix(coefficients)) {
-    return(coefficients)
-  }#IF
-  if (p == 1) {
-    matrix(coefficients, nrow = 1, ncol = nensb)
-  } else {
-    matrix(coefficients, nrow = p, ncol = 1)
-  }#IFELSE
-}#NORMALIZE_COEF_MATRIX
-
 # Build inference results array from aggregated coef/SE.
 build_inf_from_agg <- function(agg, coef_names,
                                ensemble_type) {
@@ -60,31 +34,50 @@ aggregate_reps <- function(object, aggregation = "median",
   p <- length(object$coef_names)
 
   coef_array <- array(0, dim = c(p, nensb, R))
-  se_array   <- array(0, dim = c(p, nensb, R))
+  vcov_array <- array(0, dim = c(p, p, nensb, R))
   for (r in seq_len(R)) {
     fit <- object$fits[[r]]
-    coef_array[, , r] <- normalize_coef_matrix(
-      fit$coefficients, p, nensb)
-    se_array[, , r] <- extract_se(fit, type = type)
+    coef_array[, , r] <- fit$coefficients
+    for (j in seq_len(nensb)) {
+      vcov_array[, , j, r] <- compute_ddml_variance(
+        fit$scores[[j]], fit$J[[j]],
+        fit$cluster_variable, type = type)
+    }#FOR
   }#FOR
 
+  agg_vcov <- array(0, dim = c(p, p, nensb))
   if (aggregation == "median") {
     agg_coef <- apply(coef_array, c(1, 2),
                       stats::median)
-    var_total <- se_array^2 +
-      sweep(coef_array, c(1, 2), agg_coef)^2
-    agg_se <- sqrt(apply(var_total, c(1, 2),
-                         stats::median))
   } else {
     agg_coef <- apply(coef_array, c(1, 2), mean)
-    var_total <- se_array^2 +
-      sweep(coef_array, c(1, 2), agg_coef)^2
-    agg_se <- sqrt(apply(var_total, c(1, 2),
-      function(x) length(x) / sum(1 / x)))
   }#IFELSE
 
+  for (j in seq_len(nensb)) {
+    for (k1 in seq_len(p)) {
+      for (k2 in seq_len(p)) {
+        bdiff_1 <- coef_array[k1, j, ] - agg_coef[k1, j]
+        bdiff_2 <- coef_array[k2, j, ] - agg_coef[k2, j]
+        Vvec <- vcov_array[k1, k2, j, ] + abs(bdiff_1 * bdiff_2)
+        if (aggregation == "median") {
+          agg_vcov[k1, k2, j] <- stats::median(Vvec)
+        } else {
+          agg_vcov[k1, k2, j] <- length(Vvec) / sum(1 / Vvec)
+        }#IFELSE
+      }#FOR
+    }#FOR
+  }#FOR
+
+  agg_se <- matrix(0, nrow = p, ncol = nensb)
+  for (j in seq_len(nensb)) {
+    V_j <- matrix(agg_vcov[, , j, drop = FALSE],
+                  nrow = p, ncol = p)
+    agg_se[, j] <- sqrt(diag(V_j))
+  }#FOR
+
   list(coefficients = agg_coef, se = agg_se,
-       coef_array = coef_array, se_array = se_array)
+       vcov = agg_vcov, coef_array = coef_array,
+       vcov_array = vcov_array)
 }#AGGREGATE_REPS
 
 # Exported functions ---------------------------------------------
@@ -339,8 +332,9 @@ print.ddml_rep <- function(x, ...) {
 #' Extract Aggregated Coefficients from a ddml_rep Object
 #'
 #' @param object A \code{ddml_rep} object.
-#' @param ... Additional arguments. Supports
-#'     \code{aggregation} (\code{"median"} or \code{"mean"}).
+#' @param aggregation Character string, either
+#'     \code{"median"} (default) or \code{"mean"}.
+#' @param ... Additional arguments. 
 #'
 #' @return Named vector (single ensemble) or matrix
 #'     (multiple ensembles).
@@ -376,8 +370,8 @@ coef.ddml_rep <- function(object,
 
 #' Variance-Covariance Matrix for ddml_rep Objects
 #'
-#' Returns a diagonal variance-covariance matrix from
-#' cross-resample aggregation.
+#' Returns a variance-covariance matrix from cross-resample
+#' aggregation.
 #'
 #' @param object A \code{ddml_rep} object.
 #' @param ensemble_idx Integer index of the ensemble type.
@@ -389,7 +383,7 @@ coef.ddml_rep <- function(object,
 #'     (default), \code{"HC0"}, or \code{"HC3"}.
 #' @param ... Currently unused.
 #'
-#' @return A diagonal p x p variance-covariance matrix.
+#' @return A p x p variance-covariance matrix.
 #'
 #' @examples
 #' \donttest{
@@ -413,8 +407,11 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
   agg <- aggregate_reps(object,
                         aggregation = aggregation,
                         type = type)
-  se_j <- agg$se[, ensemble_idx]
-  V <- diag(se_j^2, nrow = length(se_j))
+  V <- agg$vcov[, , ensemble_idx]
+  if (!is.matrix(V)) {
+    V <- matrix(V, nrow = length(object$coef_names),
+                ncol = length(object$coef_names))
+  }#IF
   rownames(V) <- colnames(V) <- object$coef_names
   V
 }#VCOV.DDML_REP

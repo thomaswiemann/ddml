@@ -23,6 +23,9 @@ coef.ddml <- function(object, ...) {
   cf <- object$coefficients
   if (is.matrix(cf) && ncol(cf) == 1) {
     cf <- drop(cf)
+    if (length(cf) == 1) {
+      names(cf) <- NULL
+    }#IF
   }#IF
   cf
 }#COEF.DDML
@@ -92,12 +95,7 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 confint.ddml <- function(object, parm, level = 0.95,
                          ensemble_idx = 1,
                          type = "HC1", ...) {
-  cf <- object$coefficients
-  if (is.matrix(cf)) {
-    cf <- cf[, ensemble_idx]
-  } else {
-    cf <- cf[ensemble_idx]
-  }#IFELSE
+  cf <- object$coefficients[, ensemble_idx]
 
   V <- vcov(object, ensemble_idx = ensemble_idx,
             type = type)

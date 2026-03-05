@@ -30,7 +30,8 @@ For an excellent introduction to differences-in-differences with multiple time p
 For illustration, consider the data of Callaway and Sant'Anna (2020) on county-level teen employment rates from 2003-2007 for additional details. We are interested in the effect of treatment on the log-employment rate ``lemp`` and assume that parallel trends holds conditional on county population (``lpop`` is the log of county population).
 
 ```{r}
-# Load the did package
+# Load ddml and did
+library(ddml)
 library(did)
 set.seed(588239)
 
@@ -57,7 +58,7 @@ summary(attgt_lm)
 The ``did`` package offers visualization methods using ``gglpot2``:
 
 ```{r, fig.width=8, fig.height=10, fig.align='center', out.width="90%", dpi = 200, fig.cap="Diff-in-Diff Estimates."}
-ggdid(attgt_lm, ylim = c(-.4, .4))
+ggdid(attgt_lm)
 ```
 
 Further, the group-time average treatment effects can easily be aggregated, for example, to estimate dynamic average treatment effects:
@@ -66,10 +67,10 @@ Further, the group-time average treatment effects can easily be aggregated, for 
 # aggregate the group-time average treatment effects
 dyn_lm <- aggte(attgt_lm, type = "dynamic")
 summary(dyn_lm)
-ggdid(dyn_lm, ylim = c(-.4, .4))
+ggdid(dyn_lm)
 ```
 
-# Contructing a ``xgboost``-based Diff-in-Diff Estimator
+# Constructing a ``xgboost``-based Diff-in-Diff Estimator
 
 Without additional _parametric_ functional form assumptions on the reduced form equations, it is _not_ guaranteed that the default ``att_gt`` estimator returns a convex combination of causal effects. This is because linear predictors do not necessarily correspond to the conditional expectation functions arising in the doubly-robust score of the group-time average treatment effect. The resulting misspecification error can then lead to negative weights in the aggregation of individual-level treatment effects.
 
@@ -86,8 +87,8 @@ This two-step approach allows for cleaner code when considering multiple ddml-ba
 
 The below code-snippet constructs a simple estimation method following step 1:
 ```{r}
-# load the ddml package
-library(ddml)
+# Initialize a global list to store fits for diagnostic inspection
+global_ddml_fits <- list()
 
 # write a general wrapper for ddml_att
 ddml_did_method <- function(y1, y0, D, covariates, ...) {
@@ -95,6 +96,10 @@ ddml_did_method <- function(y1, y0, D, covariates, ...) {
   delta_y <- y1 - y0
   # Compute the ATT
   att_fit <- ddml_att(y = delta_y, D = D, X = covariates, ...)
+  
+  # Store the fit in the global list
+  global_ddml_fits[[length(global_ddml_fits) + 1]] <<- att_fit
+  
   # Return results
   inf.func <- att_fit$psi_b + att_fit$att * att_fit$psi_a
   output <- list(ATT = att_fit$att, att.inf.func = inf.func)
@@ -108,8 +113,8 @@ A potentially suitable machine learning reduced form estimator is gradient tree 
 my_did_xgboost <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners
   learners = list(what = mdl_xgboost,
-                  args = list(nround = 500,
-                              params = list(eta = 0.05, max_depth = 3),
+                  args = list(nround = 50,
+                              params = list(eta = 0.1, max_depth = 3),
                               early_stopping_rounds = 1))
   learners_DX = learners
 
@@ -117,7 +122,7 @@ my_did_xgboost <- function(y1, y0, D, covariates, ...) {
   ddml_did_method(y1, y0, D, covariates,
                   learners = learners,
                   learners_DX = learners_DX,
-                  sample_folds = 10,
+                  sample_folds = 5,
                   silent = TRUE)
 }#MY_DID_XGBOOST
 ```
@@ -138,7 +143,7 @@ attgt_xgboost <- att_gt(yname = "lemp",
 summary(attgt_xgboost)
 
 # plot the coefficients
-ggdid(attgt_xgboost, ylim = c(-.4, .4))
+ggdid(attgt_xgboost)
 ```
 
 Of course, use of the ``ddml``-based reduced form estimator still allows us to leverage the various other methods of the ``did`` package, including the construction (and visualization of) dynamic average treatment effects:
@@ -147,7 +152,7 @@ Of course, use of the ``ddml``-based reduced form estimator still allows us to l
 # aggregate the group-time average treatment effects
 dyn_xgboost <- aggte(attgt_xgboost, type = "dynamic")
 summary(dyn_xgboost)
-ggdid(dyn_xgboost, ylim = c(-.4, .4))
+ggdid(dyn_xgboost)
 
 ```
 
@@ -157,7 +162,7 @@ Given these two coefficients, is there a good reason to choose one over the othe
 
 It is ex-ante difficult to trade-off the potential bias from misspecification that the linear estimator suffers from with the potential bias from estimation error that the gradient tree boosting estimator may suffer from. ``ddml`` allows to resolve this conflict in a data-driven manner by simultaneous consideration of multiple machine learners via (short-)stacking. We turn to this in the next section.
 
-# Contructing a Shortstacking-based Diff-in-Diff Estimator
+# Constructing a Shortstacking-based Diff-in-Diff Estimator
 
 Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
 
@@ -167,47 +172,47 @@ We construct a new wrapper for our ``ddml_did_method`` that hard-codes different
 - gradient tree boosting with more and less regularization
 - random forests with more and less regularization
 
-The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also `vignette("stacking")`).
+The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also ``vignette("stacking")``).
 
 ```{r}
 my_did_stacking <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners for outcome reduced-form
   learners = list(list(what = ols),
                   list(what = mdl_xgboost,
-                       args = list(nround = 500,
-                                   params = list(eta = 0.05, max_depth = 1),
+                       args = list(nround = 50,
+                                   params = list(eta = 0.1, max_depth = 1),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_xgboost,
-                       args = list(nround = 500,
-                                   params = list(eta = 0.05, max_depth = 3),
+                       args = list(nround = 50,
+                                   params = list(eta = 0.1, max_depth = 3),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_ranger,
-                       args = list(num.trees = 1000,
-                                   max.depth = 1)),
+                       args = list(num.trees = 100,
+                                   max.depth = 5)),
                   list(what = mdl_ranger,
-                       args = list(num.trees = 1000,
-                                   max.depth = 20)))
+                       args = list(num.trees = 100,
+                                   max.depth = 10)))
   # Hard-code learners for treatment reduced-form
   learners_DX = list(list(what = mdl_glm),
                   list(what = mdl_xgboost,
-                       args = list(nround = 500,
-                                   params = list(eta = 0.05, max_depth = 1),
+                       args = list(nround = 50,
+                                   params = list(eta = 0.1, max_depth = 1),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_xgboost,
-                       args = list(nround = 500,
-                                   params = list(eta = 0.05, max_depth = 3),
+                       args = list(nround = 50,
+                                   params = list(eta = 0.1, max_depth = 3),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_ranger,
-                       args = list(num.trees = 1000,
-                                   max.depth = 1)),
+                       args = list(num.trees = 100,
+                                   max.depth = 5)),
                   list(what = mdl_ranger,
-                       args = list(num.trees = 1000,
-                                   max.depth = 20)))
+                       args = list(num.trees = 100,
+                                   max.depth = 10)))
   # Call the general ddml_did method w/ additional hard-coded arguments
   ddml_did_method(y1, y0, D, covariates,
                   learners = learners,
                   learners_DX = learners_DX,
-                  sample_folds = 10,
+                  sample_folds = 5,
                   ensemble_type = "nnls",
                   shortstack = TRUE,
                   silent = TRUE)
@@ -217,6 +222,9 @@ my_did_stacking <- function(y1, y0, D, covariates, ...) {
 Finally, we recompute the group-time average treatment effects using our shortstacking estimator:
 
 ```{r, fig.width=8, fig.height=10, fig.align='center', out.width="90%", dpi = 200, fig.cap="Stacking-based Diff-in-Diff Estimates."}
+# Clear the global fits list from the previous xgboost runs
+global_ddml_fits <- list()
+
 # estimate group-time average treatment effects with ddml
 attgt_stacking <- att_gt(yname = "lemp",
                          gname = "first.treat",
@@ -230,7 +238,7 @@ attgt_stacking <- att_gt(yname = "lemp",
 summary(attgt_stacking)
 
 # plot the coefficients
-ggdid(attgt_stacking, ylim = c(-.4, .4))
+ggdid(attgt_stacking)
 ```
 The results are largely similar to those of the default linear estimator of the ``did`` package, suggesting that the linear approximation of the reduced forms is sufficiently accurate. (Of course we didn't know that before -- now, at least, we can sleep easy!)
 
@@ -240,10 +248,34 @@ Other settings, in particular settings with multiple control variables, may show
 # aggregate the group-time average treatment effects
 dyn_stacking <- aggte(attgt_stacking, type = "dynamic")
 summary(dyn_stacking)
-ggdid(dyn_stacking, ylim = c(-.4, .4))
+ggdid(dyn_stacking)
 
 ```
 
+# Stacking Diagnostics for Group-Time Effects
+
+Because the ``did`` package encapsulates the estimation of each group-time cell dynamically, the resulting ``MP`` object does not natively return the underlying ``ddml`` model estimators for inspection. 
+
+However, because we stored the intermediate fits in the ``global_ddml_fits`` list inside our ``ddml_did_method`` wrapper, we can easily run stacking diagnostics on any specific cell. 
+
+For example, let's look at the diagnostics for the ``(g=2004, t=2006)`` cell (which is the third group-time cell evaluated by the shortstacking estimator):
+
+```{r}
+# Extract the ddml_att fit computed for Group 2004 at Time 2006
+cell_fit <- global_ddml_fits[[3]]
+
+# Run stacking diagnostics on the computed cell, enabling CVC testing
+print(diagnostics(cell_fit, cvc = TRUE))
+```
+
+This diagnostic output displays the cross-validated Mean Squared Prediction Error (MSPE), the out-of-sample $R^2$, the non-negative least squares (NNLS) weights assigned to each base learner, and the CVC p-value.
+
+**How to Interpret These Metrics to Guide Learner Choice:**
+
+1. **$R^2$**: Evaluates the proportion of variance explained by each learner out-of-sample. Because these are computed on hold-out folds, negative values can occur and indicate that a learner performs worse than a simple constant mean prediction (often a sign of severe overfitting or algorithmic mismatch).
+2. **Weights**: The short-stacking algorithm assigns weights to optimally combine the learners and minimize the overall MSPE. Learners with $0$ weight do not contribute to the final predictions because their predictive power is either poor or entirely subsumed by other models in the ensemble.
+3. **CVC P-Values**: The ``cvc_pval`` column shows the p-value from a Cross-Validation Criteria test (Ahrens et al. 2024), comparing each learner's MSPE against the MSPE of the single-best ML model in the list. A high p-value (e.g. > 0.05) indicates that the learner's predictive performance is not statistically worse than the best learner. If simple linear models (e.g., ``ols``) show high p-values, it implies machine learning does not significantly improve prediction out-of-sample for this specific parameter, which can legally justify reverting to simpler, faster estimators.
+4. **Actionable Efficiency**: If your diagnostic output consistently assigns $0$ weight, negative $R^2$, and $0.000$ CVC p-values to computationally expensive models (like deep random forests), you can safely remove them from the ``learners`` list in future runs to dramatically reduce computation time without sacrificing accuracy.
 
 
 # References

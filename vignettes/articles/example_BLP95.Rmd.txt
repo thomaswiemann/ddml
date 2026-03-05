@@ -137,7 +137,7 @@ learner <- list(what = mdl_glmnet)
 lasso_fit <- ddml_fpliv(y, D = D,
                         Z = ZL, X = XL,
                         learners = learner,
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
 summary(lasso_fit)
 ```
@@ -171,12 +171,12 @@ learners <- list(list(what = ols, # ols with the baseline set
                       assign_X = set_XL,
                       assign_Z = set_ZL),
                  list(what = mdl_ranger, # random forests with the baseline set
-                      args = list(num.trees = 1000,
+                      args = list(num.trees = 100,
                                   min.node.size = 10),
                       assign_X = set_X,
                       assign_Z = set_Z),
                  list(what = mdl_xgboost, # boosted trees with the baseline set
-                      args = list(nrounds = 300),
+                      args = list(nrounds = 50),
                       assign_X = set_X,
                       assign_Z = set_Z))
 
@@ -186,7 +186,7 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            learners = learners,
                            ensemble_type = c("nnls1"),
                            shortstack = TRUE,
-                           sample_folds = 10,
+                           sample_folds = 5,
                            silent = TRUE)
 summary(stacking_fit)
 ```
@@ -219,7 +219,7 @@ compute_inelastic_demand(ols_L_fit$coef[2])
 compute_inelastic_demand(tsls_fit$coef[2])
 compute_inelastic_demand(tsls_L_fit$coef[2])
 ```
-Double/debiased machine learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the intial OLS estimates.
+Double/debiased machine learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
 ```{r}
 # ddml-lasso implied number of products with inelastic demand
 compute_inelastic_demand(lasso_fit$coef)
@@ -242,7 +242,7 @@ rlassoIV_fit <- rlassoIV(x = XL, d = D, y = y, z = ZL,
 summary(rlassoIV_fit)
 ```
 
-The coefficient is drastically different from previous estimates, including the double/debaised machine learning estimates that included lasso-based approaches.
+The coefficient is drastically different from previous estimates, including the double/debiased machine learning estimates that included lasso-based approaches.
 
 To gain some insight into potential causes for these differences, we check which instruments and controls were selected by the lasso procedure. Not surprisingly, lasso with a plug-in penalty selects only very few instruments and controls.
 
@@ -252,13 +252,13 @@ dim(Zr_)[2]
 Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
 dim(Xr_)[2]
 ```
-From the stacking weights above, we know that the double/debaised machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
+From the stacking weights above, we know that the double/debiased machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
 
 ```{r}
 # Base learner
 learner <- list(list(what = ols),
                 list(what = mdl_xgboost,
-                     args = list(nrounds = 300)))
+                     args = list(nrounds = 50)))
 
 # Compute short-stacked IV estimate
 stacking_r_fit <- ddml_fpliv(y, D = D,
@@ -266,7 +266,7 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
                         learners = learner,
                         ensemble_type = c("nnls1"),
                         shortstack = TRUE,
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
 summary(stacking_r_fit)
 ```

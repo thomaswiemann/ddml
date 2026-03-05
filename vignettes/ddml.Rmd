@@ -17,9 +17,10 @@ This article is an introduction to double/debiased machine learning using short-
 
 1. Estimation with a single machine learner
 2. Estimation with multiple machine learners & short-stacking
-3. Estimation using different types of short-stacking
-
-See [Articles](index.html) for discussions of more advanced topics.
+3. Inspecting learner performance
+4. Estimation using different types of short-stacking
+5. Generalizing to other causal models
+6. Robust inference via repeated resampling
 
 # Estimation with a Single Machine Learner
 
@@ -77,9 +78,9 @@ Since the statistical properties of machine learners depend heavily on the under
 
 
 ```r
-learners_multiple <- list(list(fun = ols),
-                          list(fun = mdl_glmnet),
-                          list(fun = mdl_xgboost,
+learners_multiple <- list(list(what = ols),
+                          list(what = mdl_glmnet),
+                          list(what = mdl_xgboost,
                                args = list(nrounds = 10,
                                            max_depth = 1)))
 ```
@@ -106,21 +107,47 @@ summary(late_fit)
 #> LATE   -0.223      0.187    -1.2     0.23
 ```
 
-It is often insightful to see which base learners contribute the most to the final reduced form estimates. The below snippet shows the weights for the reduced forms $E[Y|Z=0,X]$ and $E[Y|Z=1,X]$:
+# Inspecting Learner Performance
+
+It is often insightful to see which base learners contribute the most to the final reduced form estimates. The ``diagnostics()`` function provides a compact summary of each learner's out-of-sample mean squared prediction error (MSPE), $R^2$, and the stacking weight assigned by the chosen ensemble type:
 
 ```r
-cat("Stacking weights for E[Y|Z=0, X]: \n")
-#> Stacking weights for E[Y|Z=0, X]:
-t(late_fit$weights$y_X_Z0)
-#>            [,1] [,2]      [,3]
-#> nnls1 0.9668285    0 0.0331715
-
-cat("Stacking weights for E[Y|Z=1, X]: \n")
-#> Stacking weights for E[Y|Z=1, X]:
-t(late_fit$weights$y_X_Z1)
-#>       [,1]      [,2]      [,3]
-#> nnls1    0 0.8027662 0.1972338
+diagnostics(late_fit)
+#> Stacking diagnostics: Local Average Treatment Effect 
+#> Obs: 5000 
+#> 
+#>   y_X_Z0:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2412 0.0299 0.9668
+#>  learner_2 0.2412 0.0299 0.0000
+#>  learner_3 0.2412 0.0299 0.0332
+#> 
+#>   y_X_Z1:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2424 0.0297 0.0000
+#>  learner_2 0.2424 0.0297 0.8028
+#>  learner_3 0.2424 0.0297 0.1972
+#> 
+#>   D_X_Z0:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2091 0.0791 0.9303
+#>  learner_2 0.2091 0.0791 0.0000
+#>  learner_3 0.2091 0.0791 0.0697
+#> 
+#>   D_X_Z1:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2234 0.0817 0.9557
+#>  learner_2 0.2234 0.0817 0.0000
+#>  learner_3 0.2234 0.0817 0.0443
+#> 
+#>   Z_X:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2499 -1e-04 0.0000
+#>  learner_2 0.2499 -1e-04 0.5509
+#>  learner_3 0.2499 -1e-04 0.4491
 ```
+
+For formal statistical tests of whether learner performance differences are significant, see ``vignette("stacking_diagnostics")``.
 
 # Estimation using Different Types of Short-Stacking
 
@@ -128,7 +155,7 @@ t(late_fit$weights$y_X_Z1)
 
 - ``'nls'`` constraints the coefficients of each base learner to be non-negative
 - ``'singlebest'`` selects the single MSPE-minimizing base learner
-- ``'ols`` constructs unconstrained linear combinations of base learners
+- ``'ols'`` constructs unconstrained linear combinations of base learners
 - ``'average'`` computes an unweighted average of base learners
 
 
@@ -163,7 +190,76 @@ summary(late_fit)
 #> LATE   -0.229      0.189   -1.21     0.23
 ```
 
+# Other Causal Models
+
+The learner interface and stacking workflow are identical across all ``ddml`` estimators. For example, the partially linear model (PLM) estimates the effect of ``D`` on ``y`` while nonparametrically controlling for ``X`` -- without requiring an instrument. The same set of base learners can be reused directly:
+
+
+```r
+plm_fit <- ddml_plm(y, D, X,
+                     learners = learners_multiple,
+                     ensemble_type = 'nnls1',
+                     shortstack = TRUE,
+                     sample_folds = 3,
+                     silent = TRUE)
+summary(plm_fit)
+#> DDML estimation: Partially Linear Model 
+#> Obs: 5000   Folds: 3  Stacking: short-stack
+#> 
+#>     Estimate Std. Error t value Pr(>|t|)    
+#> D_r  -0.1467     0.0147   -9.97   <2e-16 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+Beyond ``ddml_late`` and ``ddml_plm``, the package supports several other causal models:
+
+- ``ddml_ate`` -- average treatment effect (see ``?ddml_ate``)
+- ``ddml_att`` -- average treatment effect on the treated (see ``?ddml_att``)
+- ``ddml_pliv`` -- partially linear IV model (see ``?ddml_pliv``)
+- ``ddml_fpliv`` -- flexible partially linear IV model (see ``?ddml_fpliv``)
+
+# Robust Inference via Repeated Resampling
+
+Because double/debiased machine learning relies on random sample splits, point estimates contain _splitting variance_. To stabilize results, ``ddml_replicate()`` repeats the cross-fitting procedure multiple times and aggregates the estimates (see Ahrens et al., 2024):
+
+
+```r
+plm_rep <- ddml_replicate(ddml_plm,
+                           y = y, D = D, X = X,
+                           learners = learners_multiple,
+                           ensemble_type = 'nnls1',
+                           shortstack = TRUE,
+                           sample_folds = 3,
+                           resamples = 5,
+                           silent = TRUE)
+#> Error in ddml_replicate(ddml_plm, y = y, D = D, X = X, learners = learners_multiple, : could not find function "ddml_replicate"
+summary(plm_rep)
+#> Error in eval(expr, envir, enclos): object 'plm_rep' not found
+```
+
+For a detailed discussion of aggregation methods and the ``ddml_rep`` class, see ``vignette("repeated_resampling")``.
+
+# Where to Go Next
+
+Check out the following articles to learn more:
+
+- ``vignette("stacking")`` discusses computational benefits of short-stacking
+- ``vignette("stacking_diagnostics")`` shows how to evaluate base learners and test for equal predictive ability
+- ``vignette("repeated_resampling")`` demonstrates robust inference via repeated cross-fitting
+- ``vignette("modelsummary_integration")`` illustrates integration with ``broom`` and ``modelsummary``
+- ``vignette("new_ml_wrapper")`` shows how to write user-provided base learners
+- ``vignette("sparse")`` illustrates support of sparse matrices (see ``?Matrix``)
+- ``vignette("did")`` discusses integration with the diff-in-diff package [``did``](https://bcallaway11.github.io/did/)
+
+For additional applied examples, see:
+
+- ``vignette("example_401k")`` on the effect of 401k participation on retirement savings
+- ``vignette("example_BLP95")`` on flexible demand estimation with endogenous prices
+
 # References
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." American Economic Review, 88(3), 450-477.
 

@@ -43,16 +43,12 @@ compute_ddml_inference <- function(coefficients, scores, J,
                                   cluster_variable = NULL,
                                   type = "HC1") {
   nensb <- length(ensemble_type)
-  p <- NCOL(scores[[1]])
+  p <- nrow(coefficients)
 
   inf_results <- array(0, dim = c(p, 4, nensb))
 
   for (j in seq_len(nensb)) {
-    if (is.matrix(coefficients)) {
-      theta_j <- coefficients[, j]
-    } else {
-      theta_j <- coefficients[j]
-    }#IFELSE
+    theta_j <- coefficients[, j]
 
     V <- compute_ddml_variance(scores[[j]], J[[j]],
                               cluster_variable,

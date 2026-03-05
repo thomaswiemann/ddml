@@ -51,7 +51,7 @@ time_singlelearner <- system.time({
                         learners = list(what = mdl_xgboost,
                                         args = list(nrounds = 100,
                                                     max_depth = 1)),
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 
@@ -64,7 +64,7 @@ time_shortstacking <- system.time({
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',
                         shortstack = TRUE,
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 
@@ -77,8 +77,8 @@ time_stacking <- system.time({
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',
                         shortstack = FALSE,
-                        sample_folds = 10,
-                        cv_folds = 10,
+                        sample_folds = 5,
+                        cv_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 ```

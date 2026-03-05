@@ -229,7 +229,9 @@ ddml_pliv <- function(y, D, Z, X,
     iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
 
     # Organize complementary ensemble output
-    coef <- stats::coef(iv_fit)[-1]
+    coef_vec <- stats::coef(iv_fit)[-1]
+    coef <- matrix(coef_vec, nrow = nD, ncol = 1)
+    colnames(coef) <- ensemble_type
 
     # Compute scores and Jacobian
     D_r_mat <- as.matrix(D_r)
@@ -238,7 +240,7 @@ ddml_pliv <- function(y, D, Z, X,
     e <- as.vector(y_r - D_r_mat %*% coef)
     scores <- list(D_hat * e)
     J_list <- list(-crossprod(D_hat, D_r_mat) / nobs)
-    coef_names <- names(coef)
+    coef_names <- names(coef_vec)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.

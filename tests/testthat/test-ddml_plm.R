@@ -403,6 +403,109 @@ test_that("ddml_plm fitted pass-through works", {
   )
 })
 
+test_that("ddml_plm pass-through with nnls/nnls1 reproduces exactly via crossval_resid", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  presplits <- get_sample_splits(seq_len(nobs),
+                                 sample_folds = 2,
+                                 cv_folds = 2)
+  splits <- list(
+    subsamples = presplits$subsamples,
+    cv_subsamples = presplits$cv_subsamples)
+
+  for (ens in c("nnls", "nnls1")) {
+    fit_fresh <- ddml_plm(y, D, X,
+                          learners = learners,
+                          ensemble_type = ens,
+                          sample_folds = 2,
+                          splits = splits,
+                          silent = TRUE)
+
+    # crossval_resid must be stored for exact reproduction
+    expect_true(
+      !is.null(fit_fresh$fitted$y_X$crossval_resid),
+      info = paste(ens, "y_X crossval_resid"))
+
+    # Pass-through with same ensemble reproduces exactly
+    fit_pt <- ddml_plm(y, D, X,
+                       learners = learners,
+                       ensemble_type = ens,
+                       sample_folds = 2,
+                       splits = splits,
+                       silent = TRUE,
+                       fitted = fit_fresh$fitted)
+    expect_equal(coef(fit_pt), coef(fit_fresh),
+                 tolerance = 1e-10,
+                 info = paste(ens, "exact reproduction"))
+  }
+})
+
+test_that("ddml_plm pass-through with save_crossval = FALSE uses approximate path", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5) + rnorm(nobs)
+
+  learners <- list(list(what = ols), list(what = ols))
+  presplits <- get_sample_splits(seq_len(nobs),
+                                 sample_folds = 2,
+                                 cv_folds = 2)
+  splits <- list(
+    subsamples = presplits$subsamples,
+    cv_subsamples = presplits$cv_subsamples)
+
+  # Fit with save_crossval = FALSE strips crossval_resid
+  fit_no_cv <- ddml_plm(y, D, X,
+                        learners = learners,
+                        ensemble_type = "nnls1",
+                        sample_folds = 2,
+                        splits = splits,
+                        save_crossval = FALSE,
+                        silent = TRUE)
+  expect_null(fit_no_cv$fitted$y_X$crossval_resid)
+
+  # average ensemble: still exact without crossval_resid
+  fit_avg <- ddml_plm(y, D, X,
+                      learners = learners,
+                      ensemble_type = "average",
+                      sample_folds = 2,
+                      splits = splits,
+                      silent = TRUE)
+  fit_avg_pt <- ddml_plm(y, D, X,
+                         learners = learners,
+                         ensemble_type = "average",
+                         sample_folds = 2,
+                         splits = splits,
+                         silent = TRUE,
+                         fitted = fit_no_cv$fitted)
+  expect_equal(coef(fit_avg_pt), coef(fit_avg),
+               tolerance = 1e-10)
+
+  # nnls1 ensemble: approximate (close but not identical)
+  fit_nnls_fresh <- ddml_plm(y, D, X,
+                             learners = learners,
+                             ensemble_type = "nnls1",
+                             sample_folds = 2,
+                             splits = splits,
+                             silent = TRUE)
+  fit_nnls_pt <- ddml_plm(y, D, X,
+                          learners = learners,
+                          ensemble_type = "nnls1",
+                          sample_folds = 2,
+                          splits = splits,
+                          silent = TRUE,
+                          fitted = fit_no_cv$fitted)
+  expect_true(is.numeric(coef(fit_nnls_pt)))
+  expect_equal(coef(fit_nnls_pt), coef(fit_nnls_fresh),
+               tolerance = 0.5)
+})
+
 test_that("ddml_plm legacy split args warn and still work", {
   set.seed(101)
   nobs <- 200

@@ -9,8 +9,10 @@
 \arguments{
 \item{object}{A \code{ddml_rep} object.}
 
-\item{...}{Additional arguments. Supports
-\code{aggregation} (\code{"median"} or \code{"mean"}).}
+\item{aggregation}{Character string, either
+\code{"median"} (default) or \code{"mean"}.}
+
+\item{...}{Additional arguments.}
 }
 \value{
 Named vector (single ensemble) or matrix

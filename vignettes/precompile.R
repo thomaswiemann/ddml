@@ -39,7 +39,19 @@ VIGNETTES <- list(
        src  = "vignettes/articles/did.Rmd.txt",
        out  = "vignettes/articles/did.Rmd",
        deps = c("ddml", "did"),
-       note = "needs setwd for fig.path")
+       note = "needs setwd for fig.path"),
+  list(name = "stacking_diagnostics",
+       src  = "vignettes/articles/stacking_diagnostics.Rmd.txt",
+       out  = "vignettes/articles/stacking_diagnostics.Rmd",
+       deps = "ddml"),
+  list(name = "modelsummary_integration",
+       src  = "vignettes/articles/modelsummary_integration.Rmd.txt",
+       out  = "vignettes/articles/modelsummary_integration.Rmd",
+       deps = "ddml"),
+  list(name = "repeated_resampling",
+       src  = "vignettes/articles/repeated_resampling.Rmd.txt",
+       out  = "vignettes/articles/repeated_resampling.Rmd",
+       deps = "ddml")
 )
 
 args <- commandArgs(trailingOnly = TRUE)

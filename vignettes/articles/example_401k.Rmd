@@ -27,7 +27,7 @@ library(ddml)
 set.seed(2410072)
 ```
 
-# Data construction
+# Data Construction
 
 The 401K data considered here is from the Survey of Income and Program Participation (SIPP) from the year 1991. We use the data taken from the application in
 [Chernozhukov et al. (2018)](https://academic.oup.com/ectj/article/21/1/C1/5056401s}).
@@ -59,15 +59,15 @@ A comparison with a simple multiple linear regression estimate indicates a diffe
 # PLM with gradient boosting
 xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                         learners = list(what = mdl_xgboost,
-                                        args = list(nrounds = 300)),
-                        sample_folds = 10,
+                                        args = list(nrounds = 50)),
+                        sample_folds = 5,
                         silent = TRUE)
 summary(xgboost_fit)
 #> DDML estimation: Partially Linear Model 
-#> Obs: 9915   Folds: 10
+#> Obs: 9915   Folds: 5
 #> 
 #>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    12780       1526    8.38   <2e-16 ***
+#> D_r    13916       1544    9.01   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -112,32 +112,32 @@ The estimate is nearly identical to the estimate using just gradient boosting.
 
 ```r
 # Specify set of learners
-learners <- list(list(fun = ols),
-                 list(fun = mdl_glmnet),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+learners <- list(list(what = ols),
+                 list(what = mdl_glmnet),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4)),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12)),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100)),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300)))
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8)),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50)),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150)))
 
 # PLM with short-stacking
 stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          learners = learners,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
+                         sample_folds = 5,
                          shortstack = TRUE,
                          silent = TRUE)
 summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
-#> Obs: 9915   Folds: 10  Stacking: short-stack
+#> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
 #>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    13700       1523    8.99   <2e-16 ***
+#> D_r    13602       1550    8.77   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -147,11 +147,11 @@ To better understand which machine learners contribute to the final estimate, we
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.2186 0.2850
+#> [1,] 0.2394 0.2865
 #> [2,] 0.0000 0.0000
-#> [3,] 0.1822 0.3859
-#> [4,] 0.6671 0.2911
-#> [5,] 0.0000 0.0548
+#> [3,] 0.1096 0.1720
+#> [4,] 0.7020 0.5387
+#> [5,] 0.0383 0.0164
 #> [6,] 0.0000 0.0000
 ```
 
@@ -177,40 +177,40 @@ X_extended <- 5:dim(X_c)[2] # indicators & series expansion
 
 ```r
 # Specify base learners with different sets of controls
-learners <- list(list(fun = ols,
+learners <- list(list(what = ols,
                       assign_X = X_baseline),
-                 list(fun = ols,
+                 list(what = ols,
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150),
                       assign_X = X_baseline))
 
 # PLM with short-stacking
 stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
+                         sample_folds = 5,
                          shortstack = TRUE,
                          silent = TRUE)
 summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
-#> Obs: 9915   Folds: 10  Stacking: short-stack
+#> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
 #>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    14133       1480    9.55   <2e-16 ***
+#> D_r    14008       1463    9.57   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -221,13 +221,13 @@ To assess whether the additional effort in expanding the control variables had a
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.0000 0.0115
-#> [2,] 0.0593 0.2018
-#> [3,] 0.7312 0.3289
-#> [4,] 0.0000 0.1304
-#> [5,] 0.2274 0.3153
-#> [6,] 0.0134 0.0205
-#> [7,] 0.0000 0.0000
+#> [1,] 0.0000 0.0968
+#> [2,] 0.0000 0.3466
+#> [3,] 0.7371 0.0000
+#> [4,] 0.1001 0.1537
+#> [5,] 0.1557 0.3304
+#> [6,] 0.0662 0.0483
+#> [7,] 0.0000 0.0333
 ```
 
 # Estimation with Continious and Binary Outcome and Treatment Variables
@@ -239,28 +239,28 @@ Equipped with the included ``mdl_glm`` wrapper for generalized linear models (se
 
 ```r
 # Specify an additional set of learners for the reduced form E[D|X]
-learners_DX <- list(list(fun = mdl_glm,
+learners_DX <- list(list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_baseline),
-                 list(fun = mdl_glm,
+                 list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150),
                       assign_X = X_baseline))
 
 # PLM with short-stacking and different sets of learners
@@ -268,15 +268,15 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          learners_DX = learners_DX,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
+                         sample_folds = 5,
                          shortstack = TRUE,
                          silent = TRUE)
 summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
-#> Obs: 9915   Folds: 10  Stacking: short-stack
+#> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
 #>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    14163       1484    9.54   <2e-16 ***
+#> D_r    13945       1491    9.35   <2e-16 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -288,13 +288,44 @@ The weights associated with the new base learners are now slightly larger:
 ```r
 sapply(stacking_fit$weights, round, 4)
 #>         y_X   D1_X
-#> [1,] 0.0000 0.0539
-#> [2,] 0.0000 0.3156
-#> [3,] 0.7097 0.1155
-#> [4,] 0.0403 0.3328
-#> [5,] 0.2102 0.1297
-#> [6,] 0.0818 0.0643
+#> [1,] 0.0974 0.0426
+#> [2,] 0.0000 0.3245
+#> [3,] 0.7681 0.0000
+#> [4,] 0.0000 0.1538
+#> [5,] 0.1674 0.4265
+#> [6,] 0.0000 0.0622
 #> [7,] 0.0000 0.0000
+```
+
+# Advanced: Rapid Refits with the Passthrough API
+
+Estimating multiple machine learners via cross-fitting can be computationally expensive. Suppose that, after inspecting ``stacking_fit`` above, you decide you additionally want to see the results if you had used the ``singlebest`` ensemble type instead of ``nnls``. 
+
+Rather than waiting for all base learners to be refit from scratch, ``ddml`` allows you to extract the out-of-sample predictions from the initial fit and pass them directly into a new ``ddml_plm`` call via the ``fitted`` argument. 
+
+Because ``stacking_fit`` already contains the computed ``crossval_resid`` and ``crossfit_fitted`` objects for the specified learners, we can bypass the estimation step entirely.
+
+
+```r
+# Extract the predictions and residuals from the previous fit
+advanced_passthrough <- list(
+  crossfit_fitted = stacking_fit$fitted$crossfit_fitted,
+  crossval_resid = stacking_fit$fitted$crossval_resid
+)
+
+# Recompute the structural parameter instantly using 'singlebest'
+stacking_refit <- ddml_plm(
+  y = y, D = D, X = X_c,
+  learners = learners,
+  learners_DX = learners_DX,
+  ensemble_type = "singlebest",
+  sample_folds = 5,
+  fitted = advanced_passthrough, # Pass the predictions directly
+  silent = TRUE
+)
+#> Error in validate_fitted_splits_pair(fitted, splits, w_cv): Argument 'splits' must be supplied when 'fitted' is supplied.
+summary(stacking_refit)
+#> Error in eval(expr, envir, enclos): object 'stacking_refit' not found
 ```
 
 # Bonus: Instrumental Variable Estimation
@@ -314,28 +345,28 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          learners_DX = learners_DX,
                          learners_ZX = learners_DX,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
+                         sample_folds = 5,
                          shortstack = TRUE,
                          silent = TRUE)
 summary(stacking_IV_fit)
 #> DDML estimation: Partially Linear IV Model 
-#> Obs: 9915   Folds: 10  Stacking: short-stack
+#> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
 #>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    12711       1892    6.72  1.8e-11 ***
+#> D_r    12899       1915    6.73  1.6e-11 ***
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 # Stacking weights associated with each base learner
 sapply(stacking_IV_fit$weights, round, 4)
 #>         y_X   D1_X   Z1_X
-#> [1,] 0.0000 0.0190 0.0000
-#> [2,] 0.0000 0.1696 0.4500
-#> [3,] 0.8302 0.2829 0.0000
-#> [4,] 0.0000 0.2693 0.3186
-#> [5,] 0.1681 0.2410 0.2291
-#> [6,] 0.0290 0.0188 0.0000
-#> [7,] 0.0000 0.0105 0.0131
+#> [1,] 0.0236 0.0439 0.0000
+#> [2,] 0.5938 0.3279 0.3792
+#> [3,] 0.1051 0.0620 0.0000
+#> [4,] 0.0000 0.0000 0.0387
+#> [5,] 0.3113 0.5625 0.5855
+#> [6,] 0.0000 0.0000 0.0000
+#> [7,] 0.0000 0.0077 0.0000
 ```
 
 

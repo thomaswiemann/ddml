@@ -1,0 +1,210 @@
+---
+title: "Stacking Diagnostics and Cross-Validation Criteria"
+description: "How to evaluate base learners, interpret ensemble weights, and perform statistical inference on learner performance."
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Stacking Diagnostics and Cross-Validation Criteria}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+
+# Introduction
+
+In double/debiased machine learning, the estimation of nuisance parameters (conditional expectation functions) can be substantially improved by adaptively combining multiple machine learners via stacking or short-stacking. 
+
+While stacking is primarily used to minimize the out-of-sample mean squared prediction error (MSPE) of the nuisance functions, it is often insightful for researchers to peek under the hood: Which machine learner performs the best? Are the differences in performance statistically significant, or just noise from the random cross-fitting splits?
+
+This vignette demonstrates how to extract rich diagnostic information from ``ddml`` objects and how to perform statistical inference on base learner performance using Cross-Validation Criteria (CVC) (Ahrens et al., 2024).
+
+*(Note: If you are interested in the computational benefits of the short-stacking approach used here compared to standard stacking, see ``vignette("stacking")``.)*
+
+# Setup and Estimation
+
+For illustration, we use a random subsample of 5,000 observations from the Angrist & Evans (1998) dataset. We will estimate the local average treatment effect (LATE) of having more than two children (``morekids``) on the mother's labor supply (``worked``), using the sex of the first two children (``samesex``) as an instrument. See ``?AE98`` for details.
+
+
+```r
+library(ddml)
+set.seed(84210)
+
+# Construct variables
+y <- AE98[, "worked"]
+D <- AE98[, "morekids"]
+Z <- AE98[, "samesex"]
+X <- AE98[, c("age", "agefst", "black", "hisp", "othrace", "educ")]
+```
+
+First, we estimate the LATE using a combination of linear regression, lasso, and gradient boosting. We use the ``ensemble_type = "nnls1"`` scheme, which constructs a convex combination of the base learners (non-negative weights that sum to one) to minimize the MSPE.
+
+
+```r
+# Specify multiple base learners
+learners <- list(
+  list(what = ols),
+  list(what = mdl_glmnet),
+  list(what = mdl_xgboost, args = list(nrounds = 10, max_depth = 1)),
+  list(what = mdl_xgboost, args = list(nrounds = 100, max_depth = 2))
+)
+
+# Estimate LATE with short-stacking
+late_fit <- ddml_late(
+  y, D, Z, X, 
+  learners = learners,
+  ensemble_type = "nnls1",
+  shortstack = TRUE,
+  sample_folds = 5,
+  silent = TRUE
+)
+```
+
+# Basic Diagnostics
+
+The ``diagnostics()`` function extracts the out-of-sample performance of each base learner for every conditional expectation function (reduced form) estimated during the procedure.
+
+
+```r
+# Extract stacking diagnostics
+diag <- diagnostics(late_fit)
+print(diag)
+#> Stacking diagnostics: Local Average Treatment Effect 
+#> Obs: 5000 
+#> 
+#>   y_X_Z0:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2407 0.0322 0.0000
+#>  learner_2 0.2407 0.0322 0.8975
+#>  learner_3 0.2407 0.0322 0.0000
+#>  learner_4 0.2407 0.0322 0.1025
+#> 
+#>   y_X_Z1:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2419 0.0316 0.0000
+#>  learner_2 0.2419 0.0316 0.8775
+#>  learner_3 0.2419 0.0316 0.0874
+#>  learner_4 0.2419 0.0316 0.0351
+#> 
+#>   D_X_Z0:
+#>    learner  mspe     r2 weight
+#>  learner_1 0.209 0.0799 0.6868
+#>  learner_2 0.209 0.0799 0.0000
+#>  learner_3 0.209 0.0799 0.0693
+#>  learner_4 0.209 0.0799 0.2439
+#> 
+#>   D_X_Z1:
+#>    learner   mspe     r2 weight
+#>  learner_1 0.2235 0.0813 0.7212
+#>  learner_2 0.2235 0.0813 0.0000
+#>  learner_3 0.2235 0.0813 0.1049
+#>  learner_4 0.2235 0.0813 0.1739
+#> 
+#>   Z_X:
+#>    learner   mspe    r2 weight
+#>  learner_1 0.2498 2e-04      0
+#>  learner_2 0.2498 2e-04      1
+#>  learner_3 0.2498 2e-04      0
+#>  learner_4 0.2498 2e-04      0
+```
+
+For each reduced form equation (e.g., $E[Y|Z=0, X]$), the diagnostics table reports:
+- **Learner:** The specific base learner.
+- **MSPE:** The out-of-sample mean squared prediction error.
+- **R2:** The out-of-sample $R^2$, computed as $1 - \text{MSPE}/\text{Var}(\text{Target})$.
+- **Weight:** The weight assigned to the learner by the chosen ``ensemble_type``.
+
+For workflows integrated with the ``broom`` package, or when preparing publication-ready tables with ``modelsummary``, the ``tidy()`` method converts the rich diagnostic tables into a flat ``data.frame``.
+
+
+```r
+head(tidy(diag))
+#>   equation   learner      mspe         r2       weight
+#> 1   y_X_Z0 learner_1 0.2406740 0.03216873 4.946908e-17
+#> 2   y_X_Z0 learner_2 0.2406740 0.03216873 8.975098e-01
+#> 3   y_X_Z0 learner_3 0.2406740 0.03216873 0.000000e+00
+#> 4   y_X_Z0 learner_4 0.2406740 0.03216873 1.024902e-01
+#> 5   y_X_Z1 learner_1 0.2418787 0.03156255 0.000000e+00
+#> 6   y_X_Z1 learner_2 0.2418787 0.03156255 8.774719e-01
+```
+
+# Inference on Base Learners (Cross-Validation Criteria)
+
+It is common for researchers to wonder if the base learner assigned the highest weight is *statistically significantly* better than the alternatives. Because cross-fitting creates randomly partitioned hold-out sets, differences in MSPE could simply be due to sample splitting noise.
+
+``ddml`` implements the Cross-Validation Criteria (CVC) methodology to formally test for equal predictive ability across base learners. Setting ``cvc = TRUE`` in the ``diagnostics()`` function engages a multiplier bootstrap on the out-of-sample fold residuals to test whether each learner performs equally well as the single-best learner.
+
+
+```r
+# Run diagnostics with Cross-Validation Criteria tests
+diag_cvc <- diagnostics(late_fit, cvc = TRUE, bootnum = 1000)
+print(diag_cvc)
+#> Stacking diagnostics: Local Average Treatment Effect 
+#> Obs: 5000 
+#> 
+#>   y_X_Z0:
+#>    learner   mspe     r2 weight cvc_pval
+#>  learner_1 0.2407 0.0322 0.0000    0.610
+#>  learner_2 0.2407 0.0322 0.8975    0.991
+#>  learner_3 0.2407 0.0322 0.0000    0.002
+#>  learner_4 0.2407 0.0322 0.1025    0.001
+#> 
+#>   y_X_Z1:
+#>    learner   mspe     r2 weight cvc_pval
+#>  learner_1 0.2419 0.0316 0.0000    0.238
+#>  learner_2 0.2419 0.0316 0.8775    1.000
+#>  learner_3 0.2419 0.0316 0.0874    0.002
+#>  learner_4 0.2419 0.0316 0.0351    0.000
+#> 
+#>   D_X_Z0:
+#>    learner  mspe     r2 weight cvc_pval
+#>  learner_1 0.209 0.0799 0.6868    0.843
+#>  learner_2 0.209 0.0799 0.0000    0.870
+#>  learner_3 0.209 0.0799 0.0693    0.001
+#>  learner_4 0.209 0.0799 0.2439    0.020
+#> 
+#>   D_X_Z1:
+#>    learner   mspe     r2 weight cvc_pval
+#>  learner_1 0.2235 0.0813 0.7212    0.916
+#>  learner_2 0.2235 0.0813 0.0000    0.767
+#>  learner_3 0.2235 0.0813 0.1049    0.000
+#>  learner_4 0.2235 0.0813 0.1739    0.005
+#> 
+#>   Z_X:
+#>    learner   mspe    r2 weight cvc_pval
+#>  learner_1 0.2498 2e-04      0    0.048
+#>  learner_2 0.2498 2e-04      1    0.995
+#>  learner_3 0.2498 2e-04      0    0.245
+#>  learner_4 0.2498 2e-04      0    0.000
+#> 
+#> Note: CVC compares individual base learners. 
+#> Shortstacked ensemble CVC is not available (weights use all data).
+```
+
+Two new columns are added to the table:
+- **CVC p-value:** The p-value testing the null hypothesis that the learner has the same true MSPE as the absolute best-performing learner. A small p-value (e.g., $< 0.05$) indicates that the learner performs significantly worse than the best learner.
+- **In Conf. Set:** Logical indicator of whether the learner belongs to the Model Confidence Set (the set of learners for which the null hypothesis of equal performance to the best learner cannot be rejected).
+
+Often, simple parametric models (like OLS) perform remarkably similarly to highly flexible machine learners (like XGBoost) after accounting for the variation across cross-fitting folds. The CVC tests provide a rigorous statistical foundation for model selection and ensemble justification.
+
+# Advanced Standalone CVC Usage
+
+The testing machinery underlying ``diagnostics`` is built on a suite of accessible internal functions. If you wish to directly compare exactly two learners, you can use ``cvc_pairwise()``. It returns the point estimate of the difference in MSPE, standard error, t-statistic, and p-value.
+
+Below, we extract the cross-fitted residuals for the $E[Y|Z=0, X]$ equation and compare the first two base learners (OLS and Lasso).
+
+
+```r
+# Extract the residuals for the first equation (E[Y|Z=0, X])
+resids <- late_fit$crossfit_resid[[1]]
+fold_ids <- late_fit$subsamples_byZ[[1]]
+
+# Compare Learner 1 (OLS) vs Learner 2 (Lasso)
+cvc_pairwise(resids, 1, 2, fold_ids)
+#> Error in cvc_pairwise(resids, 1, 2, fold_ids): could not find function "cvc_pairwise"
+```
+
+# References
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." *Journal of Applied Econometrics*, 40(3): 249-269.
+
+Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." *American Economic Review*, 88(3), 450-477.

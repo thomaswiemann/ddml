@@ -113,11 +113,12 @@ build_CEF_from_crossfit <- function(y, crossfit_fitted_eq,
     oos_fitted <- matrix(0, nobs, 1)
     all_weights <- vector("list", K)
     for (k in seq_len(K)) {
+      train_idx <- setdiff(seq_len(nobs), subsamples[[k]])
       fakecv_k <- list(
         oos_resid = crossval_resid[[k]],
         mspe = colMeans(crossval_resid[[k]]^2))
       ew_k <- ensemble_weights(
-        y[subsamples[[k]]], cf[subsamples[[k]], ],
+        y[train_idx], cf[train_idx, ],
         type = ensemble_type,
         learners = dummy_learners,
         cv_results = fakecv_k,

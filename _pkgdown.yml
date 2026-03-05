@@ -77,6 +77,9 @@ articles:
   contents:
   - ddml
   - articles/stacking
+  - articles/stacking_diagnostics
+  - articles/repeated_resampling
+  - articles/modelsummary_integration
   - articles/new_ml_wrapper
   - articles/sparse
   - articles/did

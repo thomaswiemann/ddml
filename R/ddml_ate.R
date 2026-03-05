@@ -246,7 +246,6 @@ ddml_ate <- function(y, D, X,
       D * (y - g1) / m - (1 - D) * (y - g0) / (1 - m) + g1 - g0,
       nobs, 1)
     ate <- mean(psi_b)
-    names(ate) <- ensemble_type
     psi_a <- matrix(-1, nobs, 1)
   } else {
     y_copy <- matrix(rep(y, nensb), nobs, nensb)
@@ -255,7 +254,6 @@ ddml_ate <- function(y, D, X,
       (1 - D_copy) * (y_copy - g_X_byD[, , 1]) / (1 - m_X_tr) +
       g_X_byD[, , 2] - g_X_byD[, , 1]
     ate <- colMeans(psi_b)
-    names(ate) <- ensemble_type
     psi_a <- matrix(-1, nobs, nensb)
   }#IFELSE
 
@@ -267,6 +265,9 @@ ddml_ate <- function(y, D, X,
     as.matrix(mean(psi_a[, j]))
   })
   coef_names <- "ATE"
+  coef <- matrix(ate, nrow = 1, ncol = nensb)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ensemble_type
 
   # Ensemble metrics
   weights <- list(y_X_D0 = y_X_D0_res$weights,
@@ -309,7 +310,7 @@ ddml_ate <- function(y, D, X,
                    cv_subsamples_byD =
                      indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type,
-                   coefficients = ate,
+                   coefficients = coef,
                    scores = scores,
                    J = J_list,
                    coef_names = coef_names,

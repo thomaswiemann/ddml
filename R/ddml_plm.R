@@ -287,14 +287,16 @@ ddml_plm <- function(y, D, X,
     ols_fit <- stats::lm(y_r ~ D_r)
 
     # Organize complementary ensemble output
-    coef <- stats::coef(ols_fit)[-1]
+    coef_vec <- stats::coef(ols_fit)[-1]
+    coef <- matrix(coef_vec, nrow = nD, ncol = 1)
+    colnames(coef) <- ensemble_type
 
     # Compute scores and Jacobian
     D_r_mat <- as.matrix(D_r)
     e <- as.vector(y_r - D_r_mat %*% coef)
     scores <- list(D_r_mat * e)
     J_list <- list(-crossprod(D_r_mat) / nobs)
-    coef_names <- names(coef)
+    coef_names <- names(coef_vec)
   }#IF
 
   # If multiple ensembles are calculated, iterate over each type.

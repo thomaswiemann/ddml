@@ -123,7 +123,6 @@ ddml_att <- function(y, D, X,
       nobs, 1)
     psi_a <- matrix(-D / p, nobs, 1)
     att <- -mean(psi_b) / mean(psi_a)
-    names(att) <- ensemble_type
   } else {
     y_copy <- matrix(rep(y, nensb), nobs, nensb)
     D_copy <- matrix(rep(D, nensb), nobs, nensb)
@@ -133,7 +132,6 @@ ddml_att <- function(y, D, X,
       (p_copy * (1 - m_X_tr))
     psi_a <- -D_copy / p_copy
     att <- -colMeans(psi_b) / colMeans(psi_a)
-    names(att) <- ensemble_type
   }#IFELSE
 
   # Compute scores and Jacobian from psi_a/psi_b
@@ -144,6 +142,9 @@ ddml_att <- function(y, D, X,
     as.matrix(mean(psi_a[, j]))
   })
   coef_names <- "ATT"
+  coef <- matrix(att, nrow = 1, ncol = nensb)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ensemble_type
 
   # Ensemble metrics
   weights <- list(y_X_D0 = y_X_D0_res$weights,
@@ -181,7 +182,7 @@ ddml_att <- function(y, D, X,
                    cv_subsamples_byD =
                      indxs$cv_subsamples_byD,
                    ensemble_type = ensemble_type,
-                   coefficients = att,
+                   coefficients = coef,
                    scores = scores,
                    J = J_list,
                    coef_names = coef_names,
