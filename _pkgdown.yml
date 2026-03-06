@@ -38,11 +38,12 @@ reference:
 - title: Supported Models
   contents:
   - ddml_plm
-  - ddml_ate
-  - ddml_att
   - ddml_pliv
   - ddml_fpliv
+  - ddml_ate
+  - ddml_att
   - ddml_late
+  - ddml_apo
 - title: Repeated Resampling
   contents:
   - ddml_replicate
