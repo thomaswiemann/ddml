@@ -1,4 +1,4 @@
-# ddml 0.3.1
+# ddml 0.9.0
 
 * Adds `ddml_apo()` for average potential outcome estimation.
 * Adds `fitted` and `splits` parameters to all `ddml_*()` estimators for re-estimation with different ensemble types without re-fitting base learners.
