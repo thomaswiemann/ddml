@@ -51,7 +51,7 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
                       conf.level = 0.95,
                       type = "HC1", ...) {
   s <- summary(x, type = type)
-  inf <- s$inf_results
+  inf <- s$coefficients
   nensb <- dim(inf)[3]
   p <- dim(inf)[1]
 
@@ -118,6 +118,7 @@ glance.ddml <- function(x, ...) {
     shortstack = if (is.null(x$shortstack)) FALSE else x$shortstack,
     ensemble_type = paste(x$ensemble_type, collapse = ", "),
     model_type = class(x)[1],
+    estimator_name = if (is.null(x$estimator_name)) class(x)[1] else x$estimator_name,
     stringsAsFactors = FALSE
   )
 }#GLANCE.DDML

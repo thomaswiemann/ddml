@@ -43,15 +43,29 @@ reference:
   - ddml_pliv
   - ddml_fpliv
   - ddml_late
+- title: Repeated Resampling
+  contents:
+  - ddml_replicate
+  - ddml_rep
 - title: internal
   contents:
   - coef.ddml
   - confint.ddml
   - vcov.ddml
+  - nobs.ddml
+  - "`$.ddml`"
+  - "`[.summary.ddml`"
   - tidy.ddml
   - glance.ddml
   - tidy.ddml_diagnostics
   - ensemble_weights
+  - coef.ddml_rep
+  - confint.ddml_rep
+  - vcov.ddml_rep
+  - tidy.ddml_rep
+  - glance.ddml_rep
+  - length.ddml_rep
+  - "`[[.ddml_rep`"
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols

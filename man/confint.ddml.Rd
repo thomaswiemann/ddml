@@ -18,9 +18,7 @@ use. Defaults to 1 (first ensemble type).}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
-(default, degrees-of-freedom corrected), \code{"HC0"}
-(uncorrected), or \code{"HC3"} (score-based leverage
-adjustment for finite-sample robustness).}
+(default), \code{"HC0"}, or \code{"HC3"}.}
 
 \item{...}{Currently unused.}
 }

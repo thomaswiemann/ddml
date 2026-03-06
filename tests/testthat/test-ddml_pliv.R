@@ -12,9 +12,9 @@ test_that("ddml_pliv computes with a single model", {
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_pliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with a single model and dependence", {
@@ -37,9 +37,9 @@ test_that("ddml_pliv computes with a single model and dependence", {
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_pliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with an ensemble procedure", {
@@ -59,9 +59,9 @@ test_that("ddml_pliv computes with an ensemble procedure", {
                              ensemble_type = "ols",
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_pliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with multiple ensemble procedures", {
@@ -83,9 +83,9 @@ test_that("ddml_pliv computes with multiple ensemble procedures", {
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 5)
+  expect_equal(length(coef(ddml_pliv_fit)), 10)
 })#TEST_THAT
 
 
@@ -116,9 +116,9 @@ test_that("ddml_pliv computes with different sets of learners", {
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 5)
+  expect_equal(length(coef(ddml_pliv_fit)), 10)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with different sets of learners & shortstack", {
@@ -146,12 +146,12 @@ test_that("ddml_pliv computes with different sets of learners & shortstack", {
                              ensemble_type = c("ols", "nnls",
                                                "nnls1",
                                                "singlebest", "average"),
-                             shortstack = T,
+                             shortstack = TRUE,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 5)
+  expect_equal(length(coef(ddml_pliv_fit)), 10)
 })#TEST_THAT
 
 test_that("summary.ddml_pliv computes with a single model", {
@@ -168,11 +168,11 @@ test_that("summary.ddml_pliv computes with a single model", {
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   inf_res <- summary(ddml_pliv_fit, type = "HC1")
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_pliv_fit)), 2)
 })#TEST_THAT
 
 
@@ -192,11 +192,11 @@ test_that("summary.ddml_pliv computes with custom ensemble weights", {
                              learners,
                              sample_folds = 3,
                              custom_ensemble_weights = diag(1, 2),
-                             silent = T)
+                             silent = TRUE)
   inf_res <- summary(ddml_pliv_fit, type = "HC1")
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 3)
+  expect_equal(length(coef(ddml_pliv_fit)), 6)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with a single model and multivariate D,Z", {
@@ -215,9 +215,9 @@ test_that("ddml_pliv computes with a single model and multivariate D,Z", {
   ddml_pliv_fit <- ddml_pliv(y, D, Z, X,
                              learners,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 2)
+  expect_equal(length(coef(ddml_pliv_fit)), 3)
 })#TEST_THAT
 
 test_that("ddml_pliv computes with different ensembles and multivariate D,Z", {
@@ -240,9 +240,47 @@ test_that("ddml_pliv computes with different ensembles and multivariate D,Z", {
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_pliv_fit$coef), 10)
+  expect_equal(length(coef(ddml_pliv_fit)), 15)
+})#TEST_THAT
+
+test_that("ddml_pliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
+  skip_if_not_installed("sandwich")
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  Z <- matrix(rnorm(nobs), nobs, 1)
+  UV <- matrix(rnorm(2 * nobs), nobs, 2) %*%
+    chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <- X %*% c(1, 0.5, 0, 0, 0) +
+    Z %*% 1.5 + UV[, 1]
+  y <- 2 * D + X %*% c(0, 1, 0.5, 0.3, 0) + UV[, 2]
+
+  fit <- ddml_pliv(y, D, Z, X,
+                   learners = list(what = ols),
+                   sample_folds = 5,
+                   silent = TRUE)
+
+  for (type in c("HC0", "HC1")) {
+    V_ddml <- vcov(fit, type = type)
+    V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = type)
+    idx <- c(seq_len(nrow(V_sw))[-1], 1)
+    V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+    expect_equal(as.numeric(V_ddml),
+                 as.numeric(V_sw_reord),
+                 tolerance = 1e-8,
+                 info = paste("PLIV", type))
+  }
+  # HC3: regressor-based leverage matches sandwich exactly
+  V_ddml <- vcov(fit, type = "HC3")
+  V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = "HC3")
+  idx <- c(seq_len(nrow(V_sw))[-1], 1)
+  V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+  expect_equal(as.numeric(V_ddml),
+               as.numeric(V_sw_reord),
+               tolerance = 1e-8,
+               info = "PLIV HC3")
 })#TEST_THAT
 
 test_that("ddml_pliv fitted pass-through works", {

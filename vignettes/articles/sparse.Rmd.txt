@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-``ddml`` supports sparse matrices from the ``Matrix`` package by default. This article illustrates double/debiased machine learning estimation with sparse matrices using the prominent study of Angrist and Krueger (1991) (AK91, hereafter) on returns to education.
+``ddml`` supports sparse matrices from the ``Matrix`` package by default. This article illustrates Double/Debiased Machine Learning estimation with sparse matrices using the prominent study of Angrist and Krueger (1991) (AK91, hereafter) on returns to education.
 
 ```{r}
 library(ddml)
@@ -143,7 +143,7 @@ summary(stacking_fit)
 The resulting coefficient is close to the coefficient based on 180 instruments. The stacking weights confirm that the first stage estimators with 180 instruments contribute almost exclusively to the final estimate, suggesting that the expansion to 1530 instrument has little benefit for the ols or lasso-based first stage fits.
 
 ```{r}
-round(stacking_fit$weights$D1_XZ, 4)
+round(stacking_fit$ensemble_weights$D1_XZ, 4)
 ```
 
 # References

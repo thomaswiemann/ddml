@@ -28,11 +28,11 @@ variance-covariance estimator. One of \code{"HC1"}
 \item{...}{Currently unused.}
 }
 \value{
-A diagonal p x p variance-covariance matrix.
+A p x p variance-covariance matrix.
 }
 \description{
-Returns a diagonal variance-covariance matrix from
-cross-resample aggregation.
+Returns a variance-covariance matrix from cross-resample
+aggregation.
 }
 \examples{
 \donttest{

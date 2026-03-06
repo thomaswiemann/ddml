@@ -17,7 +17,7 @@ This article revisits the empirical example of Chernozhukov, Hansen, and Spindle
 (CHS2015, hereafter), which extends the instruments of Berry, Levinsohn,
 and Pakes (1995) (BLP1995, hereafter) and applies an instrument selection
 procedure based on the lasso. We consider the same instrument extension
-and apply double/debiased machine learning with short-stacking that combines conventional
+and apply Double/Debiased Machine Learning with short-stacking that combines conventional
 linear estimators with computational alternatives including lasso-based
 approaches, random forests, and gradient boosting.
 
@@ -137,7 +137,7 @@ round(summary(tsls_L_fit)$coefficients[2, ], 4)
 
 # Estimating the Flexible Partially Linear IV Model with CV-Lasso
 
-Given the large set of controls and instruments in the expanded set relative to the moderate sample size, it is reasonable to consider regularized estimators. A frequent choice with many variables are lasso-based estimators. Below, we combine double/debiased machine learning with lasso selection of instruments and controls. (See ``?mdl_glmnet`` and ``?ddml_fpliv`` for details.)
+Given the large set of controls and instruments in the expanded set relative to the moderate sample size, it is reasonable to consider regularized estimators. A frequent choice with many variables are lasso-based estimators. Below, we combine Double/Debiased Machine Learning with lasso selection of instruments and controls. (See ``?mdl_glmnet`` and ``?ddml_fpliv`` for details.)
 
 
 ```r
@@ -222,14 +222,8 @@ To better understand the composition of the final estimator, it is often useful 
 
 
 ```r
-sapply(stacking_fit$weights, round, 4)
-#>         y_X   D1_X  D1_XZ
-#> [1,] 0.0000 0.0000 0.0000
-#> [2,] 0.0000 0.0000 0.0000
-#> [3,] 0.0000 0.0000 0.0000
-#> [4,] 0.0000 0.0138 0.0000
-#> [5,] 0.3786 0.5434 0.4844
-#> [6,] 0.6214 0.4429 0.5156
+sapply(stacking_fit$ensemble_weights, round, 4)
+#> list()
 ```
 
 # Elasticities
@@ -259,7 +253,7 @@ compute_inelastic_demand(tsls_fit$coef[2])
 compute_inelastic_demand(tsls_L_fit$coef[2])
 #> [1] 896
 ```
-Double/debiased machine learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
+Double/Debiased Machine Learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
 
 ```r
 # ddml-lasso implied number of products with inelastic demand
@@ -291,7 +285,7 @@ summary(rlassoIV_fit)
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-The coefficient is drastically different from previous estimates, including the double/debiased machine learning estimates that included lasso-based approaches.
+The coefficient is drastically different from previous estimates, including the Double/Debiased Machine Learning estimates that included lasso-based approaches.
 
 To gain some insight into potential causes for these differences, we check which instruments and controls were selected by the lasso procedure. Not surprisingly, lasso with a plug-in penalty selects only very few instruments and controls.
 
@@ -304,7 +298,7 @@ Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
 dim(Xr_)[2]
 #> [1] 6
 ```
-From the stacking weights above, we know that the double/debiased machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
+From the stacking weights above, we know that the Double/Debiased Machine Learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
 
 
 ```r
@@ -335,13 +329,11 @@ The similarity of the coefficient estimates to the initial stacking estimates su
 
 
 ```r
-sapply(stacking_r_fit$weights, round, 4)
-#>         y_X   D1_X  D1_XZ
-#> [1,] 0.2647 0.1262 0.0555
-#> [2,] 0.7353 0.8738 0.9445
+sapply(stacking_r_fit$ensemble_weights, round, 4)
+#> list()
 ```
 
-The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.
+The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of Double/Debiased Machine Learning with stacking as a practical solution.
 
 # References
 

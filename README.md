@@ -13,7 +13,7 @@ Version](https://www.r-pkg.org/badges/version/ddml)](https://cran.r-project.org/
 [![cranlogs](https://cranlogs.r-pkg.org/badges/ddml)](https://cran.r-project.org/package=ddml)
 <!-- badges: end -->
 
-`ddml` is an implementation of double/debiased machine learning
+`ddml` is an implementation of Double/Debiased Machine Learning
 estimators as proposed by Chernozhukov et al. (2018). The key feature of
 `ddml` is the straightforward estimation of nuisance parameters using
 (short-)stacking (Wolpert, 1992), which allows for multiple machine
@@ -69,7 +69,7 @@ X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
 `ddml_late` estimates the local average treatment effect (LATE) using
-double/debiased machine learning (see `?ddml_late`). Since the
+Double/Debiased Machine Learning (see `?ddml_late`). Since the
 statistical properties of machine learners depend heavily on the
 underlying (unknown!) structure of the data, adaptive combination of
 multiple machine learners can increase robustness. In the below snippet,

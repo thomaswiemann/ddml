@@ -55,7 +55,7 @@ X <- as.matrix(SIPP91[, c("age", "inc", "educ", "fsize",
 
 # Estimation using a Single Machine Learner
 
-The simplest double/debiased machine learning estimator for the causal effect of 401k participation on financial assets considers a single machine learner to (nonparametrically) control for individual characteristics. We consider gradient boosting in the code snippet below (see ``?ddml_plm`` and  ``?mdl_xgboost`` for details).
+The simplest Double/Debiased Machine Learning estimator for the causal effect of 401k participation on financial assets considers a single machine learner to (nonparametrically) control for individual characteristics. We consider gradient boosting in the code snippet below (see ``?ddml_plm`` and  ``?mdl_xgboost`` for details).
 
 A comparison with a simple multiple linear regression estimate indicates a difference in the point estimates of about one standard deviation, suggesting that there are at least some non-linearities present in the data.
 
@@ -106,7 +106,7 @@ summary(stacking_fit)
 
 To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+sapply(stacking_fit$ensemble_weights, round, 4)
 ```
 
 # Estimation with Different Sets of Control Variables
@@ -163,14 +163,14 @@ summary(stacking_fit)
 To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
 
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+sapply(stacking_fit$ensemble_weights, round, 4)
 ```
 
 # Estimation with Continious and Binary Outcome and Treatment Variables
 
 Thus far, we have considered the same set of base learners for the reduced form of the outcome on controls and the reduced form of the endogenous variable on the controls. In contrast to net financial assets which is (approximately) continuous, participating in a 401k is a binary indicator. It may thus sensible to consider reduced form estimators with support on the unit-interval for the latter reduced form. For example, we could consider logistic regression instead of linear regression.
 
-Equipped with the included ``mdl_glm`` wrapper for generalized linear models (see also ``?mdl_glm``), we now specify a second set of base-learners for the reduced form of the binary endogenous variable of interest on the controls. As in the previous section, we consider different sets of control variables as well. When estimating the double/debiased machine learning estimator, we pass the second set of base learners via the ``learners_DX`` argument.
+Equipped with the included ``mdl_glm`` wrapper for generalized linear models (see also ``?mdl_glm``), we now specify a second set of base-learners for the reduced form of the binary endogenous variable of interest on the controls. As in the previous section, we consider different sets of control variables as well. When estimating the Double/Debiased Machine Learning estimator, we pass the second set of base learners via the ``learners_DX`` argument.
 
 ```{r}
 # Specify an additional set of learners for the reduced form E[D|X]
@@ -213,7 +213,7 @@ The weights associated with the new base learners are now slightly larger:
 
 
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+sapply(stacking_fit$ensemble_weights, round, 4)
 ```
 
 # Advanced: Rapid Refits with the Passthrough API
@@ -266,7 +266,7 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
 summary(stacking_IV_fit)
 
 # Stacking weights associated with each base learner
-sapply(stacking_IV_fit$weights, round, 4)
+sapply(stacking_IV_fit$ensemble_weights, round, 4)
 ```
 
 

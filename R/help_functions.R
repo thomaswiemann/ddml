@@ -1,5 +1,26 @@
 # Collection of small internal functions
 
+# Resolve estimator progress messages.
+#
+# Merges user-supplied message overrides (passed via dots by
+# internal callers like ddml_ate) with estimator defaults.
+# Standard start/finish templates are derived from `name`.
+#
+# @param dots The `list(...)` captured in the estimator.
+# @param name Estimator name, e.g. "ddml_apo".
+# @param labels Named list of equation-specific labels,
+#   e.g. list(y_X = "E[Y|D=1,X]", D_X = "P(D=1|X)").
+# @return A named list of message strings.
+resolve_messages <- function(dots, name, labels = list()) {
+  defaults <- c(
+    list(start = paste0(name, ": estimating (%s)"),
+         finish = paste0(name, ": completed in %s s")),
+    labels)
+  user <- dots[["messages"]]
+  if (is.null(user)) return(defaults)
+  c(user, defaults[setdiff(names(defaults), names(user))])
+}#RESOLVE_MESSAGES
+
 # Simple generalized inverse wrapper.
 csolve <- function(X) {
   # Attempt inversion
@@ -24,23 +45,23 @@ get_oosfitted <- function(res_list, j = NULL) {
 }#GET_OOSRESID
 
 # Function to trim propensity scores and warn user
-trim_propensity_scores <- function(m_X, trim, ensemble_type) {
-  # Data parameter
+trim_propensity_scores <- function(m_X, trim, ensemble_type,
+                                   silent = FALSE) {
   nensb <- length(ensemble_type)
-  # Trim by ensemble type
   for (j in seq_len(nensb)) {
     indx_trim_0 <- which(m_X[, j] <= trim)
     indx_trim_1 <- which(m_X[, j] >= 1 - trim)
     ntrim <- length(c(indx_trim_0, indx_trim_1))
     if (ntrim > 0) {
-      # Warn user
-      if (nensb == 1) {
-        warning(paste0(ntrim, " propensity scores were trimmed."))
-      } else {
-        warning(paste0(ensemble_type[j], ": ", ntrim,
-                       " propensity scores were trimmed."))
-      }#IFELSE
-      # Replace scores by constant
+      if (!silent) {
+        if (nensb == 1) {
+          warning(paste0(ntrim,
+                         " propensity scores were trimmed."))
+        } else {
+          warning(paste0(ensemble_type[j], ": ", ntrim,
+                         " propensity scores were trimmed."))
+        }#IFELSE
+      }#IF
       m_X[indx_trim_0, j] <- trim
       m_X[indx_trim_1, j] <- 1 - trim
     }#IF
@@ -134,6 +155,8 @@ build_CEF_from_crossfit <- function(y, crossfit_fitted_eq,
     }#FOR
     weights <- array(0, dim = c(nlearners, nensb, K))
     for (k in seq_len(K)) weights[, , k] <- all_weights[[k]]
+    dimnames(weights) <- list(NULL, colnames(all_weights[[1]]),
+                              paste("sample fold ", seq_len(K)))
   } else {
     # Global weights from sample-fold residuals
     fakecv <- list(oos_resid = oos_resid,
@@ -147,6 +170,14 @@ build_CEF_from_crossfit <- function(y, crossfit_fitted_eq,
     weights <- ew$weights
     oos_fitted <- cf %*% weights
   }#IFELSE
+
+  # Propagate ensemble type names to oos_fitted columns
+  ens_names <- if (length(dim(weights)) == 3) {
+    colnames(weights[, , 1])
+  } else {
+    colnames(weights)
+  }
+  if (!is.null(ens_names)) colnames(oos_fitted) <- ens_names
 
   # Fold-level auxiliary predictions (ATE/ATT/LATE extrapolation)
   auxiliary_fitted <- NULL
@@ -198,12 +229,14 @@ validate_fitted_splits_pair <- function(fitted, splits,
 
 build_fitted_entry <- function(res, save_crossval,
                                include_auxiliary = FALSE) {
-  entry <- list(crossfit_fitted = res$crossfit_fitted,
+  entry <- list(ensemble_fitted = res$oos_fitted,
+                crossfit_fitted = res$crossfit_fitted,
                 crossfit_resid = res$crossfit_resid)
   if (save_crossval) {
     entry$crossval_resid <- res$crossval_resid
   }#IF
   if (include_auxiliary) {
+    entry$auxiliary_fitted <- res$auxiliary_fitted
     entry$auxiliary_fitted_bylearner <-
       res$auxiliary_fitted_bylearner
   }#IF
@@ -280,9 +313,11 @@ normalize_splits <- function(splits = NULL,
 }#NORMALIZE_SPLITS
 
 # Input validation checks for DDML estimators
-validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL, learners = NULL,
+validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
+                            learners = NULL,
                             sample_folds = NULL, cv_folds = NULL,
                             ensemble_type = NULL, trim = NULL,
+                            weights = NULL,
                             require_binary_D = FALSE) {
   nobs <- length(y)
   if (!is.null(y)) {
@@ -360,6 +395,15 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL, learners = N
       stop("trim must be a numeric value strictly between 0 and 0.5.")
     }
   }
+
+  if (!is.null(weights) && !is.null(y)) {
+    if (!is.numeric(weights) || anyNA(weights)) {
+      stop("weights must be a numeric vector with no NAs.")
+    }
+    if (length(weights) != nobs) {
+      stop("weights must have the same length as y.")
+    }
+  }
 }#VALIDATE_INPUTS
 
 validate_custom_weights <- function(custom_weights, learners) {
@@ -383,10 +427,18 @@ compute_ncustom_nensb <- function(ensemble_type,
   list(ncustom = ncustom, nensb = nensb)
 }#COMPUTE_NCUSTOM_NENSB
 
-# Update ensemble info from CEF result weights.
-update_ensemble_info <- function(res_weights) {
-  ensemble_type <- dimnames(res_weights)[[2]]
-  nensb <- if (is.null(ensemble_type)) 1L else length(ensemble_type)
+# Update ensemble info from CEF result weights or oos_fitted.
+update_ensemble_info <- function(res_weights = NULL,
+                                 oos_fitted = NULL) {
+  if (!is.null(res_weights)) {
+    ensemble_type <- dimnames(res_weights)[[2]]
+  } else if (!is.null(oos_fitted)) {
+    ensemble_type <- colnames(as.matrix(oos_fitted))
+  } else {
+    ensemble_type <- NULL
+  }#IFELSE
+  nensb <- if (is.null(ensemble_type)) 1L
+    else length(ensemble_type)
   multiple_ensembles <- nensb > 1
   list(ensemble_type = ensemble_type, nensb = nensb,
        multiple_ensembles = multiple_ensembles)

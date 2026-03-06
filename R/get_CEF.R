@@ -29,27 +29,78 @@ get_CEF <- function(y, X, Z = NULL,
                     fitted = NULL) {
   t0 <- proc.time()[3]
 
-  if (!is.null(label)) {
-    info_msg("  Estimating ", label, "...", silent = silent)
-  }#IF
-
   # Use pre-computed predictions if supplied
   if (!is.null(fitted)) {
-    if (!is.null(auxiliary_X) &&
-        is.null(fitted$auxiliary_fitted_bylearner)) {
-      stop(paste("When auxiliary predictions are required, fitted objects",
-                 "must contain 'auxiliary_fitted_bylearner'."))
+    if (!is.null(label)) {
+      info_msg("  Estimating ", label, "...", silent = silent)
     }#IF
-    res <- build_CEF_from_crossfit(
-      y, fitted$crossfit_fitted,
-      ensemble_type, custom_ensemble_weights,
-      crossval_resid = fitted$crossval_resid,
-      subsamples = subsamples,
-      auxiliary_fitted_bylearner = fitted$auxiliary_fitted_bylearner)
-    return(res)
+    if (!is.null(fitted$crossfit_fitted)) {
+      # Rule 2: recompute ensemble from per-learner predictions
+      if (!is.null(auxiliary_X) &&
+          is.null(fitted$auxiliary_fitted_bylearner)) {
+        stop(paste("When auxiliary predictions are required,",
+                   "fitted objects must contain",
+                   "'auxiliary_fitted_bylearner'."))
+      }#IF
+      res <- build_CEF_from_crossfit(
+        y, fitted$crossfit_fitted,
+        ensemble_type, custom_ensemble_weights,
+        crossval_resid = fitted$crossval_resid,
+        subsamples = subsamples,
+        auxiliary_fitted_bylearner =
+          fitted$auxiliary_fitted_bylearner)
+      return(res)
+    }#IF
+    if (!is.null(fitted$ensemble_fitted)) {
+      # Rule 1: pre-ensembled predictions, use directly
+      res <- list(oos_fitted = fitted$ensemble_fitted,
+                  weights = NULL, mspe = NULL, r2 = NULL,
+                  auxiliary_fitted = NULL,
+                  crossfit_fitted = NULL,
+                  crossfit_resid = NULL,
+                  crossval_resid = NULL)
+      return(res)
+    }#IF
+  }#IF
+
+  # Constant or empty y: return trivial predictions
+  if (length(unique(y)) <= 1) {
+    constant_val <- if (length(y) > 0) y[1] else 0
+    nlearners <- if (is_single_learner(learners)) 1L
+      else length(learners)
+    ncustom <- if (!is.null(custom_ensemble_weights))
+      ncol(custom_ensemble_weights) else 0L
+    nensb <- length(ensemble_type) + ncustom
+    n <- length(y)
+
+    aux_fitted <- aux_fitted_bl <- NULL
+    if (!is.null(auxiliary_X)) {
+      aux_fitted <- lapply(auxiliary_X, function(ax)
+        matrix(constant_val, nrow(ax), nensb))
+      aux_fitted_bl <- lapply(auxiliary_X, function(ax)
+        matrix(constant_val, nrow(ax), nlearners))
+    }#IF
+
+    if (!is.null(label) && label != "") {
+      info_msg("  ", label,
+               " .......... skipped (constant outcome)",
+               silent = silent)
+    }#IF
+
+    return(list(
+      oos_fitted = matrix(constant_val, n, nensb),
+      weights = NULL, mspe = NULL, r2 = NULL,
+      crossfit_fitted = matrix(constant_val, n, nlearners),
+      crossfit_resid = matrix(0, n, nlearners),
+      crossval_resid = NULL,
+      auxiliary_fitted = aux_fitted,
+      auxiliary_fitted_bylearner = aux_fitted_bl))
   }#IF
 
   # Compute CEF via cross-fitting
+  if (!is.null(label)) {
+    info_msg("  Estimating ", label, "...", silent = silent)
+  }#IF
   if (shortstack) {
     res <- shortstacking(y, X, Z,
                          learners = learners,
@@ -97,13 +148,16 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   D_levels <- lapply(CEF_res_byD, function(x) x$d)
   is_D <- rep(list(NULL), nCEF)
   for (d in seq_len(nCEF)) is_D[[d]] <- which(D == D_levels[d])
-  nensb <- ncol(as.matrix(CEF_res_byD[[1]][[1]]$oos_fitted))
-  sample_folds <- length(CEF_res_byD[[1]][[1]]$auxiliary_fitted)
+  nensb <- ncol(as.matrix(
+    CEF_res_byD[[1]][[1]]$ensemble_fitted))
+  sample_folds <- length(
+    CEF_res_byD[[1]][[1]]$auxiliary_fitted)
 
   # Populate CEF
   g_X_byD <- array(0, dim = c(nobs, nensb, nCEF))
   for (d in seq_len(nCEF)) {
-    g_X_byD[is_D[[d]], , d] <- CEF_res_byD[[d]][[1]]$oos_fitted
+    g_X_byD[is_D[[d]], , d] <-
+      CEF_res_byD[[d]][[1]]$ensemble_fitted
     for (k in seq_len(sample_folds)) {
       g_X_byD[aux_indx[[d]][[k]], , d] <-
         CEF_res_byD[[d]][[1]]$auxiliary_fitted[[k]]

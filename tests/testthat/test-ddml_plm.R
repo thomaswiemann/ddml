@@ -12,9 +12,9 @@ test_that("ddml_plm computes with a single model", {
                            learners = learners,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 1)
+  expect_equal(length(coef(ddml_plm_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_plm computes with clustered observations", {
@@ -24,7 +24,7 @@ test_that("ddml_plm computes with clustered observations", {
   D_tld <-  X %*% runif(40) + rnorm(nobs)
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
-  cluster_variable <- sample(1:100, nobs, replace = T)
+  cluster_variable <- sample(1:100, nobs, replace = TRUE)
   # Define arguments
   learners <- list(what = mdl_glmnet,
                    args = list(alpha = 0.5))
@@ -33,9 +33,9 @@ test_that("ddml_plm computes with clustered observations", {
                            cv_folds = 3,
                            sample_folds = 3,
                            cluster_variable = cluster_variable,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 1)
+  expect_equal(length(coef(ddml_plm_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_plm computes with an ensemble procedure", {
@@ -55,9 +55,9 @@ test_that("ddml_plm computes with an ensemble procedure", {
                            shortstack = FALSE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 1)
+  expect_equal(length(coef(ddml_plm_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_plm computes with multiple ensemble procedures", {
@@ -79,9 +79,9 @@ test_that("ddml_plm computes with multiple ensemble procedures", {
                            shortstack = FALSE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 5)
+  expect_equal(length(coef(ddml_plm_fit)), 10)
 })#TEST_THAT
 
 test_that("ddml_plm computes with multiple ensemble procedures & sparse mats", {
@@ -103,9 +103,9 @@ test_that("ddml_plm computes with multiple ensemble procedures & sparse mats", {
                            shortstack = FALSE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 5)
+  expect_equal(length(coef(ddml_plm_fit)), 10)
 })#TEST_THAT
 test_that("ddml_plm computes w/ an ensemble procedure & shortstacking", {
   # Simulate small dataset
@@ -124,9 +124,9 @@ test_that("ddml_plm computes w/ an ensemble procedure & shortstacking", {
                            shortstack = TRUE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 1)
+  expect_equal(length(coef(ddml_plm_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_plm computes w/ multiple ensemble procedures & shortstacking", {
@@ -148,9 +148,9 @@ test_that("ddml_plm computes w/ multiple ensemble procedures & shortstacking", {
                            shortstack = TRUE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 5)
+  expect_equal(length(coef(ddml_plm_fit)), 10)
 })#TEST_THAT
 
 test_that("ddml_plm computes w/ ensemble procedures & custom weights", {
@@ -172,9 +172,9 @@ test_that("ddml_plm computes w/ ensemble procedures & custom weights", {
                            cv_folds = 3,
                            custom_ensemble_weights = diag(1, length(learners)),
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 7)
+  expect_equal(length(coef(ddml_plm_fit)), 14)
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with a single model", {
@@ -191,12 +191,12 @@ test_that("summary.ddml_plm computes with a single model", {
                            learners = learners,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
+  expect_equal(dim(inf_res$coefficients), c(2, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with a single model and dependence", {
@@ -206,7 +206,7 @@ test_that("summary.ddml_plm computes with a single model and dependence", {
   D_tld <-  X %*% runif(40) + rnorm(nobs)
   D <- 1 * (D_tld > mean(D_tld))
   y <- D + X %*% runif(40) + rnorm(nobs)
-  cluster_variable <- sample(1:100, nobs, replace = T)
+  cluster_variable <- sample(1:100, nobs, replace = TRUE)
   # Define arguments
   learners <- list(what = mdl_glmnet,
                    args = list(alpha = 0.5))
@@ -215,12 +215,12 @@ test_that("summary.ddml_plm computes with a single model and dependence", {
                            cv_folds = 3,
                            sample_folds = 3,
                            cluster_variable = cluster_variable,
-                           silent = T)
+                           silent = TRUE)
   inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
+  expect_equal(dim(inf_res$coefficients), c(2, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_plm computes with multiple ensemble procedures", {
@@ -243,12 +243,12 @@ test_that("summary.ddml_plm computes with multiple ensemble procedures", {
                            cv_folds = 3,
                            custom_ensemble_weights = diag(1, length(learners)),
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   inf_res <- summary(ddml_plm_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 7))
+  expect_equal(dim(inf_res$coefficients), c(2, 4, 7))
 })#TEST_THAT
 
 test_that("ddml_plm computes with an ensemble procedure and multivariate D", {
@@ -268,9 +268,9 @@ test_that("ddml_plm computes with an ensemble procedure and multivariate D", {
                            shortstack = FALSE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 2)
+  expect_equal(length(coef(ddml_plm_fit)), 3)
 })#TEST_THAT
 
 test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
@@ -292,9 +292,9 @@ test_that("ddml_plm computes with multiple ensemble types and multivariate D", {
                            shortstack = FALSE,
                            cv_folds = 3,
                            sample_folds = 3,
-                           silent = T)
+                           silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_plm_fit$coef), 10)
+  expect_equal(length(coef(ddml_plm_fit)), 15)
 })#TEST_THAT
 
 test_that("ddml_plm backward-compat cv_subsamples_list works with message", {
@@ -343,7 +343,7 @@ test_that("ddml_plm computes with parallel", {
                       splits = list(subsamples = splits$subsamples),
                       silent = TRUE,
                       parallel = list(cores = 2))
-  expect_equal(res_par$coef, res_seq$coef)
+  expect_equal(coef(res_par), coef(res_seq))
 })#TEST_THAT
 
 test_that("ddml_plm fitted pass-through works", {
@@ -505,6 +505,41 @@ test_that("ddml_plm pass-through with save_crossval = FALSE uses approximate pat
   expect_equal(coef(fit_nnls_pt), coef(fit_nnls_fresh),
                tolerance = 0.5)
 })
+
+test_that("ddml_plm HC0/HC1/HC3 SEs close to sandwich::vcovHC on ols_fit", {
+  skip_if_not_installed("sandwich")
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D <- X %*% c(1, 0.5, 0, 0, 0) + rnorm(nobs)
+  y <- 2 * D + X %*% c(0, 1, 0.5, 0.3, 0) + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 5,
+                  silent = TRUE)
+
+  for (type in c("HC0", "HC1")) {
+    V_ddml <- vcov(fit, type = type)
+    V_sw <- sandwich::vcovHC(fit$ols_fit[[1]], type = type)
+    # Reorder sandwich: intercept first -> last
+    idx <- c(seq_len(nrow(V_sw))[-1], 1)
+    V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+    expect_equal(as.numeric(V_ddml),
+                 as.numeric(V_sw_reord),
+                 tolerance = 1e-8,
+                 info = paste("PLM", type))
+  }
+  # HC3: regressor-based leverage matches sandwich exactly
+  V_ddml <- vcov(fit, type = "HC3")
+  V_sw <- sandwich::vcovHC(fit$ols_fit[[1]], type = "HC3")
+  idx <- c(seq_len(nrow(V_sw))[-1], 1)
+  V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+  expect_equal(as.numeric(V_ddml),
+               as.numeric(V_sw_reord),
+               tolerance = 1e-8,
+               info = "PLM HC3")
+})#TEST_THAT
 
 test_that("ddml_plm legacy split args warn and still work", {
   set.seed(101)

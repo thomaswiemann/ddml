@@ -9,8 +9,8 @@
 #'
 #' @description Estimator for the partially linear IV model.
 #'
-#' @details \code{ddml_pliv} provides a double/debiased machine learning
-#'     estimator for the parameter of interest \eqn{\theta_0} in the partially
+#' @details \code{ddml_pliv} provides a Double/Debiased Machine Learning
+#'     estimator for the target parameter \eqn{\theta_0} in the partially
 #'     linear IV model given by
 #'
 #' \eqn{Y = \theta_0D + g_0(X) + U,}
@@ -18,6 +18,17 @@
 #' where \eqn{(Y, D, X, Z, U)} is a random vector such that
 #'     \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
 #'     \eqn{g_0} is an unknown nuisance function.
+#'
+#' In this model, the target parameter \eqn{\theta_0} is identified by the 
+#'     estimating equation 
+#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, Z, X)} and
+#'     \eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+#'
+#' \eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r_D(X)))(Z - r_Z(X)),}
+#'
+#'     with nuisance parameters \eqn{\eta = (\ell, r_D, r_Z)} taking true values
+#'     \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and
+#'     \eqn{r_{Z,0}(X) = E[Z|X]}.
 #'
 #' @inheritParams ddml_plm
 #' @param Z A matrix of instruments.
@@ -64,8 +75,9 @@
 #'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
 #'     containing the following components:
 #'     \describe{
-#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
-#'         \item{\code{weights}}{A list of matrices, providing the weight
+#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
+#'             the second-stage intercept (last element).}
+#'         \item{\code{ensemble_weights}}{A list of matrices, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedure.}
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
@@ -127,65 +139,70 @@ ddml_pliv <- function(y, D, Z, X,
                       splits = NULL,
                       save_crossval = TRUE,
                       ...) {
-  # Validate inputs
-  validate_inputs(y = y, D = D, X = X, Z = Z, learners = learners,
-                  sample_folds = sample_folds, cv_folds = cv_folds,
+  cl <- match.call()
+
+  # == Preliminaries ================================================
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_pliv", list(
+    y_X = "E[Y|X]"))
+
+  validate_inputs(y = y, D = D, X = X, Z = Z,
+                  learners = learners,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
                   ensemble_type = ensemble_type)
   validate_custom_weights(custom_ensemble_weights, learners)
-  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
-  validate_custom_weights(custom_ensemble_weights_ZX, learners_ZX)
+  validate_custom_weights(custom_ensemble_weights_DX,
+                          learners_DX)
+  validate_custom_weights(custom_ensemble_weights_ZX,
+                          learners_ZX)
 
-  # Data parameters
   nobs <- length(y)
-
-  # Check for multivariate endogenous variables
   D <- as.matrix(D)
   nD <- ncol(D)
-
-  # Check for multivariate instruments
   Z <- as.matrix(Z)
   nZ <- ncol(Z)
 
-  # Check whether ddml uses conventional stacking w/ data driven weights
-  w_cv <- !shortstack &
-    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
-    (class(learners[[1]]) != "function")
-
-  # Normalize deprecated split arguments into a single splits object
   splits <- normalize_splits(splits = splits, ...)
-  validate_fitted_splits_pair(fitted, splits, w_cv)
+  validate_fitted_splits_pair(fitted, splits, !shortstack)
 
-  # Create crossfitting and cv tuples
-  indxs <- get_sample_splits(cluster_variable = cluster_variable,
-                             sample_folds = sample_folds,
-                             cv_folds = if (w_cv) cv_folds,
-                             subsamples = splits$subsamples,
-                             cv_subsamples = splits$cv_subsamples)
+  indxs <- get_sample_splits(
+    cluster_variable = cluster_variable,
+    sample_folds = sample_folds,
+    cv_folds = cv_folds,
+    subsamples = splits$subsamples,
+    cv_subsamples = splits$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
-  # Estimation start
   t0 <- proc.time()[3]
   mode_str <- if (!is.null(parallel)) {
     p <- parse_parallel(parallel)
     paste0("parallel, ", p$num_cores, " cores")
   } else {
     "sequential"
-  }
-  info_msg("ddml_pliv: estimating (", mode_str, ")",
-           silent = silent)
+  }#IFELSE
+  if (!is.null(messages$start) && messages$start != "") {
+    info_msg(sprintf(messages$start, mode_str),
+             silent = silent)
+  }#IF
 
-  # Compute estimates of E[y|X]
+  # == Reduced-form estimation ======================================
+
+  # E[Y|X]
   y_X_res <- get_CEF(y, X,
-                     learners = learners, ensemble_type = ensemble_type,
+                     learners = learners,
+                     ensemble_type = ensemble_type,
                      shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights,
+                     custom_ensemble_weights =
+                       custom_ensemble_weights,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = "E[Y|X]",
+                     silent = silent, label = messages$y_X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
-  # Compute estimates of E[Z|X], loop through instruments
+  # E[Z|X]
   Z_X_res_list <- compute_CEF_list(
     Z, X, learners = learners_ZX,
     ensemble_type = ensemble_type,
@@ -198,7 +215,7 @@ ddml_pliv <- function(y, D, Z, X,
     parallel = parallel,
     fitted = fitted$Z_X)
 
-  # Compute estimates of E[D|X], loop through endogenous variables
+  # E[D|X]
   D_X_res_list <- compute_CEF_list(
     D, X, learners = learners_DX,
     ensemble_type = ensemble_type,
@@ -211,130 +228,107 @@ ddml_pliv <- function(y, D, Z, X,
     parallel = parallel,
     fitted = fitted$D_X)
 
-  # Update ensemble type to account for (optional) custom weights
   ensb_info <- update_ensemble_info(y_X_res$weights)
   ensemble_type <- ensb_info$ensemble_type
   nensb <- ensb_info$nensb
-  multiple_ensembles <- ensb_info$multiple_ensembles
 
-  # If a single ensemble is calculated, no loops are required.
-  if (!multiple_ensembles) {
+  # == Score construction ===========================================
 
-    # Residualize
-    y_r <- y - y_X_res$oos_fitted
-    D_r <- D - get_oosfitted(D_X_res_list)
-    V_r <- Z - get_oosfitted(Z_X_res_list)
+  coef <- matrix(0, nD + 1, nensb)
+  iv_fit <- rep(list(1), nensb)
+  scores <- vector("list", nensb)
+  J_list <- vector("list", nensb)
+  psi_a <- vector("list", nensb)
+  psi_b <- vector("list", nensb)
 
-    # Compute IV estimate with constructed variables
-    iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
+  for (j in seq_len(nensb)) {
+    y_r <- y - cbind(y_X_res$oos_fitted)[, j]
+    D_r <- D - get_oosfitted(D_X_res_list, j)
+    V_r <- Z - get_oosfitted(Z_X_res_list, j)
 
-    # Organize complementary ensemble output
-    coef_vec <- stats::coef(iv_fit)[-1]
-    coef <- matrix(coef_vec, nrow = nD, ncol = 1)
-    colnames(coef) <- ensemble_type
+    iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r, x = TRUE)
 
-    # Compute scores and Jacobian
+    coef_iv_j <- stats::coef(iv_fit_j)
+    coef[, j] <- c(coef_iv_j[-1], coef_iv_j[1])
+    iv_fit[[j]] <- iv_fit_j
+
     D_r_mat <- as.matrix(D_r)
-    V_r_mat <- as.matrix(V_r)
-    D_hat <- stats::lm.fit(V_r_mat, D_r_mat)$fitted.values
-    e <- as.vector(y_r - D_r_mat %*% coef)
-    scores <- list(D_hat * e)
-    J_list <- list(-crossprod(D_hat, D_r_mat) / nobs)
-    coef_names <- names(coef_vec)
-  }#IF
+    D_hat <- as.matrix(
+      iv_fit_j$x$projected[, -1, drop = FALSE])
+    X_hat <- cbind(D_hat, 1)
+    X_full <- cbind(D_r_mat, 1)
+    e_j <- as.vector(stats::residuals(iv_fit_j))
+    scores[[j]] <- X_hat * e_j
+    J_list[[j]] <- -crossprod(X_hat, X_full) / nobs
 
-  # If multiple ensembles are calculated, iterate over each type.
-  if (multiple_ensembles) {
-    # Iterate over ensemble type. Compute DDML IV estimate for each.
-    coef <- matrix(0, nD, nensb)
-    iv_fit <- rep(list(1), nensb)
-    scores <- vector("list", nensb)
-    J_list <- vector("list", nensb)
-    nlearners <- length(learners)
-    nlearners_DX <- length(learners_DX); nlearners_ZX <- length(learners_ZX)
+    psi_b[[j]] <- X_hat * as.vector(y_r)
+    psi_a[[j]] <- -sapply(seq_len(nD + 1),
+                          function(k) X_hat * X_full[, k],
+                          simplify = "array")
+  }#FOR
 
-    # Compute coefficients for each ensemble
-    for (j in seq_len(nensb)) {
-      # Residualize
-      y_r <- y - y_X_res$oos_fitted[, j]
-      D_r <- D - get_oosfitted(D_X_res_list, j)
-      V_r <- Z - get_oosfitted(Z_X_res_list, j)
+  # == Target parameter =============================================
 
-      # Compute IV estimate with constructed variables
-      iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r)
+  cn_weights <- dimnames(y_X_res$weights)[[2]]
+  colnames(coef) <- names(iv_fit) <-
+    if (is.null(cn_weights)) ensemble_type else cn_weights
+  cn_j <- names(iv_fit_j$coefficients)
+  rownames(coef) <- c(cn_j[-1], cn_j[1])
+  coef_names <- rownames(coef)
 
-      # Organize complementary ensemble output
-      coef[, j] <- stats::coef(iv_fit_j)[-1]
-      iv_fit[[j]] <- iv_fit_j
-
-      # Compute scores and Jacobian
-      D_r_mat <- as.matrix(D_r)
-      V_r_mat <- as.matrix(V_r)
-      D_hat <- stats::lm.fit(V_r_mat, D_r_mat)$fitted.values
-      e_j <- as.vector(y_r - D_r_mat %*% coef[, j])
-      scores[[j]] <- D_hat * e_j
-      J_list[[j]] <- -crossprod(D_hat, D_r_mat) / nobs
-    }#FOR
-    # Assign names for more legible output
-    colnames(coef) <- names(iv_fit) <- ensemble_type
-    rownames(coef) <- names(iv_fit_j$coefficients)[-1]
-    coef_names <- rownames(coef)
-  }#IF
-
-  # Ensemble metrics
-  weights <- list(y_X = y_X_res$weights)
+  ensemble_weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
   r2 <- list(y_X = y_X_res$r2)
   for (k in seq_len(nD)) {
     eq <- paste0("D", k, "_X")
-    weights[[eq]] <- D_X_res_list[[k]]$weights
+    ensemble_weights[[eq]] <- D_X_res_list[[k]]$weights
     mspe[[eq]] <- D_X_res_list[[k]]$mspe
     r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
   for (k in seq_len(nZ)) {
     eq <- paste0("Z", k, "_X")
-    weights[[eq]] <- Z_X_res_list[[k]]$weights
+    ensemble_weights[[eq]] <- Z_X_res_list[[k]]$weights
     mspe[[eq]] <- Z_X_res_list[[k]]$mspe
     r2[[eq]] <- Z_X_res_list[[k]]$r2
   }#FOR
 
-  fitted_export <- list(
-    y_X = build_fitted_entry(y_X_res, save_crossval),
-    D_X = build_fitted_from_list(D_X_res_list, save_crossval),
-    Z_X = build_fitted_from_list(Z_X_res_list, save_crossval)
-  )
-  splits_export <- list(subsamples = indxs$subsamples,
-                        cv_subsamples = indxs$cv_subsamples)
+  # == Output =======================================================
 
-  # Organize output
-  ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
-                   learners = learners,
-                   learners_ZX = learners_ZX,
-                   learners_DX = learners_DX,
-                   iv_fit = iv_fit,
-                   cluster_variable = cluster_variable,
-                   subsamples = indxs$subsamples,
-                   cv_subsamples = indxs$cv_subsamples,
-                   ensemble_type = ensemble_type,
-                   coefficients = coef,
-                   scores = scores,
-                   J = J_list,
-                   coef_names = coef_names,
-                   nobs = nobs,
-                   sample_folds = sample_folds,
-                   cv_folds = if (shortstack) NULL
-                     else cv_folds,
-                   shortstack = shortstack,
-                   fitted = fitted_export,
-                   splits = splits_export,
-                   r2 = r2)
+  ddml_fit <- list(
+    coefficients = coef,
+    iv_fit = iv_fit,
+    ensemble_weights = ensemble_weights,
+    mspe = mspe,
+    r2 = r2,
+    psi_a = psi_a, psi_b = psi_b,
+    scores = scores, J = J_list,
+    coef_names = coef_names,
+    estimator_name = "Partially Linear IV Model",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    learners = learners,
+    learners_DX = learners_DX,
+    learners_ZX = learners_ZX,
+    cluster_variable = cluster_variable,
+    fitted = list(
+      y_X = build_fitted_entry(y_X_res, save_crossval),
+      D_X = build_fitted_from_list(D_X_res_list,
+                                   save_crossval),
+      Z_X = build_fitted_from_list(Z_X_res_list,
+                                   save_crossval)),
+    splits = list(subsamples = indxs$subsamples,
+                  cv_subsamples = indxs$cv_subsamples),
+    call = cl)
 
-  # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
-  info_msg("ddml_pliv: completed in ", elapsed, "s",
-           silent = silent)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
 
-  # Amend class and return
   class(ddml_fit) <- c("ddml_pliv", "ddml")
   return(ddml_fit)
 }#DDML_PLIV

@@ -35,6 +35,12 @@ test_that("standard S3 generic methods work correctly", {
   expect_s3_class(s, "summary.ddml")
   expect_equal(s$nobs, nobs)
 
+  # nobs
+  expect_equal(nobs(fit), nobs)
+
+  # call
+  expect_false(is.null(fit$call))
+
   # print.summary
   out <- capture_output(print(s))
   expect_true(grepl("DDML estimation", out))
@@ -72,13 +78,13 @@ test_that("type argument threads through S3 methods", {
   expect_equal(s3$type, "HC3")
 
   # HC0 SEs < HC1 SEs (dof correction)
-  se_hc0 <- s0$inf_results[1, 2, 1]
-  se_hc1 <- s1$inf_results[1, 2, 1]
+  se_hc0 <- s0$coefficients[1, 2, 1]
+  se_hc1 <- s1$coefficients[1, 2, 1]
   expect_true(se_hc1 > se_hc0)
 
   # Coefficients are identical across vcov types
-  expect_equal(s0$inf_results[, 1, ], s1$inf_results[, 1, ])
-  expect_equal(s0$inf_results[, 1, ], s3$inf_results[, 1, ])
+  expect_equal(s0$coefficients[, 1, ], s1$coefficients[, 1, ])
+  expect_equal(s0$coefficients[, 1, ], s3$coefficients[, 1, ])
 
   # confint with HC3
   ci_hc1 <- confint(fit, type = "HC1")
@@ -112,6 +118,6 @@ test_that("type works with PLM estimator", {
   V_hc3 <- vcov(fit, type = "HC3")
 
   expect_true(is.matrix(V_hc3))
-  expect_equal(dim(V_hc3), c(1, 1))
+  expect_equal(dim(V_hc3), c(2, 2))
   expect_true(V_hc1[1, 1] > V_hc0[1, 1])
 })

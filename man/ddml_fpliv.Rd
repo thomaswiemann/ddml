@@ -16,7 +16,6 @@ ddml_fpliv(
   ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 10,
-  enforce_LIE = TRUE,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_DX = custom_ensemble_weights,
@@ -90,9 +89,6 @@ Multiple ensemble types may be passed as a vector of strings.}
 \item{cv_folds}{Number of folds used for cross-validation in ensemble
 construction.}
 
-\item{enforce_LIE}{Indicator equal to 1 if the law of iterated expectations
-is enforced in the first stage.}
-
 \item{custom_ensemble_weights}{A numerical matrix with user-specified
 ensemble weights. Each column corresponds to a custom ensemble
 specification, each row corresponds to a base learner in \code{learners}
@@ -125,8 +121,7 @@ that use packages not imported by \code{ddml}).}
 }}
 
 \item{fitted}{An optional named list of per-equation cross-fitted
-predictions, typically obtained via \code{fit$fitted}. Not
-supported when \code{enforce_LIE = TRUE}. See
+predictions, typically obtained via \code{fit$fitted}. See
 \code{\link{ddml_plm}} for details.}
 
 \item{splits}{An optional list of sample split objects, typically
@@ -148,8 +143,9 @@ with the \code{splits} argument.}
 \code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
 containing the following components:
 \describe{
-\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
+\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
+the second-stage intercept (last element).}
+\item{\code{ensemble_weights}}{A list of matrices, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
@@ -169,8 +165,8 @@ selected user-provided arguments. See above.}
 Estimator for the flexible partially linear IV model.
 }
 \details{
-\code{ddml_fpliv} provides a double/debiased machine learning
-estimator for the parameter of interest \eqn{\theta_0} in the partially
+\code{ddml_fpliv} provides a Double/Debiased Machine Learning
+estimator for the target parameter \eqn{\theta_0} in the partially
 linear IV model given by
 
 \eqn{Y = \theta_0D + g_0(X) + U,}
@@ -178,6 +174,18 @@ linear IV model given by
 where \eqn{(Y, D, X, Z, U)} is a random vector such that
 \eqn{E[U\vert X, Z] = 0} and \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
 and \eqn{g_0} is an unknown nuisance function.
+
+In this model, the target parameter \eqn{\theta_0} is identified by the
+estimating equation
+\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, Z, X)} and
+\eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+
+\eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r(X)))(v(X, Z) - r(X)),}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell, r, v)} taking true values
+\eqn{\ell_0(X) = E[Y|X]}, \eqn{r_0(X) = E[D|X]}, and
+\eqn{v_0(X, Z) = E[D|X, Z]}.
+}\if{html}{\out{</div>}}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

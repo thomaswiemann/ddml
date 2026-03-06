@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This article illustrates the computational advantages of short-stacking over conventional stacking for estimation of structural parameters using double/debiased machine learning. See also Ahrens et al. ([2024a](https://arxiv.org/abs/2301.09397), [2024b](https://arxiv.org/abs/2401.01645)) for further discussion of short-stacking.
+This article illustrates the computational advantages of short-stacking over conventional stacking for estimation of structural parameters using Double/Debiased Machine Learning. See also Ahrens et al. ([2024a](https://arxiv.org/abs/2301.09397), [2024b](https://arxiv.org/abs/2401.01645)) for further discussion of short-stacking.
 
 # Estimation with Stacking and Short-Stacking
 
@@ -83,7 +83,7 @@ time_stacking <- system.time({
   })#SYSTEM.TIME
 ```
 
-Both stacking and short-stacking construct weighted averages of the considered base learners to minimize the out-of-sample mean squared prediction error (MSPE). The difference between the two approaches lies in the construction of the MSPE: While stacking runs cross-validation in each cross-fitting sample fold, short-stacking directly uses the out-of-sample predictions arising in the cross-fitting step of double/debiased machine learning estimators. As the run-times below show, this results in a substantially reduced computational burden:
+Both stacking and short-stacking construct weighted averages of the considered base learners to minimize the out-of-sample mean squared prediction error (MSPE). The difference between the two approaches lies in the construction of the MSPE: While stacking runs cross-validation in each cross-fitting sample fold, short-stacking directly uses the out-of-sample predictions arising in the cross-fitting step of Double/Debiased Machine Learning estimators. As the run-times below show, this results in a substantially reduced computational burden:
 
 ```{r}
 cat("Time single learner:", time_singlelearner[1], "\n")

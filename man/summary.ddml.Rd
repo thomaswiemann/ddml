@@ -11,9 +11,8 @@
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
-(default, degrees-of-freedom corrected), \code{"HC0"}
-(uncorrected), or \code{"HC3"} (score-based leverage
-adjustment for finite-sample robustness).}
+(default), \code{"HC0"}, or \code{"HC3"}. See
+\code{\link{vcov.ddml}} for details.}
 
 \item{...}{Currently unused.}
 }
@@ -21,7 +20,11 @@ adjustment for finite-sample robustness).}
 An object of class \code{summary.ddml}.
 }
 \description{
-Summary for DDML Estimators
+Computes a coefficient table with estimates,
+standard errors, t-values, and p-values for all
+ensemble types. Standard errors are based on a
+heteroskedasticity-robust sandwich variance; see
+\code{\link{vcov.ddml}} for the HC0/HC1/HC3 formulas.
 }
 \examples{
 \donttest{

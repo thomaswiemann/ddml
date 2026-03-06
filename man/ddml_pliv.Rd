@@ -150,8 +150,9 @@ with the \code{splits} argument.}
 \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
 containing the following components:
 \describe{
-\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
+\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
+the second-stage intercept (last element).}
+\item{\code{ensemble_weights}}{A list of matrices, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
@@ -171,8 +172,8 @@ selected user-provided arguments. See above.}
 Estimator for the partially linear IV model.
 }
 \details{
-\code{ddml_pliv} provides a double/debiased machine learning
-estimator for the parameter of interest \eqn{\theta_0} in the partially
+\code{ddml_pliv} provides a Double/Debiased Machine Learning
+estimator for the target parameter \eqn{\theta_0} in the partially
 linear IV model given by
 
 \eqn{Y = \theta_0D + g_0(X) + U,}
@@ -180,6 +181,18 @@ linear IV model given by
 where \eqn{(Y, D, X, Z, U)} is a random vector such that
 \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
 \eqn{g_0} is an unknown nuisance function.
+
+In this model, the target parameter \eqn{\theta_0} is identified by the
+estimating equation
+\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, Z, X)} and
+\eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+
+\eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r_D(X)))(Z - r_Z(X)),}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell, r_D, r_Z)} taking true values
+\eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and
+\eqn{r_{Z,0}(X) = E[Z|X]}.
+}\if{html}{\out{</div>}}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

@@ -25,7 +25,7 @@ This article revisits the empirical example of Chernozhukov, Hansen, and Spindle
 (CHS2015, hereafter), which extends the instruments of Berry, Levinsohn,
 and Pakes (1995) (BLP1995, hereafter) and applies an instrument selection
 procedure based on the lasso. We consider the same instrument extension
-and apply double/debiased machine learning with short-stacking that combines conventional
+and apply Double/Debiased Machine Learning with short-stacking that combines conventional
 linear estimators with computational alternatives including lasso-based
 approaches, random forests, and gradient boosting.
 
@@ -127,7 +127,7 @@ round(summary(tsls_L_fit)$coefficients[2, ], 4)
 
 # Estimating the Flexible Partially Linear IV Model with CV-Lasso
 
-Given the large set of controls and instruments in the expanded set relative to the moderate sample size, it is reasonable to consider regularized estimators. A frequent choice with many variables are lasso-based estimators. Below, we combine double/debiased machine learning with lasso selection of instruments and controls. (See ``?mdl_glmnet`` and ``?ddml_fpliv`` for details.)
+Given the large set of controls and instruments in the expanded set relative to the moderate sample size, it is reasonable to consider regularized estimators. A frequent choice with many variables are lasso-based estimators. Below, we combine Double/Debiased Machine Learning with lasso selection of instruments and controls. (See ``?mdl_glmnet`` and ``?ddml_fpliv`` for details.)
 
 ```{r}
 # Base learner
@@ -195,7 +195,7 @@ Interestingly, the coefficient is closer to the OLS estimates than to the TSLS e
 To better understand the composition of the final estimator, it is often useful to inspect the stacking weights. These may readily be retrieved from the fitted object. Here, we see that the boosted trees and the random forest learners have been assigned the most weight in the cross validation informed ensemble procedures. The linear methods -- ols, lasso, and ridge -- do not contribute substantially to the final estimates, suggesting that the user-defined expansions of the controls and instruments does little to improve bias and precision.
 
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+sapply(stacking_fit$ensemble_weights, round, 4)
 ```
 
 # Elasticities
@@ -219,7 +219,7 @@ compute_inelastic_demand(ols_L_fit$coef[2])
 compute_inelastic_demand(tsls_fit$coef[2])
 compute_inelastic_demand(tsls_L_fit$coef[2])
 ```
-Double/debiased machine learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
+Double/Debiased Machine Learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
 ```{r}
 # ddml-lasso implied number of products with inelastic demand
 compute_inelastic_demand(lasso_fit$coef)
@@ -242,7 +242,7 @@ rlassoIV_fit <- rlassoIV(x = XL, d = D, y = y, z = ZL,
 summary(rlassoIV_fit)
 ```
 
-The coefficient is drastically different from previous estimates, including the double/debiased machine learning estimates that included lasso-based approaches.
+The coefficient is drastically different from previous estimates, including the Double/Debiased Machine Learning estimates that included lasso-based approaches.
 
 To gain some insight into potential causes for these differences, we check which instruments and controls were selected by the lasso procedure. Not surprisingly, lasso with a plug-in penalty selects only very few instruments and controls.
 
@@ -252,7 +252,7 @@ dim(Zr_)[2]
 Xr_ <- XL[, which(rlassoIV_fit$selected[49:length(rlassoIV_fit$selected)])]
 dim(Xr_)[2]
 ```
-From the stacking weights above, we know that the double/debiased machine learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
+From the stacking weights above, we know that the Double/Debiased Machine Learning estimator assigns most weight to boosted trees. In contrast to lasso-based estimates, boosted trees adaptively create interactions from their input variables, allowing for rich non-linearities in the final predictions. It thus makes sense to check whether the stark differences between the rlasso-based IV estimates above and the stacking estimates is primarily due to potential non-linearities as opposed to the specific instrument and control variables that were selected. The below code snippet re-estimates the stacking learner with the pre-selected set of controls and instruments.
 
 ```{r}
 # Base learner
@@ -274,10 +274,10 @@ summary(stacking_r_fit)
 The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
 
 ```{r}
-sapply(stacking_r_fit$weights, round, 4)
+sapply(stacking_r_fit$ensemble_weights, round, 4)
 ```
 
-The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of double/debiased machine learning with stacking as a practical solution.
+The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of Double/Debiased Machine Learning with stacking as a practical solution.
 
 # References
 

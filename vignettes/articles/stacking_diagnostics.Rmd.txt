@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-In double/debiased machine learning, the estimation of nuisance parameters (conditional expectation functions) can be substantially improved by adaptively combining multiple machine learners via stacking or short-stacking. 
+In Double/Debiased Machine Learning, the estimation of nuisance parameters (conditional expectation functions) can be substantially improved by adaptively combining multiple machine learners via stacking or short-stacking. 
 
 While stacking is primarily used to minimize the out-of-sample mean squared prediction error (MSPE) of the nuisance functions, it is often insightful for researchers to peek under the hood: Which machine learner performs the best? Are the differences in performance statistically significant, or just noise from the random cross-fitting splits?
 

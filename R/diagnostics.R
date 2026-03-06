@@ -39,12 +39,12 @@ diagnostics <- function(object, cvc = FALSE,
     stop("object must be of class 'ddml'.")
   }#IF
 
-  eq_names <- names(object$weights)
+  eq_names <- names(object$ensemble_weights)
   single_learner <- is_single_learner(object$learners)
   tables <- list()
 
   for (eq in eq_names) {
-    w <- object$weights[[eq]]
+    w <- object$ensemble_weights[[eq]]
     m <- object$mspe[[eq]]
     r <- object$r2[[eq]]
 
@@ -128,6 +128,7 @@ diagnostics <- function(object, cvc = FALSE,
   result <- list(
     tables = tables,
     model_type = class(object)[1],
+    estimator_name = object$estimator_name,
     nobs = object$nobs,
     shortstack = object$shortstack,
     cvc = cvc,
@@ -138,21 +139,16 @@ diagnostics <- function(object, cvc = FALSE,
 
 # Resolve the correct subsamples for a given equation.
 get_diag_subsamples <- function(object, eq) {
-  model <- class(object)[1]
-  if (model %in% c("ddml_plm", "ddml_pliv",
-                    "ddml_fpliv")) {
-    return(object$subsamples)
-  }#IF
-  if (model %in% c("ddml_ate", "ddml_att")) {
-    if (grepl("D0", eq)) return(object$subsamples_byD[[1]])
-    if (grepl("D1", eq)) return(object$subsamples_byD[[2]])
-    return(merge_subsamples(object$subsamples_byD))
-  }#IF
-  if (model == "ddml_late") {
-    if (grepl("Z0", eq)) return(object$subsamples_byZ[[1]])
-    if (grepl("Z1", eq)) return(object$subsamples_byZ[[2]])
-    return(merge_subsamples(object$subsamples_byZ))
-  }#IF
+  splits <- object$splits
+  if (grepl("D0|d0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byD)) return(splits$subsamples_byD[[1]])
+  if (grepl("D1|d1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byD)) return(splits$subsamples_byD[[2]])
+  if (grepl("D0|d0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byd)) return(splits$subsamples_byd[[1]])
+  if (grepl("D1|d1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byd)) return(splits$subsamples_byd[[2]])
+
+  if (grepl("Z0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byZ)) return(splits$subsamples_byZ[[1]])
+  if (grepl("Z1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byZ)) return(splits$subsamples_byZ[[2]])
+
+  if (!is.null(splits$subsamples)) return(splits$subsamples)
   object$subsamples
 }#GET_DIAG_SUBSAMPLES
 
@@ -175,17 +171,8 @@ merge_subsamples <- function(subsamples_by) {
 #'
 #' @export
 print.ddml_diagnostics <- function(x, digits = 4, ...) {
-  type_labels <- c(
-    ddml_plm = "Partially Linear Model",
-    ddml_pliv = "Partially Linear IV Model",
-    ddml_fpliv =
-      "Flexible Partially Linear IV Model",
-    ddml_ate = "Average Treatment Effect",
-    ddml_att =
-      "Average Treatment Effect on the Treated",
-    ddml_late = "Local Average Treatment Effect")
-  model_name <- type_labels[x$model_type]
-  if (is.na(model_name)) model_name <- x$model_type
+  model_name <- x$estimator_name
+  if (is.null(model_name)) model_name <- x$model_type
 
   cat("Stacking diagnostics:", model_name, "\n")
   cat("Obs:", x$nobs, "\n\n")

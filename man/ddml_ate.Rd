@@ -164,20 +164,24 @@ compatibility but should be replaced with \code{splits}.}
 \code{ddml_ate} or \code{ddml_att} is a list containing
 the following components:
 \describe{
-\item{\code{ate} / \code{att}}{A vector with the average treatment
-effect / average treatment effect on the treated estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
-assigned to each base learner (in chronological order) by the
-ensemble procedure.}
+\item{\code{coefficients}}{A matrix of estimated coefficients.}
+\item{\code{ensemble_weights}}{A list of matrices, providing the
+weight assigned to each base learner by the ensemble
+procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner (in chronological order) computed by the
-cross-validation step in the ensemble construction.}
-\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
-\item{\code{oos_pred}}{List of matrices, providing the reduced form
-predicted values.}
-\item{\code{learners},\code{learners_DX},\code{cluster_variable},
-\code{subsamples_byD},\code{cv_subsamples_byD},
+base learner computed by the cross-validation step in the
+ensemble construction.}
+\item{\code{r2}}{The out-of-sample R-squared.}
+\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
+computation of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
+\item{\code{scores}}{A list of evaluated Neyman orthogonal
+scores.}
+\item{\code{J}}{A list of evaluated Jacobians.}
+\item{\code{fitted}}{A list of fitted nuisance estimators.
+See \code{\link{ddml_plm}} for more information.}
+\item{\code{splits}}{The data splitting structure.}
+\item{\code{learners},\code{learners_DX},
+\code{cluster_variable},
 \code{ensemble_type}}{Pass-through of
 selected user-provided arguments. See above.}
 }
@@ -187,8 +191,8 @@ Estimators of the average treatment effect and the average
 treatment effect on the treated.
 }
 \details{
-\code{ddml_ate} and \code{ddml_att} provide double/debiased machine
-learning  estimators for the average treatment effect and the average
+\code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
+Learning estimators for the average treatment effect and the average
 treatment effect on the treated, respectively, in the interactive model
 given by
 
@@ -199,13 +203,31 @@ where \eqn{(Y, D, X, U)} is a random vector such that
 \eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
 and \eqn{g_0} is an unknown nuisance function.
 
-In this model, the average treatment effect is defined as
+In this model, the average treatment effect (ATE) is defined as
 
-\eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
+\eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]},
 
-and the average treatment effect on the treated is defined as
+and the average treatment effect on the treated (ATT) is defined as
 
 \eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+
+The estimating equations are
+\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
+\eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
+\eqn{W = (Y, D, X)}, and the Neyman orthogonal scores are
+
+\eqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{m(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+
+\eqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+
+\eqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{p} - \frac{m(X)(1-D)(Y-\ell_0(X))}{p(1-m(X))}}
+
+\eqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{p}}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, m, p)} taking
+true values \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{m_0(X) = E[D|X]},
+and \eqn{p_0 = E[D]}.
+}\if{html}{\out{</div>}}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

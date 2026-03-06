@@ -12,7 +12,7 @@ vignette: >
 
 # Introduction
 
-``ddml`` supports sparse matrices from the ``Matrix`` package by default. This article illustrates double/debiased machine learning estimation with sparse matrices using the prominent study of Angrist and Krueger (1991) (AK91, hereafter) on returns to education.
+``ddml`` supports sparse matrices from the ``Matrix`` package by default. This article illustrates Double/Debiased Machine Learning estimation with sparse matrices using the prominent study of Angrist and Krueger (1991) (AK91, hereafter) on returns to education.
 
 
 ```r
@@ -165,12 +165,8 @@ The resulting coefficient is close to the coefficient based on 180 instruments. 
 
 
 ```r
-round(stacking_fit$weights$D1_XZ, 4)
-#>       nnls1
-#> [1,] 0.7409
-#> [2,] 0.0000
-#> [3,] 0.2591
-#> [4,] 0.0000
+round(stacking_fit$ensemble_weights$D1_XZ, 4)
+#> Error in round(stacking_fit$ensemble_weights$D1_XZ, 4): non-numeric argument to mathematical function
 ```
 
 # References

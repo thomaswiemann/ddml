@@ -39,9 +39,13 @@ aggregate_reps <- function(object, aggregation = "median",
     fit <- object$fits[[r]]
     coef_array[, , r] <- fit$coefficients
     for (j in seq_len(nensb)) {
+      h <- if (type == "HC3") {
+        compute_leverage(fit, j)
+      }#IF
       vcov_array[, , j, r] <- compute_ddml_variance(
         fit$scores[[j]], fit$J[[j]],
-        fit$cluster_variable, type = type)
+        fit$cluster_variable, type = type,
+        leverage = h)
     }#FOR
   }#FOR
 
@@ -177,6 +181,7 @@ ddml_rep <- function(fits) {
       nresamples    = length(fits),
       model_type    = primary[1],
       coef_names    = ref$coef_names,
+      estimator_name= if (!is.null(ref$estimator_name)) ref$estimator_name else primary[1],
       ensemble_type = ens_type,
       nobs          = ref$nobs,
       sample_folds  = ref$sample_folds,
@@ -223,6 +228,13 @@ ddml_replicate <- function(fn, ..., resamples = 5,
                            silent = FALSE) {
   dots <- list(...)
   dots$silent <- silent
+  # Suppress inner start/finish messages to avoid console spam
+  if (is.null(dots$messages)) {
+    dots$messages <- list(start = "", finish = "")
+  } else {
+    dots$messages$start <- ""
+    dots$messages$finish <- ""
+  }
   fits <- vector("list", resamples)
   for (r in seq_len(resamples)) {
     if (!silent) {
@@ -308,19 +320,7 @@ length.ddml_rep <- function(x) {
 #' @export
 #' @method print ddml_rep
 print.ddml_rep <- function(x, ...) {
-  type_labels <- c(
-    ddml_plm  = "Partially Linear Model",
-    ddml_pliv = "Partially Linear IV Model",
-    ddml_fpliv =
-      "Flexible Partially Linear IV Model",
-    ddml_ate  = "Average Treatment Effect",
-    ddml_att  =
-      "Average Treatment Effect on the Treated",
-    ddml_late = "Local Average Treatment Effect")
-  model_name <- type_labels[x$model_type]
-  if (is.na(model_name)) model_name <- x$model_type
-
-  cat("DDML replicated fits:", model_name, "\n")
+  cat("DDML replicated fits:", x$estimator_name, "\n")
   cat("  Resamples:", x$nresamples,
       "  Obs:", x$nobs,
       "  Folds:", x$sample_folds, "\n\n")
@@ -506,9 +506,10 @@ summary.ddml_rep <- function(object,
   inf_results <- build_inf_from_agg(
     agg, object$coef_names, object$ensemble_type)
   result <- list(
-    inf_results   = inf_results,
+    coefficients  = inf_results,
     type          = type,
     model_type    = object$model_type,
+    estimator_name= object$estimator_name,
     nobs          = object$nobs,
     sample_folds  = object$sample_folds,
     shortstack    = object$shortstack,
@@ -531,19 +532,7 @@ summary.ddml_rep <- function(object,
 #' @export
 #' @method print summary.ddml_rep
 print.summary.ddml_rep <- function(x, digits = 3, ...) {
-  type_labels <- c(
-    ddml_plm  = "Partially Linear Model",
-    ddml_pliv = "Partially Linear IV Model",
-    ddml_fpliv =
-      "Flexible Partially Linear IV Model",
-    ddml_ate  = "Average Treatment Effect",
-    ddml_att  =
-      "Average Treatment Effect on the Treated",
-    ddml_late = "Local Average Treatment Effect")
-  model_name <- type_labels[x$model_type]
-  if (is.na(model_name)) model_name <- x$model_type
-
-  cat("DDML estimation:", model_name, "\n")
+  cat("DDML estimation:", x$estimator_name, "\n")
   cat("Obs:", x$nobs,
       "  Folds:", x$sample_folds,
       "  Resamples:", x$nresamples,
@@ -556,18 +545,18 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
   }#IF
   cat("\n\n")
 
-  nensb <- dim(x$inf_results)[3]
+  nensb <- dim(x$coefficients)[3]
   for (j in seq_len(nensb)) {
     if (nensb > 1) {
       cat("Ensemble type:",
-          dimnames(x$inf_results)[[3]][j], "\n")
+          dimnames(x$coefficients)[[3]][j], "\n")
     }#IF
-    tbl <- x$inf_results[, , j]
+    tbl <- x$coefficients[, , j]
     if (!is.matrix(tbl)) {
       tbl <- matrix(tbl, nrow = 1,
                     dimnames = list(
-                      dimnames(x$inf_results)[[1]],
-                      dimnames(x$inf_results)[[2]]))
+                      dimnames(x$coefficients)[[1]],
+                      dimnames(x$coefficients)[[2]]))
     }#IF
     stats::printCoefmat(tbl, digits = digits,
                         has.Pvalue = TRUE,
@@ -630,7 +619,7 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
                           conf.level = 0.95, ...) {
   s <- summary(x, aggregation = aggregation,
                type = type)
-  inf <- s$inf_results
+  inf <- s$coefficients
   nensb <- dim(inf)[3]
   p <- dim(inf)[1]
 
@@ -706,6 +695,7 @@ glance.ddml_rep <- function(x, ...) {
     ensemble_type = paste(x$ensemble_type,
                           collapse = ", "),
     model_type = x$model_type,
+    estimator_name = x$estimator_name,
     nresamples = x$nresamples,
     stringsAsFactors = FALSE
   )

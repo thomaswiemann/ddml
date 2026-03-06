@@ -1,6 +1,6 @@
 ---
 title: "Get Started"
-description: "A brief introduction to double/debiased machine learning using (short-)stacking in R."
+description: "A brief introduction to Double/Debiased Machine Learning using (short-)stacking in R."
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get Started}
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This article is an introduction to double/debiased machine learning using short-stacking in R. Topics discussed below include:
+This article is an introduction to Double/Debiased Machine Learning using short-stacking in R. Topics discussed below include:
 
 1. Estimation with a single machine learner
 2. Estimation with multiple machine learners & short-stacking
@@ -46,7 +46,7 @@ Z = AE98[, "samesex"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
-``ddml_late`` estimates the local average treatment effect (LATE) using double/debiased machine learning (see ``?ddml_late``). The high-dimensional nuisance parameters arising in the estimate of the LATE are conditional expectation functions of the control variables $X$. In particular, we require first step estimates of the reduced forms $E[Y|Z=z, X], E[D|Z=z, X]$ for $z=0,1$ and $E[Z|X]$. In the absence of functional form assumptions, these conditional expectations need to be estimated nonparametrically.
+``ddml_late`` estimates the local average treatment effect (LATE) using Double/Debiased Machine Learning (see ``?ddml_late``). The high-dimensional nuisance parameters arising in the estimate of the LATE are conditional expectation functions of the control variables $X$. In particular, we require first step estimates of the reduced forms $E[Y|Z=z, X], E[D|Z=z, X]$ for $z=0,1$ and $E[Z|X]$. In the absence of functional form assumptions, these conditional expectations need to be estimated nonparametrically.
 
 Here, we consider gradient boosting from the popular [xgboost](https://rdrr.io/cran/xgboost/) package to estimate the nuisance parameters. The function ``mdl_xgboost`` is a wrapper for ``xgboost``, allowing to specify all parameters of the original function. See ``?mdl_xgboost`` for details and take a look at ``vignette("new_ml_wrapper")`` to learn how to write a wrapper for a different machine learner yourself.
 
@@ -57,7 +57,7 @@ learners_single <- list(what = mdl_xgboost,
                                     max_depth = 1))
 ```
 
-Double/debiased machine learning relies on cross-fitting to avoid large bias from overfitting when estimating the nuisance parameters. The argument ``sample_folds = 3`` implies that 2/3 of the observations -- about 3,333 observations -- are used to train the machine learner in each cross-fitting sample fold.
+Double/Debiased Machine Learning relies on cross-fitting to avoid large bias from overfitting when estimating the nuisance parameters. The argument ``sample_folds = 3`` implies that 2/3 of the observations -- about 3,333 observations -- are used to train the machine learner in each cross-fitting sample fold.
 ```{r}
 # Estimate the local average treatment effect using xgboost.
 late_fit <- ddml_late(y, D, Z, X,
@@ -84,7 +84,7 @@ learners_multiple <- list(list(what = ols),
                                            max_depth = 1)))
 ```
 
-Short-stacking is a computationally convenient variant of stacking originally introduced by Wolpert (1992). Stacking constructs linear combinations of base learners to minimize the out-of-sample mean squared error of a particular reduced form (e.g., $E[Z|X]$). Short-stacking uses the out-of-sample predictions that naturally arise in computation of double/debiased machine learning estimates due to cross-fitting, which substantially reduces the computational burden (see ``vignette("stacking")``).
+Short-stacking is a computationally convenient variant of stacking originally introduced by Wolpert (1992). Stacking constructs linear combinations of base learners to minimize the out-of-sample mean squared error of a particular reduced form (e.g., $E[Z|X]$). Short-stacking uses the out-of-sample predictions that naturally arise in computation of Double/Debiased Machine Learning estimates due to cross-fitting, which substantially reduces the computational burden (see ``vignette("stacking")``).
 
 In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the four base learners with linear coefficients that are constrained to be non-negative and sum to one.
 
@@ -154,7 +154,7 @@ Beyond ``ddml_late`` and ``ddml_plm``, the package supports several other causal
 
 # Robust Inference via Repeated Resampling
 
-Because double/debiased machine learning relies on random sample splits, point estimates contain _splitting variance_. To stabilize results, ``ddml_replicate()`` repeats the cross-fitting procedure multiple times and aggregates the estimates (see Ahrens et al., 2024):
+Because Double/Debiased Machine Learning relies on random sample splits, point estimates contain _splitting variance_. To stabilize results, ``ddml_replicate()`` repeats the cross-fitting procedure multiple times and aggregates the estimates (see Ahrens et al., 2024):
 
 ```{r}
 plm_rep <- ddml_replicate(ddml_plm,

@@ -11,9 +11,9 @@ test_that("ddml_fpliv computes with a single model", {
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_fpliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with a single model and dependence", {
@@ -36,9 +36,9 @@ test_that("ddml_fpliv computes with a single model and dependence", {
                                learners,
                                cluster_variable = cluster_variable,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_fpliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with an ensemble procedure", {
@@ -58,9 +58,9 @@ test_that("ddml_fpliv computes with an ensemble procedure", {
                                ensemble_type = "ols",
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_fpliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
@@ -74,16 +74,15 @@ test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = "ols",
                                sample_folds = 3,
                                cv_folds = 3,
-                               enforce_LIE = FALSE,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 1)
+  expect_equal(length(coef(ddml_fpliv_fit)), 2)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with multiple ensemble procedures", {
@@ -104,10 +103,10 @@ test_that("ddml_fpliv computes with multiple ensemble procedures", {
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
 
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with custom weights", {
@@ -128,10 +127,10 @@ test_that("ddml_fpliv computes with custom weights", {
                                cv_folds = 3,
                                custom_ensemble_weights = diag(1, 2),
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
 
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 3)
+  expect_equal(length(coef(ddml_fpliv_fit)), 6)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
@@ -145,17 +144,16 @@ test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               enforce_LIE = FALSE,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
@@ -178,9 +176,9 @@ test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with different sets of learners", {
@@ -208,10 +206,10 @@ test_that("ddml_fpliv computes with different sets of learners", {
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
 
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes w/ ensembles & shortstack", {
@@ -230,13 +228,13 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack", {
                                learners,
                                ensemble_type = c("ols", "nnls",
                                                  "singlebest", "average"),
-                               shortstack = T,
+                               shortstack = TRUE,
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
 
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
@@ -250,17 +248,16 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               enforce_LIE = FALSE,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 4)
+  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("summary.ddml_fpliv computes with a single model", {
@@ -276,12 +273,12 @@ test_that("summary.ddml_fpliv computes with a single model", {
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   inf_res <- summary(ddml_fpliv_fit)
   capture_output(print(inf_res), print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
+  expect_equal(dim(inf_res$coefficients), c(2, 4, 1))
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with an ensemble procedure, multi D", {
@@ -301,9 +298,9 @@ test_that("ddml_fpliv computes with an ensemble procedure, multi D", {
                                ensemble_type = "ols",
                                cv_folds = 3,
                                sample_folds = 3,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 2)
+  expect_equal(length(coef(ddml_fpliv_fit)), 3)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
@@ -317,16 +314,15 @@ test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = "ols",
                                cv_folds = 3,
                                sample_folds = 3,
-                               enforce_LIE = F,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 2)
+  expect_equal(length(coef(ddml_fpliv_fit)), 3)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
@@ -349,9 +345,9 @@ test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
                                                    "singlebest", "average"),
                                  cv_folds = 3,
                                  sample_folds = 5,
-                                 silent = T)
+                                 silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 8)
+  expect_equal(length(coef(ddml_fpliv_fit)), 12)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
@@ -365,17 +361,54 @@ test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
                                                  "singlebest", "average"),
                                cv_folds = 3,
                                sample_folds = 3,
-                               enforce_LIE = F,
-                               silent = T)
+                               silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_fpliv_fit$coef), 8)
+  expect_equal(length(coef(ddml_fpliv_fit)), 12)
+})#TEST_THAT
+
+test_that("ddml_fpliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
+  skip_if_not_installed("sandwich")
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  Z <- matrix(rnorm(nobs * 2), nobs, 2)
+  UV <- matrix(rnorm(2 * nobs), nobs, 2) %*%
+    chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
+  D <- X %*% c(1, 0.5, 0, 0, 0) +
+    Z %*% c(0.5, 0.3) + UV[, 1]
+  y <- 2 * D + X %*% c(0, 1, 0.5, 0.3, 0) + UV[, 2]
+
+  fit <- ddml_fpliv(y, D, Z, X,
+                    learners = list(what = ols),
+                    sample_folds = 5,
+                    silent = TRUE)
+
+  for (type in c("HC0", "HC1")) {
+    V_ddml <- vcov(fit, type = type)
+    V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = type)
+    idx <- c(seq_len(nrow(V_sw))[-1], 1)
+    V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+    expect_equal(as.numeric(V_ddml),
+                 as.numeric(V_sw_reord),
+                 tolerance = 1e-8,
+                 info = paste("FPLIV", type))
+  }
+  # HC3: regressor-based leverage matches sandwich exactly
+  V_ddml <- vcov(fit, type = "HC3")
+  V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = "HC3")
+  idx <- c(seq_len(nrow(V_sw))[-1], 1)
+  V_sw_reord <- V_sw[idx, idx, drop = FALSE]
+  expect_equal(as.numeric(V_ddml),
+               as.numeric(V_sw_reord),
+               tolerance = 1e-8,
+               info = "FPLIV HC3")
 })#TEST_THAT
 
 test_that("ddml_fpliv fitted pass-through works", {
@@ -390,36 +423,21 @@ test_that("ddml_fpliv fitted pass-through works", {
   fit <- ddml_fpliv(y, D, Z, X,
                     learners = learners,
                     ensemble_type = "average",
-                    enforce_LIE = FALSE,
                     sample_folds = 2,
                     silent = TRUE)
-
   fit2 <- ddml_fpliv(y, D, Z, X,
                      learners = learners,
                      ensemble_type = "average",
-                     enforce_LIE = FALSE,
                      sample_folds = 2,
                      silent = TRUE,
                      fitted = fit$fitted,
                      splits = fit$splits)
   expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
 
-  # Pass-through blocked when enforce_LIE = TRUE
-  expect_error(
-    ddml_fpliv(y, D, Z, X,
-               learners = learners,
-               sample_folds = 2,
-               silent = TRUE,
-               fitted = fit$fitted,
-               splits = fit$splits),
-    "not currently supported when enforce_LIE = TRUE"
-  )
-
   # Error when fitted supplied without splits
   expect_error(
     ddml_fpliv(y, D, Z, X,
                learners = learners,
-               enforce_LIE = FALSE,
                sample_folds = 2,
                silent = TRUE,
                fitted = fit$fitted),

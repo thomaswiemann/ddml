@@ -151,29 +151,33 @@ compatibility but should be replaced with \code{splits}.}
 \code{ddml_late}. An object of class \code{ddml_late} is a list
 containing the following components:
 \describe{
-\item{\code{late}}{A vector with the average treatment effect
-estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
-assigned to each base learner (in chronological order) by the
-ensemble procedure.}
-\item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner (in chronological order) computed by the
-cross-validation step in the ensemble construction.}
-\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
-\item{\code{oos_pred}}{List of matrices, providing the reduced form
-predicted values.}
-\item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
-\code{cluster_variable},\code{subsamples_byZ},
-\code{cv_subsamples_byZ},\code{ensemble_type}}{Pass-through
-of selected user-provided arguments. See above.}
+\item{\code{coefficients}}{A matrix of estimated coefficients.}
+\item{\code{ensemble_weights}}{A list of matrices, providing the
+weight assigned to each base learner by the ensemble
+procedure.}
+\item{\code{mspe}}{A list of matrices, providing the MSPE of
+each base learner computed by the cross-validation step
+in the ensemble construction.}
+\item{\code{r2}}{The out-of-sample R-squared.}
+\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
+computation of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
+\item{\code{scores}}{A list of evaluated Neyman orthogonal
+scores.}
+\item{\code{J}}{A list of evaluated Jacobians.}
+\item{\code{fitted}}{A list of fitted nuisance estimators.
+See \code{\link{ddml_plm}} for more information.}
+\item{\code{splits}}{The data splitting structure.}
+\item{\code{learners},\code{learners_DXZ},
+\code{learners_ZX},\code{cluster_variable},
+\code{ensemble_type}}{Pass-through of selected
+user-provided arguments. See above.}
 }
 }
 \description{
 Estimator of the local average treatment effect.
 }
 \details{
-\code{ddml_late} provides a double/debiased machine learning
+\code{ddml_late} provides a Double/Debiased Machine Learning
 estimator for the local average treatment effect in the interactive model
 given by
 
@@ -187,10 +191,24 @@ where \eqn{(Y, D, X, Z, U)} is a random vector such that
 \eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
 \eqn{g_0} is an unknown nuisance function.
 
-In this model, the local average treatment effect is defined as
+In this model, the local average treatment effect (LATE) is defined as
 
 \eqn{\theta_0^{\textrm{LATE}} \equiv
-    E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)]}.
+    E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)]}.
+
+The estimating equation is
+\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
+\eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
+\eqn{W = (Y, D, Z, X)}, and the Neyman orthogonal scores are
+
+\eqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{m(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+
+\eqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{m(X)} - \frac{(1-Z)(D-r_0(X))}{1-m(X)} + r_1(X) - r_0(X)\right)}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, m)} taking
+true values \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]},
+\eqn{r_{z,0}(X) = E[D|Z=z, X]}, and \eqn{m_0(X) = E[Z|X]}.
+}\if{html}{\out{</div>}}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data

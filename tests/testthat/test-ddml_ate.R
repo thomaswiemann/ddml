@@ -11,9 +11,9 @@ test_that("ddml_ate computes with a single model", {
                              learners = learners,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 1)
+  expect_equal(length(coef(ddml_ate_fit)), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes with stratify = FALSE", {
@@ -30,9 +30,9 @@ test_that("ddml_ate computes with stratify = FALSE", {
                              stratify = FALSE,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 1)
+  expect_equal(length(coef(ddml_ate_fit)), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes with a single model and dependence", {
@@ -54,9 +54,9 @@ test_that("ddml_ate computes with a single model and dependence", {
                              cluster_variable = cluster_variable,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 1)
+  expect_equal(length(coef(ddml_ate_fit)), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes with an ensemble procedure", {
@@ -75,9 +75,9 @@ test_that("ddml_ate computes with an ensemble procedure", {
                              ensemble_type = "ols",
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 1)
+  expect_equal(length(coef(ddml_ate_fit)), 1)
 })#TEST_THAT
 
 test_that("ddml_ate computes w/ multiple ensembles + custom weights", {
@@ -98,9 +98,9 @@ test_that("ddml_ate computes w/ multiple ensembles + custom weights", {
                              cv_folds = 3,
                              custom_ensemble_weights = diag(1, 2),
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 6)
+  expect_equal(length(coef(ddml_ate_fit)), 6)
 })#TEST_THAT
 
 test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
@@ -120,9 +120,9 @@ test_that("ddml_ate computes with multiple ensemble procedures & shortstack", {
                              shortstack = TRUE,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Check output with expectations
-  expect_equal(length(ddml_ate_fit$ate), 4)
+  expect_equal(length(coef(ddml_ate_fit)), 4)
 })#TEST_THAT
 
 test_that("summary.ddml_ate computes with a single model", {
@@ -138,13 +138,13 @@ test_that("summary.ddml_ate computes with a single model", {
                              learners = learners,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
+  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_ate computes with a single model and dependence", {
@@ -166,13 +166,13 @@ test_that("summary.ddml_ate computes with a single model and dependence", {
                              cluster_variable = cluster_variable,
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 1))
+  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
 })#TEST_THAT
 
 test_that("summary.ddml_ate computes with multiple ensemble procedures", {
@@ -191,13 +191,13 @@ test_that("summary.ddml_ate computes with multiple ensemble procedures", {
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
-                             silent = T)
+                             silent = TRUE)
   # Compute inference results & test print
   inf_res <- summary(ddml_ate_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$inf_results), c(1, 4, 4))
+  expect_equal(dim(inf_res$coefficients), c(1, 4, 4))
 })#TEST_THAT
 
 test_that("ddml_ate fitted pass-through works", {
@@ -279,4 +279,32 @@ test_that("ddml_ate legacy grouped split args warn and still work", {
     "Deprecated split arguments detected"
   )
   expect_equal(coef(fit_legacy), coef(fit_splits), tolerance = 1e-8)
+})
+
+test_that("ddml_ate scores are mean-zero", {
+  nobs <- 500
+  set.seed(42)
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D_tld <- 0.2 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 3, silent = TRUE)
+  score_mean <- mean(fit$scores[[1]])
+  expect_true(abs(score_mean) < 0.01,
+              label = paste("score mean =", round(score_mean, 6)))
+})
+
+test_that("ddml_ate point estimate is close to true ATE", {
+  nobs <- 2000
+  set.seed(123)
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D_tld <- 0.5 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- 1.0 * D + 0.3 * X[, 1] + rnorm(nobs)
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 5, silent = TRUE)
+  expect_equal(coef(fit), c(ATE = 1.0), tolerance = 0.3)
 })

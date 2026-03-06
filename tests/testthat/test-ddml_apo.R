@@ -1,4 +1,4 @@
-test_that("ddml_att computes with a single model", {
+test_that("ddml_apo computes with a single model", {
   # Simulate small dataset
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -7,59 +7,64 @@ test_that("ddml_att computes with a single model", {
   y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_att_fit <- ddml_att(y, D, X,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
                              learners = learners,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = TRUE)
   # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 1)
+  expect_equal(length(coef(ddml_apo_fit)), 1)
 })#TEST_THAT
 
-test_that("ddml_att computes with stratify = FALSE", {
+test_that("ddml_apo computes with weights", {
   # Simulate small dataset
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
   D_tld <- 0.1 * X[, 1] + rnorm(nobs)
   D <- 1 * (D_tld > 0)
   y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  weights <- runif(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_att_fit <- ddml_att(y, D, X,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 0,
+                             weights = weights,
                              learners = learners,
                              stratify = FALSE,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = TRUE)
   # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 1)
+  expect_equal(length(coef(ddml_apo_fit)), 1)
 })#TEST_THAT
 
-test_that("ddml_att computes with a single model and dependence", {
+test_that("ddml_apo computes with a single model and dependence", {
   # Simulate small dataset
   n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
-  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
+  cluster_variable <- sample(seq_len(n_cluster), nobs,
+                             replace = TRUE)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
-  ddml_att_fit <- ddml_att(y, D, X,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
                              learners = learners,
                              cluster_variable = cluster_variable,
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = TRUE)
   # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 1)
+  expect_equal(length(coef(ddml_apo_fit)), 1)
 })#TEST_THAT
 
-test_that("ddml_att computes with an ensemble procedure", {
+test_that("ddml_apo computes with an ensemble procedure", {
   # Simulate small dataset
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -70,17 +75,18 @@ test_that("ddml_att computes with an ensemble procedure", {
   learners <- list(list(what = ols),
                    list(what = ols))
   # Compute DDML PLM estimator
-  ddml_att_fit <- ddml_att(y, D, X,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
                              learners = learners,
                              ensemble_type = "ols",
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = TRUE)
   # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 1)
+  expect_equal(length(coef(ddml_apo_fit)), 1)
 })#TEST_THAT
 
-test_that("ddml_att computes w/ multiple ensembles + custom weights", {
+test_that("ddml_apo computes w/ multiple ensembles + custom weights", {
   # Simulate small dataset
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -91,8 +97,10 @@ test_that("ddml_att computes w/ multiple ensembles + custom weights", {
   learners <- list(list(what = ols),
                    list(what = ols))
   # Compute DDML PLM estimator
-  ddml_att_fit <- ddml_att(y, D, X,
-                             learners,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 0,
+                             weights = rep(1, nobs),
+                             learners = learners,
                              ensemble_type = c("ols", "nnls",
                                                "singlebest", "average"),
                              cv_folds = 3,
@@ -100,83 +108,10 @@ test_that("ddml_att computes w/ multiple ensembles + custom weights", {
                              sample_folds = 3,
                              silent = TRUE)
   # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 6)
+  expect_equal(length(coef(ddml_apo_fit)), 6)
 })#TEST_THAT
 
-test_that("ddml_att computes w/ multp ensembles, custom weights + shortstack", {
-  # Simulate small dataset
-  nobs <- 500
-  X <- matrix(rnorm(nobs * 5), nobs, 5)
-  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
-  D <- 1 * (D_tld > 0)
-  y <- D + 0.1 * X[, 1] + rnorm(nobs)
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
-  # Compute DDML PLM estimator
-  ddml_att_fit <- ddml_att(y, D, X,
-                             learners,
-                             ensemble_type = c("ols", "average"),
-                             shortstack = TRUE,
-                             cv_folds = 3,
-                             custom_ensemble_weights = diag(1, 2),
-                             sample_folds = 3,
-                             silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_att_fit)), 4)
-})#TEST_THAT
-
-test_that("summary.ddml_att computes with a single model", {
-  # Simulate small dataset
-  nobs <- 500
-  X <- matrix(rnorm(nobs * 5), nobs, 5)
-  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
-  D <- 1 * (D_tld > 0)
-  y <- D + 0.1 * X[, 1] + rnorm(nobs)
-  # Define arguments
-  learners <- list(what = ols)
-  ddml_att_fit <- ddml_att(y, D, X,
-                             learners = learners,
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = TRUE)
-  # Compute inference results & test print
-  inf_res <- summary(ddml_att_fit)
-  capture_output({print(inf_res)}, print = FALSE)
-  # Check output with expectations
-  expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
-})#TEST_THAT
-
-test_that("summary.ddml_att computes with a single model and dependence", {
-  # Simulate small dataset
-  n_cluster <- 200
-  nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
-  cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
-  # Define arguments
-  learners <- list(what = ols)
-  ddml_att_fit <- ddml_att(y, D, X,
-                             learners = learners,
-                             cluster_variable = cluster_variable,
-                             cv_folds = 3,
-                             sample_folds = 3,
-                             silent = TRUE)
-  # Compute inference results & test print
-  inf_res <- summary(ddml_att_fit)
-  capture_output({print(inf_res)}, print = FALSE)
-  # Check output with expectations
-  expect_s3_class(inf_res, "summary.ddml")
-  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
-})#TEST_THAT
-
-test_that("summary.ddml_att computes with multiple ensemble procedures", {
+test_that("ddml_apo computes with multiple ensemble procedures & shortstack", {
   # Simulate small dataset
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -186,22 +121,98 @@ test_that("summary.ddml_att computes with multiple ensemble procedures", {
   # Define arguments
   learners <- list(list(what = ols))
   # Compute DDML PLM estimator
-  ddml_att_fit <- ddml_att(y, D, X,
-                             learners,
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
+                             learners = learners,
+                             ensemble_type = c("ols", "nnls",
+                                               "singlebest", "average"),
+                             shortstack = TRUE,
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = TRUE)
+  # Check output with expectations
+  expect_equal(length(coef(ddml_apo_fit)), 4)
+})#TEST_THAT
+
+test_that("summary.ddml_apo computes with a single model", {
+  # Simulate small dataset
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  # Define arguments
+  learners <- list(what = ols)
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
+                             learners = learners,
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = TRUE)
+  # Compute inference results & test print
+  inf_res <- summary(ddml_apo_fit)
+  capture_output({print(inf_res)}, print = FALSE)
+  # Check output with expectations
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
+})#TEST_THAT
+
+test_that("summary.ddml_apo computes with a single model and dependence", {
+  # Simulate small dataset
+  n_cluster <- 200
+  nobs <- 500
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
+  cluster_variable <- sample(seq_len(n_cluster), nobs,
+                             replace = TRUE)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  # Define arguments
+  learners <- list(what = ols)
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
+                             learners = learners,
+                             cluster_variable = cluster_variable,
+                             cv_folds = 3,
+                             sample_folds = 3,
+                             silent = TRUE)
+  # Compute inference results & test print
+  inf_res <- summary(ddml_apo_fit)
+  capture_output({print(inf_res)}, print = FALSE)
+  # Check output with expectations
+  expect_s3_class(inf_res, "summary.ddml")
+  expect_equal(dim(inf_res$coefficients), c(1, 4, 1))
+})#TEST_THAT
+
+test_that("summary.ddml_apo computes with multiple ensemble procedures", {
+  # Simulate small dataset
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  # Define arguments
+  learners <- list(list(what = ols))
+  # Compute DDML PLM estimator
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
+                             learners = learners,
                              ensemble_type = c("ols", "nnls",
                                                "singlebest", "average"),
                              cv_folds = 3,
                              sample_folds = 3,
                              silent = TRUE)
   # Compute inference results & test print
-  inf_res <- summary(ddml_att_fit)
+  inf_res <- summary(ddml_apo_fit)
   capture_output({print(inf_res)}, print = FALSE)
   # Check output with expectations
   expect_s3_class(inf_res, "summary.ddml")
   expect_equal(dim(inf_res$coefficients), c(1, 4, 4))
 })#TEST_THAT
 
-test_that("ddml_att fitted pass-through works", {
+test_that("ddml_apo fitted pass-through works", {
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 3), nobs, 3)
@@ -210,13 +221,16 @@ test_that("ddml_att fitted pass-through works", {
   y <- D + 0.1 * X[, 1] + rnorm(nobs)
 
   learners <- list(list(what = ols), list(what = ols))
-  fit <- ddml_att(y, D, X,
+  fit <- ddml_apo(y, D, X,
+                  d = 1,
                   learners = learners,
                   ensemble_type = "average",
                   sample_folds = 2,
                   silent = TRUE)
 
-  fit2 <- ddml_att(y, D, X,
+  # Pass-through with average ensemble reproduces exactly
+  fit2 <- ddml_apo(y, D, X,
+                   d = 1,
                    learners = learners,
                    ensemble_type = "average",
                    sample_folds = 2,
@@ -226,7 +240,8 @@ test_that("ddml_att fitted pass-through works", {
   expect_equal(coef(fit2), coef(fit), tolerance = 1e-6)
 
   expect_error(
-    ddml_att(y, D, X,
+    ddml_apo(y, D, X,
+             d = 1,
              learners = learners,
              ensemble_type = "average",
              sample_folds = 2,
@@ -234,4 +249,51 @@ test_that("ddml_att fitted pass-through works", {
              fitted = fit$fitted),
     "must be supplied when 'fitted' is supplied"
   )
-})#TEST_THAT
+})
+
+test_that("ddml_apo legacy grouped split args warn and still work", {
+  set.seed(202)
+  nobs <- 600
+  X <- matrix(rnorm(nobs * 4), nobs, 4)
+  D_tld <- X %*% c(0.7, 0.2, 0.1, 0) + rnorm(nobs)
+  D <- 1 * (D_tld > mean(D_tld))
+  y <- D + X %*% c(0.2, 0.3, 0.1, 0.4) + rnorm(nobs)
+  learners <- list(what = ols)
+  splits <- get_sample_splits(
+    cluster_variable = seq_len(nobs),
+    sample_folds = 3,
+    cv_folds = 3,
+    D = 1 * (D == 1),
+    stratify = TRUE
+  )
+  fit_splits <- ddml_apo(
+    y, D, X,
+    d = 1,
+    learners = learners,
+    sample_folds = 3,
+    cv_folds = 3,
+    splits = list(
+      subsamples = splits$subsamples,
+      subsamples_byd = splits$subsamples_byD,
+      cv_subsamples = splits$cv_subsamples,
+      cv_subsamples_byd = splits$cv_subsamples_byD
+    ),
+    silent = TRUE
+  )
+  expect_warning(
+    fit_legacy <- ddml_apo(
+      y, D, X,
+      d = 1,
+      learners = learners,
+      sample_folds = 3,
+      cv_folds = 3,
+      subsamples = splits$subsamples,
+      subsamples_byd = splits$subsamples_byD,
+      cv_subsamples = splits$cv_subsamples,
+      cv_subsamples_byd = splits$cv_subsamples_byD,
+      silent = TRUE
+    ),
+    "Deprecated split arguments detected"
+  )
+  expect_equal(coef(fit_legacy), coef(fit_splits), tolerance = 1e-8)
+})

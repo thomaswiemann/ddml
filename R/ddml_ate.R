@@ -9,8 +9,8 @@
 #' @description Estimators of the average treatment effect and the average
 #'     treatment effect on the treated.
 #'
-#' @details \code{ddml_ate} and \code{ddml_att} provide double/debiased machine
-#'     learning  estimators for the average treatment effect and the average
+#' @details \code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
+#'     Learning estimators for the average treatment effect and the average
 #'     treatment effect on the treated, respectively, in the interactive model
 #'     given by
 #'
@@ -21,13 +21,30 @@
 #'     \eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
 #'     and \eqn{g_0} is an unknown nuisance function.
 #'
-#' In this model, the average treatment effect is defined as
+#' In this model, the average treatment effect (ATE) is defined as
 #'
-#' \eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
+#' \eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]},
 #'
-#' and the average treatment effect on the treated is defined as
+#' and the average treatment effect on the treated (ATT) is defined as
 #'
 #' \eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+#'
+#' The estimating equations are
+#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
+#'     \eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
+#'     \eqn{W = (Y, D, X)}, and the Neyman orthogonal scores are
+#'
+#' \eqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{m(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+#'
+#' \eqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+#'
+#' \eqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{p} - \frac{m(X)(1-D)(Y-\ell_0(X))}{p(1-m(X))}}
+#'
+#' \eqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{p}}
+#'
+#'     with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, m, p)} taking
+#'     true values \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{m_0(X) = E[D|X]},
+#'     and \eqn{p_0 = E[D]}.
 #'
 #' @inheritParams ddml_plm
 #' @param D The binary endogenous variable of interest.
@@ -67,20 +84,24 @@
 #'     \code{ddml_ate} or \code{ddml_att} is a list containing
 #'     the following components:
 #'     \describe{
-#'         \item{\code{ate} / \code{att}}{A vector with the average treatment
-#'             effect / average treatment effect on the treated estimates.}
-#'         \item{\code{weights}}{A list of matrices, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedure.}
+#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
+#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
+#'             weight assigned to each base learner by the ensemble
+#'             procedure.}
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner (in chronological order) computed by the
-#'             cross-validation step in the ensemble construction.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml()].}
-#'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
-#'             predicted values.}
-#'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples_byD},\code{cv_subsamples_byD},
+#'             base learner computed by the cross-validation step in the
+#'             ensemble construction.}
+#'         \item{\code{r2}}{The out-of-sample R-squared.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
+#'             computation of scores. Used in [ddml::summary.ddml()].}
+#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
+#'             scores.}
+#'         \item{\code{J}}{A list of evaluated Jacobians.}
+#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
+#'             See \code{\link{ddml_plm}} for more information.}
+#'         \item{\code{splits}}{The data splitting structure.}
+#'         \item{\code{learners},\code{learners_DX},
+#'             \code{cluster_variable},
 #'             \code{ensemble_type}}{Pass-through of
 #'             selected user-provided arguments. See above.}
 #'     }
@@ -141,194 +162,187 @@ ddml_ate <- function(y, D, X,
                      splits = NULL,
                      save_crossval = TRUE,
                      ...) {
-  # Validate inputs
+  cl <- match.call()
+
+  # == Preliminaries ================================================
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_ate", list(
+    y_D0 = "E[Y|D=0,X]",
+    y_D1 = "E[Y|D=1,X]",
+    D_X = "E[D|X]"))
+
   validate_inputs(y = y, D = D, X = X, learners = learners,
-                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
 
-  # Data parameters
   nobs <- length(y)
-  is_D0 <- which(D == 0)
 
-  # Check whether ddml uses conventional stacking w/ data driven weights
-  w_cv <- !shortstack &
-    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
-    (class(learners[[1]]) != "function")
+  splits <- normalize_splits(splits = splits, by_label = "D", ...)
+  validate_fitted_splits_pair(fitted, splits, !shortstack)
 
-  # Normalize deprecated split arguments into a single splits object
-  splits <- normalize_splits(
-    splits = splits, by_label = "D", ...)
-  validate_fitted_splits_pair(fitted, splits, w_cv)
-
-  # Create crossfitting and cv tuples
-  indxs <- get_sample_splits(cluster_variable = cluster_variable,
-                             sample_folds = sample_folds,
-                             cv_folds = if (w_cv) cv_folds,
-                             D = D, stratify = stratify,
-                             subsamples = splits$subsamples,
-                             subsamples_byD = splits$subsamples_byD,
-                             cv_subsamples = splits$cv_subsamples,
-                             cv_subsamples_byD = splits$cv_subsamples_byD)
+  indxs <- get_sample_splits(
+    cluster_variable = cluster_variable,
+    sample_folds = sample_folds,
+    cv_folds = cv_folds,
+    D = D, stratify = stratify,
+    subsamples = splits$subsamples,
+    subsamples_byD = splits$subsamples_byD,
+    cv_subsamples = splits$cv_subsamples,
+    cv_subsamples_byD = splits$cv_subsamples_byD)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
-  # Estimation start
   t0 <- proc.time()[3]
   mode_str <- if (!is.null(parallel)) {
     p <- parse_parallel(parallel)
     paste0("parallel, ", p$num_cores, " cores")
   } else {
     "sequential"
-  }
-  info_msg("ddml_ate: estimating (", mode_str, ")",
-           silent = silent)
+  }#IFELSE
+  if (!is.null(messages$start) && messages$start != "") {
+    info_msg(sprintf(messages$start, mode_str),
+             silent = silent)
+  }#IF
 
-  # Compute estimates of E[y|D=0,X]
-  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = FALSE],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = indxs$subsamples_byD[[1]],
-                        cv_subsamples = indxs$cv_subsamples_byD[[1]],
-                        silent = silent, label = "E[Y|D=0,X]",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                        parallel = parallel,
-                        fitted = fitted$y_X_D0)
+  # == Reduced-form estimation ======================================
 
-  # Compute estimates of E[y|D=1,X]
-  y_X_D1_res <- get_CEF(y[-is_D0], X[-is_D0, , drop = FALSE],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = indxs$subsamples_byD[[2]],
-                        cv_subsamples = indxs$cv_subsamples_byD[[2]],
-                        silent = silent, label = "E[Y|D=1,X]",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[2]], X),
-                        parallel = parallel,
-                        fitted = fitted$y_X_D1)
-
-  # Compute estimates of E[D|X]
+  # E[D|X]
   D_X_res <- get_CEF(D, X,
-                     learners = learners_DX, ensemble_type = ensemble_type,
+                     learners = learners_DX,
+                     ensemble_type = ensemble_type,
                      shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights_DX,
+                     custom_ensemble_weights =
+                       custom_ensemble_weights_DX,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = "E[D|X]",
+                     silent = silent, label = messages$D_X,
                      parallel = parallel,
                      fitted = fitted$D_X)
 
-  # Update ensemble type to account for (optional) custom weights
-  ensb_info <- update_ensemble_info(y_X_D0_res$weights)
-  ensemble_type <- ensb_info$ensemble_type
-  nensb <- ensb_info$nensb
-  multiple_ensembles <- ensb_info$multiple_ensembles
+  # Splits for apo(d=1): byD indices match D_ind = D
+  apo_splits_1 <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byd = indxs$subsamples_byD,
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byd = indxs$cv_subsamples_byD)
+  # Splits for apo(d=0): swap byD indices since D_ind = 1-D
+  apo_splits_0 <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byd = list(indxs$subsamples_byD[[2]],
+                          indxs$subsamples_byD[[1]]),
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byd = if (!is.null(indxs$cv_subsamples_byD))
+      list(indxs$cv_subsamples_byD[[2]],
+           indxs$cv_subsamples_byD[[1]]))
 
-  # Construct reduced form variables
-  g_X_byD <- extrapolate_CEF(D = D,
-                             CEF_res_byD = list(list(y_X_D0_res, d=0),
-                                                list(y_X_D1_res, d=1)),
-                             aux_indx = indxs$aux_indx)
-  m_X <- D_X_res$oos_fitted
+  # Pre-ensembled propensity for ddml_apo delegation.
+  # For d=0, flip: P(D=0|X) = 1 - P(D=1|X).
+  fitted_D_X_1 <- list(ensemble_fitted = D_X_res$oos_fitted)
+  fitted_D_X_0 <- list(ensemble_fitted = 1 - D_X_res$oos_fitted)
 
-  # Trim propensity scores, return warnings
-  m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
+  # E[g(1,X)] via ddml_apo
+  apo_1 <- ddml_apo(
+    y = y, D = D, X = X, d = 1, weights = NULL,
+    learners = learners, learners_DX = learners_DX,
+    sample_folds = sample_folds, cv_folds = cv_folds,
+    custom_ensemble_weights = custom_ensemble_weights,
+    custom_ensemble_weights_DX = custom_ensemble_weights_DX,
+    cluster_variable = cluster_variable,
+    ensemble_type = ensemble_type, shortstack = shortstack,
+    trim = trim, parallel = parallel, silent = silent,
+    splits = apo_splits_1,
+    fitted = list(y_X = fitted$y_X_D1,
+                  D_X = fitted_D_X_1),
+    messages = list(start = "", finish = "",
+                    y_X = messages$y_D1, D_X = ""))
 
-  # Compute the ATE using the constructed variables
-  if (!multiple_ensembles) {
-    g0 <- g_X_byD[, , 1]
-    g1 <- g_X_byD[, , 2]
-    m <- as.vector(m_X_tr)
-    psi_b <- matrix(
-      D * (y - g1) / m - (1 - D) * (y - g0) / (1 - m) + g1 - g0,
-      nobs, 1)
-    ate <- mean(psi_b)
-    psi_a <- matrix(-1, nobs, 1)
-  } else {
-    y_copy <- matrix(rep(y, nensb), nobs, nensb)
-    D_copy <- matrix(rep(D, nensb), nobs, nensb)
-    psi_b <- D_copy * (y_copy - g_X_byD[, , 2]) / m_X_tr -
-      (1 - D_copy) * (y_copy - g_X_byD[, , 1]) / (1 - m_X_tr) +
-      g_X_byD[, , 2] - g_X_byD[, , 1]
-    ate <- colMeans(psi_b)
-    psi_a <- matrix(-1, nobs, nensb)
-  }#IFELSE
+  # E[g(0,X)] via ddml_apo
+  apo_0 <- ddml_apo(
+    y = y, D = D, X = X, d = 0, weights = NULL,
+    learners = learners, learners_DX = learners_DX,
+    sample_folds = sample_folds, cv_folds = cv_folds,
+    custom_ensemble_weights = custom_ensemble_weights,
+    custom_ensemble_weights_DX = custom_ensemble_weights_DX,
+    cluster_variable = cluster_variable,
+    ensemble_type = ensemble_type, shortstack = shortstack,
+    trim = trim, parallel = parallel, silent = silent,
+    splits = apo_splits_0,
+    fitted = list(y_X = fitted$y_X_D0,
+                  D_X = fitted_D_X_0),
+    messages = list(start = "", finish = "",
+                    y_X = messages$y_D0, D_X = ""))
 
-  # Compute scores and Jacobian from psi_a/psi_b
+  ensemble_type <- apo_1$ensemble_type
+  nensb <- ncol(apo_1$coefficients)
+
+  # == Score construction ===========================================
+  psi_b <- apo_1$psi_b - apo_0$psi_b
+  psi_a <- matrix(-1, nobs, nensb)
+
+  # == Target parameter =============================================
+
+  ate <- as.vector(apo_1$coefficients) - as.vector(apo_0$coefficients)
+
   scores <- lapply(seq_len(nensb), function(j) {
     as.matrix(psi_a[, j] * ate[j] + psi_b[, j])
   })
   J_list <- lapply(seq_len(nensb), function(j) {
     as.matrix(mean(psi_a[, j]))
   })
+
   coef_names <- "ATE"
   coef <- matrix(ate, nrow = 1, ncol = nensb)
   rownames(coef) <- coef_names
   colnames(coef) <- ensemble_type
 
-  # Ensemble metrics
-  weights <- list(y_X_D0 = y_X_D0_res$weights,
-                  y_X_D1 = y_X_D1_res$weights,
-                  D_X = D_X_res$weights)
-  mspe <- list(y_X_D0 = y_X_D0_res$mspe,
-               y_X_D1 = y_X_D1_res$mspe,
-               D_X = D_X_res$mspe)
-  r2 <- list(y_X_D0 = y_X_D0_res$r2,
-             y_X_D1 = y_X_D1_res$r2,
-             D_X = D_X_res$r2)
+  # == Output =======================================================
 
-  # Predictions
-  oos_pred <- list(EY_D0_X = g_X_byD[, , 1],
-                   EY_D1_X = g_X_byD[, , 2],
-                   ED_X = m_X)
+  ddml_fit <- list(
+    coefficients = coef,
+    ensemble_weights = list(
+      y_X_D0 = apo_0$ensemble_weights$y_X,
+      y_X_D1 = apo_1$ensemble_weights$y_X,
+      D_X = D_X_res$weights),
+    mspe = list(y_X_D0 = apo_0$mspe$y_X,
+                y_X_D1 = apo_1$mspe$y_X,
+                D_X = D_X_res$mspe),
+    r2 = list(y_X_D0 = apo_0$r2$y_X,
+              y_X_D1 = apo_1$r2$y_X,
+              D_X = D_X_res$r2),
+    psi_a = psi_a, psi_b = psi_b,
+    scores = scores, J = J_list,
+    coef_names = coef_names,
+    estimator_name = "Average Treatment Effect",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    learners = learners,
+    learners_DX = learners_DX,
+    cluster_variable = cluster_variable,
+    fitted = list(
+      y_X_D0 = apo_0$fitted$y_X,
+      y_X_D1 = apo_1$fitted$y_X,
+      D_X = build_fitted_entry(D_X_res, save_crossval)),
+    splits = list(
+      subsamples = indxs$subsamples,
+      subsamples_byD = indxs$subsamples_byD,
+      cv_subsamples = indxs$cv_subsamples,
+      cv_subsamples_byD = indxs$cv_subsamples_byD),
+    call = cl)
 
-  fitted_export <- list(
-    y_X_D0 = build_fitted_entry(y_X_D0_res, save_crossval,
-                                include_auxiliary = TRUE),
-    y_X_D1 = build_fitted_entry(y_X_D1_res, save_crossval,
-                                include_auxiliary = TRUE),
-    D_X = build_fitted_entry(D_X_res, save_crossval)
-  )
-  splits_export <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byD = indxs$subsamples_byD,
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byD = indxs$cv_subsamples_byD
-  )
-
-  # Organize output
-  ddml_fit <- list(ate = ate, weights = weights, mspe = mspe,
-                   psi_a = psi_a, psi_b = psi_b,
-                   oos_pred = oos_pred,
-                   learners = learners,
-                   learners_DX = learners_DX,
-                   cluster_variable = cluster_variable,
-                   subsamples_byD = indxs$subsamples_byD,
-                   cv_subsamples_byD =
-                     indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type,
-                   coefficients = coef,
-                   scores = scores,
-                   J = J_list,
-                   coef_names = coef_names,
-                   nobs = nobs,
-                   sample_folds = sample_folds,
-                   cv_folds = if (shortstack) NULL
-                     else cv_folds,
-                   shortstack = shortstack,
-                   fitted = fitted_export,
-                   splits = splits_export,
-                   r2 = r2)
-
-  # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
-  info_msg("ddml_ate: completed in ", elapsed, "s",
-           silent = silent)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
 
-  # Amend class and return
   class(ddml_fit) <- c("ddml_ate", "ddml")
   return(ddml_fit)
 }#DDML_ATE

@@ -90,7 +90,7 @@ test_that("tidy works with PLM (multi-covariate D)", {
 
   td <- tidy(fit)
   expect_s3_class(td, "data.frame")
-  expect_equal(nrow(td), 1)
+  expect_equal(nrow(td), 2)
   expect_true("term" %in% colnames(td))
 
   gl <- glance(fit)

@@ -1,5 +1,6 @@
 # ddml 0.3.1
 
+* Adds `ddml_apo()` for average potential outcome estimation.
 * Adds `fitted` and `splits` parameters to all `ddml_*()` estimators for re-estimation with different ensemble types without re-fitting base learners.
 * Adds `diagnostics()` for per-equation MSPE, R-squared, stacking weights, and cross-validated comparison (CVC) tests.
 * Adds HC0 and HC3 variance estimators alongside default HC1 via `type` argument in `vcov()`, `confint()`, `summary()`, and `tidy()`.

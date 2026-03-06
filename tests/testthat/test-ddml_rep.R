@@ -104,25 +104,25 @@ test_that("coef, vcov, confint work on ddml_rep", {
                          resamples = 3,
                          silent = TRUE)
 
-  # coef
+  # coef (D + intercept = 2 elements)
   cf <- coef(reps)
   expect_true(is.numeric(cf))
-  expect_length(cf, 1)
+  expect_length(cf, 2)
 
   # coef with mean aggregation differs from median
   cf_mean <- coef(reps, aggregation = "mean")
   expect_true(is.numeric(cf_mean))
 
-  # Aggregated coef is within range of per-resample coefs
+  # Aggregated D coef is within range of per-resample D coefs
   per_rep_coefs <- sapply(seq_len(3),
-    function(i) coef(reps[[i]]))
-  expect_true(cf >= min(per_rep_coefs) - 0.01)
-  expect_true(cf <= max(per_rep_coefs) + 0.01)
+    function(i) coef(reps[[i]])[1])
+  expect_true(cf[1] >= min(per_rep_coefs) - 0.01)
+  expect_true(cf[1] <= max(per_rep_coefs) + 0.01)
 
   # vcov
   V <- vcov(reps)
   expect_true(is.matrix(V))
-  expect_equal(dim(V), c(1, 1))
+  expect_equal(dim(V), c(2, 2))
   expect_true(V[1, 1] > 0)
 
   # vcov names
@@ -132,7 +132,7 @@ test_that("coef, vcov, confint work on ddml_rep", {
   # confint
   ci <- confint(reps)
   expect_true(is.matrix(ci))
-  expect_equal(dim(ci), c(1, 2))
+  expect_equal(dim(ci), c(2, 2))
   expect_identical(colnames(ci), c(" 2.5 %", "97.5 %"))
   expect_true(ci[1, 1] < ci[1, 2])
 
@@ -164,8 +164,8 @@ test_that("summary and print work on ddml_rep", {
   expect_equal(s$nobs, nobs)
   expect_equal(s$nresamples, 3)
   expect_equal(s$aggregation, "median")
-  expect_true(is.array(s$inf_results))
-  expect_equal(dim(s$inf_results)[2], 4)
+  expect_true(is.array(s$coefficients))
+  expect_equal(dim(s$coefficients)[2], 4)
 
   # summary with mean aggregation
   s_mean <- summary(reps, aggregation = "mean")
@@ -252,41 +252,48 @@ test_that("aggregation formulas are correct", {
                          resamples = 5,
                          silent = TRUE)
 
-  # Extract per-resample coefs and SEs manually
+  # Extract per-resample coefs and SEs manually (p x R matrices)
   R <- 5
   coefs <- sapply(seq_len(R), function(i) coef(reps[[i]]))
   ses <- sapply(seq_len(R), function(i) {
     V <- vcov(reps[[i]])
     sqrt(diag(V))
   })
+  p <- nrow(coefs)
 
-  # Median aggregation
-  expected_coef_med <- median(coefs)
-  var_total_med <- ses^2 + (coefs - expected_coef_med)^2
-  expected_se_med <- sqrt(median(var_total_med))
+  # Median aggregation (per coefficient)
+  expected_coef_med <- apply(coefs, 1, median)
+  var_total_med <- ses^2 +
+    (coefs - expected_coef_med)^2
+  expected_se_med <- sqrt(apply(var_total_med, 1, median))
 
   actual_coef_med <- coef(reps, aggregation = "median")
   s_med <- summary(reps, aggregation = "median")
-  actual_se_med <- s_med$inf_results[1, 2, 1]
+  actual_se_med <- s_med$coefficients[, 2, 1]
 
-  expect_equal(actual_coef_med, expected_coef_med,
+  expect_equal(unname(actual_coef_med),
+               unname(expected_coef_med),
                tolerance = 1e-10)
-  expect_equal(actual_se_med, expected_se_med,
+  expect_equal(unname(actual_se_med),
+               unname(expected_se_med),
                tolerance = 1e-10)
 
-  # Mean aggregation
-  expected_coef_mean <- mean(coefs)
-  var_total_mean <- ses^2 + (coefs - expected_coef_mean)^2
+  # Mean aggregation (per coefficient)
+  expected_coef_mean <- rowMeans(coefs)
+  var_total_mean <- ses^2 +
+    (coefs - expected_coef_mean)^2
   expected_se_mean <- sqrt(
-    length(var_total_mean) / sum(1 / var_total_mean))
+    R / rowSums(1 / var_total_mean))
 
   actual_coef_mean <- coef(reps, aggregation = "mean")
   s_mean <- summary(reps, aggregation = "mean")
-  actual_se_mean <- s_mean$inf_results[1, 2, 1]
+  actual_se_mean <- s_mean$coefficients[, 2, 1]
 
-  expect_equal(actual_coef_mean, expected_coef_mean,
+  expect_equal(unname(actual_coef_mean),
+               unname(expected_coef_mean),
                tolerance = 1e-10)
-  expect_equal(actual_se_mean, expected_se_mean,
+  expect_equal(unname(actual_se_mean),
+               unname(expected_se_mean),
                tolerance = 1e-10)
 })
 

@@ -19,188 +19,178 @@ ddml_att <- function(y, D, X,
                      splits = NULL,
                      save_crossval = TRUE,
                      ...) {
-  # Validate inputs
+  cl <- match.call()
+
+  # == Preliminaries ================================================
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_att", list(
+    y_D0 = "E[Y|D=0,X]",
+    D_X = "E[D|X]"))
+
   validate_inputs(y = y, D = D, X = X, learners = learners,
-                  sample_folds = sample_folds, cv_folds = cv_folds,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
-  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
+  validate_custom_weights(custom_ensemble_weights_DX,
+                          learners_DX)
 
-  # Data parameters
   nobs <- length(y)
-  is_D0 <- which(D == 0)
 
-  # Check whether ddml uses conventional stacking w/ data driven weights
-  w_cv <- !shortstack &
-    any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
-    (class(learners[[1]]) != "function")
+  splits <- normalize_splits(splits = splits, by_label = "D", ...)
+  validate_fitted_splits_pair(fitted, splits, !shortstack)
 
-  # Normalize deprecated split arguments into a single splits object
-  splits <- normalize_splits(
-    splits = splits, by_label = "D", ...)
-  validate_fitted_splits_pair(fitted, splits, w_cv)
-
-  # Create crossfitting and cv tuples
-  indxs <- get_sample_splits(cluster_variable = cluster_variable,
-                             sample_folds = sample_folds,
-                             cv_folds = if (w_cv) cv_folds,
-                             D = D, stratify = stratify,
-                             subsamples = splits$subsamples,
-                             subsamples_byD = splits$subsamples_byD,
-                             cv_subsamples = splits$cv_subsamples,
-                             cv_subsamples_byD = splits$cv_subsamples_byD)
+  indxs <- get_sample_splits(
+    cluster_variable = cluster_variable,
+    sample_folds = sample_folds,
+    cv_folds = cv_folds,
+    D = D, stratify = stratify,
+    subsamples = splits$subsamples,
+    subsamples_byD = splits$subsamples_byD,
+    cv_subsamples = splits$cv_subsamples,
+    cv_subsamples_byD = splits$cv_subsamples_byD)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
-  # Estimation start
   t0 <- proc.time()[3]
   mode_str <- if (!is.null(parallel)) {
     p <- parse_parallel(parallel)
     paste0("parallel, ", p$num_cores, " cores")
   } else {
     "sequential"
-  }
-  info_msg("ddml_att: estimating (", mode_str, ")",
-           silent = silent)
+  }#IFELSE
+  if (!is.null(messages$start) && messages$start != "") {
+    info_msg(sprintf(messages$start, mode_str), silent = silent)
+  }#IF
 
-  # Compute estimates of E[y|D=0,X]
-  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = FALSE],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = indxs$subsamples_byD[[1]],
-                        cv_subsamples = indxs$cv_subsamples_byD[[1]],
-                        silent = silent, label = "E[Y|D=0,X]",
-                        auxiliary_X = get_auxiliary_X(indxs$aux_indx[[1]], X),
-                        parallel = parallel,
-                        fitted = fitted$y_X_D0)
+  # == Reduced-form estimation ======================================
 
-  # Compute estimates of E[D|X]
+  # E[D|X]
   D_X_res <- get_CEF(D, X,
-                     learners = learners_DX, ensemble_type = ensemble_type,
+                     learners = learners_DX,
+                     ensemble_type = ensemble_type,
                      shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights_DX,
+                     custom_ensemble_weights =
+                       custom_ensemble_weights_DX,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = "E[D|X]",
+                     silent = silent, label = messages$D_X,
                      parallel = parallel,
                      fitted = fitted$D_X)
 
-  # Compute estimates of E[D] -- simple computation of averages here
-  D_res <- get_CEF(D, matrix(1, nobs, 1),
-                   learners = list(what = ols),
-                   ensemble_type = "average",
-                   shortstack = FALSE,
-                   cv_subsamples = NULL,
-                   subsamples = indxs$subsamples,
-                   silent = TRUE,
-                   label = "E[D]",
-                   parallel = parallel)
+  # E[Y|D=0,X] via ddml_apo(d=0)
+  # Swap byD indices: apo uses D_ind = 1*(D==0), so byD
+  # levels are reversed relative to the ATT's D.
+  apo_splits_0 <- list(
+    subsamples = indxs$subsamples,
+    subsamples_byd = list(indxs$subsamples_byD[[2]],
+                          indxs$subsamples_byD[[1]]),
+    cv_subsamples = indxs$cv_subsamples,
+    cv_subsamples_byd = if (!is.null(indxs$cv_subsamples_byD))
+      list(indxs$cv_subsamples_byD[[2]],
+           indxs$cv_subsamples_byD[[1]]))
 
-  # Update ensemble type to account for (optional) custom weights
-  ensb_info <- update_ensemble_info(y_X_D0_res$weights)
-  ensemble_type <- ensb_info$ensemble_type
-  nensb <- ensb_info$nensb
-  multiple_ensembles <- ensb_info$multiple_ensembles
+  # Pre-ensembled propensity: P(D=0|X) = 1 - E[D|X]
+  fitted_D_X_0 <- list(
+    ensemble_fitted = 1 - D_X_res$oos_fitted)
 
-  # Construct reduced form variables
-  g_X_D0 <- extrapolate_CEF(D = D,
-                             CEF_res_byD = list(list(fit = y_X_D0_res, d = 0)),
-                             aux_indx = indxs$aux_indx)[, , 1]
+  apo_0 <- ddml_apo(
+    y = y, D = D, X = X, d = 0, weights = NULL,
+    learners = learners, learners_DX = learners_DX,
+    sample_folds = sample_folds, cv_folds = cv_folds,
+    custom_ensemble_weights = custom_ensemble_weights,
+    custom_ensemble_weights_DX = custom_ensemble_weights_DX,
+    cluster_variable = cluster_variable,
+    ensemble_type = ensemble_type, shortstack = shortstack,
+    trim = trim, parallel = parallel, silent = silent,
+    splits = apo_splits_0,
+    fitted = list(y_X = fitted$y_X_D0,
+                  D_X = fitted_D_X_0),
+    messages = list(start = "", finish = "",
+                    y_X = messages$y_D0, D_X = ""))
+
+  ensemble_type <- apo_0$ensemble_type
+  nensb <- ncol(apo_0$coefficients)
+
+  # == Score construction ===========================================
+
+  # Reconstruct full-sample g_X_D0 from the apo fitted object
+  g_X_D0 <- extrapolate_CEF(
+    D = D,
+    CEF_res_byD = list(list(
+      fit = apo_0$fitted$y_X, d = 0)),
+    aux_indx = indxs$aux_indx)[, , 1]
+
   m_X <- D_X_res$oos_fitted
-
-  # Trim propensity scores, return warnings
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
+  p <- mean(D)
 
-  # Compute the ATT using the constructed variables
-  if (!multiple_ensembles) {
-    p <- as.vector(D_res$oos_fitted)
-    g0 <- as.vector(g_X_D0)
-    m <- as.vector(m_X_tr)
-    psi_b <- matrix(
-      D * (y - g0) / p - m * (1 - D) * (y - g0) / (p * (1 - m)),
-      nobs, 1)
-    psi_a <- matrix(-D / p, nobs, 1)
-    att <- -mean(psi_b) / mean(psi_a)
-  } else {
-    y_copy <- matrix(rep(y, nensb), nobs, nensb)
-    D_copy <- matrix(rep(D, nensb), nobs, nensb)
-    p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
-    psi_b <- D_copy * (y_copy - g_X_D0) / p_copy -
-      m_X_tr * (1 - D_copy) * (y_copy - g_X_D0) /
-      (p_copy * (1 - m_X_tr))
-    psi_a <- -D_copy / p_copy
-    att <- -colMeans(psi_b) / colMeans(psi_a)
-  }#IFELSE
+  D_mat <- matrix(D, nobs, nensb)
+  y_mat <- matrix(y, nobs, nensb)
 
-  # Compute scores and Jacobian from psi_a/psi_b
+  psi_b <- D_mat * (y_mat - g_X_D0) / p -
+    m_X_tr * (1 - D_mat) * (y_mat - g_X_D0) /
+    (p * (1 - m_X_tr))
+  psi_a <- -D_mat / p
+
+  # == Target parameter =============================================
+
+  att <- -colMeans(psi_b) / colMeans(psi_a)
+
   scores <- lapply(seq_len(nensb), function(j) {
     as.matrix(psi_a[, j] * att[j] + psi_b[, j])
   })
   J_list <- lapply(seq_len(nensb), function(j) {
     as.matrix(mean(psi_a[, j]))
   })
+
   coef_names <- "ATT"
   coef <- matrix(att, nrow = 1, ncol = nensb)
   rownames(coef) <- coef_names
   colnames(coef) <- ensemble_type
 
-  # Ensemble metrics
-  weights <- list(y_X_D0 = y_X_D0_res$weights,
-                  D_X = D_X_res$weights)
-  mspe <- list(y_X_D0 = y_X_D0_res$mspe,
-               D_X = D_X_res$mspe)
-  r2 <- list(y_X_D0 = y_X_D0_res$r2,
-             D_X = D_X_res$r2)
+  # == Output =======================================================
 
-  # Predictions
-  oos_pred <- list(EY_D0_X = g_X_D0,
-                   ED_X = m_X,
-                   ED = D_res$oos_fitted)
+  ddml_fit <- list(
+    coefficients = coef,
+    ensemble_weights = list(
+      y_X_D0 = apo_0$ensemble_weights$y_X,
+      D_X = D_X_res$weights),
+    mspe = list(y_X_D0 = apo_0$mspe$y_X,
+                D_X = D_X_res$mspe),
+    r2 = list(y_X_D0 = apo_0$r2$y_X,
+              D_X = D_X_res$r2),
+    psi_a = psi_a, psi_b = psi_b,
+    scores = scores, J = J_list,
+    coef_names = coef_names,
+    estimator_name =
+      "Average Treatment Effect on the Treated",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    learners = learners,
+    learners_DX = learners_DX,
+    cluster_variable = cluster_variable,
+    fitted = list(
+      y_X_D0 = apo_0$fitted$y_X,
+      D_X = build_fitted_entry(D_X_res, save_crossval)),
+    splits = list(
+      subsamples = indxs$subsamples,
+      subsamples_byD = indxs$subsamples_byD,
+      cv_subsamples = indxs$cv_subsamples,
+      cv_subsamples_byD = indxs$cv_subsamples_byD),
+    call = cl)
 
-  fitted_export <- list(
-    y_X_D0 = build_fitted_entry(y_X_D0_res, save_crossval,
-                                include_auxiliary = TRUE),
-    D_X = build_fitted_entry(D_X_res, save_crossval)
-  )
-  splits_export <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byD = indxs$subsamples_byD,
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byD = indxs$cv_subsamples_byD
-  )
-
-  # Organize output
-  ddml_fit <- list(att = att, weights = weights, mspe = mspe,
-                   psi_a = psi_a, psi_b = psi_b,
-                   oos_pred = oos_pred,
-                   learners = learners,
-                   learners_DX = learners_DX,
-                   cluster_variable = cluster_variable,
-                   subsamples_byD = indxs$subsamples_byD,
-                   cv_subsamples_byD =
-                     indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type,
-                   coefficients = coef,
-                   scores = scores,
-                   J = J_list,
-                   coef_names = coef_names,
-                   nobs = nobs,
-                   sample_folds = sample_folds,
-                   cv_folds = if (shortstack) NULL
-                     else cv_folds,
-                   shortstack = shortstack,
-                   fitted = fitted_export,
-                   splits = splits_export,
-                   r2 = r2)
-
-  # Print estimation completion
   elapsed <- round(proc.time()[3] - t0, 1)
-  info_msg("ddml_att: completed in ", elapsed, "s",
-           silent = silent)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
 
-  # Amend class and return
   class(ddml_fit) <- c("ddml_att", "ddml")
   return(ddml_fit)
 }#DDML_ATT
