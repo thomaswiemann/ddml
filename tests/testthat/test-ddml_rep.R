@@ -211,9 +211,10 @@ test_that("tidy and glance work on ddml_rep", {
   td <- tidy(reps, ensemble_idx = 1)
   expect_s3_class(td, "data.frame")
   expect_true(all(c("term", "estimate", "std.error",
-    "statistic", "p.value", "ensemble_type")
-    %in% colnames(td)))
+    "statistic", "p.value", "ensemble_type",
+    "aggregation") %in% colnames(td)))
   expect_equal(nrow(td), 1)
+  expect_equal(td$aggregation, "median")
 
   # tidy all ensembles
   td_all <- tidy(reps, ensemble_idx = NULL)
@@ -228,6 +229,7 @@ test_that("tidy and glance work on ddml_rep", {
   # tidy with mean aggregation
   td_mean <- tidy(reps, aggregation = "mean")
   expect_s3_class(td_mean, "data.frame")
+  expect_equal(td_mean$aggregation, "mean")
 
   # glance
   gl <- glance(reps)
@@ -238,7 +240,140 @@ test_that("tidy and glance work on ddml_rep", {
   expect_equal(gl$model_type, "ddml_ate")
 })
 
-test_that("aggregation formulas are correct", {
+test_that("median aggregation formula is correct", {
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X[, 1] + rnorm(nobs)
+  y <- 2 * D + X[, 2] + rnorm(nobs)
+
+  R <- 5
+  reps <- ddml_replicate(ddml_plm,
+                         y = y, D = D, X = X,
+                         learners = list(what = ols),
+                         sample_folds = 2,
+                         resamples = R,
+                         silent = TRUE)
+
+  coefs <- sapply(seq_len(R),
+                   function(i) coef(reps[[i]]))
+  vcovs <- lapply(seq_len(R),
+                   function(i) vcov(reps[[i]]))
+  p <- nrow(coefs)
+
+  # theta_tilde = coordinate-wise median
+  expected_coef <- apply(coefs, 1, median)
+
+  # V_r = Sigma_r + (theta_r - theta_tilde)(...)^T
+  V_list <- lapply(seq_len(R), function(r) {
+    bdiff <- coefs[, r] - expected_coef
+    vcovs[[r]] + tcrossprod(bdiff)
+  })
+
+  # tilde_Sigma_ij = median_r(V_r_ij)
+  V_arr <- array(unlist(V_list), dim = c(p, p, R))
+  expected_vcov <- apply(V_arr, c(1, 2), median)
+  expected_se <- sqrt(diag(expected_vcov))
+
+  actual_coef <- coef(reps, aggregation = "median")
+  actual_vcov <- vcov(reps, aggregation = "median")
+  s <- summary(reps, aggregation = "median")
+  actual_se <- s$coefficients[, 2, 1]
+
+  expect_equal(unname(actual_coef),
+               unname(expected_coef),
+               tolerance = 1e-10)
+  expect_equal(unname(actual_vcov),
+               unname(expected_vcov),
+               tolerance = 1e-10)
+  expect_equal(unname(actual_se),
+               unname(expected_se),
+               tolerance = 1e-10)
+})
+
+test_that("mean aggregation formula is correct", {
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X[, 1] + rnorm(nobs)
+  y <- 2 * D + X[, 2] + rnorm(nobs)
+
+  R <- 5
+  reps <- ddml_replicate(ddml_plm,
+                         y = y, D = D, X = X,
+                         learners = list(what = ols),
+                         sample_folds = 2,
+                         resamples = R,
+                         silent = TRUE)
+
+  coefs <- sapply(seq_len(R),
+                   function(i) coef(reps[[i]]))
+  vcovs <- lapply(seq_len(R),
+                   function(i) vcov(reps[[i]]))
+  p <- nrow(coefs)
+
+  # theta_tilde = arithmetic mean
+  expected_coef <- rowMeans(coefs)
+
+  # V_r = Sigma_r + (theta_r - theta_tilde)(...)^T
+  V_list <- lapply(seq_len(R), function(r) {
+    bdiff <- coefs[, r] - expected_coef
+    vcovs[[r]] + tcrossprod(bdiff)
+  })
+
+  # tilde_Sigma = (1/R) sum_r V_r
+  expected_vcov <- Reduce(`+`, V_list) / R
+  expected_se <- sqrt(diag(expected_vcov))
+
+  actual_coef <- coef(reps, aggregation = "mean")
+  actual_vcov <- vcov(reps, aggregation = "mean")
+  s <- summary(reps, aggregation = "mean")
+  actual_se <- s$coefficients[, 2, 1]
+
+  expect_equal(unname(actual_coef),
+               unname(expected_coef),
+               tolerance = 1e-10)
+  expect_equal(unname(actual_vcov),
+               unname(expected_vcov),
+               tolerance = 1e-10)
+  expect_equal(unname(actual_se),
+               unname(expected_se),
+               tolerance = 1e-10)
+})
+
+test_that("spectral aggregation works and equals median for p=1", {
+  skip_if_not_installed("CVXR")
+
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+
+  reps <- ddml_replicate(ddml_ate,
+                         y = y, D = D, X = X,
+                         learners = list(what = ols),
+                         sample_folds = 2,
+                         resamples = 3,
+                         silent = TRUE)
+
+  # For p = 1, spectral reduces to scalar median
+  cf_spec <- coef(reps, aggregation = "spectral")
+  cf_med <- coef(reps, aggregation = "median")
+  expect_equal(cf_spec, cf_med, tolerance = 1e-10)
+
+  V_spec <- vcov(reps, aggregation = "spectral")
+  V_med <- vcov(reps, aggregation = "median")
+  expect_equal(V_spec, V_med, tolerance = 1e-10)
+
+  s <- summary(reps, aggregation = "spectral")
+  expect_equal(s$aggregation, "spectral")
+})
+
+test_that("spectral aggregation gives PSD matrix for p>1", {
+  skip_if_not_installed("CVXR")
+
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 3), nobs, 3)
@@ -252,49 +387,19 @@ test_that("aggregation formulas are correct", {
                          resamples = 5,
                          silent = TRUE)
 
-  # Extract per-resample coefs and SEs manually (p x R matrices)
-  R <- 5
-  coefs <- sapply(seq_len(R), function(i) coef(reps[[i]]))
-  ses <- sapply(seq_len(R), function(i) {
-    V <- vcov(reps[[i]])
-    sqrt(diag(V))
-  })
-  p <- nrow(coefs)
+  V <- vcov(reps, aggregation = "spectral")
+  expect_true(is.matrix(V))
+  expect_equal(dim(V), c(2, 2))
 
-  # Median aggregation (per coefficient)
-  expected_coef_med <- apply(coefs, 1, median)
-  var_total_med <- ses^2 +
-    (coefs - expected_coef_med)^2
-  expected_se_med <- sqrt(apply(var_total_med, 1, median))
+  # PSD: all eigenvalues >= 0
+  eigs <- eigen(V, symmetric = TRUE, only.values = TRUE)
+  expect_true(all(eigs$values >= -1e-10))
 
-  actual_coef_med <- coef(reps, aggregation = "median")
-  s_med <- summary(reps, aggregation = "median")
-  actual_se_med <- s_med$coefficients[, 2, 1]
+  # Symmetric
+  expect_equal(V, t(V), tolerance = 1e-10)
 
-  expect_equal(unname(actual_coef_med),
-               unname(expected_coef_med),
-               tolerance = 1e-10)
-  expect_equal(unname(actual_se_med),
-               unname(expected_se_med),
-               tolerance = 1e-10)
-
-  # Mean aggregation (per coefficient)
-  expected_coef_mean <- rowMeans(coefs)
-  var_total_mean <- ses^2 +
-    (coefs - expected_coef_mean)^2
-  expected_se_mean <- sqrt(
-    R / rowSums(1 / var_total_mean))
-
-  actual_coef_mean <- coef(reps, aggregation = "mean")
-  s_mean <- summary(reps, aggregation = "mean")
-  actual_se_mean <- s_mean$coefficients[, 2, 1]
-
-  expect_equal(unname(actual_coef_mean),
-               unname(expected_coef_mean),
-               tolerance = 1e-10)
-  expect_equal(unname(actual_se_mean),
-               unname(expected_se_mean),
-               tolerance = 1e-10)
+  # Positive diagonal
+  expect_true(all(diag(V) > 0))
 })
 
 test_that("ddml_rep works with ddml_ate", {

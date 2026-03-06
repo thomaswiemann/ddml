@@ -24,15 +24,68 @@ build_inf_from_agg <- function(agg, coef_names,
   inf_results
 }#BUILD_INF_FROM_AGG
 
-# Core aggregation workhorse (Ahrens et al., 2024, Remark 2).
+# Spectral-norm median of PSD matrices via SDP (CVXR).
+#
+# Finds V* = argmin_{V >= 0} sum_r ||V - V_r||_op where
+# ||.||_op is the spectral norm (largest singular value).
+# For p = 1 this reduces to the standard scalar median.
+spectral_median_psd <- function(matrices) {
+  p <- nrow(matrices[[1]])
+  R <- length(matrices)
+
+  if (p == 1) {
+    vals <- vapply(matrices, function(m) m[1, 1],
+                   numeric(1))
+    return(matrix(stats::median(vals), 1, 1))
+  }#IF
+
+  if (!requireNamespace("CVXR", quietly = TRUE)) {
+    stop("Package 'CVXR' is required for spectral ",
+         "aggregation. Install it with:\n",
+         "  install.packages('CVXR')",
+         call. = FALSE)
+  }#IF
+
+  V <- CVXR::Variable(c(p, p), PSD = TRUE)
+  obj <- 0
+  for (r in seq_len(R)) {
+    obj <- obj + CVXR::norm(V - matrices[[r]], "2")
+  }#FOR
+
+  result <- CVXR::solve(CVXR::Problem(CVXR::Minimize(obj)))
+
+  if (result$status != "optimal") {
+    warning("SDP solver returned status '",
+            result$status,
+            "'; falling back to element-wise median.",
+            call. = FALSE)
+    arr <- array(
+      unlist(lapply(matrices, as.vector)),
+      dim = c(p, p, R))
+    return(apply(arr, c(1, 2), stats::median))
+  }#IF
+
+  V_sol <- result$getValue(V)
+  (V_sol + t(V_sol)) / 2
+}#SPECTRAL_MEDIAN_PSD
+
+# Core aggregation workhorse.
+#
+# For each replication r the inflated covariance is
+#   V_r = Sigma_r + (theta_r - theta_tilde)(theta_r - theta_tilde)'
+# where theta_tilde is the aggregated coefficient vector.
+# The three aggregation rules then differ only in how they
+# summarise {V_1, ..., V_R} into a single matrix.
 aggregate_reps <- function(object, aggregation = "median",
                            type = "HC1") {
   aggregation <- match.arg(aggregation,
-                           c("median", "mean"))
+                           c("median", "mean",
+                             "spectral"))
   R <- object$nresamples
   nensb <- length(object$ensemble_type)
   p <- length(object$coef_names)
 
+  # == Collect per-replication estimates ==
   coef_array <- array(0, dim = c(p, nensb, R))
   vcov_array <- array(0, dim = c(p, p, nensb, R))
   for (r in seq_len(R)) {
@@ -49,29 +102,39 @@ aggregate_reps <- function(object, aggregation = "median",
     }#FOR
   }#FOR
 
-  agg_vcov <- array(0, dim = c(p, p, nensb))
-  if (aggregation == "median") {
-    agg_coef <- apply(coef_array, c(1, 2),
-                      stats::median)
-  } else {
+  # == Aggregate coefficients ==
+  if (aggregation == "mean") {
     agg_coef <- apply(coef_array, c(1, 2), mean)
+  } else {
+    agg_coef <- apply(coef_array, c(1, 2), stats::median)
   }#IFELSE
 
+  # == Inflate & aggregate covariance ==
+  agg_vcov <- array(0, dim = c(p, p, nensb))
+
   for (j in seq_len(nensb)) {
-    for (k1 in seq_len(p)) {
-      for (k2 in seq_len(p)) {
-        bdiff_1 <- coef_array[k1, j, ] - agg_coef[k1, j]
-        bdiff_2 <- coef_array[k2, j, ] - agg_coef[k2, j]
-        Vvec <- vcov_array[k1, k2, j, ] + abs(bdiff_1 * bdiff_2)
-        if (aggregation == "median") {
-          agg_vcov[k1, k2, j] <- stats::median(Vvec)
-        } else {
-          agg_vcov[k1, k2, j] <- length(Vvec) / sum(1 / Vvec)
-        }#IFELSE
-      }#FOR
+    V_list <- vector("list", R)
+    for (r in seq_len(R)) {
+      bdiff <- coef_array[, j, r] - agg_coef[, j]
+      Sigma_r <- matrix(vcov_array[, , j, r], p, p)
+      V_list[[r]] <- Sigma_r + tcrossprod(bdiff)
     }#FOR
+
+    if (aggregation == "mean") {
+      V_sum <- Reduce(`+`, V_list)
+      agg_vcov[, , j] <- V_sum / R
+    } else if (aggregation == "spectral") {
+      agg_vcov[, , j] <- spectral_median_psd(V_list)
+    } else {
+      V_arr <- array(
+        unlist(lapply(V_list, as.vector)),
+        dim = c(p, p, R))
+      agg_vcov[, , j] <- apply(V_arr, c(1, 2),
+                                stats::median)
+    }#IFELSE
   }#FOR
 
+  # == Standard errors ==
   agg_se <- matrix(0, nrow = p, ncol = nensb)
   for (j in seq_len(nensb)) {
     V_j <- matrix(agg_vcov[, , j, drop = FALSE],
@@ -332,8 +395,9 @@ print.ddml_rep <- function(x, ...) {
 #' Extract Aggregated Coefficients from a ddml_rep Object
 #'
 #' @param object A \code{ddml_rep} object.
-#' @param aggregation Character string, either
-#'     \code{"median"} (default) or \code{"mean"}.
+#' @param aggregation Character string: \code{"median"}
+#'     (default), \code{"mean"}, or \code{"spectral"}.
+#'     See \code{\link{summary.ddml_rep}} for details.
 #' @param ... Additional arguments. 
 #'
 #' @return Named vector (single ensemble) or matrix
@@ -352,11 +416,15 @@ print.ddml_rep <- function(x, ...) {
 #' coef(reps, aggregation = "mean")
 #' }
 #'
+#' @seealso \code{\link{summary.ddml_rep}} for the
+#'     aggregation equations.
+#'
 #' @export
 #' @method coef ddml_rep
 coef.ddml_rep <- function(object,
                           aggregation = c("median",
-                                          "mean"),
+                                          "mean",
+                                          "spectral"),
                           ...) {
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
@@ -376,8 +444,7 @@ coef.ddml_rep <- function(object,
 #' @param object A \code{ddml_rep} object.
 #' @param ensemble_idx Integer index of the ensemble type.
 #'     Defaults to 1.
-#' @param aggregation Character string, either
-#'     \code{"median"} (default) or \code{"mean"}.
+#' @inheritParams coef.ddml_rep
 #' @param type Character string specifying the
 #'     variance-covariance estimator. One of \code{"HC1"}
 #'     (default), \code{"HC0"}, or \code{"HC3"}.
@@ -397,11 +464,15 @@ coef.ddml_rep <- function(object,
 #' vcov(reps)
 #' }
 #'
+#' @seealso \code{\link{summary.ddml_rep}} for the
+#'     aggregation equations.
+#'
 #' @export
 #' @method vcov ddml_rep
 vcov.ddml_rep <- function(object, ensemble_idx = 1,
                           aggregation = c("median",
-                                          "mean"),
+                                          "mean",
+                                          "spectral"),
                           type = "HC1", ...) {
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
@@ -423,8 +494,7 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 #' @param level Confidence level. Default 0.95.
 #' @param ensemble_idx Integer index of the ensemble type.
 #'     Defaults to 1.
-#' @param aggregation Character string, either
-#'     \code{"median"} (default) or \code{"mean"}.
+#' @inheritParams coef.ddml_rep
 #' @param type Character string specifying the
 #'     variance-covariance estimator. One of \code{"HC1"}
 #'     (default), \code{"HC0"}, or \code{"HC3"}.
@@ -445,13 +515,17 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 #' confint(reps, level = 0.90)
 #' }
 #'
+#' @seealso \code{\link{summary.ddml_rep}} for the
+#'     aggregation equations.
+#'
 #' @export
 #' @method confint ddml_rep
 confint.ddml_rep <- function(object, parm,
                              level = 0.95,
                              ensemble_idx = 1,
                              aggregation = c("median",
-                                             "mean"),
+                                             "mean",
+                                             "spectral"),
                              type = "HC1", ...) {
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
@@ -469,9 +543,41 @@ confint.ddml_rep <- function(object, parm,
 
 #' Summary for ddml_rep Objects
 #'
+#' Aggregates coefficient estimates and covariance matrices
+#' across \eqn{R} independent sample-splitting replications.
+#'
+#' @details
+#' Let \eqn{\hat\theta_r} and \eqn{\hat\Sigma_r} denote
+#' the coefficient vector and sandwich covariance matrix
+#' from replication \eqn{r}.
+#'
+#' \strong{Coefficient aggregation.}
+#' For \code{"mean"}:
+#' \eqn{\tilde\theta = R^{-1} \sum_{r=1}^{R} \hat\theta_r}.
+#' For \code{"median"} and \code{"spectral"}:
+#' \eqn{\tilde\theta_j = \mathrm{median}_{r}(\hat\theta_{r,j})}.
+#'
+#' \strong{Covariance aggregation.}
+#' Define the inflated per-replication covariance as
+#' \deqn{V_r = \hat\Sigma_r + (\hat\theta_r - \tilde\theta)
+#'     (\hat\theta_r - \tilde\theta)^\top}.
+#' For \code{"mean"}:
+#' \eqn{\tilde\Sigma = R^{-1} \sum_{r=1}^{R} V_r}.
+#' For \code{"median"}:
+#' \eqn{\tilde\Sigma_{ij} = \mathrm{median}_{r}(V_{r,ij})}.
+#' For \code{"spectral"}:
+#' \eqn{\tilde\Sigma = \arg\min_{\Sigma \succeq 0} \sum_{r} \|\Sigma - V_r\|_2},
+#' solved via \pkg{CVXR}. Guarantees positive semi-definiteness of \eqn{\tilde\Sigma}.
+#'
+#' @references
+#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E,
+#'     Hansen C B, Newey W, Robins J (2018).
+#'     "Double/debiased machine learning for treatment
+#'     and structural parameters." The Econometrics
+#'     Journal, 21(1), C1-C68.
+#'
 #' @param object A \code{ddml_rep} object.
-#' @param aggregation Character string, either
-#'     \code{"median"} (default) or \code{"mean"}.
+#' @inheritParams coef.ddml_rep
 #' @param type Character string specifying the
 #'     variance-covariance estimator. One of \code{"HC1"}
 #'     (default), \code{"HC0"}, or \code{"HC3"}.
@@ -496,7 +602,8 @@ confint.ddml_rep <- function(object, parm,
 #' @method summary ddml_rep
 summary.ddml_rep <- function(object,
                              aggregation = c("median",
-                                             "mean"),
+                                             "mean",
+                                             "spectral"),
                              type = "HC1", ...) {
   aggregation <- match.arg(aggregation)
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
@@ -578,8 +685,7 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #' @param ensemble_idx Integer index of the ensemble type
 #'     to report. Defaults to 1. Set to \code{NULL} to
 #'     return results for all ensemble types.
-#' @param aggregation Character string, either
-#'     \code{"median"} (default) or \code{"mean"}.
+#' @inheritParams coef.ddml_rep
 #' @param type Character string specifying the
 #'     variance-covariance estimator. One of \code{"HC1"}
 #'     (default), \code{"HC0"}, or \code{"HC3"}.
@@ -591,9 +697,9 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #'
 #' @return A \code{data.frame} with columns \code{term},
 #'     \code{estimate}, \code{std.error}, \code{statistic},
-#'     \code{p.value}, and \code{ensemble_type}. If
-#'     \code{conf.int = TRUE}, also \code{conf.low} and
-#'     \code{conf.high}.
+#'     \code{p.value}, \code{ensemble_type}, and
+#'     \code{aggregation}. If \code{conf.int = TRUE},
+#'     also \code{conf.low} and \code{conf.high}.
 #'
 #' @examples
 #' \donttest{
@@ -608,15 +714,20 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #' tidy(reps, conf.int = TRUE)
 #' }
 #'
+#' @seealso \code{\link{summary.ddml_rep}} for the
+#'     aggregation equations.
+#'
 #' @family ddml
 #' @export
 #' @method tidy ddml_rep
 tidy.ddml_rep <- function(x, ensemble_idx = 1,
                           aggregation = c("median",
-                                          "mean"),
+                                          "mean",
+                                          "spectral"),
                           type = "HC1",
                           conf.int = FALSE,
                           conf.level = 0.95, ...) {
+  aggregation <- match.arg(aggregation)
   s <- summary(x, aggregation = aggregation,
                type = type)
   inf <- s$coefficients
@@ -639,6 +750,7 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
         statistic = inf[k, 3, j],
         p.value = inf[k, 4, j],
         ensemble_type = dimnames(inf)[[3]][j],
+        aggregation = aggregation,
         stringsAsFactors = FALSE
       )
       if (conf.int) {

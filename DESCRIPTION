@@ -37,6 +37,7 @@ Imports:
     generics
 Suggests: 
     covr,
+    CVXR,
     knitr,
     parallel,
     rmarkdown,
