@@ -5,6 +5,10 @@
 # with fold-level demeaning to account for cross-fitting
 # dependence.
 #
+# Reference: Lei J (2020). "Cross-Validation With Confidence."
+#   Journal of the American Statistical Association,
+#   115(532), 1978-1997.
+#
 # @param resid1 Numeric vector of OOS residuals from learner 1.
 # @param resid2 Numeric vector of OOS residuals from learner 2.
 # @param fid Integer vector of fold IDs (same length as resid1).

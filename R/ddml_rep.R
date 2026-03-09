@@ -52,7 +52,7 @@ spectral_median_psd <- function(matrices) {
     obj <- obj + CVXR::norm(V - matrices[[r]], "2")
   }#FOR
 
-  result <- CVXR::solve(CVXR::Problem(CVXR::Minimize(obj)))
+  result <- CVXR::psolve(CVXR::Problem(CVXR::Minimize(obj)))
 
   if (result$status != "optimal") {
     warning("SDP solver returned status '",

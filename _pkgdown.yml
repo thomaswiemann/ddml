@@ -36,7 +36,7 @@ reference:
   - ddml-class
   - matches("print")
   - matches("summary")
-- title: Supported Models
+- title: Supported DDML Estimators
   contents:
   - ddml_plm
   - ddml_pliv
@@ -71,6 +71,7 @@ reference:
   - length.ddml_rep
   - "`[[.ddml_rep`"
   - reexports
+  - matches("predict")
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -79,7 +80,6 @@ reference:
   - mdl_ranger
   - mdl_xgboost
   - mdl_bigGLM
-  - matches("predict")
 - title: Utilities
   contents:
   - crossval

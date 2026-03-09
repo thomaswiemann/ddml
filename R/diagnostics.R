@@ -31,6 +31,10 @@
 #' tidy(diagnostics(plm_fit))
 #' }
 #'
+#' @references
+#' Lei J (2020). "Cross-Validation With Confidence." Journal of the American
+#'     Statistical Association, 115(532), 1978-1997.
+#'
 #' @export
 diagnostics <- function(object, cvc = FALSE,
                         bootnum = 500, alpha = 0.05,

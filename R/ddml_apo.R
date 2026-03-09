@@ -1,4 +1,4 @@
-#' DDML Estimator for the Average Potential Outcome
+#' Estimator for the Average Potential Outcome.
 #'
 #' @family ddml estimators
 #'

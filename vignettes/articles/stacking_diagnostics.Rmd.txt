@@ -127,3 +127,5 @@ Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." *Journal of Applied Econometrics*, 40(3): 249-269.
 
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." *American Economic Review*, 88(3), 450-477.
+
+Lei J (2020). "Cross-Validation With Confidence." *Journal of the American Statistical Association*, 115(532), 1978-1997.
