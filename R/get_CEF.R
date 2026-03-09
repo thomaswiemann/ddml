@@ -6,19 +6,17 @@
 #
 # @param y Outcome vector.
 # @param X Feature matrix (may be sparse).
-# @param Z Optional instrument matrix.
 # @param learners List of base learner specifications.
 # @param ensemble_type Character vector of ensemble types.
 # @param shortstack Logical; use short-stacking if TRUE.
 # @param subsamples List of sample fold indices.
 # @param cv_subsamples List of cross-validation fold indices.
 # @param parallel Optional list with parallel config.
-get_CEF <- function(y, X, Z = NULL,
+get_CEF <- function(y, X,
                     learners,
                     ensemble_type,
                     shortstack,
                     custom_ensemble_weights = NULL,
-                    compute_insample_predictions = FALSE,
                     subsamples,
                     cv_subsamples,
                     silent = FALSE,
@@ -102,26 +100,22 @@ get_CEF <- function(y, X, Z = NULL,
     info_msg("  Estimating ", label, "...", silent = silent)
   }#IF
   if (shortstack) {
-    res <- shortstacking(y, X, Z,
+    res <- shortstacking(y, X,
                          learners = learners,
                          ensemble_type = ensemble_type,
                          custom_ensemble_weights =
                            custom_ensemble_weights,
-                         compute_insample_predictions =
-                           compute_insample_predictions,
                          subsamples = subsamples,
                          silent = silent,
                          auxiliary_X = auxiliary_X,
                          shortstack_y = shortstack_y,
                          parallel = parallel)
   } else {
-    res <- crosspred(y, X, Z,
+    res <- crosspred(y, X,
                      learners = learners,
                      ensemble_type = ensemble_type,
                      custom_ensemble_weights =
                        custom_ensemble_weights,
-                     compute_insample_predictions =
-                       compute_insample_predictions,
                      subsamples = subsamples,
                      cv_subsamples = cv_subsamples,
                      silent = silent,

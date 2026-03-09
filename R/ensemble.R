@@ -8,7 +8,7 @@
 #'
 #' @param y The outcome variable.
 #' @param X The feature matrix.
-#' @param Z Optional instrumental variables matrix.
+
 #' @param type A character string indicating the type of ensemble to compute.
 #'     Default is \code{"average"}.
 #' @param learners A list of base learners.
@@ -45,7 +45,7 @@
 #' ens_fit$weights
 #' predict(ens_fit, newdata = X)[1:5]
 #' }
-ensemble <- function(y, X, Z = NULL,
+ensemble <- function(y, X,
                      type = "average",
                      learners,
                      cv_folds = 5,
@@ -75,7 +75,7 @@ ensemble <- function(y, X, Z = NULL,
     return(output)
   }#IF
   # Compute ensemble weights
-  ens_w_res <- ensemble_weights(y, X, Z,
+  ens_w_res <- ensemble_weights(y, X,
                                 type = type, learners = learners,
                                 cv_folds = cv_folds,
                                 cv_subsamples = cv_subsamples,
@@ -91,21 +91,16 @@ ensemble <- function(y, X, Z = NULL,
   # Fit all base learners to keep per-learner outputs always available
   mdl_fits <- rep(list(NULL), nlearners)
   for (m in seq_len(nlearners)) {
-    # Check whether X, Z assignment has been specified. If not, include all.
+    # Check whether X assignment has been specified. If not, include all.
     if (is.null(learners[[m]]$assign_X))
-      learners[[m]]$assign_X <- 1:ncol(X)
-    if (is.null(learners[[m]]$assign_Z) & !is.null(Z))
-      learners[[m]]$assign_Z <- 1:ncol(Z)
-    # Else fit on data. Begin by selecting the model constructor and the
-    #     variable assignment.
+      learners[[m]]$assign_X <- seq_len(ncol(X))
+    # Select the model constructor and the variable assignment.
     mdl_fun <- list(what = learners[[m]]$what,
                     args = learners[[m]]$args)
     assign_X <- learners[[m]]$assign_X
-    assign_Z <- learners[[m]]$assign_Z
-    # Then fit the model
+    # Fit the model
     mdl_fun$args$y <- y
-    mdl_fun$args$X <- cbind(X[, assign_X],
-                            Z[, assign_Z])
+    mdl_fun$args$X <- X[, assign_X, drop = FALSE]
     mdl_fits[[m]] <- do.call(do.call, mdl_fun)
   }#FOR
 
@@ -120,7 +115,7 @@ ensemble <- function(y, X, Z = NULL,
 # Complementary methods ========================================================
 
 #' @exportS3Method
-predict.ensemble <- function(object, newdata, newZ = NULL, ...){
+predict.ensemble <- function(object, newdata, ...){
   # Data parameters
   nlearners <- length(object$learners)
   # If y was constant, return mean_y for all observations
@@ -131,10 +126,9 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
   fitted_mat <- matrix(0, nrow(newdata), nlearners)
   for (m in seq_len(nlearners)) {
     assign_X <- object$learners[[m]]$assign_X
-    assign_Z <- object$learners[[m]]$assign_Z
     fitted <- stats::predict(object$mdl_fits[[m]],
-                             newdata = cbind(newdata[, assign_X],
-                                             newZ[, assign_Z]))
+                             newdata = newdata[, assign_X,
+                                               drop = FALSE])
     fitted_mat[, m] <- methods::as(fitted, "matrix")
   }#FOR
   # Compute matrix of fitted values by ensemble type and return
@@ -153,7 +147,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 #'
 #' @param y The outcome variable.
 #' @param X The feature matrix.
-#' @param Z Optional instrumental variables matrix.
+
 #' @param type A character string or vector indicating the type(s) of ensemble
 #'     weights to compute. Default is \code{"average"}.
 #' @param learners A list of base learners.
@@ -182,7 +176,7 @@ predict.ensemble <- function(object, newdata, newZ = NULL, ...){
 #'                       silent = TRUE)
 #' ew$weights
 #' }
-ensemble_weights <- function(y, X, Z = NULL,
+ensemble_weights <- function(y, X,
                              type = "average",
                              learners,
                              cv_folds = 5,
@@ -201,7 +195,7 @@ ensemble_weights <- function(y, X, Z = NULL,
   cv_stacking <- c("ols", "nnls", "nnls1", "singlebest")
   if (any(cv_stacking %in% type) & is.null(cv_results)) {
     # Run crossvalidation procedure
-    cv_results <- crossval(y, X, Z,
+    cv_results <- crossval(y, X,
                            learners = learners,
                            cv_folds = cv_folds,
                            cv_subsamples = cv_subsamples,

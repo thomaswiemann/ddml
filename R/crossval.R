@@ -36,8 +36,7 @@
 #' @inheritParams ddml_plm
 #' @param y The outcome variable.
 #' @param X A (sparse) matrix of predictive variables.
-#' @param Z Optional additional (sparse) matrix of predictive variables.
-#' @param learners \code{learners} is a list of lists, each containing four
+#' @param learners \code{learners} is a list of lists, each containing three
 #'     named elements:
 #'     \itemize{
 #'         \item{\code{what} The base learner function. The function must be
@@ -47,14 +46,10 @@
 #'         \item{\code{assign_X} An optional vector of column indices
 #'             corresponding to variables in \code{X} that are passed to
 #'             the base learner.}
-#'         \item{\code{assign_Z} An optional vector of column indices
-#'             corresponding to variables in \code{Z} that are passed to the
-#'             base learner.}
 #'     }
 #'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
-#'     results in inclusion of all predictive variables in \code{X} (and/or
-#'     \code{Z}).
+#'     used in \code{what}. Omission of \code{assign_X}
+#'     results in inclusion of all predictive variables in \code{X}.
 #' @param cv_folds Number of folds used for cross-validation.
 #' @param cv_subsamples List of vectors with sample indices for
 #'     cross-validation.
@@ -101,7 +96,7 @@
 #'                    cv_folds = 4,
 #'                    silent = TRUE)
 #' cv_res$mspe
-crossval <- function(y, X, Z = NULL,
+crossval <- function(y, X,
                      learners,
                      cv_folds = 10,
                      cluster_variable = seq_along(y),
@@ -140,7 +135,7 @@ crossval <- function(y, X, Z = NULL,
     fold_x <- cv_subsamples[[i]]
     crossval_compute(test_sample = fold_x,
                      learner = learners[[j]],
-                     y, X, Z)
+                     y, X)
   }#CV_FUN
 
   # Compute out-of-sample errors
@@ -188,18 +183,14 @@ crossval <- function(y, X, Z = NULL,
 
 # Complementary functions ======================================================
 crossval_compute <- function(test_sample, learner,
-                             y, X, Z = NULL) {
+                             y, X) {
   if (is.null(learner$assign_X)) learner$assign_X <- seq_len(ncol(X))
-  if (is.null(learner$assign_Z) && !is.null(Z))
-    learner$assign_Z <- seq_len(ncol(Z))
 
   mdl_fun <- list(what = learner$what, args = learner$args)
   assign_X <- learner$assign_X
-  assign_Z <- learner$assign_Z
 
   mdl_fun$args$y <- y[-test_sample]
-  mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = FALSE],
-                          Z[-test_sample, assign_Z, drop = FALSE])
+  mdl_fun$args$X <- X[-test_sample, assign_X, drop = FALSE]
 
   mdl_fit <- tryCatch(
     do.call(do.call, mdl_fun),
@@ -210,10 +201,8 @@ crossval_compute <- function(test_sample, learner,
   )
 
   cv_fitted <- stats::predict(mdl_fit,
-                              cbind(X[test_sample, assign_X,
-                                      drop = FALSE],
-                                    Z[test_sample, assign_Z,
-                                      drop = FALSE]))
+                              X[test_sample, assign_X,
+                                drop = FALSE])
   if (!is.matrix(cv_fitted)) cv_fitted <- as.matrix(cv_fitted)
   cv_resid <- y[test_sample] - cv_fitted
   return(cv_resid)

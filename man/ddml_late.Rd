@@ -51,7 +51,7 @@ such that it predicts a named input \code{y} using a named input
 \item{\code{args} Optional arguments to be passed to \code{what}.}
 }
 If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing four named elements:
+lists, each containing three named elements:
 \itemize{
 \item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
@@ -60,13 +60,10 @@ such that it predicts a named input \code{y} using a named input
 \item{\code{assign_X} An optional vector of column indices
 corresponding to control variables in \code{X} that are passed to
 the base learner.}
-\item{\code{assign_Z} An optional vector of column indices
-corresponding to instruments in \code{Z} that are passed to the
-base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
-results in inclusion of all variables in \code{X} (and/or \code{Z}).}
+used in \code{what}. Omission of \code{assign_X}
+results in inclusion of all variables in \code{X}.}
 
 \item{learners_DXZ, learners_ZX}{Optional arguments to allow for different
 estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is

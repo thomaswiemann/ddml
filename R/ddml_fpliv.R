@@ -169,7 +169,7 @@ ddml_fpliv <- function(y, D, Z, X,
   # == Reduced-form estimation ======================================
 
   # E[Y|X]
-  y_X_res <- get_CEF(y, X, Z = NULL,
+  y_X_res <- get_CEF(y, X,
                      learners = learners,
                      ensemble_type = ensemble_type,
                      shortstack = shortstack,
@@ -177,20 +177,32 @@ ddml_fpliv <- function(y, D, Z, X,
                        custom_ensemble_weights,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     compute_insample_predictions = FALSE,
                      silent = silent, label = messages$y_X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
-  # E[D|X,Z]
+  # E[D|X,Z] — merge X and Z, translate assign_Z to assign_X offsets
+  nX <- ncol(X)
+  nZ <- ncol(Z)
+  XZ <- cbind(X, Z)
+  if (!is_single_learner(learners_DXZ)) {
+    learners_DXZ <- lapply(learners_DXZ, function(l) {
+      az <- l$assign_Z
+      if (is.null(az)) az <- seq_len(nZ)
+      ax <- l$assign_X
+      if (is.null(ax)) ax <- seq_len(nX)
+      l$assign_X <- c(ax, nX + az)
+      l$assign_Z <- NULL
+      l
+    })
+  }
   D_XZ_res_list <- compute_CEF_list(
-    D, X, Z = Z, learners = learners_DXZ,
+    D, XZ, learners = learners_DXZ,
     ensemble_type = ensemble_type,
     shortstack = shortstack,
     custom_ensemble_weights = custom_ensemble_weights_DXZ,
     subsamples = indxs$subsamples,
     cv_subsamples = indxs$cv_subsamples,
-    compute_insample_predictions = FALSE,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X,Z]",
     parallel = parallel,
@@ -198,13 +210,12 @@ ddml_fpliv <- function(y, D, Z, X,
 
   # E[D|X]
   D_X_res_list <- compute_CEF_list(
-    D, X, Z = NULL, learners = learners_DX,
+    D, X, learners = learners_DX,
     ensemble_type = ensemble_type,
     shortstack = shortstack,
     custom_ensemble_weights = custom_ensemble_weights_DX,
     subsamples = indxs$subsamples,
     cv_subsamples = indxs$cv_subsamples,
-    compute_insample_predictions = FALSE,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X]",
     parallel = parallel,

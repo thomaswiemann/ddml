@@ -7,7 +7,6 @@
 crosspred(
   y,
   X,
-  Z = NULL,
   learners,
   sample_folds = 10,
   ensemble_type = "average",
@@ -28,8 +27,6 @@ crosspred(
 
 \item{X}{A (sparse) matrix of predictive variables.}
 
-\item{Z}{Optional additional (sparse) matrix of predictive variables.}
-
 \item{learners}{May take one of two forms, depending on whether a single
 learner or stacking with multiple learners is used for estimation of the
 predictor.
@@ -42,7 +39,7 @@ such that it predicts a named input \code{y} using a named input
 \item{\code{args} Optional arguments to be passed to \code{what}.}
 }
 If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing four named elements:
+lists, each containing three named elements:
 \itemize{
 \item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
@@ -51,13 +48,10 @@ such that it predicts a named input \code{y} using a named input
 \item{\code{assign_X} An optional vector of column indices
 corresponding to predictive variables in \code{X} that are
 passed to the base learner.}
-\item{\code{assign_Z} An optional vector of column indices
-corresponding to predictive variables in \code{Z} that are
-passed to the base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
-results in inclusion of all variables in \code{X} (and/or \code{Z}).}
+used in \code{what}. Omission of \code{assign_X}
+results in inclusion of all variables in \code{X}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 

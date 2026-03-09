@@ -476,12 +476,11 @@ update_ensemble_info <- function(res_weights = NULL,
 }#UPDATE_ENSEMBLE_INFO
 
 # Compute CEF for each column of M, collecting results in a list.
-compute_CEF_list <- function(M, X, Z = NULL,
+compute_CEF_list <- function(M, X,
                              learners, ensemble_type,
                              shortstack,
                              custom_ensemble_weights,
                              subsamples, cv_subsamples,
-                             compute_insample_predictions = FALSE,
                              silent = FALSE,
                              label_prefix, label_suffix,
                              parallel = NULL,
@@ -493,15 +492,13 @@ compute_CEF_list <- function(M, X, Z = NULL,
       fitted[[k]]
     }#IF
     res_list[[k]] <- get_CEF(
-      M[, k, drop = FALSE], X, Z = Z,
+      M[, k, drop = FALSE], X,
       learners = learners,
       ensemble_type = ensemble_type,
       shortstack = shortstack,
       custom_ensemble_weights = custom_ensemble_weights,
       subsamples = subsamples,
       cv_subsamples = cv_subsamples,
-      compute_insample_predictions =
-        compute_insample_predictions,
       silent = silent,
       label = paste0(label_prefix, k, label_suffix),
       parallel = parallel,

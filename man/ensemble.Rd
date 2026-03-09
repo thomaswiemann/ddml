@@ -7,7 +7,6 @@
 ensemble(
   y,
   X,
-  Z = NULL,
   type = "average",
   learners,
   cv_folds = 5,
@@ -21,8 +20,6 @@ ensemble(
 \item{y}{The outcome variable.}
 
 \item{X}{The feature matrix.}
-
-\item{Z}{Optional instrumental variables matrix.}
 
 \item{type}{A character string indicating the type of ensemble to compute.
 Default is \code{"average"}.}

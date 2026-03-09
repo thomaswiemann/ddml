@@ -29,16 +29,11 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{insample_fitted}}{When \code{compute_insample_predictions = TRUE}.
-#'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{cf_fitted_bylearner}}{A matrix of
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
-#'         \item{\code{insample_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = TRUE}, a list of matrices with
-#'             in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 #'             not \code{NULL}, a
 #'             list of matrices with additional predictions for each learner.}
@@ -74,18 +69,20 @@
 #'                                 silent = TRUE)
 #' dim(shortstack_res$cf_fitted) # = length(y) by length(ensemble_type)
 #' dim(shortstack_res$cf_fitted_bylearner) # = length(y) by length(learners)
-shortstacking <- function(y, X, Z = NULL,
+shortstacking <- function(y, X,
                           learners,
                           sample_folds = 2,
                           ensemble_type = "average",
                           custom_ensemble_weights = NULL,
-                          compute_insample_predictions = FALSE,
-                          subsamples = NULL,
                           cluster_variable = seq_along(y),
+                          subsamples = NULL,
                           silent = FALSE,
                           auxiliary_X = NULL,
                           shortstack_y = y,
                           parallel = NULL) {
+  # Normalize learner specs before parallel dispatch
+  learners <- normalize_learners(learners)
+
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
@@ -107,11 +104,9 @@ shortstacking <- function(y, X, Z = NULL,
   nensb <- length(ensemble_type) + ncustom
 
   # Compute out-of-sample predictions for each learner
-  res <- crosspred(y, X, Z,
+  res <- crosspred(y, X,
                    learners = learners,
                    ensemble_type = "average",
-                   compute_insample_predictions =
-                     compute_insample_predictions,
                    subsamples = subsamples,
                    silent = silent,
                    auxiliary_X = auxiliary_X,
@@ -137,37 +132,6 @@ shortstacking <- function(y, X, Z = NULL,
     }#FOR
   }#IF
 
-  # Compute in-sample predictions (optional)
-  insample_fitted <- rep(list(NULL), sample_folds)
-  fakecv_k <- list()
-  if (compute_insample_predictions) {
-    for (k in seq_len(sample_folds)) {
-      # Compute shortstacking weights in-sample
-      nobs_k <- length(y[-subsamples[[k]]])
-      fakecv_k$cv_resid <- matrix(y[-subsamples[[k]]], nobs_k, nlearners) -
-        res$insample_fitted_bylearner[[k]]
-      weights_k <- ensemble_weights(y[-subsamples[[k]]], X[-subsamples[[k]], ],
-                                    learners = learners,
-                                    type = ensemble_type,
-                                    custom_weights = custom_ensemble_weights,
-                                    cv_results = fakecv_k)$weights
-      # Combine base learners
-      insample_fitted[[k]] <- res$insample_fitted_bylearner[[k]] %*% weights_k
-    }#FOR
-
-    # When multiple ensembles are computed, need to reorganize insample_fitted
-    if (nensb > 1) {
-      # Loop over each ensemble type to create list of insample_fitted's
-      new_insample_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
-      for (i in seq_len(nensb)) {
-        for (k in seq_len(sample_folds)) {
-          new_insample_fitted[[i]][[k]] <- insample_fitted[[k]][, i, drop = FALSE]
-        }#FOR
-      }#FOR
-      insample_fitted <- new_insample_fitted
-    }#IF
-  }#IF
-
   # Compute mspe and r-squared
   mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - cf_fitted)^2)
   y_var <- as.numeric(stats::var(shortstack_y))
@@ -180,11 +144,9 @@ shortstacking <- function(y, X, Z = NULL,
   # return shortstacking output
   output <- list(cf_fitted = cf_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
-                 insample_fitted = insample_fitted,
                  auxiliary_fitted = auxiliary_fitted,
                  cf_fitted_bylearner = res$cf_fitted_bylearner,
                  cf_resid_bylearner = cf_resid_bylearner,
-                 insample_fitted_bylearner = res$insample_fitted_bylearner,
                  auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)
 }#SHORTSTACKING

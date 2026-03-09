@@ -17,6 +17,10 @@
 * `mdl_xgboost()` auto-detects binary factor outcomes.
 * Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median or mean aggregation.
 * Fixes `ddml_fpliv()` with custom weights.
+* Breaking changes:
+    - `crosspred()`, `crossval()`, `ensemble()`, `ensemble_weights()`, and `shortstacking()` no longer accept `Z`/`newZ` arguments. Users must pre-concatenate instruments with covariates (e.g., `cbind(X, Z)`). Estimator-level APIs are unchanged.
+    - `crosspred()` and `shortstacking()` no longer support `compute_insample_predictions`. The `insample_fitted` output components have been removed.
+    - `ddml_fpliv()` no longer accepts the `enforce_LIE` argument.
 
 # ddml 0.3.0
 
