@@ -1,5 +1,7 @@
 #' DDML Estimator for the Average Potential Outcome
 #'
+#' @family ddml estimators
+#'
 #' @description \code{ddml_apo} provides a Double/Debiased Machine Learning
 #'     estimator for the average potential outcome, allowing for custom 
 #'     weights \eqn{\omega(X)}.
@@ -32,6 +34,7 @@
 #'     with nuisance parameters \eqn{\eta = (\ell, p)} taking
 #'     true values \eqn{\ell_0(X) = E[Y|D=d, X]} and \eqn{p_0(X) = E[\mathbbm{1}\{D=d\}|X]}.
 #'
+#' @inheritParams ddml-class
 #' @inheritParams ddml_plm
 #' @inheritParams ddml_ate
 #' @param D The endogenous variable of interest. Can be discrete or continuous.
@@ -50,41 +53,33 @@
 #'     argument.
 #'
 #' @return \code{ddml_apo} returns an object of S3 class
-#'     \code{ddml_apo}. An object of class \code{ddml_apo} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner computed by the cross-validation step in the
-#'             ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             See \code{\link{ddml_plm}} for more information.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DX},
-#'             \code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of selected
-#'             user-provided arguments. See above.}
-#'     }
-#'     
-#' @references Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). 
-#'     "Model Averaging and Double Machine Learning." 
-#'     \url{https://arxiv.org/abs/2401.01645}
-#' @seealso \code{\link{summary.ddml}},
-#'     \code{\link{vcov.ddml}}, \code{\link{confint.ddml}},
-#'     \code{\link{hatvalues.ddml}},
-#'     \code{\link{ddml_plm}}, \code{\link{ddml_pliv}},
-#'     \code{\link{ddml_fpliv}}, \code{\link{ddml_late}},
-#'     \code{\link{ddml_ate}}
+#'     \code{ddml_apo} and \code{ddml}. See \code{\link{ddml-class}}
+#'     for the common output structure. Additional pass-through
+#'     fields: \code{learners}, \code{learners_DX}.
+#'
+#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
+#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
+#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::glance.ddml()], [ddml::diagnostics()]
+#'
 #' @export
+#'
+#' @references
+#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
+#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
+#'
+#' @examples
+#' # Construct variables from the included Angrist & Evans (1998) data
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+#'
+#' # Estimate the APO for d = 1 using a single base learner: Ridge.
+#' apo_fit <- ddml_apo(y, D, X,
+#'                     learners = list(what = mdl_glmnet),
+#'                     sample_folds = 2,
+#'                     silent = TRUE)
+#' summary(apo_fit)
 #'
 ddml_apo <- function(y, D, X,
                      d = 1,
@@ -191,13 +186,15 @@ ddml_apo <- function(y, D, X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
-  ensb_info <- update_ensemble_info(y_X_res$weights,
-                                    D_X_res$cf_fitted)
+  ensb_info <- update_ensemble_info(y_X_res$weights, D_X_res$cf_fitted)
   ensemble_type <- ensb_info$ensemble_type
   nensb <- ensb_info$nensb
 
   # == Score construction ===========================================
 
+  # Extrapolate E[Y|D=d,X] to full sample. aux_indx is indexed by
+  # sorted D_ind levels {0, 1}: [[2]] holds positions of {D_ind=0}
+  # observations per fold, where the D_ind=1 model must extrapolate.
   g_X <- extrapolate_CEF(
     D = D_ind,
     CEF_res_byD = list(list(
@@ -216,19 +213,20 @@ ddml_apo <- function(y, D, X,
   D_ind_mat <- matrix(D_ind, nobs, nensb)
   y_mat <- matrix(y, nobs, nensb)
 
-  psi_b <- (D_ind_mat * (y_mat - g_X) / m_X_tr + g_X) * weights_mat
-  psi_a <- matrix(-1, nobs, nensb)
+  psi_b_mat <- (D_ind_mat * (y_mat - g_X) / m_X_tr + g_X) * weights_mat
+  psi_b <- lapply(seq_len(nensb), function(j) psi_b_mat[, j, drop = FALSE])
+  psi_a <- lapply(seq_len(nensb), function(j) array(-1, dim = c(nobs, 1, 1)))
 
   # == Target parameter =============================================
 
-  apo <- colMeans(psi_b)
+  apo <- colMeans(psi_b_mat)
 
-  scores <- lapply(seq_len(nensb), function(j) {
-    as.matrix(psi_a[, j] * apo[j] + psi_b[, j])
-  })
-  J_list <- lapply(seq_len(nensb), function(j) {
-    as.matrix(mean(psi_a[, j]))
-  })
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  for (j in seq_len(nensb)) {
+    scores[, 1, j] <- -apo[j] + psi_b_mat[, j]
+    J[1, 1, j] <- -1
+  }#FOR
 
   coef_names <- "APO"
   coef <- matrix(apo, nrow = 1, ncol = nensb)
@@ -246,7 +244,7 @@ ddml_apo <- function(y, D, X,
     r2 = list(y_X = y_X_res$r2,
               D_X = D_X_res$r2),
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Average Potential Outcome",
     ensemble_type = ensemble_type,

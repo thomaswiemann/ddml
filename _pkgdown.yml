@@ -33,6 +33,7 @@ reference:
 - title: internal
   contents:
   - ddml
+  - ddml-class
   - matches("print")
   - matches("summary")
 - title: Supported Models
@@ -53,6 +54,7 @@ reference:
   - coef.ddml
   - confint.ddml
   - vcov.ddml
+  - hatvalues.ddml
   - nobs.ddml
   - "`$.ddml`"
   - "`[.summary.ddml`"
@@ -65,8 +67,10 @@ reference:
   - vcov.ddml_rep
   - tidy.ddml_rep
   - glance.ddml_rep
+  - nobs.ddml_rep
   - length.ddml_rep
   - "`[[.ddml_rep`"
+  - reexports
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -75,6 +79,7 @@ reference:
   - mdl_ranger
   - mdl_xgboost
   - mdl_bigGLM
+  - matches("predict")
 - title: Utilities
   contents:
   - crossval

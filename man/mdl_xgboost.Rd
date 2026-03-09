@@ -38,7 +38,7 @@ class(xgboost_fit)
 \references{
 Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
 Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
-Discovery and Data Mining, 785–794.
+Discovery and Data Mining, 785-794.
 }
 \seealso{
 \code{\link[xgboost:xgboost]{xgboost::xgboost()}}

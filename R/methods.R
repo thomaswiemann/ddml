@@ -75,8 +75,16 @@ nobs.ddml <- function(object, ...) {
 #' Extract Generalized Leverage (Hat Values)
 #'
 #' @description Computes the generalized leverage (hat values) for a DDML 
-#'     estimator. These values are used internally to compute heteroskedasticity-robust 
-#'     HC3 standard errors.
+#'     estimator. These values are used internally to compute
+#'     heteroskedasticity-robust HC3 standard errors.
+#'
+#' @details See \code{\link{ddml-class}} for the DML framework and
+#'     the definition of \eqn{\psi_a} and \eqn{\hat{J}}.
+#'     For the linear scores used in \code{ddml},
+#'     the generalized leverage simplifies to
+#'
+#'     \eqn{h_{ii} = \mathrm{tr}(\psi_a(W_i;
+#'     \hat\eta)\,(n\hat{J})^{-1}).}
 #'
 #' @param model An object of class \code{ddml}.
 #' @param ensemble_idx Integer index of the ensemble type to extract leverage
@@ -104,22 +112,14 @@ nobs.ddml <- function(object, ...) {
 #' @export
 hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
   validate_method_args(model, ensemble_idx = ensemble_idx)
-  if (is.list(model$psi_a)) {
-    psi_a_j <- model$psi_a[[ensemble_idx]]
-    J_j <- model$J[[ensemble_idx]]
-    J_inv <- csolve(J_j)
-    J_inv_vec <- as.vector(t(J_inv))
-
-    p <- ncol(J_j)
-    n <- model$nobs
-    dim(psi_a_j) <- c(n, p * p)
-    h <- (psi_a_j %*% J_inv_vec) / n
-    return(as.vector(h))
-  }#IF
-
-  psi_a_j <- model$psi_a[, ensemble_idx]
-  J_j <- as.numeric(model$J[[ensemble_idx]])
-  as.vector(psi_a_j / (model$nobs * J_j))
+  psi_a_j <- model$psi_a[[ensemble_idx]]
+  J_j <- model$J[, , ensemble_idx, drop = FALSE]
+  dim(J_j) <- dim(J_j)[1:2]
+  J_inv <- csolve(J_j)
+  p <- ncol(J_j)
+  n <- model$nobs
+  dim(psi_a_j) <- c(n, p * p)
+  as.vector((psi_a_j %*% as.vector(t(J_inv))) / n)
 }#HATVALUES.DDML
 
 
@@ -132,18 +132,11 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #'     variance-covariance matrix for the DDML estimator
 #'     \eqn{\hat\theta}.
 #'
-#' @details All implemented DDML estimators solve a moment
-#' condition of the form
-#' \eqn{E[m(W; \theta_0, \eta_0)] = 0} where the score
-#' decomposes as
-#'
-#' \eqn{m(W_i; \theta, \eta) = \psi_{b}(W_i; \eta) + \psi_{a}(W_i; \eta)\,\theta.}
-#'
-#' Write \eqn{m_i = m(W_i; \hat\theta, \hat\eta)} for the
-#' evaluated score and
-#' \eqn{\hat{J} = n^{-1}\sum_i \psi_a(W_i; \hat\eta)} for
-#' the sample Jacobian. Three sandwich estimators are
-#' available:
+#' @details See \code{\link{ddml-class}} for the DML framework,
+#'     including the definitions of the score \eqn{m_i},
+#'     the Jacobian \eqn{\hat{J}}, and the base sandwich
+#'     estimator \eqn{\hat\Sigma}. This function provides
+#'     three variants:
 #'
 #' \strong{HC0}:
 #' \deqn{V_{\mathrm{HC0}} = \hat{J}^{-1}
@@ -154,7 +147,7 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #' \deqn{V_{\mathrm{HC1}} = V_{\mathrm{HC0}}
 #'   \times \frac{n}{n - p}}
 #'
-#' where \eqn{p} is the dimension of \eqn{\theta}.
+#'     where \eqn{p} is the dimension of \eqn{\theta}.
 #'
 #' \strong{HC3}:
 #' \deqn{V_{\mathrm{HC3}} = \hat{J}^{-1}
@@ -162,24 +155,8 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #'   \frac{m_i m_i'}{(1 - h_{ii})^2}\right)
 #'   \hat{J}^{-\top} / n}
 #'
-#' where \eqn{h_{ii}} is the generalized leverage. In the
-#' general case,
-#' \deqn{h_{ii} = \mathrm{tr}\!\left(
-#'   \nabla_\theta m(W_i; \hat\theta, \hat\eta)
-#'   \left[\sum_{j=1}^n
-#'   \nabla_\theta m(W_j; \hat\theta, \hat\eta)
-#'   \right]^{-1}\right)}
-#'
-#' where \eqn{\nabla_\theta m(W_i; \hat\theta, \hat\eta)}
-#' is the derivative of the \eqn{i}-th score with respect
-#' to \eqn{\theta} (the nuisance parameters \eqn{\hat\eta}
-#' are treated as fixed, having been estimated
-#' out-of-sample). For the linear scores implemented in
-#' \code{ddml}, the derivative is
-#' \eqn{\nabla_\theta m(W_i; \theta, \eta) = \psi_a(W_i; \eta)},
-#' so the leverage simplifies to
-#'
-#' \eqn{h_{ii} = \mathrm{tr}(\psi_a(W_i; \hat\eta)\,(n\hat{J})^{-1}).}
+#'     where \eqn{h_{ii}} is the generalized leverage;
+#'     see \code{\link{hatvalues.ddml}}.
 #'
 #' @param object An object of class \code{ddml}.
 #' @param ensemble_idx Integer index of the ensemble type to
@@ -218,8 +195,10 @@ vcov.ddml <- function(object, ensemble_idx = 1,
     stats::hatvalues(object, ensemble_idx = ensemble_idx)
   }#IF
 
-  sc <- as.matrix(object$scores[[ensemble_idx]])
-  J_j <- as.matrix(object$J[[ensemble_idx]])
+  sc <- object$scores[, , ensemble_idx, drop = FALSE]
+  dim(sc) <- dim(sc)[1:2]
+  J_j <- object$J[, , ensemble_idx, drop = FALSE]
+  dim(J_j) <- dim(J_j)[1:2]
   p <- ncol(sc)
 
   # Cluster aggregation: rowsum scores to cluster level
@@ -302,7 +281,8 @@ confint.ddml <- function(object, parm, level = 0.95,
   } else {
     parm <- intersect(parm, cf_names)
     if (length(parm) == 0) {
-      stop("None of the specified 'parm' were found in the model coefficients.")
+      stop("None of the specified 'parm' were found in ",
+           "the model coefficients.", call. = FALSE)
     }#IF
   }#IFELSE
   

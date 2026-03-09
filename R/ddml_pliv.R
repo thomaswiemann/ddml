@@ -2,11 +2,7 @@
 #'
 #' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()],
-#'     [AER::ivreg()]
+#' @seealso [AER::ivreg()]
 #'
 #' @description Estimator for the partially linear IV model.
 #'
@@ -31,33 +27,8 @@
 #'     \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and
 #'     \eqn{r_{Z,0}(X) = E[Z|X]}.
 #'
-#' @inheritParams ddml_plm
+#' @inheritParams ddml-class
 #' @param Z A matrix of instruments.
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation functions.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing three named elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to control variables in \code{X} that are passed to
-#'             the base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{what}. Omission of \code{assign_X}
-#'     results in inclusion of all variables in \code{X}.
 #' @param learners_DX,learners_ZX Optional arguments to allow for different
 #'     base learners for estimation of \eqn{E[D|X]}, \eqn{E[Z|X]}. Setup is
 #'     identical to \code{learners}.
@@ -70,30 +41,10 @@
 #'     have the same number of columns.
 #'
 #' @return \code{ddml_pliv} returns an object of S3 class
-#'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner computed by the cross-validation step in the
-#'             ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             See \code{\link{ddml_plm}} for more information.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
-#'             \code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of selected
-#'             user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_pliv} and \code{ddml}. See \code{\link{ddml-class}}
+#'     for the common output structure. Additional pass-through
+#'     fields: \code{learners}, \code{learners_DX},
+#'     \code{learners_ZX}.
 #' @export
 #'
 #' @references
@@ -238,8 +189,8 @@ ddml_pliv <- function(y, D, Z, X,
   # == Score construction ===========================================
 
   coef <- matrix(0, nD + 1, nensb)
-  scores <- vector("list", nensb)
-  J_list <- vector("list", nensb)
+  scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
   psi_a <- vector("list", nensb)
   psi_b <- vector("list", nensb)
 
@@ -264,8 +215,8 @@ ddml_pliv <- function(y, D, Z, X,
     X_full <- D_fit
     e_j <- as.vector(y_r - X_full %*% coef_iv_j)
     
-    scores[[j]] <- X_hat * e_j
-    J_list[[j]] <- -crossprod(X_hat, X_full) / nobs
+    scores[, , j] <- X_hat * e_j
+    J[, , j] <- -crossprod(X_hat, X_full) / nobs
 
     psi_b[[j]] <- X_hat * as.vector(y_r)
     psi_a[[j]] <- -sapply(seq_len(nD + 1),
@@ -306,7 +257,7 @@ ddml_pliv <- function(y, D, Z, X,
     mspe = mspe,
     r2 = r2,
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Partially Linear IV Model",
     ensemble_type = ensemble_type,

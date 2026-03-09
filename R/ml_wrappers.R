@@ -23,11 +23,11 @@
 #' @references
 #' Friedman J, Hastie T, Tibshirani R (2010). "Regularization Paths for
 #'     Generalized Linear Models via Coordinate Descent." Journal of Statistical
-#'     Software, 33(1), 1–22.
+#'     Software, 33(1), 1-22.
 #'
 #' Simon N, Friedman J, Hastie T, Tibshirani R (2011). "Regularization Paths for
 #'     Cox's Proportional Hazards Model via Coordinate Descent." Journal of
-#'     Statistical Software, 39(5), 1–13.
+#'     Statistical Software, 39(5), 1-13.
 #'
 #' @examples
 #' glmnet_fit <- mdl_glmnet(rnorm(100), matrix(rnorm(1000), 100, 10))
@@ -47,6 +47,15 @@ mdl_glmnet <- function(y, X,
   return(mdl_fit)
 }#MDL_GLMNET
 
+#' Predict method for \code{mdl_glmnet} objects.
+#'
+#' @param object A fitted \code{mdl_glmnet} object.
+#' @param newdata A (sparse) feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[glmnet:predict.glmnet]{predict.glmnet}}.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
@@ -96,7 +105,7 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 #' @references
 #' Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
 #' Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
-#' Discovery and Data Mining, 785–794.
+#' Discovery and Data Mining, 785-794.
 #'
 #' @examples
 #' xgboost_fit <- mdl_xgboost(rnorm(50), matrix(rnorm(150), 50, 3),
@@ -119,6 +128,15 @@ mdl_xgboost <- function(y, X,
   return(mdl_fit)
 }#MDL_XGBOOST
 
+#' Predict method for \code{mdl_xgboost} objects.
+#'
+#' @param object A fitted \code{mdl_xgboost} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[xgboost:predict.xgb.Booster]{predict.xgb.Booster}}.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method.
@@ -166,6 +184,16 @@ mdl_ranger <- function(y, X, ...){
   return(mdl_fit)
 }#MDL_RANGER
 
+#' Predict method for \code{mdl_ranger} objects.
+#'
+#' @param object A fitted \code{mdl_ranger} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[ranger:predict.ranger]{predict.ranger}}.
+#'
+#' @return A numeric vector of predicted values (probabilities for
+#'     probability forests, point predictions for regression forests).
+#'
 #' @exportS3Method
 predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Assign column names to newdata if none are given
@@ -179,7 +207,8 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
   } else if (object$treetype == "Regression") {
     stats::predict(object, data = newdata, ...)$predictions
   } else {
-    warning("mdl_ranger is only designed for regression and probability forests")
+    warning("mdl_ranger is only designed for regression and probability forests",
+            call. = FALSE)
     stats::predict(object, data = newdata, ...)$predictions
   }#IFELSE
 }#PREDICT.MDL_RANGER
@@ -214,6 +243,15 @@ mdl_glm <- function(y, X, ...) {
   return(glm_fit) # return fitted glm object
 }#MDL_GLM
 
+#' Predict method for \code{mdl_glm} objects.
+#'
+#' @param object A fitted \code{mdl_glm} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[stats:predict.glm]{predict.glm}}.
+#'
+#' @return A numeric vector of predicted response values.
+#'
 #' @exportS3Method
 predict.mdl_glm <- function(object, newdata, ...) {
   df <- data.frame(newdata) # transform data from matrices to data.frame
@@ -248,6 +286,14 @@ mdl_bigGLM <- function(y, X, ...) {
   return(mdl_fit)
 }#MDL_BIGGLM
 
+#' Predict method for \code{mdl_bigGLM} objects.
+#'
+#' @param object A fitted \code{mdl_bigGLM} object.
+#' @param newdata A (sparse) feature matrix for prediction.
+#' @param ... Currently unused.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.mdl_bigGLM <- function(object, newdata = NULL, ...) {
   beta <- object$fitted_coef

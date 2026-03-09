@@ -13,7 +13,7 @@ Version](https://www.r-pkg.org/badges/version/ddml)](https://cran.r-project.org/
 [![cranlogs](https://cranlogs.r-pkg.org/badges/ddml)](https://cran.r-project.org/package=ddml)
 <!-- badges: end -->
 
-`ddml` is an implementation of Double/Debiased Machine Learning
+`ddml` is an implementation of double/debiased machine learning
 estimators as proposed by Chernozhukov et al. (2018). The key feature of
 `ddml` is the straightforward estimation of nuisance parameters using
 (short-)stacking (Wolpert, 1992), which allows for multiple machine
@@ -69,7 +69,7 @@ X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 ```
 
 `ddml_late` estimates the local average treatment effect (LATE) using
-Double/Debiased Machine Learning (see `?ddml_late`). Since the
+double/debiased machine learning (see `?ddml_late`). Since the
 statistical properties of machine learners depend heavily on the
 underlying (unknown!) structure of the data, adaptive combination of
 multiple machine learners can increase robustness. In the below snippet,
@@ -82,7 +82,7 @@ learners:
 
 ``` r
 # Estimate the local average treatment effect using short-stacking with base
-#     learners ols, rlasso, and xgboost.
+#     learners ols, lasso, and xgboost.
 late_fit_short <- ddml_late(y, D, Z, X,
                             learners = list(list(what = ols),
                                             list(what = mdl_glmnet),
@@ -97,8 +97,8 @@ summary(late_fit_short)
 #> DDML estimation: Local Average Treatment Effect 
 #> Obs: 5000   Folds: 10  Stacking: short-stack
 #> 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.220      0.187   -1.18     0.24
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.223      0.187   -1.19     0.23
 ```
 
 ## Learn More about `ddml`
@@ -141,6 +141,12 @@ advanced features such as [multiway
 clustering](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html)
 and
 [stacking](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html).
+
+## AI Disclosure
+
+Portions of this package’s code, documentation, and tests were developed
+with the assistance of AI tools. We reviewed, tested, and edited all
+AI-generated content. All errors are our own.
 
 ## References
 

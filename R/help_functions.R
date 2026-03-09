@@ -59,10 +59,12 @@ trim_propensity_scores <- function(m_X, trim, ensemble_type,
       if (!silent) {
         if (nensb == 1) {
           warning(paste0(ntrim,
-                         " propensity scores were trimmed."))
+                         " propensity scores were trimmed."),
+                  call. = FALSE)
         } else {
           warning(paste0(ensemble_type[j], ": ", ntrim,
-                         " propensity scores were trimmed."))
+                         " propensity scores were trimmed."),
+                  call. = FALSE)
         }#IFELSE
       }#IF
       m_X[indx_trim_0, j] <- trim
@@ -215,14 +217,17 @@ validate_fitted_splits_pair <- function(fitted, splits,
                                         w_cv = FALSE) {
   if (is.null(fitted)) return(invisible(NULL))
   if (is.null(splits)) {
-    stop("Argument 'splits' must be supplied when 'fitted' is supplied.")
+    stop("Argument 'splits' must be supplied when 'fitted' is supplied.",
+         call. = FALSE)
   }#IF
   if (is.null(splits$subsamples)) {
-    stop("splits must contain 'subsamples' when 'fitted' is supplied.")
+    stop("splits must contain 'subsamples' when 'fitted' is supplied.",
+         call. = FALSE)
   }#IF
   if (w_cv && is.null(splits$cv_subsamples)) {
     stop(paste("splits must contain 'cv_subsamples' for data-driven",
-               "stacking when 'fitted' is supplied."))
+               "stacking when 'fitted' is supplied."),
+         call. = FALSE)
   }#IF
 }#VALIDATE_FITTED_SPLITS_PAIR
 
@@ -274,7 +279,7 @@ normalize_splits <- function(splits = NULL,
   if (!is.null(dots[["cv_subsamples_list"]])) {
     if (!is.null(cv_subsamples))
       stop("Specify cv_subsamples or cv_subsamples_list, ",
-           "not both.")
+           "not both.", call. = FALSE)
     message("Note: cv_subsamples_list has been renamed to ",
             "cv_subsamples.")
     cv_subsamples <- dots[["cv_subsamples_list"]]
@@ -296,7 +301,7 @@ normalize_splits <- function(splits = NULL,
   }#IF
   if (is.null(splits) && !legacy_used) return(NULL)
   if (is.null(splits)) splits <- list()
-  if (!is.list(splits)) stop("'splits' must be a list.")
+  if (!is.list(splits)) stop("'splits' must be a list.", call. = FALSE)
   if (is.null(splits$subsamples) && !is.null(subsamples))
     splits$subsamples <- subsamples
   if (is.null(splits$cv_subsamples) && !is.null(cv_subsamples))
@@ -341,40 +346,44 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
   nobs <- length(y)
   if (!is.null(y)) {
     if (!is.numeric(y) || anyNA(y) || nobs == 0) {
-      stop("y must be a numeric vector with no NAs.")
+      stop("y must be a numeric vector with no NAs.",
+           call. = FALSE)
     }
   }
 
   if (!is.null(D) && !is.null(y)) {
     D_mat <- as.matrix(D)
     if (!is.numeric(D_mat) || anyNA(D_mat)) {
-      stop("D must be numeric with no NAs.")
+      stop("D must be numeric with no NAs.", call. = FALSE)
     }
     if (nrow(D_mat) != nobs) {
-      stop("Length/number of rows of D must match length of y.")
+      stop("Length/number of rows of D must match length of y.",
+           call. = FALSE)
     }
     if (require_binary_D) {
       if (!all(D_mat %in% c(0, 1))) {
-        stop("D must be binary (0 or 1).")
+        stop("D must be binary (0 or 1).", call. = FALSE)
       }
     }
   }
 
   if (!is.null(X) && !is.null(y)) {
     if (NROW(X) != nobs) {
-      stop("Number of rows of X must match length of y.")
+      stop("Number of rows of X must match length of y.",
+           call. = FALSE)
     }
   }
 
   if (!is.null(Z) && !is.null(y)) {
     if (NROW(Z) != nobs) {
-      stop("Number of rows of Z must match length of y.")
+      stop("Number of rows of Z must match length of y.",
+           call. = FALSE)
     }
   }
 
   if (!is.null(learners)) {
     if (!is.list(learners)) {
-      stop("learners must be a list.")
+      stop("learners must be a list.", call. = FALSE)
     } else {
       is_single <- is_single_learner(learners)
       if (!is_single) {
@@ -393,14 +402,16 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
   if (!is.null(sample_folds)) {
     if (!is.numeric(sample_folds) || length(sample_folds) > 1 ||
         sample_folds < 1 || sample_folds %% 1 != 0) {
-      stop("sample_folds must be a positive integer.")
+      stop("sample_folds must be a positive integer.",
+           call. = FALSE)
     }
   }
 
   if (!is.null(cv_folds)) {
     if (!is.numeric(cv_folds) || length(cv_folds) > 1 ||
         cv_folds < 1 || cv_folds %% 1 != 0) {
-      stop("cv_folds must be a positive integer.")
+      stop("cv_folds must be a positive integer.",
+           call. = FALSE)
     }
   }
 
@@ -409,7 +420,8 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
     if (!is.character(ensemble_type) ||
         any(!ensemble_type %in% allowed_types)) {
       stop("ensemble_type must be one or more of: ",
-           "nnls, nnls1, singlebest, ols, average.")
+           "nnls, nnls1, singlebest, ols, average.",
+           call. = FALSE)
     }
   }
 
@@ -417,22 +429,25 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
     if (!is.numeric(trim) || length(trim) > 1 ||
         trim <= 0 || trim >= 0.5) {
       stop("trim must be a numeric value strictly ",
-           "between 0 and 0.5.")
+           "between 0 and 0.5.", call. = FALSE)
     }
   }
 
   if (!is.null(weights) && !is.null(y)) {
     if (!is.numeric(weights) || anyNA(weights)) {
-      stop("weights must be a numeric vector with no NAs.")
+      stop("weights must be a numeric vector with no NAs.",
+           call. = FALSE)
     }
     if (length(weights) != nobs) {
-      stop("weights must have the same length as y.")
+      stop("weights must have the same length as y.",
+           call. = FALSE)
     }
   }
 
   if (!is.null(cluster_variable)) {
     if (anyNA(cluster_variable)) {
-      stop("cluster_variable must not contain NAs.")
+      stop("cluster_variable must not contain NAs.",
+           call. = FALSE)
     }
   }
 }#VALIDATE_INPUTS
@@ -440,12 +455,14 @@ validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
 validate_custom_weights <- function(custom_weights, learners) {
   if (is.null(custom_weights)) return(invisible(NULL))
   if (!is.numeric(custom_weights)) {
-    stop("custom_ensemble_weights must be numeric.")
+    stop("custom_ensemble_weights must be numeric.",
+         call. = FALSE)
   }
   custom_weights <- as.matrix(custom_weights)
   n_learners <- if (is_single_learner(learners)) 1 else length(learners)
   if (nrow(custom_weights) != n_learners) {
-    stop("Number of rows in custom_ensemble_weights must match the number of base learners.")
+    stop("Number of rows in custom_ensemble_weights must match ",
+         "the number of base learners.", call. = FALSE)
   }
 }#VALIDATE_CUSTOM_WEIGHTS
 

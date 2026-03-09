@@ -291,7 +291,7 @@ test_that("ddml_late scores are mean-zero", {
   fit <- ddml_late(y, D, Z, X,
                    learners = list(what = ols),
                    sample_folds = 3, silent = TRUE)
-  score_mean <- mean(fit$scores[[1]])
+  score_mean <- mean(fit$scores[, , 1])
   expect_true(abs(score_mean) < 0.05,
               label = paste("score mean =", round(score_mean, 6)))
 })

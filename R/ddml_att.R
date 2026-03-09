@@ -117,7 +117,9 @@ ddml_att <- function(y, D, X,
 
   # == Score construction ===========================================
 
-  # Reconstruct full-sample g_X_D0 from the apo fitted object
+  # Extrapolate E[Y|D=0,X] to full sample. aux_indx is indexed by
+  # sorted D levels {0, 1}: [[1]] holds positions of {D=1}
+  # observations per fold, where the D=0 model must extrapolate.
   g_X_D0 <- extrapolate_CEF(
     D = D,
     CEF_res_byD = list(list(
@@ -131,21 +133,23 @@ ddml_att <- function(y, D, X,
   D_mat <- matrix(D, nobs, nensb)
   y_mat <- matrix(y, nobs, nensb)
 
-  psi_b <- D_mat * (y_mat - g_X_D0) / p -
+  psi_b_mat <- D_mat * (y_mat - g_X_D0) / p -
     m_X_tr * (1 - D_mat) * (y_mat - g_X_D0) /
     (p * (1 - m_X_tr))
-  psi_a <- -D_mat / p
+  psi_a_vec <- -D / p
+  psi_b <- lapply(seq_len(nensb), function(j) psi_b_mat[, j, drop = FALSE])
+  psi_a <- lapply(seq_len(nensb), function(j) array(psi_a_vec, dim = c(nobs, 1, 1)))
 
   # == Target parameter =============================================
 
-  att <- -colMeans(psi_b) / colMeans(psi_a)
+  att <- -colMeans(psi_b_mat) / mean(psi_a_vec)
 
-  scores <- lapply(seq_len(nensb), function(j) {
-    as.matrix(psi_a[, j] * att[j] + psi_b[, j])
-  })
-  J_list <- lapply(seq_len(nensb), function(j) {
-    as.matrix(mean(psi_a[, j]))
-  })
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  for (j in seq_len(nensb)) {
+    scores[, 1, j] <- psi_a_vec * att[j] + psi_b_mat[, j]
+    J[1, 1, j] <- mean(psi_a_vec)
+  }#FOR
 
   coef_names <- "ATT"
   coef <- matrix(att, nrow = 1, ncol = nensb)
@@ -164,7 +168,7 @@ ddml_att <- function(y, D, X,
     r2 = list(y_X_D0 = apo_0$r2$y_X,
               D_X = D_X_res$r2),
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name =
       "Average Treatment Effect on the Treated",

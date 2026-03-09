@@ -2,11 +2,6 @@
 #'
 #' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()]
-#'
 #' @description Estimator of the local average treatment effect.
 #'
 #' @details \code{ddml_late} provides a Double/Debiased Machine Learning
@@ -41,33 +36,9 @@
 #'     true values \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]},
 #'     \eqn{r_{z,0}(X) = E[D|Z=z, X]}, and \eqn{m_0(X) = E[Z|X]}.
 #'
+#' @inheritParams ddml-class
 #' @inheritParams ddml_ate
 #' @param Z Binary instrumental variable.
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation functions.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing three named elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to control variables in \code{X} that are passed to
-#'             the base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{what}. Omission of \code{assign_X}
-#'     results in inclusion of all variables in \code{X}.
 #' @param learners_DXZ,learners_ZX Optional arguments to allow for different
 #'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
 #'     identical to \code{learners}.
@@ -88,30 +59,10 @@
 #'     compatibility but should be replaced with \code{splits}.
 #'
 #' @return \code{ddml_late} returns an object of S3 class
-#'     \code{ddml_late}. An object of class \code{ddml_late} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of
-#'             each base learner computed by the cross-validation step
-#'             in the ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             See \code{\link{ddml_plm}} for more information.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DXZ},
-#'             \code{learners_ZX},\code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of selected
-#'             user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_late} and \code{ddml}. See
+#'     \code{\link{ddml-class}} for the common output structure.
+#'     Additional pass-through fields: \code{learners},
+#'     \code{learners_DXZ}, \code{learners_ZX}.
 #' @export
 #'
 #' @references
@@ -301,19 +252,24 @@ ddml_late <- function(y, D, Z, X,
 
   # == Score construction ===========================================
 
-  psi_b <- ate_rf$psi_b
-  psi_a <- -ate_fs$psi_b
+  psi_b <- ate_rf$psi_b   # already a list (from ddml_ate)
+  psi_a <- lapply(seq_len(nensb), function(j) {
+    array(-as.vector(ate_fs$psi_b[[j]]),
+          dim = c(nobs, 1, 1))
+  })
 
   # == Target parameter =============================================
 
-  late <- as.vector(ate_rf$coefficients) / as.vector(ate_fs$coefficients)
+  late <- as.vector(ate_rf$coefficients) /
+    as.vector(ate_fs$coefficients)
 
-  scores <- lapply(seq_len(nensb), function(j) {
-    as.matrix(psi_a[, j] * late[j] + psi_b[, j])
-  })
-  J_list <- lapply(seq_len(nensb), function(j) {
-    as.matrix(mean(psi_a[, j]))
-  })
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  for (j in seq_len(nensb)) {
+    scores[, 1, j] <- psi_a[[j]][, 1, 1] * late[j] +
+      as.vector(psi_b[[j]])
+    J[1, 1, j] <- mean(psi_a[[j]])
+  }#FOR
 
   coef_names <- "LATE"
   coef <- matrix(late, nrow = 1, ncol = nensb)
@@ -351,7 +307,7 @@ ddml_late <- function(y, D, Z, X,
       D_X_Z1 = ate_fs$r2$y_X_D1,
       Z_X = ate_rf$r2$D_X),
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Local Average Treatment Effect",
     ensemble_type = ensemble_type,

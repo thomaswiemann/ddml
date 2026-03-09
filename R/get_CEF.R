@@ -38,15 +38,14 @@ get_CEF <- function(y, X,
           is.null(fitted$auxiliary_fitted_bylearner)) {
         stop(paste("When auxiliary predictions are required,",
                    "fitted objects must contain",
-                   "'auxiliary_fitted_bylearner'."))
+                   "'auxiliary_fitted_bylearner'."), call. = FALSE)
       }#IF
       res <- build_CEF_from_crossfit(
         y, fitted$cf_fitted_bylearner,
         ensemble_type, custom_ensemble_weights,
         cv_resid_byfold = fitted$cv_resid_byfold,
         subsamples = subsamples,
-        auxiliary_fitted_bylearner =
-          fitted$auxiliary_fitted_bylearner)
+        auxiliary_fitted_bylearner = fitted$auxiliary_fitted_bylearner)
       return(res)
     }#IF
     if (!is.null(fitted$cf_fitted)) {
@@ -80,8 +79,7 @@ get_CEF <- function(y, X,
     }#IF
 
     if (!is.null(label) && label != "") {
-      info_msg("  ", label,
-               " .......... skipped (constant outcome)",
+      info_msg("  ", label, " .......... skipped (constant outcome)",
                silent = silent)
     }#IF
 
@@ -133,7 +131,9 @@ get_CEF <- function(y, X,
 # predictions into an (nobs x nensb x nlevels) array.
 #
 # @param D Treatment vector.
-# @param CEF_res_byD List of get_CEF results, one per D level.
+# @param CEF_res_byD List (length nlevels) of lists, each with
+#   elements \code{$fit} (containing \code{$cf_fitted} and
+#   \code{$auxiliary_fitted}) and \code{$d} (the treatment level).
 # @param aux_indx Auxiliary sample indices for extrapolation.
 extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   # Data parameters
@@ -143,18 +143,18 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   is_D <- rep(list(NULL), nCEF)
   for (d in seq_len(nCEF)) is_D[[d]] <- which(D == D_levels[d])
   nensb <- ncol(as.matrix(
-    CEF_res_byD[[1]][[1]]$cf_fitted))
+    CEF_res_byD[[1]]$fit$cf_fitted))
   sample_folds <- length(
-    CEF_res_byD[[1]][[1]]$auxiliary_fitted)
+    CEF_res_byD[[1]]$fit$auxiliary_fitted)
 
   # Populate CEF
   g_X_byD <- array(0, dim = c(nobs, nensb, nCEF))
   for (d in seq_len(nCEF)) {
     g_X_byD[is_D[[d]], , d] <-
-      CEF_res_byD[[d]][[1]]$cf_fitted
+      CEF_res_byD[[d]]$fit$cf_fitted
     for (k in seq_len(sample_folds)) {
       g_X_byD[aux_indx[[d]][[k]], , d] <-
-        CEF_res_byD[[d]][[1]]$auxiliary_fitted[[k]]
+        CEF_res_byD[[d]]$fit$auxiliary_fitted[[k]]
     }#FOR
   }#FOR
 

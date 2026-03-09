@@ -61,7 +61,7 @@ ensemble <- function(y, X,
   # Check if y is constant
   if (length(unique(y)) == 1) {
     warning(paste("Outcome variable y is constant. Ensemble will return",
-                   "mean(y) for all predictions."))
+                   "mean(y) for all predictions."), call. = FALSE)
     # Return minimal output needed for predictions
     output <- list(
       mdl_fits = NULL,
@@ -86,7 +86,8 @@ ensemble <- function(y, X,
   cv_results <- ens_w_res$cv_results
   # Warn if all learner weights are zero across ensemble columns
   if (!any(rowSums(abs(weights)) > 0)) {
-    warning("None of the learners are assigned positive stacking weights.")
+    warning("None of the learners are assigned positive stacking weights.",
+            call. = FALSE)
   }#IF
   # Fit all base learners to keep per-learner outputs always available
   mdl_fits <- rep(list(NULL), nlearners)
@@ -114,6 +115,15 @@ ensemble <- function(y, X,
 
 # Complementary methods ========================================================
 
+#' Predict method for \code{ensemble} objects.
+#'
+#' @param object A fitted \code{ensemble} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Currently unused.
+#'
+#' @return A matrix of per-learner predictions with one column per
+#'     base learner.
+#'
 #' @exportS3Method
 predict.ensemble <- function(object, newdata, ...){
   # Data parameters
@@ -193,7 +203,7 @@ ensemble_weights <- function(y, X,
   # Check whether out-of-sample residuals should be calculated to inform the
   #     ensemble weights, and whether previous results are available.
   cv_stacking <- c("ols", "nnls", "nnls1", "singlebest")
-  if (any(cv_stacking %in% type) & is.null(cv_results)) {
+  if (any(cv_stacking %in% type) && is.null(cv_results)) {
     # Run crossvalidation procedure
     cv_results <- crossval(y, X,
                            learners = learners,
@@ -257,7 +267,7 @@ ensemble_weights <- function(y, X,
   }#IF
   # Assign ensemble types to columns
   if (!(ncustom == 0) && is.null(colnames(custom_weights))) {
-    colnames(custom_weights) <- paste0("custom_", 1:ncustom)
+    colnames(custom_weights) <- paste0("custom_", seq_len(ncustom))
   }#IF
   colnames(weights) <- c(type, colnames(custom_weights))
   # Organize and return output

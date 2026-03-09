@@ -2,11 +2,7 @@
 #'
 #' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()],
-#'     [AER::ivreg()]
+#' @seealso [AER::ivreg()]
 #'
 #' @description Estimator for the flexible partially linear IV model.
 #'
@@ -31,7 +27,7 @@
 #'     \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_0(X) = E[D|X]}, and
 #'     \eqn{v_0(X, Z) = E[D|X, Z]}.
 #'
-#' @inheritParams ddml_pliv
+#' @inheritParams ddml-class
 #' @param Z A (sparse) matrix of instruments.
 #' @param learners_DXZ,learners_DX Optional arguments to allow for different
 #'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[D \vert X]}. Setup is
@@ -43,38 +39,12 @@
 #'     \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_DX} must
 #'     have the same number of columns.
-#' @param fitted An optional named list of per-equation cross-fitted
-#'     predictions, typically obtained via \code{fit$fitted}. See
-#'     \code{\link{ddml_plm}} for details.
-#' @param save_crossval Logical; store inner cross-validation
-#'     residuals for exact weight recomputation on pass-through.
-#'     See \code{\link{ddml_plm}} for details.
 #'
 #' @return \code{ddml_fpliv} returns an object of S3 class
-#'     \code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner computed by the cross-validation step in the
-#'             ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             See \code{\link{ddml_plm}} for more information.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DXZ},
-#'             \code{learners_DX},\code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of selected
-#'             user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_fpliv} and \code{ddml}. See
+#'     \code{\link{ddml-class}} for the common output structure.
+#'     Additional pass-through fields: \code{learners},
+#'     \code{learners_DXZ}, \code{learners_DX}.
 #' @export
 #'
 #' @references
@@ -228,8 +198,8 @@ ddml_fpliv <- function(y, D, Z, X,
   # == Score construction ===========================================
 
   coef <- matrix(0, nD + 1, nensb)
-  scores <- vector("list", nensb)
-  J_list <- vector("list", nensb)
+  scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
   psi_a <- vector("list", nensb)
   psi_b <- vector("list", nensb)
 
@@ -260,8 +230,8 @@ ddml_fpliv <- function(y, D, Z, X,
     X_full <- D_fit
     e_j <- as.vector(y_r - X_full %*% coef_iv_j)
 
-    scores[[j]] <- X_hat * e_j
-    J_list[[j]] <- -crossprod(X_hat, X_full) / nobs
+    scores[, , j] <- X_hat * e_j
+    J[, , j] <- -crossprod(X_hat, X_full) / nobs
 
     psi_b[[j]] <- X_hat * as.vector(y_r)
     psi_a[[j]] <- -sapply(seq_len(nD + 1),
@@ -298,7 +268,7 @@ ddml_fpliv <- function(y, D, Z, X,
     mspe = mspe,
     r2 = r2,
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Flexible Partially Linear IV Model",
     ensemble_type = ensemble_type,

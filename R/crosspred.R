@@ -45,50 +45,7 @@
 #'     \eqn{\mathcal{T}_s} and predictions are made for \eqn{I_s}.
 #'
 #' @inheritParams crossval
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     predictor.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing three named elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to predictive variables in \code{X} that are
-#'             passed to the base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{what}. Omission of \code{assign_X}
-#'     results in inclusion of all variables in \code{X}.
-#' @param sample_folds Number of cross-fitting folds.
-#' @param ensemble_type Ensemble method to combine base learners into final
-#'     estimate of the conditional expectation functions. Possible values are:
-#'     \itemize{
-#'         \item{\code{"nnls"} Non-negative least squares.}
-#'         \item{\code{"nnls1"} Non-negative least squares with the constraint
-#'             that all weights sum to one.}
-#'         \item{\code{"singlebest"} Select base learner with minimum MSPE.}
-#'         \item{\code{"ols"} Ordinary least squares.}
-#'         \item{\code{"average"} Simple average over base learners.}
-#'     }
-#'     Multiple ensemble types may be passed as a vector of strings.
-#' @param cv_folds Number of folds used for cross-validation in ensemble
-#'     construction.
-#' @param custom_ensemble_weights A numerical matrix with user-specified
-#'     ensemble weights. Each column corresponds to a custom ensemble
-#'     specification, each row corresponds to a base learner in \code{learners}
-#'     (in chronological order). Optional column names are used to name the
-#'     estimation results corresponding the custom ensemble specification.
+#' @inheritParams ddml-class
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
@@ -96,18 +53,6 @@
 #' @param auxiliary_X An optional list of matrices of length
 #'     \code{sample_folds}, each containing additional observations to calculate
 #'     predictions for.
-#' @param parallel An optional named list with parallel processing
-#'     options. When \code{NULL} (the default), computation is
-#'     sequential. Supported fields:
-#'     \describe{
-#'         \item{\code{cores}}{Number of cores to use.}
-#'         \item{\code{export}}{Character vector of object names to
-#'             export to parallel workers (for custom learners that
-#'             reference global objects).}
-#'         \item{\code{packages}}{Character vector of additional
-#'             package names to load on workers (for custom learners
-#'             that use packages not imported by \code{ddml}).}
-#'     }
 #'
 #' @return \code{crosspred} returns a list containing the following components:
 #'     \describe{
@@ -117,11 +62,24 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
+#'         \item{\code{mspe}}{A matrix of per-learner MSPEs, with
+#'             rows for learners and columns for sample folds.
+#'             \code{NULL} when a single learner is used.}
+#'         \item{\code{r2}}{A matrix of per-learner out-of-sample
+#'             R-squared values. Same dimensions as \code{mspe}.
+#'             \code{NULL} when a single learner is used.}
+#'         \item{\code{cv_resid_byfold}}{A list (length
+#'             \code{sample_folds}) of inner cross-validation
+#'             residual matrices used for ensemble weight estimation.
+#'             \code{NULL} when a single learner is used.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
 #'             predictions, each column corresponding to a base learner
 #'             (in chronological order).}
+#'         \item{\code{cf_resid_bylearner}}{A matrix of out-of-sample
+#'             residuals (\code{y - cf_fitted_bylearner}), each column
+#'             corresponding to a base learner.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X}
 #'             is not \code{NULL}, a list of matrices with additional
 #'             predictions for each learner.}
@@ -177,7 +135,8 @@ crosspred <- function(y, X,
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
-      stop("Specify cv_subsamples or cv_subsamples_list, not both.")
+      stop("Specify cv_subsamples or cv_subsamples_list, not both.",
+           call. = FALSE)
     message("Note: cv_subsamples_list has been renamed to cv_subsamples.")
     cv_subsamples <- cv_subsamples_list
   }#IF

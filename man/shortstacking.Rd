@@ -11,7 +11,6 @@ shortstacking(
   sample_folds = 2,
   ensemble_type = "average",
   custom_ensemble_weights = NULL,
-  compute_insample_predictions = FALSE,
   cluster_variable = seq_along(y),
   subsamples = NULL,
   silent = FALSE,
@@ -25,54 +24,43 @@ shortstacking(
 
 \item{X}{A (sparse) matrix of predictive variables.}
 
-\item{learners}{May take one of two forms, depending on whether a single
-learner or stacking with multiple learners is used for estimation of the
-predictor.
-If a single learner is used, \code{learners} is a list with two named
-elements:
-\itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
-}
-If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing three named elements:
+\item{learners}{\code{learners} is a list of lists, each containing three
+named elements:
 \itemize{
 \item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
 \item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to predictive variables in \code{X} that are
-passed to the base learner.}
+corresponding to variables in \code{X} that are passed to
+the base learner.}
 }
 Omission of the \code{args} element results in default arguments being
 used in \code{what}. Omission of \code{assign_X}
-results in inclusion of all variables in \code{X}.}
+results in inclusion of all predictive variables in \code{X}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{Ensemble method to combine base learners into final
-estimate of the conditional expectation functions. Possible values are:
+\item{ensemble_type}{Ensemble method to combine base learners into
+final estimate of the conditional expectation functions.
+Possible values are:
 \itemize{
 \item{\code{"nnls"} Non-negative least squares.}
-\item{\code{"nnls1"} Non-negative least squares with the constraint
-that all weights sum to one.}
-\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"nnls1"} Non-negative least squares with the
+constraint that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum
+MSPE.}
 \item{\code{"ols"} Ordinary least squares.}
 \item{\code{"average"} Simple average over base learners.}
 }
 Multiple ensemble types may be passed as a vector of strings.}
 
-\item{custom_ensemble_weights}{A numerical matrix with user-specified
-ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to a base learner in \code{learners}
-(in chronological order). Optional column names are used to name the
-estimation results corresponding the custom ensemble specification.}
-
-\item{compute_insample_predictions}{Indicator equal to 1 if in-sample
-predictions should also be computed.}
+\item{custom_ensemble_weights}{A numerical matrix with
+user-specified ensemble weights. Each column corresponds to a
+custom ensemble specification, each row corresponds to a base
+learner in \code{learners} (in chronological order). Optional
+column names are used to name the estimation results
+corresponding the custom ensemble specification.}
 
 \item{cluster_variable}{A vector of cluster indices.}
 
@@ -110,16 +98,17 @@ order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{insample_fitted}}{When \code{compute_insample_predictions = TRUE}.
-a list of matrices with in-sample predictions by sample fold.}
+\item{\code{mspe}}{A numeric vector of per-ensemble MSPEs for
+the short-stacked predictions.}
+\item{\code{r2}}{A numeric vector of per-ensemble
+out-of-sample R-squared values.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
 \item{\code{cf_fitted_bylearner}}{A matrix of
 out-of-sample predictions, each column corresponding to a base
 learner (in chronological order).}
-\item{\code{insample_fitted_bylearner}}{When
-\code{compute_insample_predictions = TRUE}, a list of matrices with
-in-sample predictions by sample fold.}
+\item{\code{cf_resid_bylearner}}{A matrix of per-learner
+out-of-sample residuals used for weight estimation.}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 not \code{NULL}, a
 list of matrices with additional predictions for each learner.}

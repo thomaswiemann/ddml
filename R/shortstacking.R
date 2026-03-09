@@ -5,21 +5,10 @@
 #' @description Predictions using short-stacking.
 #'
 #' @inheritParams crosspred
+#' @inheritParams ddml-class
 #' @param shortstack_y Optional vector of the outcome variable to form
 #'     short-stacking predictions for. Base learners are always trained on
 #'     \code{y}.
-#' @param parallel An optional named list with parallel processing
-#'     options. When \code{NULL} (the default), computation is
-#'     sequential. Supported fields:
-#'     \describe{
-#'         \item{\code{cores}}{Number of cores to use.}
-#'         \item{\code{export}}{Character vector of object names to
-#'             export to parallel workers (for custom learners that
-#'             reference global objects).}
-#'         \item{\code{packages}}{Character vector of additional
-#'             package names to load on workers (for custom learners
-#'             that use packages not imported by \code{ddml}).}
-#'     }
 #'
 #' @return \code{shortstack} returns a list containing the following components:
 #'     \describe{
@@ -29,11 +18,17 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
+#'         \item{\code{mspe}}{A numeric vector of per-ensemble MSPEs for
+#'             the short-stacked predictions.}
+#'         \item{\code{r2}}{A numeric vector of per-ensemble
+#'             out-of-sample R-squared values.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{cf_fitted_bylearner}}{A matrix of
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
+#'         \item{\code{cf_resid_bylearner}}{A matrix of per-learner
+#'             out-of-sample residuals used for weight estimation.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
 #'             not \code{NULL}, a
 #'             list of matrices with additional predictions for each learner.}

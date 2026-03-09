@@ -52,6 +52,15 @@ ols <- function(y, X,
 
 # Complementary methods ========================================================
 
+#' Predict method for \code{ols} objects.
+#'
+#' @param object A fitted \code{ols} object.
+#' @param newdata A feature matrix for prediction. If \code{NULL},
+#'     returns fitted values from the training data.
+#' @param ... Currently unused.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix

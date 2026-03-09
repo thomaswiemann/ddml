@@ -42,44 +42,49 @@ ddml_apo(
 \eqn{\omega(X)}. If \code{weights = NULL} (the default), a vector of 1s
 is used, which estimates the Average Potential Outcome (APO).}
 
-\item{learners}{May take one of two forms, depending on whether a single
-learner or stacking with multiple learners is used for estimation of the
-conditional expectation functions.
-If a single learner is used, \code{learners} is a list with two named
-elements:
+\item{learners}{May take one of two forms, depending on whether a
+single learner or stacking with multiple learners is used for
+estimation of the conditional expectation functions.
+If a single learner is used, \code{learners} is a list with
+two named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 }
-If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing four named elements:
+If stacking with multiple learners is used, \code{learners} is
+a list of lists, each containing three named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to control variables in \code{X} that are passed to
-the base learner.}
+corresponding to control variables in \code{X} that
+are passed to the base learner.}
 }
-Omission of the \code{args} element results in default arguments being
-used in \code{what}. Omission of \code{assign_X} results in inclusion of
-all variables in \code{X}.}
+Omission of the \code{args} element results in default
+arguments being used in \code{what}. Omission of
+\code{assign_X} results in inclusion of all variables in
+\code{X}.}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{Ensemble method to combine base learners into final
-estimate of the conditional expectation functions. Possible values are:
+\item{ensemble_type}{Ensemble method to combine base learners into
+final estimate of the conditional expectation functions.
+Possible values are:
 \itemize{
 \item{\code{"nnls"} Non-negative least squares.}
-\item{\code{"nnls1"} Non-negative least squares with the constraint
-that all weights sum to one.}
-\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"nnls1"} Non-negative least squares with the
+constraint that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum
+MSPE.}
 \item{\code{"ols"} Ordinary least squares.}
 \item{\code{"average"} Simple average over base learners.}
 }
@@ -87,14 +92,15 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{Number of folds used for cross-validation in ensemble
-construction.}
+\item{cv_folds}{Number of folds used for cross-validation in
+ensemble construction.}
 
-\item{custom_ensemble_weights}{A numerical matrix with user-specified
-ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to a base learner in \code{learners}
-(in chronological order). Optional column names are used to name the
-estimation results corresponding the custom ensemble specification.}
+\item{custom_ensemble_weights}{A numerical matrix with
+user-specified ensemble weights. Each column corresponds to a
+custom ensemble specification, each row corresponds to a base
+learner in \code{learners} (in chronological order). Optional
+column names are used to name the estimation results
+corresponding the custom ensemble specification.}
 
 \item{custom_ensemble_weights_DX}{Optional argument to allow for different
 custom ensemble weights for \code{learners_DX}. Setup is identical to
@@ -129,7 +135,8 @@ predictions, typically obtained from a previous fit via
 \code{fit$fitted}. When supplied (together with \code{splits}),
 base learners are not re-fitted; only ensemble weights are
 recomputed. This allows fast re-estimation with a different
-\code{ensemble_type}. See the example below.}
+\code{ensemble_type}. See \code{\link{ddml_plm}} for
+an example.}
 
 \item{splits}{An optional list of sample split objects. For
 \code{ddml_apo}, this must be a list with elements \code{subsamples} and
@@ -137,8 +144,8 @@ recomputed. This allows fast re-estimation with a different
 \code{cv_subsamples_byd} for stratified splitting). Typically
 obtained from a previous fit via \code{fit$splits}.}
 
-\item{save_crossval}{Logical indicating whether to store the
-inner cross-validation residuals used for ensemble weight
+\item{save_crossval}{Logical indicating whether to store the inner
+cross-validation residuals used for ensemble weight
 computation. Default \code{TRUE}. When \code{TRUE}, subsequent
 pass-through calls with data-driven ensembles (e.g.,
 \code{"nnls"}) reproduce per-fold weights exactly. Set to
@@ -152,30 +159,9 @@ argument.}
 }
 \value{
 \code{ddml_apo} returns an object of S3 class
-\code{ddml_apo}. An object of class \code{ddml_apo} is a list
-containing the following components:
-\describe{
-\item{\code{coefficients}}{A matrix of estimated coefficients.}
-\item{\code{ensemble_weights}}{A list of matrices, providing the
-weight assigned to each base learner by the ensemble
-procedure.}
-\item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner computed by the cross-validation step in the
-ensemble construction.}
-\item{\code{r2}}{The out-of-sample R-squared.}
-\item{\code{psi_a}, \code{psi_b}}{Score components used in
-\code{\link{vcov.ddml}}.}
-\item{\code{scores}}{A list of evaluated Neyman orthogonal
-scores.}
-\item{\code{J}}{A list of evaluated Jacobians.}
-\item{\code{fitted}}{A list of fitted nuisance estimators.
-See \code{\link{ddml_plm}} for more information.}
-\item{\code{splits}}{The data splitting structure.}
-\item{\code{learners},\code{learners_DX},
-\code{cluster_variable},
-\code{ensemble_type}}{Pass-through of selected
-user-provided arguments. See above.}
-}
+\code{ddml_apo} and \code{ddml}. See \code{\link{ddml-class}}
+for the common output structure. Additional pass-through
+fields: \code{learners}, \code{learners_DX}.
 }
 \description{
 \code{ddml_apo} provides a Double/Debiased Machine Learning
@@ -212,16 +198,36 @@ The estimating equation is
 true values \eqn{\ell_0(X) = E[Y|D=d, X]} and \eqn{p_0(X) = E[\mathbbm{1}\{D=d\}|X]}.
 }\if{html}{\out{</div>}}
 }
+\examples{
+# Construct variables from the included Angrist & Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the APO for d = 1 using a single base learner: Ridge.
+apo_fit <- ddml_apo(y, D, X,
+                    learners = list(what = mdl_glmnet),
+                    sample_folds = 2,
+                    silent = TRUE)
+summary(apo_fit)
+
+}
 \references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024).
-"Model Averaging and Double Machine Learning."
-\url{https://arxiv.org/abs/2401.01645}
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
+Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 }
 \seealso{
-\code{\link{summary.ddml}},
-\code{\link{vcov.ddml}}, \code{\link{confint.ddml}},
-\code{\link{hatvalues.ddml}},
-\code{\link{ddml_plm}}, \code{\link{ddml_pliv}},
-\code{\link{ddml_fpliv}}, \code{\link{ddml_late}},
-\code{\link{ddml_ate}}
+\code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
+\code{\link[=vcov.ddml]{vcov.ddml()}}, \code{\link[=confint.ddml]{confint.ddml()}},
+\code{\link[=hatvalues.ddml]{hatvalues.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
+\code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
+
+Other ddml estimators: 
+\code{\link{ddml-class}},
+\code{\link{ddml_ate}()},
+\code{\link{ddml_fpliv}()},
+\code{\link{ddml_late}()},
+\code{\link{ddml_pliv}()},
+\code{\link{ddml_plm}()}
 }
+\concept{ddml estimators}

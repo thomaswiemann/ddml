@@ -19,8 +19,18 @@ A numeric vector of generalized leverage values.
 }
 \description{
 Computes the generalized leverage (hat values) for a DDML
-estimator. These values are used internally to compute heteroskedasticity-robust
-HC3 standard errors.
+estimator. These values are used internally to compute
+heteroskedasticity-robust HC3 standard errors.
+}
+\details{
+See \code{\link{ddml-class}} for the DML framework and
+the definition of \eqn{\psi_a} and \eqn{\hat{J}}.
+For the linear scores used in \code{ddml},
+the generalized leverage simplifies to
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{\eqn{h_{ii} = \mathrm{tr}(\psi_a(W_i;
+    \hat\eta)\,(n\hat{J})^{-1}).}
+}\if{html}{\out{</div>}}
 }
 \examples{
 \donttest{

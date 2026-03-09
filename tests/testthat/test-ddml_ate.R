@@ -291,7 +291,7 @@ test_that("ddml_ate scores are mean-zero", {
   fit <- ddml_ate(y, D, X,
                   learners = list(what = ols),
                   sample_folds = 3, silent = TRUE)
-  score_mean <- mean(fit$scores[[1]])
+  score_mean <- mean(fit$scores[, , 1])
   expect_true(abs(score_mean) < 0.01,
               label = paste("score mean =", round(score_mean, 6)))
 })
@@ -308,3 +308,47 @@ test_that("ddml_ate point estimate is close to true ATE", {
                   sample_folds = 5, silent = TRUE)
   expect_equal(coef(fit), c(ATE = 1.0), tolerance = 0.3)
 })
+
+test_that("ddml_ate computes with sparse matrices", {
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  learners <- list(list(what = ols), list(what = ols))
+  ddml_ate_fit <- ddml_ate(y, D, as(X, "sparseMatrix"),
+                           learners = learners,
+                           ensemble_type = "ols",
+                           cv_folds = 3,
+                           sample_folds = 3,
+                           silent = TRUE)
+  expect_equal(length(coef(ddml_ate_fit)), 1)
+})#TEST_THAT
+
+test_that("ddml_ate computes with parallel", {
+  skip_on_cran()
+  skip_if_not_installed("parallel")
+  set.seed(42)
+  nobs <- 500
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(nobs)
+  D <- 1 * (D_tld > 0)
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
+  learners <- list(what = ols)
+  # Sequential
+  res_seq <- ddml_ate(y, D, X,
+                      learners = learners,
+                      sample_folds = 3,
+                      stratify = FALSE,
+                      silent = TRUE)
+  # Parallel with same splits
+  res_par <- ddml_ate(y, D, X,
+                      learners = learners,
+                      sample_folds = 3,
+                      stratify = FALSE,
+                      splits = res_seq$splits,
+                      silent = TRUE,
+                      parallel = list(cores = 2))
+  expect_equal(coef(res_par), coef(res_seq))
+})#TEST_THAT

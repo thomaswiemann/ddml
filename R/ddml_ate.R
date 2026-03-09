@@ -2,11 +2,6 @@
 #'
 #' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()]
-#'
 #' @description Estimators of the average treatment effect and the average
 #'     treatment effect on the treated.
 #'
@@ -47,6 +42,7 @@
 #'     true values \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{m_0(X) = E[D|X]},
 #'     and \eqn{p_0 = E[D]}.
 #'
+#' @inheritParams ddml-class
 #' @inheritParams ddml_plm
 #' @param D The binary endogenous variable of interest.
 #' @param splits An optional list of sample split objects. For
@@ -61,51 +57,12 @@
 #'     subsamples are constructed to be balanced across treatment levels.
 #' @param trim Number in (0, 1) for trimming the estimated propensity scores at
 #'     \code{trim} and \code{1-trim}.
-#' @param parallel An optional named list with parallel processing
-#'     options. When \code{NULL} (the default), computation is
-#'     sequential. Supported fields:
-#'     \describe{
-#'         \item{\code{cores}}{Number of cores to use.}
-#'         \item{\code{export}}{Character vector of object names to
-#'             export to parallel workers (for custom learners that
-#'             reference global objects).}
-#'         \item{\code{packages}}{Character vector of additional
-#'             package names to load on workers (for custom learners
-#'             that use packages not imported by \code{ddml}).}
-#'     }
-#' @param fitted An optional named list of per-equation cross-fitted
-#'     predictions, typically obtained via \code{fit$fitted}. See
-#'     \code{\link{ddml_plm}} for details and an example.
-#' @param save_crossval Logical; store inner cross-validation
-#'     residuals for exact weight recomputation on pass-through.
-#'     See \code{\link{ddml_plm}} for details.
 #'
-#' @return \code{ddml_ate} and \code{ddml_att} return an object of S3 class
-#'     \code{ddml_ate} and \code{ddml_att}, respectively. An object of class
-#'     \code{ddml_ate} or \code{ddml_att} is a list containing
-#'     the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner computed by the cross-validation step in the
-#'             ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             See \code{\link{ddml_plm}} for more information.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DX},
-#'             \code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of
-#'             selected user-provided arguments. See above.}
-#'     }
+#' @return \code{ddml_ate} and \code{ddml_att} return objects of S3
+#'     class \code{ddml_ate}/\code{ddml_att} and \code{ddml}. See
+#'     \code{\link{ddml-class}} for the common output structure.
+#'     Additional pass-through fields: \code{learners},
+#'     \code{learners_DX}.
 #' @export
 #'
 #' @references
@@ -283,19 +240,21 @@ ddml_ate <- function(y, D, X,
   nensb <- ncol(apo_1$coefficients)
 
   # == Score construction ===========================================
-  psi_b <- apo_1$psi_b - apo_0$psi_b
-  psi_a <- matrix(-1, nobs, nensb)
+  psi_b <- lapply(seq_len(nensb), function(j) {
+    apo_1$psi_b[[j]] - apo_0$psi_b[[j]]
+  })
+  psi_a <- lapply(seq_len(nensb), function(j) array(-1, dim = c(nobs, 1, 1)))
 
   # == Target parameter =============================================
 
   ate <- as.vector(apo_1$coefficients) - as.vector(apo_0$coefficients)
 
-  scores <- lapply(seq_len(nensb), function(j) {
-    as.matrix(psi_a[, j] * ate[j] + psi_b[, j])
-  })
-  J_list <- lapply(seq_len(nensb), function(j) {
-    as.matrix(mean(psi_a[, j]))
-  })
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  for (j in seq_len(nensb)) {
+    scores[, 1, j] <- -ate[j] + as.vector(psi_b[[j]])
+    J[1, 1, j] <- -1
+  }#FOR
 
   coef_names <- "ATE"
   coef <- matrix(ate, nrow = 1, ncol = nensb)
@@ -317,7 +276,7 @@ ddml_ate <- function(y, D, X,
               y_X_D1 = apo_1$r2$y_X,
               D_X = D_X_res$r2),
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Average Treatment Effect",
     ensemble_type = ensemble_type,

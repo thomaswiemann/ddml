@@ -32,11 +32,11 @@ class(glmnet_fit)
 \references{
 Friedman J, Hastie T, Tibshirani R (2010). "Regularization Paths for
 Generalized Linear Models via Coordinate Descent." Journal of Statistical
-Software, 33(1), 1–22.
+Software, 33(1), 1-22.
 
 Simon N, Friedman J, Hastie T, Tibshirani R (2011). "Regularization Paths for
 Cox's Proportional Hazards Model via Coordinate Descent." Journal of
-Statistical Software, 39(5), 1–13.
+Statistical Software, 39(5), 1-13.
 }
 \seealso{
 \code{\link[glmnet:glmnet]{glmnet::glmnet()}},\code{\link[glmnet:cv.glmnet]{glmnet::cv.glmnet()}}

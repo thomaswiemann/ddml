@@ -14,7 +14,7 @@ get_sample_splits <- function(cluster_variable,
 
   # Auto-merge subsamples_byD into subsamples when only byD is given
   if (is.null(subsamples) && !is.null(subsamples_byD)) {
-    if (!by_D) stop("subsamples_byD requires D to be specified.")
+    if (!by_D) stop("subsamples_byD requires D to be specified.", call. = FALSE)
     subsamples <- merge_subsamples_byD(subsamples_byD, D)
   }#IF
 
@@ -111,17 +111,18 @@ get_crossfit_indices <- function(cluster_variable,
     compute_cf <- TRUE
   } else if (is.null(subsamples) && !is.null(subsamples_byD)) {
     stop(paste0("``subsamples`` must also be set when setting ",
-                "``subsamples_byD``."))
+                "``subsamples_byD``."), call. = FALSE)
   } else if (!is.null(subsamples) && is.null(subsamples_byD) && by_D) {
     stop(paste0("When ``by_D==TRUE``, ``subsamples_byD`` must also be set ",
-                "when setting ``subsamples``."))
+                "when setting ``subsamples``."), call. = FALSE)
   }#IF
 
   # Compute crossfit indices
   if (compute_cf) {
     if (stratify) {
       if (!by_D)
-        stop("Stratified sampling only works when ``by_D=TRUE``.")
+        stop("Stratified sampling only works when ``by_D=TRUE``.",
+             call. = FALSE)
       cl_folds <- get_cf_indices_stratified(
         cluster_variable = cluster_variable,
         sample_folds = sample_folds, D = D)
@@ -195,7 +196,7 @@ check_subsamples <- function(subsamples, subsamples_byD, stratify,
       min(training_counts_byD), " observations for training. Consider ",
       "increasing ", fold_arg, " if possible.")
   }#IFELSE
-  if (throw_warning) warning(warning_text)
+  if (throw_warning) warning(warning_text, call. = FALSE)
 
   # Return training counts (invisible)
   invisible(list(training_counts = training_counts,
@@ -222,7 +223,7 @@ get_cf_indices_stratified <- function(cluster_variable, sample_folds,
   # Error if number of clusters is smaller than the number of sample folds
   if (min(nclusters_byD) < sample_folds)
     stop(paste0("Number of clusters for at least one treatment level is ",
-                "smaller than the number of sample folds."))
+                "smaller than the number of sample folds."), call. = FALSE)
 
   # Check for clustering
   cluster <- (length(unique(cluster_variable)) != nobs)
@@ -236,7 +237,8 @@ get_cf_indices_stratified <- function(cluster_variable, sample_folds,
       warning(paste0(
         "Stratified subsample construction can take a long time",
         " when there are many clusters. Check whether",
-        " stratification is necessary if you're short on time."))
+        " stratification is necessary if you're short on time."),
+        call. = FALSE)
 
     # Map cluster ids to indices in cluster_variable
     cl_indx_list <- split(seq_along(cluster_variable),

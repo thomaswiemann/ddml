@@ -36,7 +36,7 @@ diagnostics <- function(object, cvc = FALSE,
                         bootnum = 500, alpha = 0.05,
                         ...) {
   if (!inherits(object, "ddml")) {
-    stop("object must be of class 'ddml'.")
+    stop("object must be of class 'ddml'.", call. = FALSE)
   }#IF
 
   eq_names <- names(object$ensemble_weights)

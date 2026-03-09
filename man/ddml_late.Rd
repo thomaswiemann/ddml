@@ -33,37 +33,40 @@ ddml_late(
 \arguments{
 \item{y}{The outcome variable.}
 
-\item{D}{The binary endogenous variable of interest.}
+\item{D}{A matrix of endogenous variables.}
 
 \item{Z}{Binary instrumental variable.}
 
 \item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{May take one of two forms, depending on whether a single
-learner or stacking with multiple learners is used for estimation of the
-conditional expectation functions.
-If a single learner is used, \code{learners} is a list with two named
-elements:
+\item{learners}{May take one of two forms, depending on whether a
+single learner or stacking with multiple learners is used for
+estimation of the conditional expectation functions.
+If a single learner is used, \code{learners} is a list with
+two named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 }
-If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing three named elements:
+If stacking with multiple learners is used, \code{learners} is
+a list of lists, each containing three named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to control variables in \code{X} that are passed to
-the base learner.}
+corresponding to control variables in \code{X} that
+are passed to the base learner.}
 }
-Omission of the \code{args} element results in default arguments being
-used in \code{what}. Omission of \code{assign_X}
-results in inclusion of all variables in \code{X}.}
+Omission of the \code{args} element results in default
+arguments being used in \code{what}. Omission of
+\code{assign_X} results in inclusion of all variables in
+\code{X}.}
 
 \item{learners_DXZ, learners_ZX}{Optional arguments to allow for different
 estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
@@ -71,13 +74,15 @@ identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{Ensemble method to combine base learners into final
-estimate of the conditional expectation functions. Possible values are:
+\item{ensemble_type}{Ensemble method to combine base learners into
+final estimate of the conditional expectation functions.
+Possible values are:
 \itemize{
 \item{\code{"nnls"} Non-negative least squares.}
-\item{\code{"nnls1"} Non-negative least squares with the constraint
-that all weights sum to one.}
-\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"nnls1"} Non-negative least squares with the
+constraint that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum
+MSPE.}
 \item{\code{"ols"} Ordinary least squares.}
 \item{\code{"average"} Simple average over base learners.}
 }
@@ -85,14 +90,15 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{Number of folds used for cross-validation in ensemble
-construction.}
+\item{cv_folds}{Number of folds used for cross-validation in
+ensemble construction.}
 
-\item{custom_ensemble_weights}{A numerical matrix with user-specified
-ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to a base learner in \code{learners}
-(in chronological order). Optional column names are used to name the
-estimation results corresponding the custom ensemble specification.}
+\item{custom_ensemble_weights}{A numerical matrix with
+user-specified ensemble weights. Each column corresponds to a
+custom ensemble specification, each row corresponds to a base
+learner in \code{learners} (in chronological order). Optional
+column names are used to name the estimation results
+corresponding the custom ensemble specification.}
 
 \item{custom_ensemble_weights_DXZ, custom_ensemble_weights_ZX}{Optional
 arguments to allow for different
@@ -126,17 +132,25 @@ that use packages not imported by \code{ddml}).}
 }}
 
 \item{fitted}{An optional named list of per-equation cross-fitted
-predictions, typically obtained via \code{fit$fitted}. See
-\code{\link{ddml_plm}} for details and an example.}
+predictions, typically obtained from a previous fit via
+\code{fit$fitted}. When supplied (together with \code{splits}),
+base learners are not re-fitted; only ensemble weights are
+recomputed. This allows fast re-estimation with a different
+\code{ensemble_type}. See \code{\link{ddml_plm}} for
+an example.}
 
 \item{splits}{An optional list of sample split objects. For
 \code{ddml_late}, recommended keys are \code{subsamples},
 \code{subsamples_byZ}, \code{cv_subsamples}, and
 \code{cv_subsamples_byZ}.}
 
-\item{save_crossval}{Logical; store inner cross-validation
-residuals for exact weight recomputation on pass-through.
-See \code{\link{ddml_plm}} for details.}
+\item{save_crossval}{Logical indicating whether to store the inner
+cross-validation residuals used for ensemble weight
+computation. Default \code{TRUE}. When \code{TRUE}, subsequent
+pass-through calls with data-driven ensembles (e.g.,
+\code{"nnls"}) reproduce per-fold weights exactly. Set to
+\code{FALSE} to reduce object size at the cost of approximate
+weight recomputation.}
 
 \item{...}{Deprecated arguments (\code{subsamples},
 \code{subsamples_byZ}, \code{cv_subsamples},
@@ -145,30 +159,10 @@ compatibility but should be replaced with \code{splits}.}
 }
 \value{
 \code{ddml_late} returns an object of S3 class
-\code{ddml_late}. An object of class \code{ddml_late} is a list
-containing the following components:
-\describe{
-\item{\code{coefficients}}{A matrix of estimated coefficients.}
-\item{\code{ensemble_weights}}{A list of matrices, providing the
-weight assigned to each base learner by the ensemble
-procedure.}
-\item{\code{mspe}}{A list of matrices, providing the MSPE of
-each base learner computed by the cross-validation step
-in the ensemble construction.}
-\item{\code{r2}}{The out-of-sample R-squared.}
-\item{\code{psi_a}, \code{psi_b}}{Score components used in
-\code{\link{vcov.ddml}}.}
-\item{\code{scores}}{A list of evaluated Neyman orthogonal
-scores.}
-\item{\code{J}}{A list of evaluated Jacobians.}
-\item{\code{fitted}}{A list of fitted nuisance estimators.
-See \code{\link{ddml_plm}} for more information.}
-\item{\code{splits}}{The data splitting structure.}
-\item{\code{learners},\code{learners_DXZ},
-\code{learners_ZX},\code{cluster_variable},
-\code{ensemble_type}}{Pass-through of selected
-user-provided arguments. See above.}
-}
+\code{ddml_late} and \code{ddml}. See
+\code{\link{ddml-class}} for the common output structure.
+Additional pass-through fields: \code{learners},
+\code{learners_DXZ}, \code{learners_ZX}.
 }
 \description{
 Estimator of the local average treatment effect.
@@ -256,12 +250,9 @@ Treatment Effects." Econometrica, 62(2), 467-475.
 Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
-\code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
-\code{\link[=vcov.ddml]{vcov.ddml()}}, \code{\link[=confint.ddml]{confint.ddml()}},
-\code{\link[=hatvalues.ddml]{hatvalues.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
-\code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
-
 Other ddml estimators: 
+\code{\link{ddml-class}},
+\code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_pliv}()},

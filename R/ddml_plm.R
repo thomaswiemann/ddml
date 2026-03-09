@@ -2,11 +2,6 @@
 #'
 #' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()]
-#'
 #' @description Estimator for the partially linear model.
 #'
 #' @details \code{ddml_plm} provides a Double/Debiased Machine Learning
@@ -29,122 +24,18 @@
 #'     with nuisance parameters \eqn{\eta = (\ell, r)} taking true values
 #'     \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
 #'
-#' @param y The outcome variable.
-#' @param D A matrix of endogenous variables.
-#' @param X A (sparse) matrix of control variables.
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation functions.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing four named elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to control variables in \code{X} that are passed to
-#'             the base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{what}. Omission of \code{assign_X} results in inclusion of
-#'     all variables in \code{X}.
+#' @inheritParams ddml-class
 #' @param learners_DX Optional argument to allow for different estimators of
 #'     \eqn{E[D|X]}. Setup is identical to \code{learners}.
-#' @param sample_folds Number of cross-fitting folds.
-#' @param ensemble_type Ensemble method to combine base learners into final
-#'     estimate of the conditional expectation functions. Possible values are:
-#'     \itemize{
-#'         \item{\code{"nnls"} Non-negative least squares.}
-#'         \item{\code{"nnls1"} Non-negative least squares with the constraint
-#'             that all weights sum to one.}
-#'         \item{\code{"singlebest"} Select base learner with minimum MSPE.}
-#'         \item{\code{"ols"} Ordinary least squares.}
-#'         \item{\code{"average"} Simple average over base learners.}
-#'     }
-#'     Multiple ensemble types may be passed as a vector of strings.
-#' @param shortstack Boolean to use short-stacking.
-#' @param cv_folds Number of folds used for cross-validation in ensemble
-#'     construction.
-#' @param custom_ensemble_weights A numerical matrix with user-specified
-#'     ensemble weights. Each column corresponds to a custom ensemble
-#'     specification, each row corresponds to a base learner in \code{learners}
-#'     (in chronological order). Optional column names are used to name the
-#'     estimation results corresponding the custom ensemble specification.
 #' @param custom_ensemble_weights_DX Optional argument to allow for different
 #'     custom ensemble weights for \code{learners_DX}. Setup is identical to
 #'     \code{custom_ensemble_weights}. Note: \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DX} must have the same number of columns.
-#' @param cluster_variable A vector of cluster indices.
-#' @param ... Deprecated arguments (\code{subsamples},
-#'     \code{cv_subsamples}, \code{cv_subsamples_list}) are still
-#'     accepted for backward compatibility but should be replaced
-#'     with the \code{splits} argument.
-#' @param silent Boolean to silence estimation updates.
-#' @param parallel An optional named list with parallel processing
-#'     options. When \code{NULL} (the default), computation is
-#'     sequential. Supported fields:
-#'     \describe{
-#'         \item{\code{cores}}{Number of cores to use.}
-#'         \item{\code{export}}{Character vector of object names to
-#'             export to parallel workers (for custom learners that
-#'             reference global objects).}
-#'         \item{\code{packages}}{Character vector of additional
-#'             package names to load on workers (for custom learners
-#'             that use packages not imported by \code{ddml}).}
-#'     }
-#' @param fitted An optional named list of per-equation cross-fitted
-#'     predictions, typically obtained from a previous fit via
-#'     \code{fit$fitted}. When supplied (together with \code{splits}),
-#'     base learners are not re-fitted; only ensemble weights are
-#'     recomputed. This allows fast re-estimation with a different
-#'     \code{ensemble_type}. See the example below.
-#' @param splits An optional list of sample split objects, typically
-#'     obtained from a previous fit via \code{fit$splits}. Must be
-#'     supplied when \code{fitted} is provided. Can also be used
-#'     standalone to provide pre-computed sample folds.
-#' @param save_crossval Logical indicating whether to store the
-#'     inner cross-validation residuals used for ensemble weight
-#'     computation. Default \code{TRUE}. When \code{TRUE}, subsequent
-#'     pass-through calls with data-driven ensembles (e.g.,
-#'     \code{"nnls"}) reproduce per-fold weights exactly. Set to
-#'     \code{FALSE} to reduce object size at the cost of approximate
-#'     weight recomputation.
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
-#'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
-#'     the following components:
-#'     \describe{
-#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
-#'             weight assigned to each base learner by the ensemble
-#'             procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner computed by the cross-validation step in the
-#'             ensemble construction.}
-#'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
-#'             \code{\link{vcov.ddml}}.}
-#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
-#'             scores.}
-#'         \item{\code{J}}{A list of evaluated Jacobians.}
-#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
-#'             Can be passed back via the \code{fitted} argument to
-#'             skip cross-fitting on re-estimation.}
-#'         \item{\code{splits}}{The data splitting structure.}
-#'         \item{\code{learners},\code{learners_DX},
-#'             \code{cluster_variable},
-#'             \code{ensemble_type}}{Pass-through of selected
-#'             user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_plm} and \code{ddml}. See \code{\link{ddml-class}}
+#'     for the common output structure. Additional pass-through
+#'     fields: \code{learners}, \code{learners_DX}.
 #' @export
 #'
 #' @references
@@ -298,8 +189,8 @@ ddml_plm <- function(y, D, X,
   # == Score construction ===========================================
 
   coef <- matrix(0, nD + 1, nensb)
-  scores <- vector("list", nensb)
-  J_list <- vector("list", nensb)
+  scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
   psi_a <- vector("list", nensb)
   psi_b <- vector("list", nensb)
   for (j in seq_len(nensb)) {
@@ -313,8 +204,8 @@ ddml_plm <- function(y, D, X,
     coef[, j] <- coef_ols_j
     e_j <- as.vector(y_r - X_full %*% coef_ols_j)
     
-    scores[[j]] <- X_full * e_j
-    J_list[[j]] <- -crossprod(X_full) / nobs
+    scores[, , j] <- X_full * e_j
+    J[, , j] <- -crossprod(X_full) / nobs
 
     psi_b[[j]] <- X_full * as.vector(y_r)
     psi_a[[j]] <- -sapply(seq_len(nD + 1),
@@ -350,7 +241,7 @@ ddml_plm <- function(y, D, X,
     mspe = mspe,
     r2 = r2,
     psi_a = psi_a, psi_b = psi_b,
-    scores = scores, J = J_list,
+    scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Partially Linear Model",
     ensemble_type = ensemble_type,

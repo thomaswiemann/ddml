@@ -60,7 +60,8 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
     j_seq <- seq_len(nensb)
   } else {
     if (any(ensemble_idx < 1) || any(ensemble_idx > nensb)) {
-      stop(sprintf("ensemble_idx must be between 1 and %d", nensb))
+      stop(sprintf("ensemble_idx must be between 1 and %d", nensb),
+           call. = FALSE)
     }#IF
     j_seq <- ensemble_idx
   }#IFELSE

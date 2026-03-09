@@ -27,18 +27,11 @@ variance-covariance matrix for the DDML estimator
 \eqn{\hat\theta}.
 }
 \details{
-All implemented DDML estimators solve a moment
-condition of the form
-\eqn{E[m(W; \theta_0, \eta_0)] = 0} where the score
-decomposes as
-
-\eqn{m(W_i; \theta, \eta) = \psi_{b}(W_i; \eta) + \psi_{a}(W_i; \eta)\,\theta.}
-
-Write \eqn{m_i = m(W_i; \hat\theta, \hat\eta)} for the
-evaluated score and
-\eqn{\hat{J} = n^{-1}\sum_i \psi_a(W_i; \hat\eta)} for
-the sample Jacobian. Three sandwich estimators are
-available:
+See \code{\link{ddml-class}} for the DML framework,
+including the definitions of the score \eqn{m_i},
+the Jacobian \eqn{\hat{J}}, and the base sandwich
+estimator \eqn{\hat\Sigma}. This function provides
+three variants:
 
 \strong{HC0}:
 \deqn{V_{\mathrm{HC0}} = \hat{J}^{-1}
@@ -49,7 +42,8 @@ available:
 \deqn{V_{\mathrm{HC1}} = V_{\mathrm{HC0}}
   \times \frac{n}{n - p}}
 
-where \eqn{p} is the dimension of \eqn{\theta}.
+\if{html}{\out{<div class="sourceCode">}}\preformatted{where \eqn{p} is the dimension of \eqn{\theta}.
+}\if{html}{\out{</div>}}
 
 \strong{HC3}:
 \deqn{V_{\mathrm{HC3}} = \hat{J}^{-1}
@@ -57,24 +51,9 @@ where \eqn{p} is the dimension of \eqn{\theta}.
   \frac{m_i m_i'}{(1 - h_{ii})^2}\right)
   \hat{J}^{-\top} / n}
 
-where \eqn{h_{ii}} is the generalized leverage. In the
-general case,
-\deqn{h_{ii} = \mathrm{tr}\!\left(
-  \nabla_\theta m(W_i; \hat\theta, \hat\eta)
-  \left[\sum_{j=1}^n
-  \nabla_\theta m(W_j; \hat\theta, \hat\eta)
-  \right]^{-1}\right)}
-
-where \eqn{\nabla_\theta m(W_i; \hat\theta, \hat\eta)}
-is the derivative of the \eqn{i}-th score with respect
-to \eqn{\theta} (the nuisance parameters \eqn{\hat\eta}
-are treated as fixed, having been estimated
-out-of-sample). For the linear scores implemented in
-\code{ddml}, the derivative is
-\eqn{\nabla_\theta m(W_i; \theta, \eta) = \psi_a(W_i; \eta)},
-so the leverage simplifies to
-
-\eqn{h_{ii} = \mathrm{tr}(\psi_a(W_i; \hat\eta)\,(n\hat{J})^{-1}).}
+\if{html}{\out{<div class="sourceCode">}}\preformatted{where \eqn{h_{ii}} is the generalized leverage;
+see \code{\link{hatvalues.ddml}}.
+}\if{html}{\out{</div>}}
 }
 \examples{
 \donttest{
