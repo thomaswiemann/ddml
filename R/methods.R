@@ -21,6 +21,10 @@
 
 #' Extract Model Coefficients
 #'
+#' @description Extracts the estimated coefficients
+#'     from a DDML model for the specified or default
+#'     ensemble type.
+#'
 #' @param object An object of class \code{ddml}.
 #' @param ... Currently unused.
 #'
@@ -39,6 +43,7 @@
 #' coef(plm_fit)
 #' }
 #'
+#' @family ddml inference
 #' @export
 coef.ddml <- function(object, ...) {
   cf <- object$coefficients
@@ -52,16 +57,74 @@ coef.ddml <- function(object, ...) {
 
 #' Extract Number of Observations
 #'
+#' @description Returns the number of observations
+#'     used to fit the DDML model.
+#'
 #' @param object An object of class \code{ddml}.
 #' @param ... Currently unused.
 #'
 #' @return An integer specifying the number of observations.
 #'
+#' @family ddml inference
 #' @importFrom stats nobs
 #' @export
 nobs.ddml <- function(object, ...) {
   object$nobs
 }#NOBS.DDML
+
+#' Extract Generalized Leverage (Hat Values)
+#'
+#' @description Computes the generalized leverage (hat values) for a DDML 
+#'     estimator. These values are used internally to compute heteroskedasticity-robust 
+#'     HC3 standard errors.
+#'
+#' @param model An object of class \code{ddml}.
+#' @param ensemble_idx Integer index of the ensemble type to extract leverage
+#'     values for. Defaults to 1.
+#' @param ... Currently unused.
+#'
+#' @return A numeric vector of generalized leverage values.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' plm_fit = ddml_plm(y, D, X,
+#'                     learners = list(what = ols),
+#'                     sample_folds = 2, silent = TRUE)
+#' h = hatvalues(plm_fit)
+#' head(h)
+#' }
+#' 
+#' @seealso \code{\link{vcov.ddml}} for the use of leverage in HC3 standard errors.
+#'
+#' @family ddml inference
+#' @importFrom stats hatvalues
+#' @export
+hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
+  validate_method_args(model, ensemble_idx = ensemble_idx)
+  if (is.list(model$psi_a)) {
+    psi_a_j <- model$psi_a[[ensemble_idx]]
+    J_j <- model$J[[ensemble_idx]]
+    J_inv <- csolve(J_j)
+    J_inv_vec <- as.vector(t(J_inv))
+
+    p <- ncol(J_j)
+    n <- model$nobs
+    dim(psi_a_j) <- c(n, p * p)
+    h <- (psi_a_j %*% J_inv_vec) / n
+    return(as.vector(h))
+  }#IF
+
+  psi_a_j <- model$psi_a[, ensemble_idx]
+  J_j <- as.numeric(model$J[[ensemble_idx]])
+  as.vector(psi_a_j / (model$nobs * J_j))
+}#HATVALUES.DDML
+
+
+
+
 
 #' Variance-Covariance Matrix for DDML Estimators
 #'
@@ -83,18 +146,18 @@ nobs.ddml <- function(object, ...) {
 #' available:
 #'
 #' \strong{HC0}:
-#' \deqn{V_{\textrm{HC0}} = \hat{J}^{-1}
+#' \deqn{V_{\mathrm{HC0}} = \hat{J}^{-1}
 #'   \left(\frac{1}{n}\sum_i m_i m_i'\right)
 #'   \hat{J}^{-\top} / n}
 #'
 #' \strong{HC1} (default):
-#' \deqn{V_{\textrm{HC1}} = V_{\textrm{HC0}}
+#' \deqn{V_{\mathrm{HC1}} = V_{\mathrm{HC0}}
 #'   \times \frac{n}{n - p}}
 #'
 #' where \eqn{p} is the dimension of \eqn{\theta}.
 #'
 #' \strong{HC3}:
-#' \deqn{V_{\textrm{HC3}} = \hat{J}^{-1}
+#' \deqn{V_{\mathrm{HC3}} = \hat{J}^{-1}
 #'   \left(\frac{1}{n}\sum_i
 #'   \frac{m_i m_i'}{(1 - h_{ii})^2}\right)
 #'   \hat{J}^{-\top} / n}
@@ -140,26 +203,68 @@ nobs.ddml <- function(object, ...) {
 #' vcov(plm_fit, type = "HC3")
 #' }
 #'
+#' @seealso \code{\link{hatvalues.ddml}},
+#'     \code{\link{confint.ddml}},
+#'     \code{\link{summary.ddml}}
+#'
+#' @family ddml inference
 #' @export
 vcov.ddml <- function(object, ensemble_idx = 1,
                       type = "HC1", ...) {
+  type <- validate_method_args(object,
+    ensemble_idx = ensemble_idx, type = type)
+
   h <- if (type == "HC3") {
-    compute_leverage(object, ensemble_idx)
+    stats::hatvalues(object, ensemble_idx = ensemble_idx)
   }#IF
-  V <- compute_ddml_variance(
-    object$scores[[ensemble_idx]],
-    object$J[[ensemble_idx]],
-    object$cluster_variable,
-    type = type,
-    leverage = h)
+
+  sc <- as.matrix(object$scores[[ensemble_idx]])
+  J_j <- as.matrix(object$J[[ensemble_idx]])
+  p <- ncol(sc)
+
+  # Cluster aggregation: rowsum scores to cluster level
+  clustered <- !is.null(object$cluster_variable) &&
+    length(unique(object$cluster_variable)) < nrow(sc)
+  if (clustered) {
+    sc <- rowsum(sc, object$cluster_variable)
+  }#IF
+
+  n_eff <- nrow(sc)
+
+  if (type == "HC3") {
+    if (clustered) {
+      h <- as.vector(tapply(h, object$cluster_variable, sum))
+    }#IF
+    sc <- sc / (1 - h)
+    meat <- crossprod(sc) / n_eff
+    J_inv <- csolve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) / n_eff
+  } else if (type == "HC1") {
+    meat <- crossprod(sc) / n_eff
+    J_inv <- csolve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) *
+      n_eff / (n_eff - p) / n_eff
+  } else {
+    # HC0
+    meat <- crossprod(sc) / n_eff
+    J_inv <- csolve(J_j)
+    V <- J_inv %*% meat %*% t(J_inv) / n_eff
+  }#IFELSE
+  
   rownames(V) <- colnames(V) <- object$coef_names
   V
 }#VCOV.DDML
 
 #' Confidence Intervals for DDML Estimators
 #'
+#' @description Computes confidence intervals for one or more 
+#'     parameters in a fitted DDML model.
+#'
 #' @param object An object of class \code{ddml}.
-#' @param parm Not used (included for generic compatibility).
+#' @param parm A specification of which parameters are to be
+#'     given confidence intervals, either a vector of numbers
+#'     or a vector of names. If missing, all parameters are
+#'     considered.
 #' @param level Confidence level. Default 0.95.
 #' @inheritParams vcov.ddml
 #' @param ... Currently unused.
@@ -175,39 +280,47 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 #'                     learners = list(what = ols),
 #'                     sample_folds = 2, silent = TRUE)
 #' confint(plm_fit)
+#' confint(plm_fit, parm = "D1")
 #' confint(plm_fit, level = 0.90)
 #' }
+#' 
+#' @seealso \code{\link{vcov.ddml}}
 #'
+#' @family ddml inference
 #' @importFrom stats vcov
 #' @export
 confint.ddml <- function(object, parm, level = 0.95,
                          ensemble_idx = 1,
                          type = "HC1", ...) {
   cf <- object$coefficients[, ensemble_idx]
+  cf_names <- object$coef_names
+
+  if (missing(parm)) {
+    parm <- cf_names
+  } else if (is.numeric(parm)) {
+    parm <- cf_names[parm]
+  } else {
+    parm <- intersect(parm, cf_names)
+    if (length(parm) == 0) {
+      stop("None of the specified 'parm' were found in the model coefficients.")
+    }#IF
+  }#IFELSE
+  
+  cf <- cf[parm]
 
   V <- vcov(object, ensemble_idx = ensemble_idx,
             type = type)
-  se <- sqrt(diag(V))
+  se <- sqrt(diag(V))[parm]
+  
   z <- stats::qnorm((1 + level) / 2)
   ci <- cbind(cf - z * se, cf + z * se)
   pct <- c((1 - level) / 2, (1 + level) / 2) * 100
   colnames(ci) <- paste0(format(pct, digits = 3), " %")
-  rownames(ci) <- object$coef_names
+  rownames(ci) <- parm
   ci
 }#CONFINT.DDML
 
-#' Subscript a DDML Summary Object (Deprecated)
-#'
-#' Delegates \code{[} to the underlying inference array.
-#' This method exists for backward compatibility only;
-#' use \code{x$coefficients[...]} instead.
-#'
-#' @param x An object of class \code{summary.ddml}.
-#' @param ... Indices passed to \code{[} on the inference
-#'     array.
-#'
-#' @return The subset of the inference array.
-#'
+#' @rdname summary.ddml
 #' @export
 `[.summary.ddml` <- function(x, ...) {
   message("Note: subscripting a summary.ddml object with ",
@@ -224,13 +337,21 @@ confint.ddml <- function(object, parm, level = 0.95,
 #'     \code{\link{vcov.ddml}} for the HC0/HC1/HC3 formulas.
 #'
 #' @param object An object of class \code{ddml}.
-#' @param type Character string specifying the
-#'     variance-covariance estimator. One of \code{"HC1"}
-#'     (default), \code{"HC0"}, or \code{"HC3"}. See
-#'     \code{\link{vcov.ddml}} for details.
+#' @inheritParams vcov.ddml
 #' @param ... Currently unused.
 #'
-#' @return An object of class \code{summary.ddml}.
+#' @return An object of class \code{summary.ddml} with:
+#'     \describe{
+#'         \item{\code{coefficients}}{A 3-dimensional array
+#'             (\eqn{p \times 4 \times}{p x 4 x} nensb) of
+#'             estimates, standard errors, z-values, and
+#'             p-values.}
+#'         \item{\code{type}}{The HC type used.}
+#'         \item{\code{nobs}}{Number of observations.}
+#'         \item{\code{sample_folds}}{Number of cross-fitting
+#'             folds.}
+#'         \item{\code{ensemble_type}}{Ensemble type labels.}
+#'     }
 #'
 #' @examples
 #' \donttest{
@@ -244,30 +365,45 @@ confint.ddml <- function(object, parm, level = 0.95,
 #' summary(plm_fit, type = "HC3")
 #' }
 #'
+#' @seealso \code{\link{vcov.ddml}}
+#'
+#' @family ddml inference
 #' @export
 summary.ddml <- function(object, type = "HC1", ...) {
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
+  
   single_learner <- is_single_learner(object$learners)
   ens_type <- if (single_learner) {
     "single base learner"
   } else {
     object$ensemble_type
   }#IFELSE
+  
+  nensb <- length(ens_type)
+  p <- nrow(object$coefficients)
 
-  h_list <- if (type == "HC3") {
-    lapply(seq_along(object$scores), function(j) {
-      compute_leverage(object, j)
-    })
-  }#IF
-  inf <- compute_ddml_inference(
-    coefficients = object$coefficients,
-    scores = object$scores,
-    J = object$J,
-    coef_names = object$coef_names,
-    ensemble_type = ens_type,
-    cluster_variable = object$cluster_variable,
-    type = type,
-    leverage_list = h_list)
+  inf <- array(0, dim = c(p, 4, nensb))
+
+  for (j in seq_len(nensb)) {
+    theta_j <- object$coefficients[, j]
+
+    V <- stats::vcov(object, ensemble_idx = j, type = type)
+    se <- sqrt(diag(V))
+    z_val <- theta_j / se
+    p_val <- 2 * stats::pnorm(abs(z_val),
+                               lower.tail = FALSE)
+
+    inf[, 1, j] <- theta_j
+    inf[, 2, j] <- se
+    inf[, 3, j] <- z_val
+    inf[, 4, j] <- p_val
+  }#FOR
+
+  dimnames(inf) <- list(
+    object$coef_names,
+    c("Estimate", "Std. Error", "z value", "Pr(>|z|)"),
+    ens_type
+  )
 
   result <- list(
     coefficients = inf,
@@ -284,13 +420,10 @@ summary.ddml <- function(object, type = "HC1", ...) {
   result
 }#SUMMARY.DDML
 
-#' Print Summary for DDML Estimators
+#' @rdname summary.ddml
 #'
 #' @param x An object of class \code{summary.ddml}.
 #' @param digits Number of significant digits. Default 3.
-#' @param ... Currently unused.
-#'
-#' @return \code{x}, invisibly.
 #'
 #' @export
 print.summary.ddml <- function(x, digits = 3, ...) {

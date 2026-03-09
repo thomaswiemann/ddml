@@ -1,9 +1,10 @@
 #' Estimator for the Partially Linear Model.
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
 #' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
+#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
 #'     [ddml::glance.ddml()], [ddml::diagnostics()]
 #'
 #' @description Estimator for the partially linear model.
@@ -45,16 +46,16 @@
 #'     If stacking with multiple learners is used, \code{learners} is a list of
 #'     lists, each containing four named elements:
 #'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
+#'         \item{\code{what} The base learner function. The function must be
 #'             such that it predicts a named input \code{y} using a named input
 #'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
 #'         \item{\code{assign_X} An optional vector of column indices
 #'             corresponding to control variables in \code{X} that are passed to
 #'             the base learner.}
 #'     }
 #'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} results in inclusion of
+#'     used in \code{what}. Omission of \code{assign_X} results in inclusion of
 #'     all variables in \code{X}.
 #' @param learners_DX Optional argument to allow for different estimators of
 #'     \eqn{E[D|X]}. Setup is identical to \code{learners}.
@@ -122,21 +123,27 @@
 #'     \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
 #'     the following components:
 #'     \describe{
-#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
-#'             the second-stage intercept (last element).}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedure.}
+#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
+#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
+#'             weight assigned to each base learner by the ensemble
+#'             procedure.}
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner (in chronological order) computed by the
-#'             cross-validation step in the ensemble construction.}
-#'         \item{\code{ols_fit}}{Object of class \code{lm} from the second
-#'             stage regression of \eqn{Y - \hat{E}[Y|X]} on
-#'             \eqn{D - \hat{E}[D|X]}.}
-#'         \item{\code{learners},\code{learners_DX},\code{cluster_variable},
-#'             \code{subsamples}, \code{cv_subsamples},
-#'             \code{ensemble_type}}{Pass-through of selected user-provided
-#'             arguments. See above.}
+#'             base learner computed by the cross-validation step in the
+#'             ensemble construction.}
+#'         \item{\code{r2}}{The out-of-sample R-squared.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
+#'             \code{\link{vcov.ddml}}.}
+#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
+#'             scores.}
+#'         \item{\code{J}}{A list of evaluated Jacobians.}
+#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
+#'             Can be passed back via the \code{fitted} argument to
+#'             skip cross-fitting on re-estimation.}
+#'         \item{\code{splits}}{The data splitting structure.}
+#'         \item{\code{learners},\code{learners_DX},
+#'             \code{cluster_variable},
+#'             \code{ensemble_type}}{Pass-through of selected
+#'             user-provided arguments. See above.}
 #'     }
 #' @export
 #'
@@ -224,7 +231,8 @@ ddml_plm <- function(y, D, X,
   validate_inputs(y = y, D = D, X = X, learners = learners,
                   sample_folds = sample_folds,
                   cv_folds = cv_folds,
-                  ensemble_type = ensemble_type)
+                  ensemble_type = ensemble_type,
+                  cluster_variable = cluster_variable)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX,
                           learners_DX)
@@ -290,24 +298,21 @@ ddml_plm <- function(y, D, X,
   # == Score construction ===========================================
 
   coef <- matrix(0, nD + 1, nensb)
-  ols_fit <- rep(list(1), nensb)
   scores <- vector("list", nensb)
   J_list <- vector("list", nensb)
   psi_a <- vector("list", nensb)
   psi_b <- vector("list", nensb)
   for (j in seq_len(nensb)) {
-    D_r <- D - get_oosfitted(D_X_res_list, j)
-    y_r <- y - cbind(y_X_res$oos_fitted)[, j]
-
-    ols_fit_j <- stats::lm(y_r ~ D_r)
-
-    coef_ols_j <- stats::coef(ols_fit_j)
-    coef[, j] <- c(coef_ols_j[-1], coef_ols_j[1])
-    ols_fit[[j]] <- ols_fit_j
+    D_r <- D - get_cf_fitted(D_X_res_list, j)
+    y_r <- y - cbind(y_X_res$cf_fitted)[, j]
 
     D_r_mat <- as.matrix(D_r)
     X_full <- cbind(D_r_mat, 1)
-    e_j <- as.vector(stats::residuals(ols_fit_j))
+    
+    coef_ols_j <- as.vector(qr.solve(X_full, y_r))
+    coef[, j] <- coef_ols_j
+    e_j <- as.vector(y_r - X_full %*% coef_ols_j)
+    
     scores[[j]] <- X_full * e_j
     J_list[[j]] <- -crossprod(X_full) / nobs
 
@@ -320,11 +325,13 @@ ddml_plm <- function(y, D, X,
   # == Target parameter =============================================
 
   cn_weights <- dimnames(y_X_res$weights)[[2]]
-  colnames(coef) <- names(ols_fit) <-
-    if (is.null(cn_weights)) ensemble_type else cn_weights
-  cn_j <- names(ols_fit_j$coefficients)
-  rownames(coef) <- c(cn_j[-1], cn_j[1])
+  colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights
+  cn_j <- colnames(D)
+  if (is.null(cn_j)) cn_j <- paste0("D", seq_len(nD))
+  rownames(coef) <- c(cn_j, "(Intercept)")
   coef_names <- rownames(coef)
+
+  # == Output =======================================================
 
   # Ensemble metrics
   ensemble_weights <- list(y_X = y_X_res$weights)
@@ -337,11 +344,8 @@ ddml_plm <- function(y, D, X,
     r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
 
-  # == Output =======================================================
-
   ddml_fit <- list(
     coefficients = coef,
-    ols_fit = ols_fit,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
     r2 = r2,

@@ -44,16 +44,7 @@ summary(reps)
 \seealso{
 \code{\link[=ddml_rep]{ddml_rep()}}
 
-Other ddml: 
-\code{\link{ddml_ate}()},
-\code{\link{ddml_fpliv}()},
-\code{\link{ddml_late}()},
-\code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()},
-\code{\link{ddml_rep}()},
-\code{\link{glance.ddml}()},
-\code{\link{glance.ddml_rep}()},
-\code{\link{tidy.ddml}()},
-\code{\link{tidy.ddml_rep}()}
+Other ddml replication: 
+\code{\link{ddml_rep}()}
 }
-\concept{ddml}
+\concept{ddml replication}

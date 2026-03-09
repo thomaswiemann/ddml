@@ -5,6 +5,34 @@
 #' @description Estimator of the mean squared prediction error of
 #'     different learners using cross-validation.
 #'
+#' @details \code{crossval} estimates the mean squared prediction error
+#'     (MSPE) of \eqn{J} base learners via \eqn{K}-fold
+#'     cross-validation. It is the inner workhorse of the stacking
+#'     machinery used by \code{\link{ensemble_weights}} to determine
+#'     ensemble weights.
+#'
+#' Given a generic conditional expectation function \eqn{f_0(\cdot)}
+#'     (e.g., \eqn{E[Y\vert X]}, \eqn{E[D\vert X]}), let
+#'     \eqn{\{I_1, \ldots, I_K\}} be a \eqn{K}-fold partition of
+#'     \eqn{\{1, \ldots, n\}} and let \eqn{\hat{f}_j^{(-k)}} denote
+#'     learner \eqn{j} trained on all observations outside fold
+#'     \eqn{I_k}. The out-of-sample residual for observation
+#'     \eqn{i \in I_k} is
+#'
+#' \eqn{\hat{e}_{i,j} = y_i - \hat{f}_j^{(-k)}(X_i).}
+#'
+#' Since every observation belongs to exactly one fold, this yields a
+#'     complete \eqn{n \times J} residual matrix. The cross-validated
+#'     MSPE for learner \eqn{j} is
+#'
+#' \eqn{\widehat{\textrm{MSPE}}_j = n^{-1} \sum_{i=1}^{n} \hat{e}_{i,j}^2,}
+#'
+#' and the cross-validated \eqn{R^2} is
+#'
+#' \eqn{\hat{R}^2_j = 1 - \widehat{\textrm{MSPE}}_j \,/\, \hat{\sigma}^2_y,}
+#'
+#' where \eqn{\hat{\sigma}^2_y} is the sample variance of \eqn{y}.
+#'
 #' @inheritParams ddml_plm
 #' @param y The outcome variable.
 #' @param X A (sparse) matrix of predictive variables.
@@ -12,10 +40,10 @@
 #' @param learners \code{learners} is a list of lists, each containing four
 #'     named elements:
 #'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
+#'         \item{\code{what} The base learner function. The function must be
 #'             such that it predicts a named input \code{y} using a named input
 #'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
 #'         \item{\code{assign_X} An optional vector of column indices
 #'             corresponding to variables in \code{X} that are passed to
 #'             the base learner.}
@@ -24,7 +52,7 @@
 #'             base learner.}
 #'     }
 #'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
 #'     results in inclusion of all predictive variables in \code{X} (and/or
 #'     \code{Z}).
 #' @param cv_folds Number of folds used for cross-validation.
@@ -46,12 +74,16 @@
 #' @return \code{crossval} returns a list containing the following components:
 #'     \describe{
 #'         \item{\code{mspe}}{A vector of MSPE estimates,
-#'             each corresponding to a base learners (in chronological order).}
-#'         \item{\code{oos_resid}}{A matrix of out-of-sample prediction errors,
-#'             each column corresponding to a base learners (in chronological
+#'             each corresponding to a base learner (in chronological
 #'             order).}
-#'         \item{\code{cv_subsamples}}{Pass-through of \code{cv_subsamples}.
-#'             See above.}
+#'         \item{\code{r2}}{A vector of cross-validated \eqn{R^2}
+#'             values, each corresponding to a base learner (in
+#'             chronological order).}
+#'         \item{\code{cv_resid}}{A matrix of out-of-sample residuals,
+#'             each column corresponding to a base learner (in
+#'             chronological order).}
+#'         \item{\code{cv_subsamples}}{Pass-through of
+#'             \code{cv_subsamples}. See above.}
 #'     }
 #' @export
 #'
@@ -82,8 +114,12 @@ crossval <- function(y, X, Z = NULL,
   parallel_export <- p$export
   parallel_packages <- p$packages
 
-  # Normalize learner specs: resolve fun/what before parallel dispatch
+  # Normalize learner specs before parallel dispatch
   learners <- normalize_learners(learners)
+
+  # Validate inputs
+  validate_inputs(y = y, X = X, learners = learners,
+                  cv_folds = cv_folds)
 
   # Data parameters
   nobs <- length(y)
@@ -134,19 +170,18 @@ crossval <- function(y, X, Z = NULL,
                               cl = cl)
 
   # Compile residual matrix
-  oos_resid <- unlist(cv_res)
-  oos_resid <- matrix(oos_resid, nobs, nlearners)
-  oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSE]
+  cv_resid <- unlist(cv_res)
+  cv_resid <- matrix(cv_resid, nobs, nlearners)
+  cv_resid <- cv_resid[order(unlist(cv_subsamples)), , drop = FALSE]
 
   # Compute MSPE and R-squared by learner
-  mspe <- colMeans(oos_resid^2)
+  mspe <- colMeans(cv_resid^2)
   y_var <- as.numeric(stats::var(y))
-  r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_,
-                                                   length(mspe))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_, length(mspe))
 
   # Organize and return output
   output <- list(mspe = mspe, r2 = r2,
-                 oos_resid = oos_resid,
+                 cv_resid = cv_resid,
                  cv_subsamples = cv_subsamples)
   return(output)
 }#CROSSVAL
@@ -174,12 +209,12 @@ crossval_compute <- function(test_sample, learner,
     }
   )
 
-  oos_fitted <- stats::predict(mdl_fit,
-                               cbind(X[test_sample, assign_X,
-                                       drop = FALSE],
-                                     Z[test_sample, assign_Z,
-                                       drop = FALSE]))
-  if (!is.matrix(oos_fitted)) oos_fitted <- as.matrix(oos_fitted)
-  oos_resid <- y[test_sample] - oos_fitted
-  return(oos_resid)
+  cv_fitted <- stats::predict(mdl_fit,
+                              cbind(X[test_sample, assign_X,
+                                      drop = FALSE],
+                                    Z[test_sample, assign_Z,
+                                      drop = FALSE]))
+  if (!is.matrix(cv_fitted)) cv_fitted <- as.matrix(cv_fitted)
+  cv_resid <- y[test_sample] - cv_fitted
+  return(cv_resid)
 }#CROSSVAL_COMPUTE

@@ -42,19 +42,19 @@ such that it predicts a named input \code{y} using a named input
 If stacking with multiple learners is used, \code{learners} is a list of
 lists, each containing four named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
+\item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
 corresponding to predictive variables in \code{X} that are
 passed to the base learner.}
 \item{\code{assign_Z} An optional vector of column indices
-corresponding to predictive in \code{Z} that are passed to the
-base learner.}
+corresponding to predictive variables in \code{Z} that are
+passed to the base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
 results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
 \item{sample_folds}{Number of cross-fitting folds.}
@@ -110,20 +110,20 @@ that use packages not imported by \code{ddml}).}
 \value{
 \code{shortstack} returns a list containing the following components:
 \describe{
-\item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+\item{\code{cf_fitted}}{A matrix of out-of-sample predictions,
 each column corresponding to an ensemble type (in chronological
 order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
+\item{\code{insample_fitted}}{When \code{compute_insample_predictions = TRUE}.
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
-\item{\code{crossfit_fitted}}{A matrix of
+\item{\code{cf_fitted_bylearner}}{A matrix of
 out-of-sample predictions, each column corresponding to a base
 learner (in chronological order).}
-\item{\code{is_fitted_bylearner}}{When
+\item{\code{insample_fitted_bylearner}}{When
 \code{compute_insample_predictions = TRUE}, a list of matrices with
 in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
@@ -155,8 +155,8 @@ shortstack_res <- shortstacking(y, X,
                                                   "singlebest"),
                                 sample_folds = 2,
                                 silent = TRUE)
-dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
-dim(shortstack_res$crossfit_fitted) # = length(y) by length(learners)
+dim(shortstack_res$cf_fitted) # = length(y) by length(ensemble_type)
+dim(shortstack_res$cf_fitted_bylearner) # = length(y) by length(learners)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and

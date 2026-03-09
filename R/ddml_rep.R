@@ -19,7 +19,7 @@ build_inf_from_agg <- function(agg, coef_names,
   }#FOR
   dimnames(inf_results) <- list(
     coef_names,
-    c("Estimate", "Std. Error", "t value", "Pr(>|t|)"),
+    c("Estimate", "Std. Error", "z value", "Pr(>|z|)"),
     ensemble_type)
   inf_results
 }#BUILD_INF_FROM_AGG
@@ -92,13 +92,8 @@ aggregate_reps <- function(object, aggregation = "median",
     fit <- object$fits[[r]]
     coef_array[, , r] <- fit$coefficients
     for (j in seq_len(nensb)) {
-      h <- if (type == "HC3") {
-        compute_leverage(fit, j)
-      }#IF
-      vcov_array[, , j, r] <- compute_ddml_variance(
-        fit$scores[[j]], fit$J[[j]],
-        fit$cluster_variable, type = type,
-        leverage = h)
+      vcov_array[, , j, r] <- stats::vcov(fit,
+        ensemble_idx = j, type = type)
     }#FOR
   }#FOR
 
@@ -186,7 +181,7 @@ aggregate_reps <- function(object, aggregation = "median",
 #' summary(reps)
 #' }
 #'
-#' @family ddml
+#' @family ddml replication
 #' @seealso [ddml_replicate()]
 #' @export
 ddml_rep <- function(fits) {
@@ -284,7 +279,7 @@ ddml_rep <- function(fits) {
 #' summary(reps)
 #' }
 #'
-#' @family ddml
+#' @family ddml replication
 #' @seealso [ddml_rep()]
 #' @export
 ddml_replicate <- function(fn, ..., resamples = 5,
@@ -359,26 +354,24 @@ length.ddml_rep <- function(x) {
   x$nresamples
 }#LENGTH.DDML_REP
 
-#' Print a ddml_rep Object
+#' Extract Number of Observations from a ddml_rep Object
 #'
-#' Displays a brief overview of a \code{ddml_rep} object.
+#' @param object A \code{ddml_rep} object.
+#' @param ... Currently unused.
+#'
+#' @return An integer specifying the number of observations.
+#'
+#' @importFrom stats nobs
+#' @export
+#' @method nobs ddml_rep
+nobs.ddml_rep <- function(object, ...) {
+  object$nobs
+}#NOBS.DDML_REP
+
+#' @rdname ddml_rep
 #'
 #' @param x A \code{ddml_rep} object.
 #' @param ... Currently unused.
-#'
-#' @return \code{x}, invisibly.
-#'
-#' @examples
-#' \donttest{
-#' y = AE98[, "worked"]
-#' D = AE98[, "morekids"]
-#' X = AE98[, c("age","agefst","black","hisp","othrace")]
-#' reps = ddml_replicate(ddml_plm, y = y, D = D, X = X,
-#'                       learners = list(what = ols),
-#'                       sample_folds = 2,
-#'                       resamples = 3, silent = TRUE)
-#' reps
-#' }
 #'
 #' @export
 #' @method print ddml_rep
@@ -422,9 +415,7 @@ print.ddml_rep <- function(x, ...) {
 #' @export
 #' @method coef ddml_rep
 coef.ddml_rep <- function(object,
-                          aggregation = c("median",
-                                          "mean",
-                                          "spectral"),
+                          aggregation = c("median", "mean", "spectral"),
                           ...) {
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
@@ -445,9 +436,7 @@ coef.ddml_rep <- function(object,
 #' @param ensemble_idx Integer index of the ensemble type.
 #'     Defaults to 1.
 #' @inheritParams coef.ddml_rep
-#' @param type Character string specifying the
-#'     variance-covariance estimator. One of \code{"HC1"}
-#'     (default), \code{"HC0"}, or \code{"HC3"}.
+#' @inheritParams vcov.ddml
 #' @param ... Currently unused.
 #'
 #' @return A p x p variance-covariance matrix.
@@ -470,10 +459,9 @@ coef.ddml_rep <- function(object,
 #' @export
 #' @method vcov ddml_rep
 vcov.ddml_rep <- function(object, ensemble_idx = 1,
-                          aggregation = c("median",
-                                          "mean",
-                                          "spectral"),
+                          aggregation = c("median", "mean", "spectral"),
                           type = "HC1", ...) {
+  type <- match.arg(type, c("HC0", "HC1", "HC3"))
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
                         aggregation = aggregation,
@@ -490,14 +478,11 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 #' Confidence Intervals for ddml_rep Objects
 #'
 #' @param object A \code{ddml_rep} object.
-#' @param parm Not used (included for generic compatibility).
-#' @param level Confidence level. Default 0.95.
+#' @inheritParams confint.ddml
 #' @param ensemble_idx Integer index of the ensemble type.
 #'     Defaults to 1.
 #' @inheritParams coef.ddml_rep
-#' @param type Character string specifying the
-#'     variance-covariance estimator. One of \code{"HC1"}
-#'     (default), \code{"HC0"}, or \code{"HC3"}.
+#' @inheritParams vcov.ddml
 #' @param ... Currently unused.
 #'
 #' @return A matrix with columns for lower and upper bounds.
@@ -523,9 +508,7 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 confint.ddml_rep <- function(object, parm,
                              level = 0.95,
                              ensemble_idx = 1,
-                             aggregation = c("median",
-                                             "mean",
-                                             "spectral"),
+                             aggregation = c("median", "mean", "spectral"),
                              type = "HC1", ...) {
   aggregation <- match.arg(aggregation)
   agg <- aggregate_reps(object,
@@ -533,11 +516,30 @@ confint.ddml_rep <- function(object, parm,
                         type = type)
   cf <- agg$coefficients[, ensemble_idx]
   se <- agg$se[, ensemble_idx]
+  cf_names <- object$coef_names
+  names(cf) <- cf_names
+  names(se) <- cf_names
+
+  if (missing(parm)) {
+    parm <- cf_names
+  } else if (is.numeric(parm)) {
+    parm <- cf_names[parm]
+  } else {
+    parm <- intersect(parm, cf_names)
+    if (length(parm) == 0) {
+      stop("None of the specified 'parm' were found ",
+           "in the model coefficients.",
+           call. = FALSE)
+    }#IF
+  }#IFELSE
+
+  cf <- cf[parm]
+  se <- se[parm]
   z <- stats::qnorm((1 + level) / 2)
   ci <- cbind(cf - z * se, cf + z * se)
   pct <- c((1 - level) / 2, (1 + level) / 2) * 100
   colnames(ci) <- paste0(format(pct, digits = 3), " %")
-  rownames(ci) <- object$coef_names
+  rownames(ci) <- parm
   ci
 }#CONFINT.DDML_REP
 
@@ -601,9 +603,7 @@ confint.ddml_rep <- function(object, parm,
 #' @export
 #' @method summary ddml_rep
 summary.ddml_rep <- function(object,
-                             aggregation = c("median",
-                                             "mean",
-                                             "spectral"),
+                             aggregation = c("median", "mean", "spectral"),
                              type = "HC1", ...) {
   aggregation <- match.arg(aggregation)
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
@@ -628,13 +628,10 @@ summary.ddml_rep <- function(object,
   result
 }#SUMMARY.DDML_REP
 
-#' Print Summary for ddml_rep Objects
+#' @rdname summary.ddml_rep
 #'
 #' @param x An object of class \code{summary.ddml_rep}.
 #' @param digits Number of significant digits. Default 3.
-#' @param ... Currently unused.
-#'
-#' @return \code{x}, invisibly.
 #'
 #' @export
 #' @method print summary.ddml_rep
@@ -717,13 +714,10 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #' @seealso \code{\link{summary.ddml_rep}} for the
 #'     aggregation equations.
 #'
-#' @family ddml
 #' @export
 #' @method tidy ddml_rep
 tidy.ddml_rep <- function(x, ensemble_idx = 1,
-                          aggregation = c("median",
-                                          "mean",
-                                          "spectral"),
+                          aggregation = c("median", "mean", "spectral"),
                           type = "HC1",
                           conf.int = FALSE,
                           conf.level = 0.95, ...) {
@@ -792,7 +786,6 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
 #' glance(reps)
 #' }
 #'
-#' @family ddml
 #' @export
 #' @method glance ddml_rep
 glance.ddml_rep <- function(x, ...) {

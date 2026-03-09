@@ -13,7 +13,7 @@ get_sample_splits <- function(cluster_variable,
   by_D <- !is.null(D)
 
   # Auto-merge subsamples_byD into subsamples when only byD is given
-  if (is.null(subsamples) & !is.null(subsamples_byD)) {
+  if (is.null(subsamples) && !is.null(subsamples_byD)) {
     if (!by_D) stop("subsamples_byD requires D to be specified.")
     subsamples <- merge_subsamples_byD(subsamples_byD, D)
   }#IF
@@ -107,12 +107,12 @@ get_crossfit_indices <- function(cluster_variable,
 
   # Check whether subsamples need to be constructed
   compute_cf <- FALSE
-  if (is.null(subsamples) & is.null(subsamples_byD)) {
+  if (is.null(subsamples) && is.null(subsamples_byD)) {
     compute_cf <- TRUE
-  } else if (is.null(subsamples) & !is.null(subsamples_byD)) {
+  } else if (is.null(subsamples) && !is.null(subsamples_byD)) {
     stop(paste0("``subsamples`` must also be set when setting ",
                 "``subsamples_byD``."))
-  } else if (!is.null(subsamples) & is.null(subsamples_byD) & by_D) {
+  } else if (!is.null(subsamples) && is.null(subsamples_byD) && by_D) {
     stop(paste0("When ``by_D==TRUE``, ``subsamples_byD`` must also be set ",
                 "when setting ``subsamples``."))
   }#IF
@@ -178,18 +178,18 @@ check_subsamples <- function(subsamples, subsamples_byD, stratify,
                                  FUN = function(x, y) y - x)
     if (min(training_counts_byD) < 100) throw_warning <- TRUE
   }#IF
-  if (throw_warning & !by_D) {
+  if (throw_warning && !by_D) {
     warning_text <- paste0(
       "One of the ", type, " subsamples only uses ",
       min(training_counts), " observations for training. Consider ",
       "increasing ", fold_arg, " if possible.")
-  } else if (throw_warning & by_D & !stratify) {
+  } else if (throw_warning && by_D && !stratify) {
     warning_text <- paste0(
       "One of the ", type, " subsamples only uses ",
       min(training_counts_byD), " observations for training. Consider ",
       "setting ``stratify=TRUE`` and/or increasing ", fold_arg,
       " if possible.")
-  } else if (throw_warning & by_D & stratify) {
+  } else if (throw_warning && by_D && stratify) {
     warning_text <- paste0(
       "One of the ", type, " subsamples only uses ",
       min(training_counts_byD), " observations for training. Consider ",

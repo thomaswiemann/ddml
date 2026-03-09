@@ -34,7 +34,7 @@ get_CEF <- function(y, X, Z = NULL,
     if (!is.null(label)) {
       info_msg("  Estimating ", label, "...", silent = silent)
     }#IF
-    if (!is.null(fitted$crossfit_fitted)) {
+    if (!is.null(fitted$cf_fitted_bylearner)) {
       # Rule 2: recompute ensemble from per-learner predictions
       if (!is.null(auxiliary_X) &&
           is.null(fitted$auxiliary_fitted_bylearner)) {
@@ -43,22 +43,22 @@ get_CEF <- function(y, X, Z = NULL,
                    "'auxiliary_fitted_bylearner'."))
       }#IF
       res <- build_CEF_from_crossfit(
-        y, fitted$crossfit_fitted,
+        y, fitted$cf_fitted_bylearner,
         ensemble_type, custom_ensemble_weights,
-        crossval_resid = fitted$crossval_resid,
+        cv_resid_byfold = fitted$cv_resid_byfold,
         subsamples = subsamples,
         auxiliary_fitted_bylearner =
           fitted$auxiliary_fitted_bylearner)
       return(res)
     }#IF
-    if (!is.null(fitted$ensemble_fitted)) {
+    if (!is.null(fitted$cf_fitted)) {
       # Rule 1: pre-ensembled predictions, use directly
-      res <- list(oos_fitted = fitted$ensemble_fitted,
+      res <- list(cf_fitted = fitted$cf_fitted,
                   weights = NULL, mspe = NULL, r2 = NULL,
                   auxiliary_fitted = NULL,
-                  crossfit_fitted = NULL,
-                  crossfit_resid = NULL,
-                  crossval_resid = NULL)
+                  cf_fitted_bylearner = NULL,
+                  cf_resid_bylearner = NULL,
+                  cv_resid_byfold = NULL)
       return(res)
     }#IF
   }#IF
@@ -88,11 +88,11 @@ get_CEF <- function(y, X, Z = NULL,
     }#IF
 
     return(list(
-      oos_fitted = matrix(constant_val, n, nensb),
+      cf_fitted = matrix(constant_val, n, nensb),
       weights = NULL, mspe = NULL, r2 = NULL,
-      crossfit_fitted = matrix(constant_val, n, nlearners),
-      crossfit_resid = matrix(0, n, nlearners),
-      crossval_resid = NULL,
+      cf_fitted_bylearner = matrix(constant_val, n, nlearners),
+      cf_resid_bylearner = matrix(0, n, nlearners),
+      cv_resid_byfold = NULL,
       auxiliary_fitted = aux_fitted,
       auxiliary_fitted_bylearner = aux_fitted_bl))
   }#IF
@@ -149,7 +149,7 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   is_D <- rep(list(NULL), nCEF)
   for (d in seq_len(nCEF)) is_D[[d]] <- which(D == D_levels[d])
   nensb <- ncol(as.matrix(
-    CEF_res_byD[[1]][[1]]$ensemble_fitted))
+    CEF_res_byD[[1]][[1]]$cf_fitted))
   sample_folds <- length(
     CEF_res_byD[[1]][[1]]$auxiliary_fitted)
 
@@ -157,7 +157,7 @@ extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   g_X_byD <- array(0, dim = c(nobs, nensb, nCEF))
   for (d in seq_len(nCEF)) {
     g_X_byD[is_D[[d]], , d] <-
-      CEF_res_byD[[d]][[1]]$ensemble_fitted
+      CEF_res_byD[[d]][[1]]$cf_fitted
     for (k in seq_len(sample_folds)) {
       g_X_byD[aux_indx[[d]][[k]], , d] <-
         CEF_res_byD[[d]][[1]]$auxiliary_fitted[[k]]

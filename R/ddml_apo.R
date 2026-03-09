@@ -49,37 +49,38 @@
 #'     compatibility but should be replaced with the \code{splits}
 #'     argument.
 #'
-#' @return \code{ddml_apo} returns a list object of class \code{ddml_apo} 
-#'     and \code{ddml} with the following properties:
-#' \describe{
-#'   \item{\code{coefficients}}{A matrix of estimated coefficients.}
-#'   \item{\code{ensemble_weights}}{The ensemble weights.}
-#'   \item{\code{mspe}}{The in-sample mean squared prediction errors.}
-#'   \item{\code{r2}}{The out-of-sample R-squared.}
-#'   \item{\code{psi_a}, \code{psi_b}}{The scale and scores associated with
-#'     evaluating the Neyman orthogonal score.}
-#'   \item{\code{scores}}{A list of evaluating the Neyman orthogonal scores.}
-#'   \item{\code{J}}{A list of evaluating the Jacobian of the Neyman
-#'     orthogonal scores.}
-#'   \item{\code{fitted}}{An optional list of fitted nuisance estimators.
-#'     See \code{\link{ddml_plm}} for more information.}
-#'   \item{\code{splits}}{The data splitting structure.}
-#'   \item{\code{learners}}{The original list of learners.}
-#'   \item{\code{learners_DX}}{The original list of learners for the propensity
-#'     score.}
-#'   \item{\code{ensemble_type}}{The ensemble type.}
-#'   \item{\code{nobs}}{The number of observations.}
-#'   \item{\code{sample_folds}}{The number of sample folds.}
-#'   \item{\code{cv_folds}}{The number of cross-validation folds.}
-#'   \item{\code{shortstack}}{A boolean indicating if shortstacking was used.}
-#'   \item{\code{cluster_variable}}{The original cluster variable.}
-#'   \item{\code{call}}{The match.call().}
-#' }
+#' @return \code{ddml_apo} returns an object of S3 class
+#'     \code{ddml_apo}. An object of class \code{ddml_apo} is a list
+#'     containing the following components:
+#'     \describe{
+#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
+#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
+#'             weight assigned to each base learner by the ensemble
+#'             procedure.}
+#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
+#'             base learner computed by the cross-validation step in the
+#'             ensemble construction.}
+#'         \item{\code{r2}}{The out-of-sample R-squared.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
+#'             \code{\link{vcov.ddml}}.}
+#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
+#'             scores.}
+#'         \item{\code{J}}{A list of evaluated Jacobians.}
+#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
+#'             See \code{\link{ddml_plm}} for more information.}
+#'         \item{\code{splits}}{The data splitting structure.}
+#'         \item{\code{learners},\code{learners_DX},
+#'             \code{cluster_variable},
+#'             \code{ensemble_type}}{Pass-through of selected
+#'             user-provided arguments. See above.}
+#'     }
 #'     
 #' @references Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). 
 #'     "Model Averaging and Double Machine Learning." 
 #'     \url{https://arxiv.org/abs/2401.01645}
-#' @seealso \code{\link{summary.ddml}}
+#' @seealso \code{\link{summary.ddml}},
+#'     \code{\link{vcov.ddml}}, \code{\link{confint.ddml}},
+#'     \code{\link{hatvalues.ddml}},
 #'     \code{\link{ddml_plm}}, \code{\link{ddml_pliv}},
 #'     \code{\link{ddml_fpliv}}, \code{\link{ddml_late}},
 #'     \code{\link{ddml_ate}}
@@ -122,6 +123,7 @@ ddml_apo <- function(y, D, X,
                   cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
                   weights = weights,
+                  cluster_variable = cluster_variable,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX,
@@ -190,7 +192,7 @@ ddml_apo <- function(y, D, X,
                      fitted = fitted$y_X)
 
   ensb_info <- update_ensemble_info(y_X_res$weights,
-                                    D_X_res$oos_fitted)
+                                    D_X_res$cf_fitted)
   ensemble_type <- ensb_info$ensemble_type
   nensb <- ensb_info$nensb
 
@@ -200,11 +202,11 @@ ddml_apo <- function(y, D, X,
     D = D_ind,
     CEF_res_byD = list(list(
       fit = list(
-        ensemble_fitted = y_X_res$oos_fitted,
+        cf_fitted = y_X_res$cf_fitted,
         auxiliary_fitted = y_X_res$auxiliary_fitted),
       d = 1)),
     aux_indx = indxs$aux_indx[2])[, , 1]
-  m_X <- D_X_res$oos_fitted
+  m_X <- D_X_res$cf_fitted
   is_internal <- is.null(messages$start) ||
     messages$start == ""
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type,
@@ -278,7 +280,3 @@ ddml_apo <- function(y, D, X,
   return(ddml_fit)
 }#DDML_APO
 
-#' @export
-summary.ddml_apo <- function(object, ...) {
-  summary.ddml(object, ...)
-}

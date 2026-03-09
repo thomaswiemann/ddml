@@ -44,12 +44,13 @@ generics::glance
 #' tidy(plm_fit, conf.int = TRUE)
 #' }
 #'
-#' @family ddml
 #' @export
 #' @method tidy ddml
 tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
                       conf.level = 0.95,
                       type = "HC1", ...) {
+  type <- match.arg(type, c("HC1", "HC0", "HC3"))
+
   s <- summary(x, type = type)
   inf <- s$coefficients
   nensb <- dim(inf)[3]
@@ -58,30 +59,50 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
   if (is.null(ensemble_idx)) {
     j_seq <- seq_len(nensb)
   } else {
+    if (any(ensemble_idx < 1) || any(ensemble_idx > nensb)) {
+      stop(sprintf("ensemble_idx must be between 1 and %d", nensb))
+    }#IF
     j_seq <- ensemble_idx
   }#IFELSE
 
-  rows <- list()
+  # Pre-allocate rows
+  n_rows <- length(j_seq) * p
+  term <- rep(dimnames(inf)[[1]], length(j_seq))
+  ensemble_type <- rep(dimnames(inf)[[3]][j_seq], each = p)
+  
+  estimate <- numeric(n_rows)
+  std.error <- numeric(n_rows)
+  statistic <- numeric(n_rows)
+  p.value <- numeric(n_rows)
+
+  idx <- 1
   for (j in j_seq) {
     for (k in seq_len(p)) {
-      row <- data.frame(
-        term = dimnames(inf)[[1]][k],
-        estimate = inf[k, 1, j],
-        std.error = inf[k, 2, j],
-        statistic = inf[k, 3, j],
-        p.value = inf[k, 4, j],
-        ensemble_type = dimnames(inf)[[3]][j],
-        stringsAsFactors = FALSE
-      )
-      if (conf.int) {
-        z <- stats::qnorm((1 + conf.level) / 2)
-        row$conf.low <- inf[k, 1, j] - z * inf[k, 2, j]
-        row$conf.high <- inf[k, 1, j] + z * inf[k, 2, j]
-      }#IF
-      rows[[length(rows) + 1]] <- row
+      estimate[idx] <- inf[k, 1, j]
+      std.error[idx] <- inf[k, 2, j]
+      statistic[idx] <- inf[k, 3, j]
+      p.value[idx] <- inf[k, 4, j]
+      idx <- idx + 1
     }#FOR
   }#FOR
-  do.call(rbind, rows)
+
+  res <- data.frame(
+    term = term,
+    estimate = estimate,
+    std.error = std.error,
+    statistic = statistic,
+    p.value = p.value,
+    ensemble_type = ensemble_type,
+    stringsAsFactors = FALSE
+  )
+
+  if (conf.int) {
+    z <- stats::qnorm((1 + conf.level) / 2)
+    res$conf.low <- res$estimate - z * res$std.error
+    res$conf.high <- res$estimate + z * res$std.error
+  }#IF
+
+  res
 }#TIDY.DDML
 
 #' Glance at a ddml Object
@@ -108,7 +129,9 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
 #' glance(plm_fit)
 #' }
 #'
-#' @family ddml
+#' @seealso \code{\link{tidy.ddml}},
+#'     \code{\link{summary.ddml}}
+#'
 #' @export
 #' @method glance ddml
 glance.ddml <- function(x, ...) {

@@ -7,7 +7,7 @@
 \method{vcov}{ddml_rep}(
   object,
   ensemble_idx = 1,
-  aggregation = c("median", "mean"),
+  aggregation = c("median", "mean", "spectral"),
   type = "HC1",
   ...
 )
@@ -18,8 +18,9 @@
 \item{ensemble_idx}{Integer index of the ensemble type.
 Defaults to 1.}
 
-\item{aggregation}{Character string, either
-\code{"median"} (default) or \code{"mean"}.}
+\item{aggregation}{Character string: \code{"median"}
+(default), \code{"mean"}, or \code{"spectral"}.
+See \code{\link{summary.ddml_rep}} for details.}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
@@ -46,4 +47,8 @@ reps = ddml_replicate(ddml_plm, y = y, D = D, X = X,
 vcov(reps)
 }
 
+}
+\seealso{
+\code{\link{summary.ddml_rep}} for the
+aggregation equations.
 }

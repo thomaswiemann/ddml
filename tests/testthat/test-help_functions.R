@@ -38,7 +38,7 @@ test_that("normalize_learners resolves what and fun", {
   # neither → error
   expect_error(
     normalize_learners(list(list(args = list()))),
-    "what.*fun")
+    "'what' element")
 
   # reset flag
   options(ddml.fun_deprecated_warned = NULL)

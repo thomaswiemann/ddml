@@ -46,16 +46,16 @@ such that it predicts a named input \code{y} using a named input
 If stacking with multiple learners is used, \code{learners} is a list of
 lists, each containing four named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
+\item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
 corresponding to control variables in \code{X} that are passed to
 the base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} results in inclusion of
+used in \code{what}. Omission of \code{assign_X} results in inclusion of
 all variables in \code{X}.}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
@@ -138,21 +138,27 @@ with the \code{splits} argument.}
 \code{ddml_plm}. An object of class \code{ddml_plm} is a list containing
 the following components:
 \describe{
-\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
-the second-stage intercept (last element).}
-\item{\code{ensemble_weights}}{A list of matrices, providing the weight
-assigned to each base learner (in chronological order) by the
-ensemble procedure.}
+\item{\code{coefficients}}{A matrix of estimated coefficients.}
+\item{\code{ensemble_weights}}{A list of matrices, providing the
+weight assigned to each base learner by the ensemble
+procedure.}
 \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner (in chronological order) computed by the
-cross-validation step in the ensemble construction.}
-\item{\code{ols_fit}}{Object of class \code{lm} from the second
-stage regression of \eqn{Y - \hat{E}[Y|X]} on
-\eqn{D - \hat{E}[D|X]}.}
-\item{\code{learners},\code{learners_DX},\code{cluster_variable},
-\code{subsamples}, \code{cv_subsamples},
-\code{ensemble_type}}{Pass-through of selected user-provided
-arguments. See above.}
+base learner computed by the cross-validation step in the
+ensemble construction.}
+\item{\code{r2}}{The out-of-sample R-squared.}
+\item{\code{psi_a}, \code{psi_b}}{Score components used in
+\code{\link{vcov.ddml}}.}
+\item{\code{scores}}{A list of evaluated Neyman orthogonal
+scores.}
+\item{\code{J}}{A list of evaluated Jacobians.}
+\item{\code{fitted}}{A list of fitted nuisance estimators.
+Can be passed back via the \code{fitted} argument to
+skip cross-fitting on re-estimation.}
+\item{\code{splits}}{The data splitting structure.}
+\item{\code{learners},\code{learners_DX},
+\code{cluster_variable},
+\code{ensemble_type}}{Pass-through of selected
+user-provided arguments. See above.}
 }
 }
 \description{
@@ -240,19 +246,14 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
 \code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
-\code{\link[=confint.ddml]{confint.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
+\code{\link[=vcov.ddml]{vcov.ddml()}}, \code{\link[=confint.ddml]{confint.ddml()}},
+\code{\link[=hatvalues.ddml]{hatvalues.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
 \code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
 
-Other ddml: 
+Other ddml estimators: 
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
-\code{\link{ddml_pliv}()},
-\code{\link{ddml_rep}()},
-\code{\link{ddml_replicate}()},
-\code{\link{glance.ddml}()},
-\code{\link{glance.ddml_rep}()},
-\code{\link{tidy.ddml}()},
-\code{\link{tidy.ddml_rep}()}
+\code{\link{ddml_pliv}()}
 }
-\concept{ddml}
+\concept{ddml estimators}

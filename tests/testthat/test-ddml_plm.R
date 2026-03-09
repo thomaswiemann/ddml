@@ -368,8 +368,8 @@ test_that("ddml_plm fitted pass-through works", {
 
   # fitted should be stored with per-equation crossfit data
   expect_true(!is.null(fit$fitted))
-  expect_true(!is.null(fit$fitted$y_X$crossfit_fitted))
-  expect_true(!is.null(fit$fitted$y_X$crossfit_resid))
+  expect_true(!is.null(fit$fitted$y_X$cf_fitted_bylearner))
+  expect_true(!is.null(fit$fitted$y_X$cf_resid_bylearner))
 
   # Pass-through with average ensemble reproduces exactly
   fit2 <- ddml_plm(y, D, X,
@@ -403,7 +403,7 @@ test_that("ddml_plm fitted pass-through works", {
   )
 })
 
-test_that("ddml_plm pass-through with nnls/nnls1 reproduces exactly via crossval_resid", {
+test_that("ddml_plm pass-through with nnls/nnls1 reproduces exactly via cv_resid_byfold", {
   set.seed(42)
   nobs <- 200
   X <- matrix(rnorm(nobs * 3), nobs, 3)
@@ -426,10 +426,10 @@ test_that("ddml_plm pass-through with nnls/nnls1 reproduces exactly via crossval
                           splits = splits,
                           silent = TRUE)
 
-    # crossval_resid must be stored for exact reproduction
+    # cv_resid_byfold must be stored for exact reproduction
     expect_true(
-      !is.null(fit_fresh$fitted$y_X$crossval_resid),
-      info = paste(ens, "y_X crossval_resid"))
+      !is.null(fit_fresh$fitted$y_X$cv_resid_byfold),
+      info = paste(ens, "y_X cv_resid_byfold"))
 
     # Pass-through with same ensemble reproduces exactly
     fit_pt <- ddml_plm(y, D, X,
@@ -460,7 +460,7 @@ test_that("ddml_plm pass-through with save_crossval = FALSE uses approximate pat
     subsamples = presplits$subsamples,
     cv_subsamples = presplits$cv_subsamples)
 
-  # Fit with save_crossval = FALSE strips crossval_resid
+  # Fit with save_crossval = FALSE strips cv_resid_byfold
   fit_no_cv <- ddml_plm(y, D, X,
                         learners = learners,
                         ensemble_type = "nnls1",
@@ -468,9 +468,9 @@ test_that("ddml_plm pass-through with save_crossval = FALSE uses approximate pat
                         splits = splits,
                         save_crossval = FALSE,
                         silent = TRUE)
-  expect_null(fit_no_cv$fitted$y_X$crossval_resid)
+  expect_null(fit_no_cv$fitted$y_X$cv_resid_byfold)
 
-  # average ensemble: still exact without crossval_resid
+  # average ensemble: still exact without cv_resid_byfold
   fit_avg <- ddml_plm(y, D, X,
                       learners = learners,
                       ensemble_type = "average",
@@ -519,9 +519,15 @@ test_that("ddml_plm HC0/HC1/HC3 SEs close to sandwich::vcovHC on ols_fit", {
                   sample_folds = 5,
                   silent = TRUE)
 
+  # Reconstruct the final partialing-out regression since ols_fit is removed:
+  y_r <- as.vector(y - fit$fitted$y_X$cf_fitted_bylearner[, 1])
+  D_r <- as.matrix(D - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
+  colnames(D_r) <- colnames(D)
+  ols_fit <- stats::lm(y_r ~ D_r)
+
   for (type in c("HC0", "HC1")) {
     V_ddml <- vcov(fit, type = type)
-    V_sw <- sandwich::vcovHC(fit$ols_fit[[1]], type = type)
+    V_sw <- sandwich::vcovHC(ols_fit, type = type)
     # Reorder sandwich: intercept first -> last
     idx <- c(seq_len(nrow(V_sw))[-1], 1)
     V_sw_reord <- V_sw[idx, idx, drop = FALSE]
@@ -532,7 +538,7 @@ test_that("ddml_plm HC0/HC1/HC3 SEs close to sandwich::vcovHC on ols_fit", {
   }
   # HC3: regressor-based leverage matches sandwich exactly
   V_ddml <- vcov(fit, type = "HC3")
-  V_sw <- sandwich::vcovHC(fit$ols_fit[[1]], type = "HC3")
+  V_sw <- sandwich::vcovHC(ols_fit, type = "HC3")
   idx <- c(seq_len(nrow(V_sw))[-1], 1)
   V_sw_reord <- V_sw[idx, idx, drop = FALSE]
   expect_equal(as.numeric(V_ddml),

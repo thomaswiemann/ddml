@@ -3,7 +3,7 @@
 \docType{data}
 \name{AE98}
 \alias{AE98}
-\title{Random subsample from the data of Angrist & Evans (1991).}
+\title{Random subsample from the data of Angrist & Evans (1998).}
 \format{
 A data frame with 5,000 rows and 13 variables.
 \describe{
@@ -31,7 +31,7 @@ Hispanic.}
 AE98
 }
 \description{
-Random subsample from the data of Angrist & Evans (1991).
+Random subsample from the data of Angrist & Evans (1998).
 }
 \references{
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply:

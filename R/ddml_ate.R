@@ -1,9 +1,10 @@
 #' Estimators of Average Treatment Effects.
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
 #' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
+#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
 #'     [ddml::glance.ddml()], [ddml::diagnostics()]
 #'
 #' @description Estimators of the average treatment effect and the average
@@ -92,8 +93,8 @@
 #'             base learner computed by the cross-validation step in the
 #'             ensemble construction.}
 #'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
-#'             computation of scores. Used in [ddml::summary.ddml()].}
+#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
+#'             \code{\link{vcov.ddml}}.}
 #'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
 #'             scores.}
 #'         \item{\code{J}}{A list of evaluated Jacobians.}
@@ -176,6 +177,7 @@ ddml_ate <- function(y, D, X,
                   sample_folds = sample_folds,
                   cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
+                  cluster_variable = cluster_variable,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
@@ -242,8 +244,8 @@ ddml_ate <- function(y, D, X,
 
   # Pre-ensembled propensity for ddml_apo delegation.
   # For d=0, flip: P(D=0|X) = 1 - P(D=1|X).
-  fitted_D_X_1 <- list(ensemble_fitted = D_X_res$oos_fitted)
-  fitted_D_X_0 <- list(ensemble_fitted = 1 - D_X_res$oos_fitted)
+  fitted_D_X_1 <- list(cf_fitted = D_X_res$cf_fitted)
+  fitted_D_X_0 <- list(cf_fitted = 1 - D_X_res$cf_fitted)
 
   # E[g(1,X)] via ddml_apo
   apo_1 <- ddml_apo(

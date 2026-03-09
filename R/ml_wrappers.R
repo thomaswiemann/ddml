@@ -50,7 +50,7 @@ mdl_glmnet <- function(y, X,
 #' @exportS3Method
 predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
-  cv <- "cv.glmnet" %in% class(object)
+  cv <- inherits(object, "cv.glmnet")
   class(object) <- class(object)[-1]
   # Compute predictions
   if (cv) {
@@ -107,7 +107,8 @@ mdl_xgboost <- function(y, X,
                         ...){
   # Compute xgboost
   dots <- list(...)
-  if (is.null(dots$params$objective) && is.null(dots$objective) && is.factor(y) && length(levels(y)) == 2) {
+  if (is.null(dots$params$objective) && is.null(dots$objective) &&
+      is.factor(y) && length(levels(y)) == 2) {
     dots$objective <- "binary:logistic"
   }#IF
   mdl_fit <- do.call(xgboost::xgboost,
@@ -171,13 +172,11 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
   if (is.null(colnames(newdata))) {
     colnames(newdata) <- seq(dim(newdata)[2])
   }#IF
-  class(object) <- class(object)[2]
+  class(object) <- class(object)[-1]
   # Predict using randomForest prediction method
   if (object$treetype == "Probability estimation") {
-    #stats::predict(object, data = newdata, ...)$predictions[, 2]
     stats::predict(object, data = newdata, ...)$predictions[, 2]
   } else if (object$treetype == "Regression") {
-    #stats::predict(object, data = newdata, ...)$predictions
     stats::predict(object, data = newdata, ...)$predictions
   } else {
     warning("mdl_ranger is only designed for regression and probability forests")

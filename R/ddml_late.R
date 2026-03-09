@@ -1,9 +1,10 @@
 #' Estimator of the Local Average Treatment Effect.
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
 #' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
+#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
 #'     [ddml::glance.ddml()], [ddml::diagnostics()]
 #'
 #' @description Estimator of the local average treatment effect.
@@ -56,10 +57,10 @@
 #'     If stacking with multiple learners is used, \code{learners} is a list of
 #'     lists, each containing four named elements:
 #'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
+#'         \item{\code{what} The base learner function. The function must be
 #'             such that it predicts a named input \code{y} using a named input
 #'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
 #'         \item{\code{assign_X} An optional vector of column indices
 #'             corresponding to control variables in \code{X} that are passed to
 #'             the base learner.}
@@ -68,7 +69,7 @@
 #'             base learner.}
 #'     }
 #'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+#'     used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
 #'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
 #' @param learners_DXZ,learners_ZX Optional arguments to allow for different
 #'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
@@ -101,8 +102,8 @@
 #'             each base learner computed by the cross-validation step
 #'             in the ensemble construction.}
 #'         \item{\code{r2}}{The out-of-sample R-squared.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
-#'             computation of scores. Used in [ddml::summary.ddml()].}
+#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
+#'             \code{\link{vcov.ddml}}.}
 #'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
 #'             scores.}
 #'         \item{\code{J}}{A list of evaluated Jacobians.}
@@ -200,6 +201,7 @@ ddml_late <- function(y, D, Z, X,
                   sample_folds = sample_folds,
                   cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
+                  cluster_variable = cluster_variable,
                   require_binary_D = FALSE)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DXZ,
@@ -233,8 +235,7 @@ ddml_late <- function(y, D, Z, X,
     "sequential"
   }#IFELSE
   if (!is.null(messages$start) && messages$start != "") {
-    info_msg(sprintf(messages$start, mode_str),
-             silent = silent)
+    info_msg(sprintf(messages$start, mode_str), silent = silent)
   }#IF
 
   # == Reduced-form estimation ======================================

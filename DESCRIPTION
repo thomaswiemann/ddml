@@ -25,7 +25,6 @@ Depends:
 Imports: 
     methods,
     stats,
-    AER,
     MASS,
     Matrix,
     nnls,
@@ -36,6 +35,7 @@ Imports:
     xgboost,
     generics
 Suggests: 
+    AER,
     covr,
     CVXR,
     knitr,

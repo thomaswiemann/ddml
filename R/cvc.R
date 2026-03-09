@@ -121,7 +121,7 @@ cvc_confidence_set <- function(resid_mat, fid,
 # Runs pairwise comparisons and the model confidence set
 # procedure on a matrix of OOS residuals.
 #
-# @param oos_resid Matrix (n x nlearners) of OOS residuals.
+# @param cv_resid Matrix (n x nlearners) of OOS residuals.
 # @param subsamples List of sample fold index vectors (used
 #     to derive fold IDs).
 # @param bootnum Number of bootstrap replications.
@@ -130,10 +130,10 @@ cvc_confidence_set <- function(resid_mat, fid,
 # @return List with: pairwise (nlearners x nlearners matrix
 #     of p-values), confidence_set (logical vector),
 #     pvalues (numeric vector from confidence set procedure).
-cvc_test <- function(oos_resid, subsamples,
+cvc_test <- function(cv_resid, subsamples,
                      bootnum = 500, alpha = 0.05) {
-  n <- nrow(oos_resid)
-  nlearners <- ncol(oos_resid)
+  n <- nrow(cv_resid)
+  nlearners <- ncol(cv_resid)
 
   # Derive fold IDs from subsamples
   fid <- integer(n)
@@ -143,22 +143,22 @@ cvc_test <- function(oos_resid, subsamples,
 
   # Pairwise comparisons
   pairwise <- matrix(NA_real_, nlearners, nlearners)
-  if (!is.null(colnames(oos_resid))) {
+  if (!is.null(colnames(cv_resid))) {
     rownames(pairwise) <- colnames(pairwise) <-
-      colnames(oos_resid)
+      colnames(cv_resid)
   }#IF
   for (i in seq_len(nlearners)) {
     for (j in seq_len(nlearners)) {
       if (i != j) {
         pairwise[i, j] <- cvc_pairwise(
-          oos_resid[, i], oos_resid[, j],
+          cv_resid[, i], cv_resid[, j],
           fid, bootnum)
       }#IF
     }#FOR
   }#FOR
 
   # Model confidence set
-  cs <- cvc_confidence_set(oos_resid, fid, bootnum, alpha)
+  cs <- cvc_confidence_set(cv_resid, fid, bootnum, alpha)
 
   list(pairwise = pairwise,
        pvalues = cs$pvalues,

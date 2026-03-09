@@ -121,3 +121,92 @@ test_that("type works with PLM estimator", {
   expect_equal(dim(V_hc3), c(2, 2))
   expect_true(V_hc1[1, 1] > V_hc0[1, 1])
 })
+
+test_that("vcov rejects invalid type", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- 1 * (rnorm(nobs) > 0)
+  y <- D + rnorm(nobs)
+
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2, silent = TRUE)
+
+  expect_error(vcov(fit, type = "HC2"))
+  expect_error(vcov(fit, type = "hc1"))
+})
+
+test_that("confint parm subsetting works", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- cbind(D1 = rnorm(nobs), D2 = rnorm(nobs))
+  y <- D[, 1] + D[, 2] + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2,
+                  silent = TRUE)
+
+  ci_all <- confint(fit)
+  expect_equal(nrow(ci_all), 3)
+
+  ci_d1 <- confint(fit, parm = "D1")
+  expect_equal(nrow(ci_d1), 1)
+  expect_equal(rownames(ci_d1), "D1")
+
+  ci_num <- confint(fit, parm = 1:2)
+  expect_equal(nrow(ci_num), 2)
+
+  expect_error(confint(fit, parm = "nonexistent"))
+})
+
+test_that("hatvalues returns correct length", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- 1 * (rnorm(nobs) > 0)
+  y <- D + rnorm(nobs)
+
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2, silent = TRUE)
+
+  h <- hatvalues(fit)
+  expect_length(h, nobs)
+  expect_true(is.numeric(h))
+  expect_true(all(is.finite(h)))
+})
+
+test_that("hatvalues works for multi-parameter estimator", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
+  y <- 2 * D + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2,
+                  silent = TRUE)
+
+  h <- hatvalues(fit)
+  expect_length(h, nobs)
+  expect_true(all(is.finite(h)))
+})
+
+test_that("ensemble_idx out of range errors", {
+  set.seed(42)
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- 1 * (rnorm(nobs) > 0)
+  y <- D + rnorm(nobs)
+
+  fit <- ddml_ate(y, D, X,
+                  learners = list(what = ols),
+                  sample_folds = 2, silent = TRUE)
+
+  expect_error(vcov(fit, ensemble_idx = 99))
+  expect_error(hatvalues(fit, ensemble_idx = 0))
+})

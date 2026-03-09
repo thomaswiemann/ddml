@@ -9,7 +9,10 @@
 \arguments{
 \item{object}{An object of class \code{ddml}.}
 
-\item{parm}{Not used (included for generic compatibility).}
+\item{parm}{A specification of which parameters are to be
+given confidence intervals, either a vector of numbers
+or a vector of names. If missing, all parameters are
+considered.}
 
 \item{level}{Confidence level. Default 0.95.}
 
@@ -26,7 +29,8 @@ variance-covariance estimator. One of \code{"HC1"}
 A matrix with columns for lower and upper bounds.
 }
 \description{
-Confidence Intervals for DDML Estimators
+Computes confidence intervals for one or more
+parameters in a fitted DDML model.
 }
 \examples{
 \donttest{
@@ -37,7 +41,19 @@ plm_fit = ddml_plm(y, D, X,
                     learners = list(what = ols),
                     sample_folds = 2, silent = TRUE)
 confint(plm_fit)
+confint(plm_fit, parm = "D1")
 confint(plm_fit, level = 0.90)
 }
 
 }
+\seealso{
+\code{\link{vcov.ddml}}
+
+Other ddml inference: 
+\code{\link{[.summary.ddml}()},
+\code{\link{coef.ddml}()},
+\code{\link{hatvalues.ddml}()},
+\code{\link{nobs.ddml}()},
+\code{\link{vcov.ddml}()}
+}
+\concept{ddml inference}

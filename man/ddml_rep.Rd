@@ -2,15 +2,22 @@
 % Please edit documentation in R/ddml_rep.R
 \name{ddml_rep}
 \alias{ddml_rep}
+\alias{print.ddml_rep}
 \title{Construct a Multi-Resample DDML Object}
 \usage{
 ddml_rep(fits)
+
+\method{print}{ddml_rep}(x, ...)
 }
 \arguments{
 \item{fits}{A list of at least 2 objects inheriting from
 class \code{"ddml"}. All fits must share the same
 primary class, coefficient names, ensemble type, and
 number of observations.}
+
+\item{x}{A \code{ddml_rep} object.}
+
+\item{...}{Currently unused.}
 }
 \value{
 An object of class \code{"ddml_rep"} with fields:
@@ -48,16 +55,7 @@ summary(reps)
 \seealso{
 \code{\link[=ddml_replicate]{ddml_replicate()}}
 
-Other ddml: 
-\code{\link{ddml_ate}()},
-\code{\link{ddml_fpliv}()},
-\code{\link{ddml_late}()},
-\code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()},
-\code{\link{ddml_replicate}()},
-\code{\link{glance.ddml}()},
-\code{\link{glance.ddml_rep}()},
-\code{\link{tidy.ddml}()},
-\code{\link{tidy.ddml_rep}()}
+Other ddml replication: 
+\code{\link{ddml_replicate}()}
 }
-\concept{ddml}
+\concept{ddml replication}

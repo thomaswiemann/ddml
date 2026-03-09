@@ -4,13 +4,14 @@
 \alias{coef.ddml_rep}
 \title{Extract Aggregated Coefficients from a ddml_rep Object}
 \usage{
-\method{coef}{ddml_rep}(object, aggregation = c("median", "mean"), ...)
+\method{coef}{ddml_rep}(object, aggregation = c("median", "mean", "spectral"), ...)
 }
 \arguments{
 \item{object}{A \code{ddml_rep} object.}
 
-\item{aggregation}{Character string, either
-\code{"median"} (default) or \code{"mean"}.}
+\item{aggregation}{Character string: \code{"median"}
+(default), \code{"mean"}, or \code{"spectral"}.
+See \code{\link{summary.ddml_rep}} for details.}
 
 \item{...}{Additional arguments.}
 }
@@ -34,4 +35,8 @@ coef(reps)
 coef(reps, aggregation = "mean")
 }
 
+}
+\seealso{
+\code{\link{summary.ddml_rep}} for the
+aggregation equations.
 }

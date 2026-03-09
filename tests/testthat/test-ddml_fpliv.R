@@ -52,34 +52,12 @@ test_that("ddml_fpliv computes with an ensemble procedure", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                               learners,
-                               ensemble_type = "ols",
-                               cv_folds = 3,
-                               sample_folds = 3,
-                               silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_fpliv_fit)), 2)
-})#TEST_THAT
-
-test_that("ddml_fpliv computes with stacking w/o enforcing the LIE", {
-  # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
-  y <- D + X %*% runif(40) + UV[, 2]
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
   # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = "ols",
-                               sample_folds = 3,
                                cv_folds = 3,
+                               sample_folds = 3,
                                silent = TRUE)
   # Check output with expectations
   expect_equal(length(coef(ddml_fpliv_fit)), 2)
@@ -96,7 +74,7 @@ test_that("ddml_fpliv computes with multiple ensemble procedures", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
@@ -120,7 +98,7 @@ test_that("ddml_fpliv computes with custom weights", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("average"),
@@ -131,29 +109,6 @@ test_that("ddml_fpliv computes with custom weights", {
 
   # Check output with expectations
   expect_equal(length(coef(ddml_fpliv_fit)), 6)
-})#TEST_THAT
-
-test_that("ddml_fpliv computes with multiple ensembles w/o the LIE", {
-  # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
-  y <- D + X %*% runif(40) + UV[, 2]
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
-  # Compute DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                               learners,
-                               ensemble_type = c("ols", "nnls",
-                                                 "singlebest", "average"),
-                               cv_folds = 3,
-                               sample_folds = 3,
-                               silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
 test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
@@ -167,7 +122,7 @@ test_that("ddml_fpliv computes with multiple ensembles and sparse matrices", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D,
                                Z = as(Z, "sparseMatrix"),
                                X = as(X, "sparseMatrix"),
@@ -197,7 +152,7 @@ test_that("ddml_fpliv computes with different sets of learners", {
                        list(what = ols))
   learners_DX <- list(list(what = ols),
                       list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                learners_DXZ = learners_DXZ,
@@ -223,7 +178,7 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
+  # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
@@ -237,28 +192,7 @@ test_that("ddml_fpliv computes w/ ensembles & shortstack", {
   expect_equal(length(coef(ddml_fpliv_fit)), 8)
 })#TEST_THAT
 
-test_that("ddml_fpliv computes w/ ensembles & shortstack but w/o the LIE ", {
-  # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1]
-  y <- D + X %*% runif(40) + UV[, 2]
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
-  # Compute DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                               learners,
-                               ensemble_type = c("ols", "nnls",
-                                                 "singlebest", "average"),
-                               cv_folds = 3,
-                               sample_folds = 3,
-                               silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_fpliv_fit)), 8)
-})#TEST_THAT
+
 
 test_that("summary.ddml_fpliv computes with a single model", {
   # Simulate small dataset
@@ -292,28 +226,6 @@ test_that("ddml_fpliv computes with an ensemble procedure, multi D", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                               learners,
-                               ensemble_type = "ols",
-                               cv_folds = 3,
-                               sample_folds = 3,
-                               silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_fpliv_fit)), 3)
-})#TEST_THAT
-
-test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
-  # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1], rnorm(nobs))
-  y <- rowSums(D) + X %*% runif(40) + UV[, 2]
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
   # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
@@ -327,6 +239,7 @@ test_that("ddml_fpliv computes with an ensemble procedure w/o LIE, multi D", {
 
 test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
   # Simulate small dataset
+  set.seed(51)
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
   Z <- matrix(rnorm(nobs * 3), nobs, 3)
@@ -338,36 +251,13 @@ test_that("ddml_fpliv computes with multiple ensemble procedures, multi D", {
   # Define arguments
   learners <- list(list(what = ols),
                    list(what = ols))
-  # Compute LIE-conform DDML IV estimator
-  ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
-                                 learners,
-                                 ensemble_type = c("ols", "nnls",
-                                                   "singlebest", "average"),
-                                 cv_folds = 3,
-                                 sample_folds = 5,
-                                 silent = TRUE)
-  # Check output with expectations
-  expect_equal(length(coef(ddml_fpliv_fit)), 12)
-})#TEST_THAT
-
-test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
-  # Simulate small dataset
-  nobs <- 200
-  X <- cbind(1, matrix(rnorm(nobs*39), nobs, 39))
-  Z <- matrix(rnorm(nobs*10), nobs, 10)
-  UV <- matrix(rnorm(2*nobs), nobs, 2) %*% chol(matrix(c(1, 0.7, 0.7, 1), 2, 2))
-  D <-  cbind(X %*% runif(40) + Z %*% c(1, runif(9)) + UV[, 1], rnorm(nobs))
-  y <- rowSums(D) + X %*% runif(40) + UV[, 2]
-  # Define arguments
-  learners <- list(list(what = ols),
-                   list(what = ols))
   # Compute DDML IV estimator
   ddml_fpliv_fit <- ddml_fpliv(y, D, Z, X,
                                learners,
                                ensemble_type = c("ols", "nnls",
                                                  "singlebest", "average"),
                                cv_folds = 3,
-                               sample_folds = 3,
+                               sample_folds = 5,
                                silent = TRUE)
   # Check output with expectations
   expect_equal(length(coef(ddml_fpliv_fit)), 12)
@@ -375,6 +265,7 @@ test_that("ddml_fpliv computes with ensemble procedures w/o LIE, multi D", {
 
 test_that("ddml_fpliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("AER")
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -390,9 +281,17 @@ test_that("ddml_fpliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
                     sample_folds = 5,
                     silent = TRUE)
 
+  # Reconstruct the final partialing-out regression since iv_fit is removed:
+  y_r <- as.vector(y - fit$fitted$y_X$cf_fitted_bylearner[, 1])
+  D_r <- as.matrix(D - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
+  V_r <- as.matrix(fit$fitted$D_XZ[[1]]$cf_fitted_bylearner[, 1] - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
+  colnames(D_r) <- colnames(D)
+  colnames(V_r) <- colnames(D)
+  iv_fit <- AER::ivreg(y_r ~ D_r | V_r, x = TRUE)
+
   for (type in c("HC0", "HC1")) {
     V_ddml <- vcov(fit, type = type)
-    V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = type)
+    V_sw <- sandwich::vcovHC(iv_fit, type = type)
     idx <- c(seq_len(nrow(V_sw))[-1], 1)
     V_sw_reord <- V_sw[idx, idx, drop = FALSE]
     expect_equal(as.numeric(V_ddml),
@@ -402,7 +301,7 @@ test_that("ddml_fpliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
   }
   # HC3: regressor-based leverage matches sandwich exactly
   V_ddml <- vcov(fit, type = "HC3")
-  V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = "HC3")
+  V_sw <- sandwich::vcovHC(iv_fit, type = "HC3")
   idx <- c(seq_len(nrow(V_sw))[-1], 1)
   V_sw_reord <- V_sw[idx, idx, drop = FALSE]
   expect_equal(as.numeric(V_ddml),

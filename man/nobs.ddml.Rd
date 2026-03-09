@@ -15,5 +15,15 @@
 An integer specifying the number of observations.
 }
 \description{
-Extract Number of Observations
+Returns the number of observations
+used to fit the DDML model.
 }
+\seealso{
+Other ddml inference: 
+\code{\link{[.summary.ddml}()},
+\code{\link{coef.ddml}()},
+\code{\link{confint.ddml}()},
+\code{\link{hatvalues.ddml}()},
+\code{\link{vcov.ddml}()}
+}
+\concept{ddml inference}

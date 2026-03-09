@@ -222,13 +222,13 @@ Estimating multiple machine learners via cross-fitting can be computationally ex
 
 Rather than waiting for all base learners to be refit from scratch, ``ddml`` allows you to extract the out-of-sample predictions from the initial fit and pass them directly into a new ``ddml_plm`` call via the ``fitted`` argument. 
 
-Because ``stacking_fit`` already contains the computed ``crossval_resid`` and ``crossfit_fitted`` objects for the specified learners, we can bypass the estimation step entirely.
+Because ``stacking_fit`` already contains the computed ``cv_resid_byfold`` and ``cf_fitted_bylearner`` objects for the specified learners, we can bypass the estimation step entirely.
 
 ```{r}
 # Extract the predictions and residuals from the previous fit
 advanced_passthrough <- list(
-  crossfit_fitted = stacking_fit$fitted$crossfit_fitted,
-  crossval_resid = stacking_fit$fitted$crossval_resid
+  cf_fitted_bylearner = stacking_fit$fitted$cf_fitted_bylearner,
+  cv_resid_byfold = stacking_fit$fitted$cv_resid_byfold
 )
 
 # Recompute the structural parameter instantly using 'singlebest'

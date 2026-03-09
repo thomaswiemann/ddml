@@ -2,27 +2,64 @@
 % Please edit documentation in R/ddml_rep.R
 \name{summary.ddml_rep}
 \alias{summary.ddml_rep}
+\alias{print.summary.ddml_rep}
 \title{Summary for ddml_rep Objects}
 \usage{
-\method{summary}{ddml_rep}(object, aggregation = c("median", "mean"), type = "HC1", ...)
+\method{summary}{ddml_rep}(
+  object,
+  aggregation = c("median", "mean", "spectral"),
+  type = "HC1",
+  ...
+)
+
+\method{print}{summary.ddml_rep}(x, digits = 3, ...)
 }
 \arguments{
 \item{object}{A \code{ddml_rep} object.}
 
-\item{aggregation}{Character string, either
-\code{"median"} (default) or \code{"mean"}.}
+\item{aggregation}{Character string: \code{"median"}
+(default), \code{"mean"}, or \code{"spectral"}.
+See \code{\link{summary.ddml_rep}} for details.}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
 (default), \code{"HC0"}, or \code{"HC3"}.}
 
 \item{...}{Currently unused.}
+
+\item{x}{An object of class \code{summary.ddml_rep}.}
+
+\item{digits}{Number of significant digits. Default 3.}
 }
 \value{
 An object of class \code{"summary.ddml_rep"}.
 }
 \description{
-Summary for ddml_rep Objects
+Aggregates coefficient estimates and covariance matrices
+across \eqn{R} independent sample-splitting replications.
+}
+\details{
+Let \eqn{\hat\theta_r} and \eqn{\hat\Sigma_r} denote
+the coefficient vector and sandwich covariance matrix
+from replication \eqn{r}.
+
+\strong{Coefficient aggregation.}
+For \code{"mean"}:
+\eqn{\tilde\theta = R^{-1} \sum_{r=1}^{R} \hat\theta_r}.
+For \code{"median"} and \code{"spectral"}:
+\eqn{\tilde\theta_j = \mathrm{median}_{r}(\hat\theta_{r,j})}.
+
+\strong{Covariance aggregation.}
+Define the inflated per-replication covariance as
+\deqn{V_r = \hat\Sigma_r + (\hat\theta_r - \tilde\theta)
+    (\hat\theta_r - \tilde\theta)^\top}.
+For \code{"mean"}:
+\eqn{\tilde\Sigma = R^{-1} \sum_{r=1}^{R} V_r}.
+For \code{"median"}:
+\eqn{\tilde\Sigma_{ij} = \mathrm{median}_{r}(V_{r,ij})}.
+For \code{"spectral"}:
+\eqn{\tilde\Sigma = \arg\min_{\Sigma \succeq 0} \sum_{r} \|\Sigma - V_r\|_2},
+solved via \pkg{CVXR}. Guarantees positive semi-definiteness of \eqn{\tilde\Sigma}.
 }
 \examples{
 \donttest{
@@ -37,4 +74,11 @@ summary(reps)
 summary(reps, aggregation = "mean")
 }
 
+}
+\references{
+Chernozhukov V, Chetverikov D, Demirer M, Duflo E,
+Hansen C B, Newey W, Robins J (2018).
+"Double/debiased machine learning for treatment
+and structural parameters." The Econometrics
+Journal, 21(1), C1-C68.
 }

@@ -247,6 +247,7 @@ test_that("ddml_pliv computes with different ensembles and multivariate D,Z", {
 
 test_that("ddml_pliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
   skip_if_not_installed("sandwich")
+  skip_if_not_installed("AER")
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 5), nobs, 5)
@@ -262,9 +263,17 @@ test_that("ddml_pliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
                    sample_folds = 5,
                    silent = TRUE)
 
+  # Reconstruct the final partialing-out regression since iv_fit is removed:
+  y_r <- as.vector(y - fit$fitted$y_X$cf_fitted_bylearner[, 1])
+  D_r <- as.matrix(D - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
+  V_r <- as.matrix(Z - fit$fitted$Z_X[[1]]$cf_fitted_bylearner[, 1])
+  colnames(D_r) <- colnames(D)
+  colnames(V_r) <- colnames(Z)
+  iv_fit <- AER::ivreg(y_r ~ D_r | V_r, x = TRUE)
+
   for (type in c("HC0", "HC1")) {
     V_ddml <- vcov(fit, type = type)
-    V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = type)
+    V_sw <- sandwich::vcovHC(iv_fit, type = type)
     idx <- c(seq_len(nrow(V_sw))[-1], 1)
     V_sw_reord <- V_sw[idx, idx, drop = FALSE]
     expect_equal(as.numeric(V_ddml),
@@ -274,7 +283,7 @@ test_that("ddml_pliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
   }
   # HC3: regressor-based leverage matches sandwich exactly
   V_ddml <- vcov(fit, type = "HC3")
-  V_sw <- sandwich::vcovHC(fit$iv_fit[[1]], type = "HC3")
+  V_sw <- sandwich::vcovHC(iv_fit, type = "HC3")
   idx <- c(seq_len(nrow(V_sw))[-1], 1)
   V_sw_reord <- V_sw[idx, idx, drop = FALSE]
   expect_equal(as.numeric(V_ddml),

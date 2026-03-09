@@ -32,6 +32,7 @@ ddml_att <- function(y, D, X,
                   sample_folds = sample_folds,
                   cv_folds = cv_folds,
                   ensemble_type = ensemble_type, trim = trim,
+                  cluster_variable = cluster_variable,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DX,
@@ -94,7 +95,7 @@ ddml_att <- function(y, D, X,
 
   # Pre-ensembled propensity: P(D=0|X) = 1 - E[D|X]
   fitted_D_X_0 <- list(
-    ensemble_fitted = 1 - D_X_res$oos_fitted)
+    cf_fitted = 1 - D_X_res$cf_fitted)
 
   apo_0 <- ddml_apo(
     y = y, D = D, X = X, d = 0, weights = NULL,
@@ -123,7 +124,7 @@ ddml_att <- function(y, D, X,
       fit = apo_0$fitted$y_X, d = 0)),
     aux_indx = indxs$aux_indx)[, , 1]
 
-  m_X <- D_X_res$oos_fitted
+  m_X <- D_X_res$cf_fitted
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
   p <- mean(D)
 

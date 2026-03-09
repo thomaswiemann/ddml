@@ -9,7 +9,7 @@
   parm,
   level = 0.95,
   ensemble_idx = 1,
-  aggregation = c("median", "mean"),
+  aggregation = c("median", "mean", "spectral"),
   type = "HC1",
   ...
 )
@@ -17,15 +17,19 @@
 \arguments{
 \item{object}{A \code{ddml_rep} object.}
 
-\item{parm}{Not used (included for generic compatibility).}
+\item{parm}{A specification of which parameters are to be
+given confidence intervals, either a vector of numbers
+or a vector of names. If missing, all parameters are
+considered.}
 
 \item{level}{Confidence level. Default 0.95.}
 
 \item{ensemble_idx}{Integer index of the ensemble type.
 Defaults to 1.}
 
-\item{aggregation}{Character string, either
-\code{"median"} (default) or \code{"mean"}.}
+\item{aggregation}{Character string: \code{"median"}
+(default), \code{"mean"}, or \code{"spectral"}.
+See \code{\link{summary.ddml_rep}} for details.}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
@@ -52,4 +56,8 @@ confint(reps)
 confint(reps, level = 0.90)
 }
 
+}
+\seealso{
+\code{\link{summary.ddml_rep}} for the
+aggregation equations.
 }

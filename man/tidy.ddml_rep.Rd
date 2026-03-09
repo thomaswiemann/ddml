@@ -7,7 +7,7 @@
 \method{tidy}{ddml_rep}(
   x,
   ensemble_idx = 1,
-  aggregation = c("median", "mean"),
+  aggregation = c("median", "mean", "spectral"),
   type = "HC1",
   conf.int = FALSE,
   conf.level = 0.95,
@@ -21,8 +21,9 @@
 to report. Defaults to 1. Set to \code{NULL} to
 return results for all ensemble types.}
 
-\item{aggregation}{Character string, either
-\code{"median"} (default) or \code{"mean"}.}
+\item{aggregation}{Character string: \code{"median"}
+(default), \code{"mean"}, or \code{"spectral"}.
+See \code{\link{summary.ddml_rep}} for details.}
 
 \item{type}{Character string specifying the
 variance-covariance estimator. One of \code{"HC1"}
@@ -39,9 +40,9 @@ Default 0.95.}
 \value{
 A \code{data.frame} with columns \code{term},
 \code{estimate}, \code{std.error}, \code{statistic},
-\code{p.value}, and \code{ensemble_type}. If
-\code{conf.int = TRUE}, also \code{conf.low} and
-\code{conf.high}.
+\code{p.value}, \code{ensemble_type}, and
+\code{aggregation}. If \code{conf.int = TRUE},
+also \code{conf.low} and \code{conf.high}.
 }
 \description{
 Extracts aggregated coefficient estimates, standard
@@ -64,16 +65,6 @@ tidy(reps, conf.int = TRUE)
 
 }
 \seealso{
-Other ddml: 
-\code{\link{ddml_ate}()},
-\code{\link{ddml_fpliv}()},
-\code{\link{ddml_late}()},
-\code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()},
-\code{\link{ddml_rep}()},
-\code{\link{ddml_replicate}()},
-\code{\link{glance.ddml}()},
-\code{\link{glance.ddml_rep}()},
-\code{\link{tidy.ddml}()}
+\code{\link{summary.ddml_rep}} for the
+aggregation equations.
 }
-\concept{ddml}

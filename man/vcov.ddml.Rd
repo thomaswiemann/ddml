@@ -41,18 +41,18 @@ the sample Jacobian. Three sandwich estimators are
 available:
 
 \strong{HC0}:
-\deqn{V_{\textrm{HC0}} = \hat{J}^{-1}
+\deqn{V_{\mathrm{HC0}} = \hat{J}^{-1}
   \left(\frac{1}{n}\sum_i m_i m_i'\right)
   \hat{J}^{-\top} / n}
 
 \strong{HC1} (default):
-\deqn{V_{\textrm{HC1}} = V_{\textrm{HC0}}
+\deqn{V_{\mathrm{HC1}} = V_{\mathrm{HC0}}
   \times \frac{n}{n - p}}
 
 where \eqn{p} is the dimension of \eqn{\theta}.
 
 \strong{HC3}:
-\deqn{V_{\textrm{HC3}} = \hat{J}^{-1}
+\deqn{V_{\mathrm{HC3}} = \hat{J}^{-1}
   \left(\frac{1}{n}\sum_i
   \frac{m_i m_i'}{(1 - h_{ii})^2}\right)
   \hat{J}^{-\top} / n}
@@ -89,3 +89,16 @@ vcov(plm_fit, type = "HC3")
 }
 
 }
+\seealso{
+\code{\link{hatvalues.ddml}},
+\code{\link{confint.ddml}},
+\code{\link{summary.ddml}}
+
+Other ddml inference: 
+\code{\link{[.summary.ddml}()},
+\code{\link{coef.ddml}()},
+\code{\link{confint.ddml}()},
+\code{\link{hatvalues.ddml}()},
+\code{\link{nobs.ddml}()}
+}
+\concept{ddml inference}

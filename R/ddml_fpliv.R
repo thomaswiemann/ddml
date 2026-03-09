@@ -1,9 +1,10 @@
 #' Estimator for the Flexible Partially Linear IV Model.
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
 #' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::confint.ddml()], [ddml::tidy.ddml()],
+#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
+#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
 #'     [ddml::glance.ddml()], [ddml::diagnostics()],
 #'     [AER::ivreg()]
 #'
@@ -53,22 +54,26 @@
 #'     \code{ddml_fpliv}. An object of class \code{ddml_fpliv} is a list
 #'     containing the following components:
 #'     \describe{
-#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates and
-#'             the second-stage intercept (last element).}
-#'         \item{\code{ensemble_weights}}{A list of matrices, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedure.}
+#'         \item{\code{coefficients}}{A matrix of estimated coefficients.}
+#'         \item{\code{ensemble_weights}}{A list of matrices, providing the
+#'             weight assigned to each base learner by the ensemble
+#'             procedure.}
 #'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner (in chronological order) computed by the
-#'             cross-validation step in the ensemble construction.}
-#'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
-#'             regression of \eqn{Y - \hat{E}[Y\vert X]} on
-#'             \eqn{D - \hat{E}[D\vert X]} using
-#'             \eqn{\hat{E}[D\vert X,Z] - \hat{E}[D\vert X]} as the instrument.}
-#'         \item{\code{learners},\code{learners_DX},\code{learners_DXZ},
-#'             \code{cluster_variable},\code{subsamples},
-#'             \code{cv_subsamples},\code{ensemble_type}}{Pass-through of
-#'             selected user-provided arguments. See above.}
+#'             base learner computed by the cross-validation step in the
+#'             ensemble construction.}
+#'         \item{\code{r2}}{The out-of-sample R-squared.}
+#'         \item{\code{psi_a}, \code{psi_b}}{Score components used in
+#'             \code{\link{vcov.ddml}}.}
+#'         \item{\code{scores}}{A list of evaluated Neyman orthogonal
+#'             scores.}
+#'         \item{\code{J}}{A list of evaluated Jacobians.}
+#'         \item{\code{fitted}}{A list of fitted nuisance estimators.
+#'             See \code{\link{ddml_plm}} for more information.}
+#'         \item{\code{splits}}{The data splitting structure.}
+#'         \item{\code{learners},\code{learners_DXZ},
+#'             \code{learners_DX},\code{cluster_variable},
+#'             \code{ensemble_type}}{Pass-through of selected
+#'             user-provided arguments. See above.}
 #'     }
 #' @export
 #'
@@ -126,7 +131,8 @@ ddml_fpliv <- function(y, D, Z, X,
                   learners = learners,
                   sample_folds = sample_folds,
                   cv_folds = cv_folds,
-                  ensemble_type = ensemble_type)
+                  ensemble_type = ensemble_type,
+                  cluster_variable = cluster_variable)
   validate_custom_weights(custom_ensemble_weights, learners)
   validate_custom_weights(custom_ensemble_weights_DXZ,
                           learners_DXZ)
@@ -211,34 +217,38 @@ ddml_fpliv <- function(y, D, Z, X,
   # == Score construction ===========================================
 
   coef <- matrix(0, nD + 1, nensb)
-  iv_fit <- rep(list(1), nensb)
   scores <- vector("list", nensb)
   J_list <- vector("list", nensb)
   psi_a <- vector("list", nensb)
   psi_b <- vector("list", nensb)
 
   cn_weights <- dimnames(y_X_res$weights)[[2]]
-  colnames(coef) <- names(iv_fit) <-
-    if (is.null(cn_weights)) ensemble_type else cn_weights
+  colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights
 
   for (j in seq_len(nensb)) {
-    D_r <- D - get_oosfitted(D_X_res_list, j)
-    V_r <- get_oosfitted(D_XZ_res_list, j) -
-      get_oosfitted(D_X_res_list, j)
-    y_r <- y - cbind(y_X_res$oos_fitted)[, j]
-
-    iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r, x = TRUE)
-
-    coef_iv_j <- stats::coef(iv_fit_j)
-    coef[, j] <- c(coef_iv_j[-1], coef_iv_j[1])
-    iv_fit[[j]] <- iv_fit_j
+    D_r <- D - get_cf_fitted(D_X_res_list, j)
+    V_r <- get_cf_fitted(D_XZ_res_list, j) -
+      get_cf_fitted(D_X_res_list, j)
+    y_r <- y - cbind(y_X_res$cf_fitted)[, j]
 
     D_r_mat <- as.matrix(D_r)
-    D_hat <- as.matrix(
-      iv_fit_j$x$projected[, -1, drop = FALSE])
-    X_hat <- cbind(D_hat, 1)
-    X_full <- cbind(D_r_mat, 1)
-    e_j <- as.vector(stats::residuals(iv_fit_j))
+    V_r_mat <- as.matrix(V_r)
+    
+    D_fit <- cbind(D_r_mat, 1)
+    V_fit <- cbind(V_r_mat, 1)
+    
+    # 2SLS: First stage projection
+    pi_hat <- qr.solve(V_fit, D_fit)
+    D_hat <- V_fit %*% pi_hat
+
+    # 2SLS: Second stage fit
+    coef_iv_j <- as.vector(qr.solve(D_hat, y_r))
+    coef[, j] <- coef_iv_j
+
+    X_hat <- D_hat
+    X_full <- D_fit
+    e_j <- as.vector(y_r - X_full %*% coef_iv_j)
+
     scores[[j]] <- X_hat * e_j
     J_list[[j]] <- -crossprod(X_hat, X_full) / nobs
 
@@ -250,9 +260,12 @@ ddml_fpliv <- function(y, D, Z, X,
 
   # == Target parameter =============================================
 
-  cn_j <- names(iv_fit[[1]]$coefficients)
-  rownames(coef) <- c(cn_j[-1], cn_j[1])
+  cn_j <- colnames(D)
+  if (is.null(cn_j)) cn_j <- paste0("D", seq_len(nD))
+  rownames(coef) <- c(cn_j, "(Intercept)")
   coef_names <- rownames(coef)
+
+  # == Output =======================================================
 
   ensemble_weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
@@ -268,11 +281,8 @@ ddml_fpliv <- function(y, D, Z, X,
     r2[[eq]] <- D_XZ_res_list[[k]]$r2
   }#FOR
 
-  # == Output =======================================================
-
   ddml_fit <- list(
     coefficients = coef,
-    iv_fit = iv_fit,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
     r2 = r2,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/crosspred.R
 \name{crosspred}
 \alias{crosspred}
-\title{Cross-Predictions using Stacking.}
+\title{Cross-Fitted Predictions using Stacking.}
 \usage{
 crosspred(
   y,
@@ -44,19 +44,19 @@ such that it predicts a named input \code{y} using a named input
 If stacking with multiple learners is used, \code{learners} is a list of
 lists, each containing four named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
+\item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
 corresponding to predictive variables in \code{X} that are
 passed to the base learner.}
 \item{\code{assign_Z} An optional vector of column indices
-corresponding to predictive in \code{Z} that are passed to the
-base learner.}
+corresponding to predictive variables in \code{Z} that are
+passed to the base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
 results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
 \item{sample_folds}{Number of cross-fitting folds.}
@@ -116,21 +116,21 @@ that use packages not imported by \code{ddml}).}
 \value{
 \code{crosspred} returns a list containing the following components:
 \describe{
-\item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+\item{\code{cf_fitted}}{A matrix of out-of-sample predictions,
 each column corresponding to an ensemble type (in chronological
 order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{is_fitted}}{When
+\item{\code{insample_fitted}}{When
 \code{compute_insample_predictions = TRUE}.
 a list of matrices with in-sample predictions by sample fold.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
-\item{\code{crossfit_fitted}}{A matrix of out-of-sample
+\item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
 predictions, each column corresponding to a base learner
 (in chronological order).}
-\item{\code{is_fitted_bylearner}}{When
+\item{\code{insample_fitted_bylearner}}{When
 \code{compute_insample_predictions = TRUE}, a list of matrices
 with in-sample predictions by sample fold (per learner).}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X}
@@ -139,7 +139,48 @@ predictions for each learner.}
 }
 }
 \description{
-Cross-predictions using stacking.
+Cross-fitted predictions using stacking.
+}
+\details{
+\code{crosspred} implements the cross-fitting step of the
+Double/Debiased Machine Learning procedure combined with
+stacking. It produces the cross-fitted nuisance estimates
+\eqn{\hat{\eta}(X_i)} used in the Neyman orthogonal scores of
+all \code{ddml_*} estimators.
+
+Let \eqn{\{I_1, \ldots, I_S\}} be an \eqn{S}-fold partition of
+\eqn{\{1, \ldots, n\}}, and denote the training set for fold
+\eqn{s} by
+\eqn{\mathcal{T}_s = \{1, \ldots, n\} \setminus I_s}.
+Given \eqn{J} base learners, the procedure operates on each
+cross-fitting fold \eqn{s} in three steps:
+
+\strong{Step 1 (Stacking weights).}
+Run \eqn{K}-fold cross-validation on \eqn{\mathcal{T}_s}
+(via \code{\link{crossval}}) to estimate the MSPE of each
+base learner, and solve for fold-specific stacking weights
+\eqn{\hat{w}_s = (\hat{w}_{1,s}, \ldots, \hat{w}_{J,s})'}.
+
+\strong{Step 2 (Fit).}
+Fit each base learner \eqn{j} on the full training set
+\eqn{\mathcal{T}_s}, yielding \eqn{\hat{f}_{j,s}(\cdot)}.
+
+\strong{Step 3 (Predict).}
+For each \eqn{i \in I_s}, compute the ensemble cross-fitted
+prediction
+
+\eqn{\hat{\eta}(X_i) = \sum_{j=1}^{J} \hat{w}_{j,s} \hat{f}_{j,s}(X_i).}
+
+Since every observation belongs to exactly one fold, the result is
+a complete \eqn{n}-vector of out-of-sample predictions.
+Crucially, both the stacking weights \eqn{\hat{w}_s} and the
+base learner fits \eqn{\hat{f}_{j,s}} depend only on
+\eqn{\mathcal{T}_s}, which does not contain observation
+\eqn{i}.
+
+When a single learner is used (\eqn{J = 1}), no stacking or inner
+cross-validation is performed: the learner is simply fitted on
+\eqn{\mathcal{T}_s} and predictions are made for \eqn{I_s}.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -160,8 +201,8 @@ crosspred_res <- crosspred(y, X,
                            sample_folds = 2,
                            cv_folds = 2,
                            silent = TRUE)
-dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
-dim(crosspred_res$crossfit_fitted) # = length(y) by length(learners)
+dim(crosspred_res$cf_fitted) # = length(y) by length(ensemble_type)
+dim(crosspred_res$cf_fitted_bylearner) # = length(y) by length(learners)
 }
 \references{
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and

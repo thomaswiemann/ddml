@@ -43,7 +43,7 @@ ols <- function(y, X,
   }#IFELSE
   # Return estimate
   coef <- as.matrix(coef)
-  try(rownames(coef) <- colnames(X)) # assign coefficient names
+  if (!is.null(colnames(X))) rownames(coef) <- colnames(X)
   output <- list(coef = coef, y = y, X = X,
                  const = const, w = w)
   class(output) <- "ols" # define S3 class

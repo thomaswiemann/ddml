@@ -19,6 +19,6 @@ test_that("shortstacking computes with ensemble procedures & custom weights", {
                              compute_insample_predictions = T,
                              silent = F)
   # Check output with expectations
-  expect_equal(dim(shortstacking_res$oos_fitted), c(length(y), 8))
-  expect_equal(length(shortstacking_res$is_fitted), 8)
+  expect_equal(dim(shortstacking_res$cf_fitted), c(length(y), 8))
+  expect_equal(length(shortstacking_res$insample_fitted), 8)
 })#TEST_THAT

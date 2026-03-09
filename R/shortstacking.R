@@ -23,20 +23,20 @@
 #'
 #' @return \code{shortstack} returns a list containing the following components:
 #'     \describe{
-#'         \item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+#'         \item{\code{cf_fitted}}{A matrix of out-of-sample predictions,
 #'             each column corresponding to an ensemble type (in chronological
 #'             order).}
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = TRUE}.
+#'         \item{\code{insample_fitted}}{When \code{compute_insample_predictions = TRUE}.
 #'             a list of matrices with in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{crossfit_fitted}}{A matrix of
+#'         \item{\code{cf_fitted_bylearner}}{A matrix of
 #'             out-of-sample predictions, each column corresponding to a base
 #'             learner (in chronological order).}
-#'         \item{\code{is_fitted_bylearner}}{When
+#'         \item{\code{insample_fitted_bylearner}}{When
 #'             \code{compute_insample_predictions = TRUE}, a list of matrices with
 #'             in-sample predictions by sample fold.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
@@ -72,8 +72,8 @@
 #'                                                   "singlebest"),
 #'                                 sample_folds = 2,
 #'                                 silent = TRUE)
-#' dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
-#' dim(shortstack_res$crossfit_fitted) # = length(y) by length(learners)
+#' dim(shortstack_res$cf_fitted) # = length(y) by length(ensemble_type)
+#' dim(shortstack_res$cf_fitted_bylearner) # = length(y) by length(learners)
 shortstacking <- function(y, X, Z = NULL,
                           learners,
                           sample_folds = 2,
@@ -119,72 +119,72 @@ shortstacking <- function(y, X, Z = NULL,
 
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()
-  fakecv$oos_resid <- matrix(shortstack_y, nobs, nlearners) -
-    res$crossfit_fitted
+  fakecv$cv_resid <- matrix(shortstack_y, nobs, nlearners) -
+    res$cf_fitted_bylearner
   weights <- ensemble_weights(shortstack_y, X, learners = learners,
                               type = ensemble_type,
                               custom_weights = custom_ensemble_weights,
                               cv_results = fakecv)$weights
 
   # Compute predictions
-  oos_fitted <- res$crossfit_fitted %*% weights
+  cf_fitted <- res$cf_fitted_bylearner %*% weights
 
-  # Compute auxilliary predictions (optional)
+  # Compute auxiliary predictions (optional)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   if (!is.null(auxiliary_X)) {
     for (k in seq_len(sample_folds)) {
       auxiliary_fitted[[k]] <- res$auxiliary_fitted_bylearner[[k]] %*% weights
     }#FOR
-  }#if
+  }#IF
 
   # Compute in-sample predictions (optional)
-  is_fitted <- rep(list(NULL), sample_folds)
+  insample_fitted <- rep(list(NULL), sample_folds)
   fakecv_k <- list()
   if (compute_insample_predictions) {
     for (k in seq_len(sample_folds)) {
       # Compute shortstacking weights in-sample
       nobs_k <- length(y[-subsamples[[k]]])
-      fakecv_k$oos_resid <- matrix(y[-subsamples[[k]]], nobs_k, nlearners) -
-        res$is_fitted_bylearner[[k]]
+      fakecv_k$cv_resid <- matrix(y[-subsamples[[k]]], nobs_k, nlearners) -
+        res$insample_fitted_bylearner[[k]]
       weights_k <- ensemble_weights(y[-subsamples[[k]]], X[-subsamples[[k]], ],
                                     learners = learners,
                                     type = ensemble_type,
                                     custom_weights = custom_ensemble_weights,
                                     cv_results = fakecv_k)$weights
       # Combine base learners
-      is_fitted[[k]] <- res$is_fitted_bylearner[[k]] %*% weights_k
+      insample_fitted[[k]] <- res$insample_fitted_bylearner[[k]] %*% weights_k
     }#FOR
 
-    # When multiple ensembles are computed, need to reorganize is_fitted
+    # When multiple ensembles are computed, need to reorganize insample_fitted
     if (nensb > 1) {
-      # Loop over each ensemble type to creat list of is_fitted's
-      new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
+      # Loop over each ensemble type to create list of insample_fitted's
+      new_insample_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
       for (i in seq_len(nensb)) {
         for (k in seq_len(sample_folds)) {
-          new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = FALSE]
+          new_insample_fitted[[i]][[k]] <- insample_fitted[[k]][, i, drop = FALSE]
         }#FOR
       }#FOR
-      is_fitted <- new_is_fitted
+      insample_fitted <- new_insample_fitted
     }#IF
   }#IF
 
   # Compute mspe and r-squared
-  mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - oos_fitted)^2)
+  mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - cf_fitted)^2)
   y_var <- as.numeric(stats::var(shortstack_y))
   r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_,
                                                    length(mspe))
 
   # Per-learner OOS residuals (already computed for weight estimation)
-  crossfit_resid <- as.matrix(fakecv$oos_resid)
+  cf_resid_bylearner <- as.matrix(fakecv$cv_resid)
 
   # return shortstacking output
-  output <- list(oos_fitted = oos_fitted,
+  output <- list(cf_fitted = cf_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
-                 is_fitted = is_fitted,
+                 insample_fitted = insample_fitted,
                  auxiliary_fitted = auxiliary_fitted,
-                 crossfit_fitted = res$crossfit_fitted,
-                 crossfit_resid = crossfit_resid,
-                 is_fitted_bylearner = res$is_fitted_bylearner,
+                 cf_fitted_bylearner = res$cf_fitted_bylearner,
+                 cf_resid_bylearner = cf_resid_bylearner,
+                 insample_fitted_bylearner = res$insample_fitted_bylearner,
                  auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)
 }#SHORTSTACKING

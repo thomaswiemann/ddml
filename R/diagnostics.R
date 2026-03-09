@@ -91,25 +91,29 @@ diagnostics <- function(object, cvc = FALSE,
         r_avg <- as.numeric(r)
       }#IFELSE
 
-      # Use first ensemble type weights for display
-      w_display <- if (ncol(w_avg) >= 1) {
-        w_avg[, 1]
-      } else {
-        rep(NA_real_, nlearners)
-      }#IFELSE
+      # Display weights for all ensemble types
+      ens_names <- colnames(w_avg)
+      if (is.null(ens_names)) {
+        ens_names <- paste0("weight_", seq_len(ncol(w_avg)))
+      }#IF
 
       tbl <- data.frame(
         learner = learner_names,
         mspe = m_avg,
         r2 = r_avg,
-        weight = w_display,
         stringsAsFactors = FALSE,
         row.names = NULL)
+
+      # Add a weight column per ensemble type
+      for (j in seq_len(ncol(w_avg))) {
+        col_name <- paste0("weight_", ens_names[j])
+        tbl[[col_name]] <- w_avg[, j]
+      }#FOR
     }#IFELSE
 
     # CVC p-values (opt-in)
     if (cvc && !single_learner) {
-      resid <- get_crossfit_resid_for_eq(object$fitted, eq)
+      resid <- get_cf_resid_bylearner_for_eq(object$fitted, eq)
       subs <- get_diag_subsamples(object, eq)
       if (!is.null(resid) && !is.null(subs) &&
           ncol(resid) > 1) {
@@ -183,7 +187,9 @@ print.ddml_diagnostics <- function(x, digits = 4, ...) {
 
     # Format numeric columns
     display <- tbl
-    for (col in c("mspe", "r2", "weight", "cvc_pval")) {
+    num_cols <- c("mspe", "r2", "cvc_pval",
+      grep("^weight_", names(display), value = TRUE))
+    for (col in num_cols) {
       if (col %in% names(display)) {
         display[[col]] <- round(display[[col]], digits)
       }#IF

@@ -16,7 +16,9 @@ Named vector (single ensemble) or matrix
 (multiple ensembles).
 }
 \description{
-Extract Model Coefficients
+Extracts the estimated coefficients
+from a DDML model for the specified or default
+ensemble type.
 }
 \examples{
 \donttest{
@@ -31,3 +33,12 @@ coef(plm_fit)
 }
 
 }
+\seealso{
+Other ddml inference: 
+\code{\link{[.summary.ddml}()},
+\code{\link{confint.ddml}()},
+\code{\link{hatvalues.ddml}()},
+\code{\link{nobs.ddml}()},
+\code{\link{vcov.ddml}()}
+}
+\concept{ddml inference}

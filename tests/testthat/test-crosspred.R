@@ -24,8 +24,8 @@ test_that("crosspred computes with a single model", {
                              compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
-  expect_equal(length(crosspred_res$oos_fitted), length(y))
-  expect_equal(length(crosspred_res$is_fitted), 3)
+  expect_equal(length(crosspred_res$cf_fitted), length(y))
+  expect_equal(length(crosspred_res$insample_fitted), 3)
 })#TEST_THAT
 
 test_that("crosspred computes with ensemble procedures", {
@@ -49,8 +49,8 @@ test_that("crosspred computes with ensemble procedures", {
                              compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
-  expect_equal(dim(crosspred_res$oos_fitted), c(length(y), 5))
-  expect_equal(length(crosspred_res$is_fitted), 5)
+  expect_equal(dim(crosspred_res$cf_fitted), c(length(y), 5))
+  expect_equal(length(crosspred_res$insample_fitted), 5)
 })#TEST_THAT
 
 test_that("crosspred computes with ensemble procedures & custom weights", {
@@ -78,8 +78,8 @@ test_that("crosspred computes with ensemble procedures & custom weights", {
                              compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
-  expect_equal(dim(crosspred_res$oos_fitted), c(length(y), 8))
-  expect_equal(length(crosspred_res$is_fitted), 8)
+  expect_equal(dim(crosspred_res$cf_fitted), c(length(y), 8))
+  expect_equal(length(crosspred_res$insample_fitted), 8)
 })#TEST_THAT
 
 test_that("crosspred computes with ensemble procedures and sparse matrices", {
@@ -103,8 +103,8 @@ test_that("crosspred computes with ensemble procedures and sparse matrices", {
                              compute_insample_predictions = T,
                              silent = T)
   # Check output with expectations
-  expect_equal(dim(crosspred_res$oos_fitted), c(length(y), 5))
-  expect_equal(length(crosspred_res$is_fitted), 5)
+  expect_equal(dim(crosspred_res$cf_fitted), c(length(y), 5))
+  expect_equal(length(crosspred_res$insample_fitted), 5)
 })#TEST_THAT
 
 test_that("crosspred computes auxilliary predictions", {
@@ -156,6 +156,6 @@ test_that("crosspred returns identical results with parallel", {
                        cv_subsamples = splits$cv_subsamples,
                        silent = T,
                        parallel = list(cores = 2))
-  expect_equal(res_par$oos_fitted, res_seq$oos_fitted)
+  expect_equal(res_par$cf_fitted, res_seq$cf_fitted)
   expect_equal(res_par$weights, res_seq$weights)
 })#TEST_THAT

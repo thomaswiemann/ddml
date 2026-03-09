@@ -113,7 +113,7 @@ Below, we extract the cross-fitted residuals for the $E[Y|Z=0, X]$ equation and 
 
 ```{r}
 # Extract the residuals for the first equation (E[Y|Z=0, X])
-resids <- late_fit$crossfit_resid[[1]]
+resids <- late_fit$cf_resid_bylearner[[1]]
 fold_ids <- late_fit$subsamples_byZ[[1]]
 
 # Compare Learner 1 (OLS) vs Learner 2 (Lasso)

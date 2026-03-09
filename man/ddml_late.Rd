@@ -53,10 +53,10 @@ such that it predicts a named input \code{y} using a named input
 If stacking with multiple learners is used, \code{learners} is a list of
 lists, each containing four named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
+\item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
 corresponding to control variables in \code{X} that are passed to
 the base learner.}
@@ -65,7 +65,7 @@ corresponding to instruments in \code{Z} that are passed to the
 base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
+used in \code{what}. Omission of \code{assign_X} (and/or \code{assign_Z})
 results in inclusion of all variables in \code{X} (and/or \code{Z}).}
 
 \item{learners_DXZ, learners_ZX}{Optional arguments to allow for different
@@ -159,8 +159,8 @@ procedure.}
 each base learner computed by the cross-validation step
 in the ensemble construction.}
 \item{\code{r2}}{The out-of-sample R-squared.}
-\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the
-computation of scores. Used in \code{\link[=summary.ddml]{summary.ddml()}}.}
+\item{\code{psi_a}, \code{psi_b}}{Score components used in
+\code{\link{vcov.ddml}}.}
 \item{\code{scores}}{A list of evaluated Neyman orthogonal
 scores.}
 \item{\code{J}}{A list of evaluated Jacobians.}
@@ -260,19 +260,14 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
 \code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
-\code{\link[=confint.ddml]{confint.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
+\code{\link[=vcov.ddml]{vcov.ddml()}}, \code{\link[=confint.ddml]{confint.ddml()}},
+\code{\link[=hatvalues.ddml]{hatvalues.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
 \code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
 
-Other ddml: 
+Other ddml estimators: 
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()},
-\code{\link{ddml_rep}()},
-\code{\link{ddml_replicate}()},
-\code{\link{glance.ddml}()},
-\code{\link{glance.ddml_rep}()},
-\code{\link{tidy.ddml}()},
-\code{\link{tidy.ddml_rep}()}
+\code{\link{ddml_plm}()}
 }
-\concept{ddml}
+\concept{ddml estimators}

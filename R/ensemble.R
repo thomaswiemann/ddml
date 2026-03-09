@@ -217,29 +217,41 @@ ensemble_weights <- function(y, X, Z = NULL,
     } else if (type[k] == "nnls1") {
       # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
       # the quadratic programming problem.
-      sq_resid <- Matrix::crossprod(cv_results$oos_resid)
+      sq_resid <- Matrix::crossprod(cv_results$cv_resid)
       A <- cbind(matrix(1, nlearners, 1), diag(1, nlearners))
       # Calculate solution
       # Note: quadprog only solves for pos.def matrices. nearPD finds nearest
       #     pos.def matrix as a workaround.
-      r <- quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
-                             dvec = matrix(0, nlearners, 1),
-                             Amat = A,
-                             bvec = c(1, rep(0, nlearners)))
-      weights[, k] <- r$solution
+      r <- tryCatch(
+        quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
+                           dvec = matrix(0, nlearners, 1),
+                           Amat = A,
+                           bvec = c(1, rep(0, nlearners))),
+        error = function(e) {
+          warning("nnls1 weight optimization failed: ",
+                  conditionMessage(e),
+                  ". Falling back to equal weights.",
+                  call. = FALSE)
+          NULL
+        })
+      if (!is.null(r)) {
+        weights[, k] <- r$solution
+      } else {
+        weights[, k] <- rep(1 / nlearners, nlearners)
+      }#IFELSE
     } else if (type[k] == "nnls") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) - cv_results$oos_resid
+      cv_fitted <- as.numeric(y) - cv_results$cv_resid
       # For non-negative stacking, calculate the non-negatuve ols coefficients
-      weights[, k] <- nnls::nnls(oos_fitted, y)$x
+      weights[, k] <- nnls::nnls(cv_fitted, y)$x
     } else if (type[k] == "ols") {
       # Reconstruct out of sample fitted values
-      oos_fitted <- as.numeric(y) - cv_results$oos_resid
+      cv_fitted <- as.numeric(y) - cv_results$cv_resid
       # For unconstrained stacking, simply calculate the ols coefficients
-      weights[, k] <- ols(y, oos_fitted, const = FALSE)$coef
+      weights[, k] <- ols(y, cv_fitted, const = FALSE)$coef
     } else if (type[k] == "singlebest") {
       # Find MSPE-minimizing model
-      mdl_min <- which.min(Matrix::colMeans(cv_results$oos_resid^2)[, drop = FALSE])
+      mdl_min <- which.min(Matrix::colMeans(cv_results$cv_resid^2)[, drop = FALSE])
       mdl_min <- (seq_len(nlearners))[mdl_min]
       # Assign unit weight to the best model
       weights[mdl_min, k] <- 1
