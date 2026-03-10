@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{predict.mdl_ranger}
 \alias{predict.mdl_ranger}
-\title{Predict method for \code{mdl_ranger} objects.}
+\title{Predict Method for mdl_ranger Objects}
 \usage{
 \method{predict}{mdl_ranger}(object, newdata = NULL, ...)
 }
@@ -19,5 +19,5 @@ A numeric vector of predicted values (probabilities for
 probability forests, point predictions for regression forests).
 }
 \description{
-Predict method for \code{mdl_ranger} objects.
+Predict Method for mdl_ranger Objects
 }

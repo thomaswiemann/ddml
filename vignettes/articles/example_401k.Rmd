@@ -66,8 +66,9 @@ summary(xgboost_fit)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 9915   Folds: 5
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    13916       1544    9.01   <2e-16 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1             13916       1544    9.01   <2e-16 ***
+#> (Intercept)     -541        636   -0.85      0.4    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -136,17 +137,37 @@ summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    13602       1550    8.77   <2e-16 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1             13769       1516    9.08   <2e-16 ***
+#> (Intercept)    -1194        537   -2.22    0.026 *  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
+To better understand which machine learners contribute to the final estimate, we can inspect the stacking diagnostics. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
 
 ```r
-sapply(stacking_fit$ensemble_weights, round, 4)
-#> list()
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Partially Linear Model 
+#> Obs: 9915 
+#> 
+#>   y_X:
+#>    learner       mspe     r2 weight_nnls
+#>  learner_1 3125114171 0.2255      0.1926
+#>  learner_2 3126016675 0.2253      0.0000
+#>  learner_3 3045999690 0.2451      0.0000
+#>  learner_4 2910378985 0.2787      0.7992
+#>  learner_5 3435902221 0.1485      0.0824
+#>  learner_6 3716930203 0.0789      0.0000
+#> 
+#>   D1_X:
+#>    learner   mspe      r2 weight_nnls
+#>  learner_1 0.1725  0.1072      0.2333
+#>  learner_2 0.1725  0.1071      0.0000
+#>  learner_3 0.1717  0.1112      0.1916
+#>  learner_4 0.1711  0.1144      0.5891
+#>  learner_5 0.1860  0.0371      0.0000
+#>  learner_6 0.2045 -0.0588      0.0000
 ```
 
 # Estimation with Different Sets of Control Variables
@@ -203,18 +224,40 @@ summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    14008       1463    9.57   <2e-16 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1             14120       1500    9.42   <2e-16 ***
+#> (Intercept)     -960        532   -1.80    0.071 .  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
+To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking diagnostics. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
 
 
 ```r
-sapply(stacking_fit$ensemble_weights, round, 4)
-#> list()
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Partially Linear Model 
+#> Obs: 9915 
+#> 
+#>   y_X:
+#>    learner       mspe      r2 weight_nnls
+#>  learner_1 3125864729  0.2253      0.0000
+#>  learner_2 2877766026  0.2868      0.0000
+#>  learner_3 2858270329  0.2916      0.7204
+#>  learner_4 3021160887  0.2513      0.0000
+#>  learner_5 2926909974  0.2746      0.3365
+#>  learner_6 4121257708 -0.0213      0.0000
+#>  learner_7 4614176089 -0.1435      0.0000
+#> 
+#>   D1_X:
+#>    learner   mspe      r2 weight_nnls
+#>  learner_1 0.1727  0.1062      0.0123
+#>  learner_2 0.1719  0.1104      0.0370
+#>  learner_3 0.1714  0.1130      0.3921
+#>  learner_4 0.1718  0.1106      0.0773
+#>  learner_5 0.1710  0.1147      0.3848
+#>  learner_6 0.1825  0.0554      0.1035
+#>  learner_7 0.2001 -0.0360      0.0038
 ```
 
 # Estimation with Continious and Binary Outcome and Treatment Variables
@@ -262,19 +305,41 @@ summary(stacking_fit)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    13945       1491    9.35   <2e-16 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1             14025       1490    9.41   <2e-16 ***
+#> (Intercept)     -387        534   -0.72     0.47    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-The weights associated with the new base learners are now slightly larger:
+The diagnostics associated with the new base learners show slightly larger weights:
 
 
 
 ```r
-sapply(stacking_fit$ensemble_weights, round, 4)
-#> list()
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Partially Linear Model 
+#> Obs: 9915 
+#> 
+#>   y_X:
+#>    learner       mspe      r2 weight_nnls
+#>  learner_1 3118730135  0.2271      0.0652
+#>  learner_2 2902039913  0.2808      0.0000
+#>  learner_3 2871909268  0.2883      0.8547
+#>  learner_4 3089111001  0.2344      0.0000
+#>  learner_5 3026275768  0.2500      0.0347
+#>  learner_6 3906568364  0.0319      0.0656
+#>  learner_7 4253407158 -0.0541      0.0000
+#> 
+#>   D1_X:
+#>    learner   mspe      r2 weight_nnls
+#>  learner_1 0.1735  0.1020      0.0673
+#>  learner_2 0.1717  0.1114      0.3660
+#>  learner_3 0.1715  0.1125      0.0000
+#>  learner_4 0.1718  0.1106      0.1588
+#>  learner_5 0.1714  0.1127      0.3949
+#>  learner_6 0.1856  0.0394      0.0203
+#>  learner_7 0.2037 -0.0544      0.0000
 ```
 
 # Advanced: Rapid Refits with the Passthrough API
@@ -283,16 +348,10 @@ Estimating multiple machine learners via cross-fitting can be computationally ex
 
 Rather than waiting for all base learners to be refit from scratch, ``ddml`` allows you to extract the out-of-sample predictions from the initial fit and pass them directly into a new ``ddml_plm`` call via the ``fitted`` argument. 
 
-Because ``stacking_fit`` already contains the computed ``crossval_resid`` and ``crossfit_fitted`` objects for the specified learners, we can bypass the estimation step entirely.
+Because ``stacking_fit`` already contains the cross-fitted predictions and sample splits in its ``fitted`` component, we can bypass the estimation step entirely.
 
 
 ```r
-# Extract the predictions and residuals from the previous fit
-advanced_passthrough <- list(
-  crossfit_fitted = stacking_fit$fitted$crossfit_fitted,
-  crossval_resid = stacking_fit$fitted$crossval_resid
-)
-
 # Recompute the structural parameter instantly using 'singlebest'
 stacking_refit <- ddml_plm(
   y = y, D = D, X = X_c,
@@ -300,12 +359,19 @@ stacking_refit <- ddml_plm(
   learners_DX = learners_DX,
   ensemble_type = "singlebest",
   sample_folds = 5,
-  fitted = advanced_passthrough, # Pass the predictions directly
+  fitted = stacking_fit$fitted, # Pass the predictions directly
+  splits = stacking_fit$splits, # Pass the splits used directly
   silent = TRUE
 )
-#> Error in validate_fitted_splits_pair(fitted, splits, w_cv): Argument 'splits' must be supplied when 'fitted' is supplied.
 summary(stacking_refit)
-#> Error in eval(expr, envir, enclos): object 'stacking_refit' not found
+#> DDML estimation: Partially Linear Model 
+#> Obs: 9915   Folds: 5
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          13963.03    1492.40    9.36   <2e-16 ***
+#> (Intercept)    -5.36     535.14   -0.01     0.99    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 # Bonus: Instrumental Variable Estimation
@@ -332,14 +398,50 @@ summary(stacking_IV_fit)
 #> DDML estimation: Partially Linear IV Model 
 #> Obs: 9915   Folds: 5  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r    12899       1915    6.73  1.6e-11 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1             13151       1888    6.96  3.3e-12 ***
+#> (Intercept)     -966        530   -1.83    0.068 .  
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
 
-# Stacking weights associated with each base learner
-sapply(stacking_IV_fit$ensemble_weights, round, 4)
-#> list()
+The stacking diagnostics for the IV model:
+
+
+```r
+diagnostics(stacking_IV_fit)
+#> Stacking diagnostics: Partially Linear IV Model 
+#> Obs: 9915 
+#> 
+#>   y_X:
+#>    learner       mspe     r2 weight_nnls
+#>  learner_1 3120947021 0.2266      0.0000
+#>  learner_2 2864489352 0.2901      0.0000
+#>  learner_3 2836320542 0.2971      0.7226
+#>  learner_4 3061626328 0.2413      0.0000
+#>  learner_5 2914205541 0.2778      0.2624
+#>  learner_6 3518126794 0.1281      0.0626
+#>  learner_7 3808805316 0.0561      0.0099
+#> 
+#>   D1_X:
+#>    learner   mspe      r2 weight_nnls
+#>  learner_1 0.1736  0.1013      0.0370
+#>  learner_2 0.1718  0.1110      0.2420
+#>  learner_3 0.1714  0.1126      0.1068
+#>  learner_4 0.1719  0.1102      0.0433
+#>  learner_5 0.1709  0.1152      0.5302
+#>  learner_6 0.1840  0.0478      0.0469
+#>  learner_7 0.2024 -0.0475      0.0000
+#> 
+#>   Z1_X:
+#>    learner   mspe     r2 weight_nnls
+#>  learner_1 0.2014 0.1375      0.0000
+#>  learner_2 0.1973 0.1550      0.3248
+#>  learner_3 0.1972 0.1555      0.0000
+#>  learner_4 0.1977 0.1533      0.0235
+#>  learner_5 0.1959 0.1608      0.6553
+#>  learner_6 0.2121 0.0916      0.0000
+#>  learner_7 0.2313 0.0092      0.0000
 ```
 
 

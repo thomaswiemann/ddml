@@ -2,7 +2,7 @@
 % Please edit documentation in R/ols.R
 \name{predict.ols}
 \alias{predict.ols}
-\title{Predict method for \code{ols} objects.}
+\title{Predict Method for ols Objects}
 \usage{
 \method{predict}{ols}(object, newdata = NULL, ...)
 }
@@ -18,5 +18,5 @@ returns fitted values from the training data.}
 A numeric vector of predicted values.
 }
 \description{
-Predict method for \code{ols} objects.
+Predict Method for ols Objects
 }

@@ -36,17 +36,17 @@ test_that("ddml_att computes with stratify = FALSE", {
 })#TEST_THAT
 
 test_that("ddml_att computes with a single model and dependence", {
-  # Simulate small dataset
+  set.seed(13)
+  # Simulate small clustered dataset
   n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
   cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
   ddml_att_fit <- ddml_att(y, D, X,
@@ -149,17 +149,17 @@ test_that("summary.ddml_att computes with a single model", {
 })#TEST_THAT
 
 test_that("summary.ddml_att computes with a single model and dependence", {
-  # Simulate small dataset
+  set.seed(13)
+  # Simulate small clustered dataset
   n_cluster <- 200
   nobs <- 500
-  X <- cbind(1, matrix(rnorm(n_cluster*39), n_cluster, 39))
-  D_tld <-  X %*% runif(40) + rnorm(n_cluster)
-  fun <- stepfun(quantile(D_tld, probs = 0.5), c(0, 1))
-  D <- fun(D_tld)
+  X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)
+  D_tld <- 0.1 * X[, 1] + rnorm(n_cluster)
+  D <- 1 * (D_tld > 0)
   cluster_variable <- sample(1:n_cluster, nobs, replace = TRUE)
-  D <- D[cluster_variable, drop = F]
-  X <- X[cluster_variable, , drop = F]
-  y <- D + X %*% runif(40) + rnorm(nobs)
+  D <- D[cluster_variable]
+  X <- X[cluster_variable, , drop = FALSE]
+  y <- D + 0.1 * X[, 1] + rnorm(nobs)
   # Define arguments
   learners <- list(what = ols)
   ddml_att_fit <- ddml_att(y, D, X,

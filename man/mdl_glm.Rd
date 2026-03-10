@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_glm}
 \alias{mdl_glm}
-\title{Wrapper for \code{\link[stats:glm]{stats::glm()}}.}
+\title{Wrapper for stats::glm()}
 \usage{
 mdl_glm(y, X, ...)
 }

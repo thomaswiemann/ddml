@@ -19,7 +19,7 @@ This article demonstrates how to extract model statistics easily and create prof
 ```r
 library(ddml)
 # Also load modelsummary if it is installed
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   library(modelsummary)
 }
 set.seed(351789)
@@ -83,8 +83,9 @@ tidy(ols_fit)
 # Tidy the DDML model
 # By default, it extracts the results for the first ensemble type.
 tidy(ddml_fit)
-#>   term   estimate  std.error statistic      p.value ensemble_type
-#> 1  D_r -0.1851801 0.03224716 -5.742526 9.327476e-09          nnls
+#>          term     estimate  std.error  statistic      p.value ensemble_type
+#> 1          D1 -0.185140138 0.03225458 -5.7399638 9.469678e-09          nnls
+#> 2 (Intercept)  0.003821463 0.01530043  0.2497617 8.027716e-01          nnls
 ```
 
 If you computed multiple ensembles simultaneously, you can specify ``ensemble_idx`` to retrieve the results for another aggregate ensemble. You can also request confidence intervals.
@@ -93,10 +94,12 @@ If you computed multiple ensembles simultaneously, you can specify ``ensemble_id
 ```r
 # Extract the second ensemble type (e.g., 'singlebest') with confidence intervals
 tidy(ddml_fit, ensemble_idx = 2, conf.int = TRUE)
-#>   term   estimate  std.error statistic      p.value ensemble_type   conf.low
-#> 1  D_r -0.1857013 0.03220572 -5.766097 8.112844e-09    singlebest -0.2488233
-#>    conf.high
-#> 1 -0.1225792
+#>          term      estimate  std.error   statistic      p.value ensemble_type
+#> 1          D1 -0.1846309958 0.03225331 -5.72440526 1.037967e-08    singlebest
+#> 2 (Intercept) -0.0008189899 0.01530667 -0.05350544 9.573292e-01    singlebest
+#>      conf.low   conf.high
+#> 1 -0.24784631 -0.12141568
+#> 2 -0.03081951  0.02918153
 ```
 
 ## ``glance()`` for Model Statistics
@@ -108,6 +111,8 @@ To grab a single-row summary of the estimator statistics (number of observations
 glance(ddml_fit)
 #>   nobs sample_folds shortstack    ensemble_type model_type
 #> 1 1000            5       TRUE nnls, singlebest   ddml_plm
+#>           estimator_name
+#> 1 Partially Linear Model
 ```
 
 # Producing Tables with ``modelsummary``
@@ -123,14 +128,12 @@ model_list <- list(
 )
 
 # Render a simple comparison table if modelsummary is available
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(model_list, 
            stars = TRUE,
            coef_rename = c("D" = "Treatment (D)"),
            gof_omit = "AIC|BIC|Log.Lik.|F|RMSE")
 }
-#> Error: Package `tinytable` required for this function to work.
-#>   Please install it by running `install.packages("tinytable")`.
 ```
 
 Notice how ``modelsummary`` automatically pulled the custom goodness-of-fit metrics from ``glance.ddml()`` (e.g., ``sample_folds``, ``shortstack``, ``ensemble_type``).
@@ -143,7 +146,7 @@ If you wish to show the results for the *other* ensemble type (``singlebest``) i
 df_nnls       <- tidy(ddml_fit, ensemble_idx = 1)
 df_singlebest <- tidy(ddml_fit, ensemble_idx = 2)
 
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(
     list("DDML (NNLS)" = df_nnls, "DDML (Single Best)" = df_singlebest),
     title = "Comparison of Stacking Approaches",
@@ -151,23 +154,6 @@ if (require("modelsummary", quietly = TRUE)) {
     gof_map = NA # We omit model statistics since we passed data.frames directly
   )
 }
-#> Objects of class `NULL` are currently not supported.
-#> Error: `modelsummary could not extract the required information from a model of
-#>   class "data.frame". The package tried a sequence of 2 helper functions
-#>   to extract estimates:
-#>   
-#>   parameters::parameters(model)
-#>   broom::tidy(model)
-#>   
-#>   To draw a table, one of these commands must return a `data.frame` with a
-#>   column named "term". The `modelsummary` website explains how to
-#>   summarize unsupported models or add support for new models yourself:
-#>   https://modelsummary.com/vignettes/modelsummary.html
-#>   
-#>   These errors messages were generated during extraction:
-#>   
-#>   `parameters::parameters(model)` did not return a valid data.frame.
-#> `broom::tidy(model)` did not return a valid data.frame.
 ```
 
 # Tidy Support for Repeated Resampling
@@ -187,18 +173,21 @@ repl_fit <- ddml_replicate(
   sample_folds = 5,
   silent = TRUE
 )
-#> Error in ddml_replicate(ddml_plm, y = y, D = D, X = X, learners = list(list(what = ols)), : could not find function "ddml_replicate"
 
 # Extract aggregated coefficients
 tidy(repl_fit)
-#> Error in eval(expr, envir, enclos): object 'repl_fit' not found
+#>          term     estimate  std.error   statistic      p.value ensemble_type
+#> 1          D1 -0.185302213 0.03208110 -5.77605637 7.647176e-09          nnls
+#> 2 (Intercept) -0.000510678 0.01526034 -0.03346438 9.733043e-01          nnls
+#>   aggregation
+#> 1      median
+#> 2      median
 
 # Combine standard fit and averaged fit in a table
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(list("Single Split" = ddml_fit, "Repeated 3x" = repl_fit),
            stars = TRUE)
 }
-#> Error in eval(expr, envir, enclos): object 'repl_fit' not found
 ```
 
 # Diagnostics Integration
@@ -213,11 +202,11 @@ diag_fit <- diagnostics(ddml_fit)
 
 # Tidy output generates a data.frame 
 head(tidy(diag_fit), 5)
-#>   equation   learner      mspe         r2    weight
-#> 1      y_X learner_1 0.2412722 0.02764647 0.4186534
-#> 2      y_X learner_2 0.2413187 0.02745888 0.5734605
-#> 3     D1_X learner_1 0.2206338 0.05336647 0.7208025
-#> 4     D1_X learner_2 0.2206689 0.05321582 0.2715648
+#>   equation   learner      mspe         r2 weight_nnls weight_singlebest
+#> 1      y_X learner_1 0.2413624 0.02728268   0.5657648                 1
+#> 2      y_X learner_2 0.2413952 0.02715058   0.4264064                 0
+#> 3     D1_X learner_1 0.2206689 0.05321582   0.8069033                 1
+#> 4     D1_X learner_2 0.2209438 0.05203664   0.1852464                 0
 ```
 
 Because ``tidy(diagnostics(fit))`` evaluates exactly to a standard ``data.frame``, we can append it directly to any output artifact, knit it nicely with ``knitr::kable()``, or integrate it directly into supplementary appendix tables in an academic paper.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{predict.mdl_glm}
 \alias{predict.mdl_glm}
-\title{Predict method for \code{mdl_glm} objects.}
+\title{Predict Method for mdl_glm Objects}
 \usage{
 \method{predict}{mdl_glm}(object, newdata, ...)
 }
@@ -18,5 +18,5 @@
 A numeric vector of predicted response values.
 }
 \description{
-Predict method for \code{mdl_glm} objects.
+Predict Method for mdl_glm Objects
 }

@@ -85,8 +85,9 @@ summary(stacking_180IV_fit)
 #> DDML estimation: Flexible Partially Linear IV Model 
 #> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r   0.1121     0.0215    5.23  1.7e-07 ***
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1           1.12e-01   2.15e-02    5.23  1.7e-07 ***
+#> (Intercept) -6.14e-05   1.13e-03   -0.05     0.96    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -114,10 +115,9 @@ summary(stacking_1530IV_fit)
 #> DDML estimation: Flexible Partially Linear IV Model 
 #> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)  
-#> D_r   0.1112     0.0579    1.92    0.055 .
-#> ---
-#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#>             Estimate Std. Error z value Pr(>|z|)
+#> D1          0.046151   0.051943    0.89     0.37
+#> (Intercept) 0.000064   0.001112    0.06     0.95
 ```
 
 The coefficients corresponding to the two sets of instruments are quite different. Leveraging the ``ddml`` functionality that allows for specification of different sets of input variables, we construct a stacking estimator that considers both first stage regressions simultaneously.
@@ -155,18 +155,35 @@ summary(stacking_fit)
 #> DDML estimation: Flexible Partially Linear IV Model 
 #> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r   0.1148     0.0209    5.49    4e-08 ***
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1           0.105040   0.015673    6.70  2.1e-11 ***
+#> (Intercept) -0.000196   0.001125   -0.17     0.86    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-The resulting coefficient is close to the coefficient based on 180 instruments. The stacking weights confirm that the first stage estimators with 180 instruments contribute almost exclusively to the final estimate, suggesting that the expansion to 1530 instrument has little benefit for the ols or lasso-based first stage fits.
+The resulting coefficient is close to the coefficient based on 180 instruments. The stacking diagnostics confirm that the first stage estimators with 180 instruments contribute almost exclusively to the final estimate, suggesting that the expansion to 1530 instruments has little benefit for the ols or lasso-based first stage fits.
 
 
 ```r
-round(stacking_fit$ensemble_weights$D1_XZ, 4)
-#> Error in round(stacking_fit$ensemble_weights$D1_XZ, 4): non-numeric argument to mathematical function
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Flexible Partially Linear IV Model 
+#> Obs: 329509 
+#> 
+#>   y_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.4489 0.0258            1
+#> 
+#>   D1_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 10.187 0.0538            1
+#> 
+#>   D1_XZ:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 10.1851 0.0540       0.5874
+#>  learner_2 10.2699 0.0461       0.0000
+#>  learner_3 10.1852 0.0540       0.4126
+#>  learner_4 10.2673 0.0464       0.0000
 ```
 
 # References

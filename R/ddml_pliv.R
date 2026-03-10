@@ -264,7 +264,7 @@ ddml_pliv <- function(y, D, Z, X,
                         "D", "_X"),
       build_fitted_flat(Z_X_res_list, save_crossval,
                         "Z", "_X")),
-    splits = setNames(
+    splits = stats::setNames(
       rep(list(list(subsamples = indxs$subsamples,
                     cv_subsamples = indxs$cv_subsamples)),
           length(ensemble_weights)),

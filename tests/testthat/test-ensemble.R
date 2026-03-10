@@ -104,9 +104,16 @@ test_that("ensemble returns mean_y for constant outcomes", {
   # Check predictions
   ens_fitted <- predict.ensemble(ens_fit, newdata = X)
 
-  # Check output matches expectations
-  expect_equal(dim(ens_fitted), c(nrow(X), length(learners)))
+  # Check output matches expectations (nensb = 3 ensemble types)
+  expect_equal(dim(ens_fitted), c(nrow(X), 3))
   expect_true(all(ens_fitted == 42))
   expect_true(ens_fit$constant_y)
   expect_null(ens_fit$mdl_fits)
+  expect_equal(dim(ens_fit$weights), c(length(learners), 3))
+
+  # bylearner prediction returns nlearners columns
+  ens_bylearner <- predict.ensemble(ens_fit, newdata = X,
+                                    type = "bylearner")
+  expect_equal(dim(ens_bylearner), c(nrow(X), length(learners)))
+  expect_true(all(ens_bylearner == 42))
 })

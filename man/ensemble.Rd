@@ -2,7 +2,7 @@
 % Please edit documentation in R/ensemble.R
 \name{ensemble}
 \alias{ensemble}
-\title{Stacking estimator using combinations of base learners}
+\title{Stacking Estimator Using Combinations of Base Learners}
 \usage{
 ensemble(
   y,
@@ -24,7 +24,8 @@ ensemble(
 \item{type}{A character string indicating the type of ensemble to compute.
 Default is \code{"average"}.}
 
-\item{learners}{A list of base learners.}
+\item{learners}{A list of base learners. See
+\code{\link{ddml-intro}} for the full specification.}
 
 \item{cv_folds}{Number of cross-validation folds.}
 
@@ -38,12 +39,16 @@ Default is \code{"average"}.}
 }
 \value{
 An object of class \code{ensemble} containing:
-\item{mdl_fits}{List of fitted base learners.}
-\item{weights}{Computed ensemble weights.}
-\item{learners}{The base learners used.}
-\item{cv_results}{Cross-validation results if computed.}
-\item{mean_y}{Mean of the outcome variable.}
-\item{constant_y}{Boolean indicating if y is constant.}
+\describe{
+\item{\code{mdl_fits}}{List of fitted base learners.}
+\item{\code{weights}}{Computed ensemble weights.}
+\item{\code{learners}}{The base learners used.}
+\item{\code{cv_results}}{Cross-validation results if
+computed.}
+\item{\code{mean_y}}{Mean of the outcome variable.}
+\item{\code{constant_y}}{Boolean indicating if y is
+constant.}
+}
 }
 \description{
 Computes an ensemble of learners based on the specified
@@ -73,6 +78,8 @@ predict(ens_fit, newdata = X)[1:5]
 Other utilities: 
 \code{\link{crosspred}()},
 \code{\link{crossval}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
 \code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}
 }

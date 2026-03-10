@@ -8,7 +8,7 @@ ensemble_weights(
   y,
   X,
   type = "average",
-  learners,
+  learners = NULL,
   cv_folds = 5,
   cv_subsamples = NULL,
   cv_results = NULL,
@@ -24,7 +24,12 @@ ensemble_weights(
 \item{type}{A character string or vector indicating the type(s) of ensemble
 weights to compute. Default is \code{"average"}.}
 
-\item{learners}{A list of base learners.}
+\item{learners}{Optional list of base learners.
+Required when \code{cv_results} is not supplied (learners are
+needed to run cross-validation). When \code{cv_results} is
+supplied, \code{learners} may be omitted; the number of
+learners is inferred from the cross-validation residuals.
+See \code{\link{ddml-intro}} for the full specification.}
 
 \item{cv_folds}{Number of cross-validation folds.}
 
@@ -38,8 +43,12 @@ weights to compute. Default is \code{"average"}.}
 }
 \value{
 A list containing:
-\item{weights}{A matrix of computed ensemble weights.}
-\item{cv_results}{Cross-validation results used for computing weights.}
+\describe{
+\item{\code{weights}}{A matrix of computed ensemble
+weights.}
+\item{\code{cv_results}}{Cross-validation results used
+for computing weights.}
+}
 }
 \description{
 Computes the stacking weights for an ensemble of base learners
@@ -64,6 +73,8 @@ ew$weights
 Other utilities: 
 \code{\link{crosspred}()},
 \code{\link{crossval}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
 \code{\link{ensemble}()},
 \code{\link{shortstacking}()}
 }

@@ -63,7 +63,7 @@ summary(late_fit)
 #> DDML estimation: Local Average Treatment Effect 
 #> Obs: 5000   Folds: 3
 #> 
-#>      Estimate Std. Error t value Pr(>|t|)
+#>      Estimate Std. Error z value Pr(>|z|)
 #> LATE   -0.244      0.196   -1.25     0.21
 ```
 (Note that estimation here is based on a random subsample of 5,000 observations. The results can thus not readily be compared to those in Angrist & Evans (1998).)
@@ -103,8 +103,8 @@ summary(late_fit)
 #> DDML estimation: Local Average Treatment Effect 
 #> Obs: 5000   Folds: 3  Stacking: short-stack
 #> 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.223      0.187    -1.2     0.23
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.235      0.189   -1.24     0.21
 ```
 
 # Inspecting Learner Performance
@@ -117,34 +117,34 @@ diagnostics(late_fit)
 #> Obs: 5000 
 #> 
 #>   y_X_Z0:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2412 0.0299 0.9668
-#>  learner_2 0.2412 0.0299 0.0000
-#>  learner_3 0.2412 0.0299 0.0332
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2415 0.0289       0.7891
+#>  learner_2 0.2416 0.0283       0.0000
+#>  learner_3 0.2442 0.0179       0.2109
 #> 
 #>   y_X_Z1:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2424 0.0297 0.0000
-#>  learner_2 0.2424 0.0297 0.8028
-#>  learner_3 0.2424 0.0297 0.1972
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2421 0.0305       0.8593
+#>  learner_2 0.2421 0.0305       0.0000
+#>  learner_3 0.2462 0.0143       0.1407
 #> 
 #>   D_X_Z0:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2091 0.0791 0.9303
-#>  learner_2 0.2091 0.0791 0.0000
-#>  learner_3 0.2091 0.0791 0.0697
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2085 0.0820       0.8911
+#>  learner_2 0.2085 0.0820       0.0000
+#>  learner_3 0.2141 0.0573       0.1089
 #> 
 #>   D_X_Z1:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2234 0.0817 0.9557
-#>  learner_2 0.2234 0.0817 0.0000
-#>  learner_3 0.2234 0.0817 0.0443
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2231 0.0828        0.909
+#>  learner_2 0.2231 0.0828        0.000
+#>  learner_3 0.2297 0.0556        0.091
 #> 
 #>   Z_X:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2499 -1e-04 0.0000
-#>  learner_2 0.2499 -1e-04 0.5509
-#>  learner_3 0.2499 -1e-04 0.4491
+#>    learner   mspe      r2 weight_nnls1
+#>  learner_1 0.2502 -0.0011            0
+#>  learner_2 0.2499  0.0001            1
+#>  learner_3 0.2503 -0.0015            0
 ```
 
 For formal statistical tests of whether learner performance differences are significant, see ``vignette("stacking_diagnostics")``.
@@ -174,20 +174,20 @@ summary(late_fit)
 #> Obs: 5000   Folds: 3  Stacking: short-stack
 #> 
 #> Ensemble type: nnls 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.231      0.187   -1.24     0.22
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.231      0.189   -1.22     0.22
 #> 
 #> Ensemble type: singlebest 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.229      0.187   -1.22     0.22
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.227      0.188   -1.21     0.23
 #> 
 #> Ensemble type: ols 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.231      0.187   -1.23     0.22
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.231      0.189   -1.22     0.22
 #> 
 #> Ensemble type: average 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.229      0.189   -1.21     0.23
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.228      0.189   -1.21     0.23
 ```
 
 # Other Causal Models
@@ -206,8 +206,9 @@ summary(plm_fit)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 5000   Folds: 3  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r  -0.1467     0.0147   -9.97   <2e-16 ***
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -1.46e-01   1.47e-02   -9.94   <2e-16 ***
+#> (Intercept)  7.46e-05   6.89e-03    0.01     0.99    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -233,9 +234,15 @@ plm_rep <- ddml_replicate(ddml_plm,
                            sample_folds = 3,
                            resamples = 5,
                            silent = TRUE)
-#> Error in ddml_replicate(ddml_plm, y = y, D = D, X = X, learners = learners_multiple, : could not find function "ddml_replicate"
 summary(plm_rep)
-#> Error in eval(expr, envir, enclos): object 'plm_rep' not found
+#> DDML estimation: Partially Linear Model 
+#> Obs: 5000   Folds: 3   Resamples: 5   Aggregation: median  Stacking: short-stack
+#> 
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -1.48e-01   1.47e-02   -10.1   <2e-16 ***
+#> (Intercept)  7.04e-06   6.88e-03     0.0        1    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 For a detailed discussion of aggregation methods and the ``ddml_rep`` class, see ``vignette("repeated_resampling")``.

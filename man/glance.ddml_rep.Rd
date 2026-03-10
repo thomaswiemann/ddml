@@ -12,10 +12,9 @@
 \item{...}{Currently unused.}
 }
 \value{
-A one-row \code{data.frame} with columns
-\code{nobs}, \code{sample_folds}, \code{shortstack},
-\code{ensemble_type}, \code{model_type}, and
-\code{nresamples}.
+A one-row \code{data.frame} with columns \code{nobs},
+\code{sample_folds}, \code{shortstack}, \code{ensemble_type},
+\code{model_type}, and \code{nresamples}.
 }
 \description{
 Returns a one-row summary of model-level statistics,

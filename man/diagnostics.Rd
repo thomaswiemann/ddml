@@ -4,7 +4,7 @@
 \alias{diagnostics}
 \title{Stacking Diagnostics for DDML Estimators}
 \usage{
-diagnostics(object, cvc = FALSE, bootnum = 500, alpha = 0.05, ...)
+diagnostics(object, cvc = FALSE, bootnum = 500, ...)
 }
 \arguments{
 \item{object}{An object of class \code{ddml}.}
@@ -16,16 +16,12 @@ learner is significantly outperformed by the others.}
 \item{bootnum}{Number of bootstrap replications for CVC.
 Default 500. Ignored when \code{cvc = FALSE}.}
 
-\item{alpha}{Significance level for the model confidence
-set. Default 0.05.}
-
 \item{...}{Currently unused.}
 }
 \value{
-An object of class \code{ddml_diagnostics}
-containing per-equation learner diagnostics. Use
-\code{print()} for formatted output or \code{tidy()}
-for a flat data.frame.
+An object of class \code{ddml_diagnostics} containing per-equation
+learner diagnostics. Use \code{print()} for formatted output or
+\code{tidy()} for a flat data.frame.
 }
 \description{
 Computes per-learner diagnostics including MSPE, R-squared,
@@ -37,11 +33,27 @@ ensemble weights, and optionally cross-validation comparison
 y = AE98[, "worked"]
 D = AE98[, "morekids"]
 X = AE98[, c("age","agefst","black","hisp","othrace")]
+learners = list(list(what = ols),
+               list(what = mdl_glmnet))
 plm_fit = ddml_plm(y, D, X,
-                    learners = list(what = ols),
+                    learners = learners,
                     sample_folds = 2, silent = TRUE)
-diagnostics(plm_fit)
-tidy(diagnostics(plm_fit))
+diagnostics(plm_fit, cvc = TRUE)
+tidy(diagnostics(plm_fit, cvc = TRUE))
 }
 
 }
+\references{
+Lei J (2020). "Cross-Validation With Confidence." Journal of the American
+Statistical Association, 115(532), 1978-1997.
+}
+\seealso{
+Other utilities: 
+\code{\link{crosspred}()},
+\code{\link{crossval}()},
+\code{\link{ddml}()},
+\code{\link{ensemble}()},
+\code{\link{ensemble_weights}()},
+\code{\link{shortstacking}()}
+}
+\concept{utilities}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{predict.mdl_bigGLM}
 \alias{predict.mdl_bigGLM}
-\title{Predict method for \code{mdl_bigGLM} objects.}
+\title{Predict Method for mdl_bigGLM Objects}
 \usage{
 \method{predict}{mdl_bigGLM}(object, newdata = NULL, ...)
 }
@@ -17,5 +17,5 @@
 A numeric vector of predicted values.
 }
 \description{
-Predict method for \code{mdl_bigGLM} objects.
+Predict Method for mdl_bigGLM Objects
 }

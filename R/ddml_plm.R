@@ -248,7 +248,7 @@ ddml_plm <- function(y, D, X,
       list(y_X = build_fitted_entry(y_X_res, save_crossval)),
       build_fitted_flat(D_X_res_list, save_crossval,
                         "D", "_X")),
-    splits = setNames(
+    splits = stats::setNames(
       rep(list(list(subsamples = indxs$subsamples,
                     cv_subsamples = indxs$cv_subsamples)),
           length(ensemble_weights)),

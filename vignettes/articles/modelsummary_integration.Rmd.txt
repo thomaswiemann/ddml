@@ -26,7 +26,7 @@ This article demonstrates how to extract model statistics easily and create prof
 ```{r setup}
 library(ddml)
 # Also load modelsummary if it is installed
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   library(modelsummary)
 }
 set.seed(351789)
@@ -106,7 +106,7 @@ model_list <- list(
 )
 
 # Render a simple comparison table if modelsummary is available
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(model_list, 
            stars = TRUE,
            coef_rename = c("D" = "Treatment (D)"),
@@ -123,7 +123,7 @@ If you wish to show the results for the *other* ensemble type (``singlebest``) i
 df_nnls       <- tidy(ddml_fit, ensemble_idx = 1)
 df_singlebest <- tidy(ddml_fit, ensemble_idx = 2)
 
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(
     list("DDML (NNLS)" = df_nnls, "DDML (Single Best)" = df_singlebest),
     title = "Comparison of Stacking Approaches",
@@ -154,7 +154,7 @@ repl_fit <- ddml_replicate(
 tidy(repl_fit)
 
 # Combine standard fit and averaged fit in a table
-if (require("modelsummary", quietly = TRUE)) {
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(list("Single Split" = ddml_fit, "Repeated 3x" = repl_fit),
            stars = TRUE)
 }

@@ -2,9 +2,9 @@
 % Please edit documentation in R/ensemble.R
 \name{predict.ensemble}
 \alias{predict.ensemble}
-\title{Predict method for \code{ensemble} objects.}
+\title{Predict Method for \code{ensemble} Objects}
 \usage{
-\method{predict}{ensemble}(object, newdata, ...)
+\method{predict}{ensemble}(object, newdata, ..., type = "ensemble")
 }
 \arguments{
 \item{object}{A fitted \code{ensemble} object.}
@@ -12,11 +12,16 @@
 \item{newdata}{A feature matrix for prediction.}
 
 \item{...}{Currently unused.}
+
+\item{type}{Character; \code{"ensemble"} (default) returns
+weighted ensemble predictions, \code{"bylearner"} returns
+the raw per-learner prediction matrix.}
 }
 \value{
-A matrix of per-learner predictions with one column per
-base learner.
+A matrix of predictions. When \code{type = "ensemble"},
+one column per ensemble type; when \code{type = "bylearner"},
+one column per base learner.
 }
 \description{
-Predict method for \code{ensemble} objects.
+Predict Method for \code{ensemble} Objects
 }

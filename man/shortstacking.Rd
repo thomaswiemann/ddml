@@ -2,7 +2,7 @@
 % Please edit documentation in R/shortstacking.R
 \name{shortstacking}
 \alias{shortstacking}
-\title{Predictions using Short-Stacking.}
+\title{Predictions using Short-Stacking}
 \usage{
 shortstacking(
   y,
@@ -15,7 +15,6 @@ shortstacking(
   subsamples = NULL,
   silent = FALSE,
   auxiliary_X = NULL,
-  shortstack_y = y,
   parallel = NULL
 )
 }
@@ -72,10 +71,6 @@ corresponding the custom ensemble specification.}
 \code{sample_folds}, each containing additional observations to calculate
 predictions for.}
 
-\item{shortstack_y}{Optional vector of the outcome variable to form
-short-stacking predictions for. Base learners are always trained on
-\code{y}.}
-
 \item{parallel}{An optional named list with parallel processing
 options. When \code{NULL} (the default), computation is
 sequential. Supported fields:
@@ -98,20 +93,20 @@ order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{mspe}}{A numeric vector of per-ensemble MSPEs for
-the short-stacked predictions.}
-\item{\code{r2}}{A numeric vector of per-ensemble
-out-of-sample R-squared values.}
+\item{\code{mspe}}{A numeric vector of per-learner out-of-sample
+MSPEs, computed from cross-fitted residuals.}
+\item{\code{r2}}{A numeric vector of per-learner out-of-sample
+R-squared values.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
-\item{\code{cf_fitted_bylearner}}{A matrix of
-out-of-sample predictions, each column corresponding to a base
-learner (in chronological order).}
+\item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
+predictions, each column corresponding to a base learner (in
+chronological order).}
 \item{\code{cf_resid_bylearner}}{A matrix of per-learner
 out-of-sample residuals used for weight estimation.}
 \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
-not \code{NULL}, a
-list of matrices with additional predictions for each learner.}
+not \code{NULL}, a list of matrices with additional predictions
+for each learner.}
 }
 Note that unlike \code{crosspred}, \code{shortstack} always computes
 out-of-sample predictions for each base learner (at no additional
@@ -151,6 +146,8 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 Other utilities: 
 \code{\link{crosspred}()},
 \code{\link{crossval}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
 \code{\link{ensemble}()},
 \code{\link{ensemble_weights}()}
 }

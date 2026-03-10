@@ -187,3 +187,38 @@ test_that("auxiliary_X construction works with multi-valued D", {
   expect_equal(dim(auxiliary_X_d[[1]])[1],
                length(res$aux_indx[[1]][[1]]))
 })#TEST_THAT
+
+# --- derive_subsamples_byD round-trip ---
+
+test_that("derive_subsamples_byD matches get_sample_splits", {
+  set.seed(42)
+  nobs <- 200
+  D <- rep(c(0, 1), each = nobs / 2)
+  cl <- seq_len(nobs)
+
+  ref <- get_sample_splits(
+    cluster_variable = cl, sample_folds = 3,
+    cv_folds = 3, D = D, stratify = TRUE)
+
+  derived <- derive_subsamples_byD(ref$subsamples, D)
+  expect_equal(derived, ref$subsamples_byD)
+})#TEST_THAT
+
+test_that("get_sample_splits derives subsamples_byD when missing", {
+  set.seed(42)
+  nobs <- 200
+  D <- rep(c(0, 1), each = nobs / 2)
+  cl <- seq_len(nobs)
+
+  ref <- get_sample_splits(
+    cluster_variable = cl, sample_folds = 3,
+    cv_folds = 3, D = D, stratify = TRUE)
+
+  derived <- get_sample_splits(
+    cluster_variable = cl, sample_folds = 3,
+    cv_folds = 3, D = D, stratify = TRUE,
+    subsamples = ref$subsamples)
+
+  expect_equal(derived$subsamples, ref$subsamples)
+  expect_equal(derived$subsamples_byD, ref$subsamples_byD)
+})#TEST_THAT

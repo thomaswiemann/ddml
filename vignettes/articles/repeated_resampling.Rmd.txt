@@ -113,11 +113,11 @@ summary(fit_rep, aggregation = "mean")
 
 ## Visualizing Splitting Variance
 
-We can inspect the exact variation across the five sample splits by extracting the point estimates from the underlying arrays of the ``ddml_rep`` object:
+We can inspect the exact variation across the five sample splits by extracting the point estimates from the underlying list of fits in the ``ddml_rep`` object:
 
 ```{r}
-# Individual point estimates for the 'nnls' ensemble across the 5 independent splits
-split_estimates <- fit_rep$coef_array[1, "nnls", ]
+# Individual point estimates for the primary ensemble across the 5 independent splits
+split_estimates <- vapply(fit_rep$fits, function(fit) coef(fit)[1], numeric(1))
 print(split_estimates)
 
 # Variance of the point estimates across splits

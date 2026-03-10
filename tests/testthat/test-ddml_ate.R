@@ -236,51 +236,6 @@ test_that("ddml_ate fitted pass-through works", {
   )
 })
 
-test_that("ddml_ate legacy grouped split args warn and still work", {
-  set.seed(202)
-  nobs <- 600
-  X <- matrix(rnorm(nobs * 4), nobs, 4)
-  D_tld <- X %*% c(0.7, 0.2, 0.1, 0) + rnorm(nobs)
-  D <- 1 * (D_tld > mean(D_tld))
-  y <- D + X %*% c(0.2, 0.3, 0.1, 0.4) + rnorm(nobs)
-  learners <- list(what = ols)
-  splits <- get_sample_splits(
-    cluster_variable = seq_len(nobs),
-    sample_folds = 3,
-    cv_folds = 3,
-    D = D,
-    stratify = TRUE
-  )
-  fit_splits <- ddml_ate(
-    y, D, X,
-    learners = learners,
-    sample_folds = 3,
-    cv_folds = 3,
-    splits = list(
-      subsamples = splits$subsamples,
-      subsamples_byD = splits$subsamples_byD,
-      cv_subsamples = splits$cv_subsamples,
-      cv_subsamples_byD = splits$cv_subsamples_byD
-    ),
-    silent = TRUE
-  )
-  expect_warning(
-    fit_legacy <- ddml_ate(
-      y, D, X,
-      learners = learners,
-      sample_folds = 3,
-      cv_folds = 3,
-      subsamples = splits$subsamples,
-      subsamples_byD = splits$subsamples_byD,
-      cv_subsamples = splits$cv_subsamples,
-      cv_subsamples_byD = splits$cv_subsamples_byD,
-      silent = TRUE
-    ),
-    "Deprecated split arguments detected"
-  )
-  expect_equal(coef(fit_legacy), coef(fit_splits), tolerance = 1e-8)
-})
-
 test_that("ddml_ate scores are mean-zero", {
   nobs <- 500
   set.seed(42)

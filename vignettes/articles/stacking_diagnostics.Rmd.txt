@@ -99,26 +99,8 @@ diag_cvc <- diagnostics(late_fit, cvc = TRUE, bootnum = 1000)
 print(diag_cvc)
 ```
 
-Two new columns are added to the table:
-- **CVC p-value:** The p-value testing the null hypothesis that the learner has the same true MSPE as the absolute best-performing learner. A small p-value (e.g., $< 0.05$) indicates that the learner performs significantly worse than the best learner.
-- **In Conf. Set:** Logical indicator of whether the learner belongs to the Model Confidence Set (the set of learners for which the null hypothesis of equal performance to the best learner cannot be rejected).
-
-Often, simple parametric models (like OLS) perform remarkably similarly to highly flexible machine learners (like XGBoost) after accounting for the variation across cross-fitting folds. The CVC tests provide a rigorous statistical foundation for model selection and ensemble justification.
-
-# Advanced Standalone CVC Usage
-
-The testing machinery underlying ``diagnostics`` is built on a suite of accessible internal functions. If you wish to directly compare exactly two learners, you can use ``cvc_pairwise()``. It returns the point estimate of the difference in MSPE, standard error, t-statistic, and p-value.
-
-Below, we extract the cross-fitted residuals for the $E[Y|Z=0, X]$ equation and compare the first two base learners (OLS and Lasso).
-
-```{r}
-# Extract the residuals for the first equation (E[Y|Z=0, X])
-resids <- late_fit$cf_resid_bylearner[[1]]
-fold_ids <- late_fit$subsamples_byZ[[1]]
-
-# Compare Learner 1 (OLS) vs Learner 2 (Lasso)
-cvc_pairwise(resids, 1, 2, fold_ids)
-```
+A new column is added to the table:
+- **CVC p-value:** The p-value testing the null hypothesis that the learner has the same true MSPE as the absolute best-performing learner. A small p-value (e.g., $< 0.05$) indicates that the learner performs significantly worse than the best learner. Conversely, a large p-value means the learner belongs to the "model confidence set" of learners whose performance is not statistically distinguishable from the best.
 
 # References
 

@@ -65,3 +65,17 @@ test_that("ddml_plm works with list(fun=) for backward compat", {
   expect_true(!is.null(coef(fit)))
   options(ddml.fun_deprecated_warned = NULL)
 })
+
+test_that("validate_fitted_splits_pair checks null splits", {
+  expect_no_error(
+    validate_fitted_splits_pair(NULL, NULL))
+  expect_error(
+    validate_fitted_splits_pair(
+      fitted = list(y_X = list(cf_fitted = 1)),
+      splits = NULL),
+    "splits")
+  expect_no_error(
+    validate_fitted_splits_pair(
+      fitted = list(y_X = list(cf_fitted = 1)),
+      splits = list(subsamples = list(1:50))))
+})

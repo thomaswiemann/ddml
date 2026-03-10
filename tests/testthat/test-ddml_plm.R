@@ -501,7 +501,7 @@ test_that("ddml_plm HC0/HC1/HC3 SEs close to sandwich::vcovHC on ols_fit", {
 
   # Reconstruct the final partialing-out regression since ols_fit is removed:
   y_r <- as.vector(y - fit$fitted$y_X$cf_fitted_bylearner[, 1])
-  D_r <- as.matrix(D - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
+  D_r <- as.matrix(D - fit$fitted$D1_X$cf_fitted_bylearner[, 1])
   colnames(D_r) <- colnames(D)
   ols_fit <- stats::lm(y_r ~ D_r)
 

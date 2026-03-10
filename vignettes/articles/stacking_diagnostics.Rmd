@@ -72,39 +72,39 @@ print(diag)
 #> Obs: 5000 
 #> 
 #>   y_X_Z0:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2407 0.0322 0.0000
-#>  learner_2 0.2407 0.0322 0.8975
-#>  learner_3 0.2407 0.0322 0.0000
-#>  learner_4 0.2407 0.0322 0.1025
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2408 0.0316        0.000
+#>  learner_2 0.2407 0.0319        0.901
+#>  learner_3 0.2446 0.0165        0.000
+#>  learner_4 0.2470 0.0067        0.099
 #> 
 #>   y_X_Z1:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2419 0.0316 0.0000
-#>  learner_2 0.2419 0.0316 0.8775
-#>  learner_3 0.2419 0.0316 0.0874
-#>  learner_4 0.2419 0.0316 0.0351
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2420 0.0309       0.0000
+#>  learner_2 0.2419 0.0314       0.8775
+#>  learner_3 0.2459 0.0155       0.0874
+#>  learner_4 0.2485 0.0049       0.0351
 #> 
 #>   D_X_Z0:
-#>    learner  mspe     r2 weight
-#>  learner_1 0.209 0.0799 0.6868
-#>  learner_2 0.209 0.0799 0.0000
-#>  learner_3 0.209 0.0799 0.0693
-#>  learner_4 0.209 0.0799 0.2439
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2095 0.0776       0.6868
+#>  learner_2 0.2095 0.0776       0.0000
+#>  learner_3 0.2150 0.0533       0.0693
+#>  learner_4 0.2130 0.0621       0.2439
 #> 
 #>   D_X_Z1:
-#>    learner   mspe     r2 weight
-#>  learner_1 0.2235 0.0813 0.7212
-#>  learner_2 0.2235 0.0813 0.0000
-#>  learner_3 0.2235 0.0813 0.1049
-#>  learner_4 0.2235 0.0813 0.1739
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.2239 0.0797       0.7212
+#>  learner_2 0.2239 0.0797       0.0000
+#>  learner_3 0.2297 0.0560       0.1049
+#>  learner_4 0.2288 0.0594       0.1739
 #> 
 #>   Z_X:
-#>    learner   mspe    r2 weight
-#>  learner_1 0.2498 2e-04      0
-#>  learner_2 0.2498 2e-04      1
-#>  learner_3 0.2498 2e-04      0
-#>  learner_4 0.2498 2e-04      0
+#>    learner   mspe      r2 weight_nnls1
+#>  learner_1 0.2503 -0.0015            0
+#>  learner_2 0.2498  0.0002            1
+#>  learner_3 0.2501 -0.0010            0
+#>  learner_4 0.2551 -0.0209            0
 ```
 
 For each reduced form equation (e.g., $E[Y|Z=0, X]$), the diagnostics table reports:
@@ -118,13 +118,13 @@ For workflows integrated with the ``broom`` package, or when preparing publicati
 
 ```r
 head(tidy(diag))
-#>   equation   learner      mspe         r2       weight
-#> 1   y_X_Z0 learner_1 0.2406740 0.03216873 4.946908e-17
-#> 2   y_X_Z0 learner_2 0.2406740 0.03216873 8.975098e-01
-#> 3   y_X_Z0 learner_3 0.2406740 0.03216873 0.000000e+00
-#> 4   y_X_Z0 learner_4 0.2406740 0.03216873 1.024902e-01
-#> 5   y_X_Z1 learner_1 0.2418787 0.03156255 0.000000e+00
-#> 6   y_X_Z1 learner_2 0.2418787 0.03156255 8.774719e-01
+#>   equation   learner      mspe          r2 weight_nnls1
+#> 1   y_X_Z0 learner_1 0.2408175 0.031591434 4.234957e-17
+#> 2   y_X_Z0 learner_2 0.2407379 0.031911480 9.010382e-01
+#> 3   y_X_Z0 learner_3 0.2445764 0.016475863 0.000000e+00
+#> 4   y_X_Z0 learner_4 0.2470071 0.006701109 9.896183e-02
+#> 5   y_X_Z1 learner_1 0.2420426 0.030906416 0.000000e+00
+#> 6   y_X_Z1 learner_2 0.2419307 0.031354272 8.774719e-01
 ```
 
 # Inference on Base Learners (Cross-Validation Criteria)
@@ -142,66 +142,46 @@ print(diag_cvc)
 #> Obs: 5000 
 #> 
 #>   y_X_Z0:
-#>    learner   mspe     r2 weight cvc_pval
-#>  learner_1 0.2407 0.0322 0.0000    0.610
-#>  learner_2 0.2407 0.0322 0.8975    0.991
-#>  learner_3 0.2407 0.0322 0.0000    0.002
-#>  learner_4 0.2407 0.0322 0.1025    0.001
+#>    learner   mspe     r2 weight_nnls1 cvc_pval
+#>  learner_1 0.2408 0.0316        0.000    0.505
+#>  learner_2 0.2407 0.0319        0.901    0.996
+#>  learner_3 0.2446 0.0165        0.000    0.000
+#>  learner_4 0.2470 0.0067        0.099    0.001
 #> 
 #>   y_X_Z1:
-#>    learner   mspe     r2 weight cvc_pval
-#>  learner_1 0.2419 0.0316 0.0000    0.238
-#>  learner_2 0.2419 0.0316 0.8775    1.000
-#>  learner_3 0.2419 0.0316 0.0874    0.002
-#>  learner_4 0.2419 0.0316 0.0351    0.000
+#>    learner   mspe     r2 weight_nnls1 cvc_pval
+#>  learner_1 0.2420 0.0309       0.0000    0.221
+#>  learner_2 0.2419 0.0314       0.8775    1.000
+#>  learner_3 0.2459 0.0155       0.0874    0.004
+#>  learner_4 0.2485 0.0049       0.0351    0.000
 #> 
 #>   D_X_Z0:
-#>    learner  mspe     r2 weight cvc_pval
-#>  learner_1 0.209 0.0799 0.6868    0.843
-#>  learner_2 0.209 0.0799 0.0000    0.870
-#>  learner_3 0.209 0.0799 0.0693    0.001
-#>  learner_4 0.209 0.0799 0.2439    0.020
+#>    learner   mspe     r2 weight_nnls1 cvc_pval
+#>  learner_1 0.2095 0.0776       0.6868    0.833
+#>  learner_2 0.2095 0.0776       0.0000    0.875
+#>  learner_3 0.2150 0.0533       0.0693    0.000
+#>  learner_4 0.2130 0.0621       0.2439    0.018
 #> 
 #>   D_X_Z1:
-#>    learner   mspe     r2 weight cvc_pval
-#>  learner_1 0.2235 0.0813 0.7212    0.916
-#>  learner_2 0.2235 0.0813 0.0000    0.767
-#>  learner_3 0.2235 0.0813 0.1049    0.000
-#>  learner_4 0.2235 0.0813 0.1739    0.005
+#>    learner   mspe     r2 weight_nnls1 cvc_pval
+#>  learner_1 0.2239 0.0797       0.7212    0.879
+#>  learner_2 0.2239 0.0797       0.0000    0.809
+#>  learner_3 0.2297 0.0560       0.1049    0.000
+#>  learner_4 0.2288 0.0594       0.1739    0.006
 #> 
 #>   Z_X:
-#>    learner   mspe    r2 weight cvc_pval
-#>  learner_1 0.2498 2e-04      0    0.048
-#>  learner_2 0.2498 2e-04      1    0.995
-#>  learner_3 0.2498 2e-04      0    0.245
-#>  learner_4 0.2498 2e-04      0    0.000
+#>    learner   mspe      r2 weight_nnls1 cvc_pval
+#>  learner_1 0.2503 -0.0015            0    0.076
+#>  learner_2 0.2498  0.0002            1    0.994
+#>  learner_3 0.2501 -0.0010            0    0.253
+#>  learner_4 0.2551 -0.0209            0    0.000
 #> 
 #> Note: CVC compares individual base learners. 
 #> Shortstacked ensemble CVC is not available (weights use all data).
 ```
 
-Two new columns are added to the table:
-- **CVC p-value:** The p-value testing the null hypothesis that the learner has the same true MSPE as the absolute best-performing learner. A small p-value (e.g., $< 0.05$) indicates that the learner performs significantly worse than the best learner.
-- **In Conf. Set:** Logical indicator of whether the learner belongs to the Model Confidence Set (the set of learners for which the null hypothesis of equal performance to the best learner cannot be rejected).
-
-Often, simple parametric models (like OLS) perform remarkably similarly to highly flexible machine learners (like XGBoost) after accounting for the variation across cross-fitting folds. The CVC tests provide a rigorous statistical foundation for model selection and ensemble justification.
-
-# Advanced Standalone CVC Usage
-
-The testing machinery underlying ``diagnostics`` is built on a suite of accessible internal functions. If you wish to directly compare exactly two learners, you can use ``cvc_pairwise()``. It returns the point estimate of the difference in MSPE, standard error, t-statistic, and p-value.
-
-Below, we extract the cross-fitted residuals for the $E[Y|Z=0, X]$ equation and compare the first two base learners (OLS and Lasso).
-
-
-```r
-# Extract the residuals for the first equation (E[Y|Z=0, X])
-resids <- late_fit$crossfit_resid[[1]]
-fold_ids <- late_fit$subsamples_byZ[[1]]
-
-# Compare Learner 1 (OLS) vs Learner 2 (Lasso)
-cvc_pairwise(resids, 1, 2, fold_ids)
-#> Error in cvc_pairwise(resids, 1, 2, fold_ids): could not find function "cvc_pairwise"
-```
+A new column is added to the table:
+- **CVC p-value:** The p-value testing the null hypothesis that the learner has the same true MSPE as the absolute best-performing learner. A small p-value (e.g., $< 0.05$) indicates that the learner performs significantly worse than the best learner. Conversely, a large p-value means the learner belongs to the "model confidence set" of learners whose performance is not statistically distinguishable from the best.
 
 # References
 
@@ -210,3 +190,5 @@ Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." *Journal of Applied Econometrics*, 40(3): 249-269.
 
 Angrist J, Evans W (1998). "Children and Their Parents' Labor Supply: Evidence from Exogenous Variation in Family Size." *American Economic Review*, 88(3), 450-477.
+
+Lei J (2020). "Cross-Validation With Confidence." *Journal of the American Statistical Association*, 115(532), 1978-1997.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_bigGLM}
 \alias{mdl_bigGLM}
-\title{Wrapper for \code{\link[glmnet:bigGlm]{glmnet::bigGlm()}}.}
+\title{Wrapper for glmnet::bigGlm()}
 \usage{
 mdl_bigGLM(y, X, ...)
 }

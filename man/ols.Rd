@@ -2,7 +2,7 @@
 % Please edit documentation in R/ols.R
 \name{ols}
 \alias{ols}
-\title{Ordinary least squares.}
+\title{Ordinary Least Squares}
 \usage{
 ols(y, X, const = TRUE, w = NULL)
 }

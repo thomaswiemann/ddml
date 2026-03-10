@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_glmnet}
 \alias{mdl_glmnet}
-\title{Wrapper for \code{\link[glmnet:glmnet]{glmnet::glmnet()}}.}
+\title{Wrapper for glmnet::glmnet()}
 \usage{
 mdl_glmnet(y, X, cv = TRUE, ...)
 }

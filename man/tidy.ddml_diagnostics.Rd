@@ -12,10 +12,8 @@
 \item{...}{Currently unused.}
 }
 \value{
-A \code{data.frame} with columns \code{equation},
-\code{learner}, \code{mspe}, \code{r2}, \code{weight},
-and optionally \code{cvc_pval} and
-\code{in_conf_set}.
+A \code{data.frame} with columns \code{equation}, \code{learner},
+\code{mspe}, \code{r2}, \code{weight}, and optionally \code{cvc_pval}.
 }
 \description{
 Returns a flat data.frame of per-learner stacking
@@ -28,10 +26,12 @@ table creation with \code{kable()}, \code{gt()}, or
 y = AE98[, "worked"]
 D = AE98[, "morekids"]
 X = AE98[, c("age","agefst","black","hisp","othrace")]
+learners = list(list(what = ols),
+               list(what = mdl_glmnet))
 plm_fit = ddml_plm(y, D, X,
-                    learners = list(what = ols),
+                    learners = learners,
                     sample_folds = 2, silent = TRUE)
-tidy(diagnostics(plm_fit))
+tidy(diagnostics(plm_fit, cvc = TRUE))
 }
 
 }

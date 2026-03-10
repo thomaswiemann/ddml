@@ -2,7 +2,7 @@
 % Please edit documentation in R/crosspred.R
 \name{crosspred}
 \alias{crosspred}
-\title{Cross-Fitted Predictions using Stacking.}
+\title{Cross-Fitted Predictions Using Stacking}
 \usage{
 crosspred(
   y,
@@ -103,16 +103,13 @@ order).}
 \item{\code{weights}}{An array, providing the weight
 assigned to each base learner (in chronological order) by the
 ensemble procedures.}
-\item{\code{mspe}}{A matrix of per-learner MSPEs, with
-rows for learners and columns for sample folds.
-\code{NULL} when a single learner is used.}
-\item{\code{r2}}{A matrix of per-learner out-of-sample
-R-squared values. Same dimensions as \code{mspe}.
-\code{NULL} when a single learner is used.}
-\item{\code{cv_resid_byfold}}{A list (length
-\code{sample_folds}) of inner cross-validation
-residual matrices used for ensemble weight estimation.
-\code{NULL} when a single learner is used.}
+\item{\code{mspe}}{A numeric vector of per-learner out-of-sample
+MSPEs, computed from cross-fitted residuals.}
+\item{\code{r2}}{A numeric vector of per-learner out-of-sample
+R-squared values.}
+\item{\code{cv_resid_byfold}}{A list (length \code{sample_folds})
+of inner cross-validation residual matrices used for ensemble
+weight estimation. \code{NULL} when a single learner is used.}
 \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 \code{NULL}, a list of matrices with additional predictions.}
 \item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
@@ -201,6 +198,8 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 \seealso{
 Other utilities: 
 \code{\link{crossval}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
 \code{\link{ensemble}()},
 \code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_xgboost}
 \alias{mdl_xgboost}
-\title{Wrapper for \code{\link[xgboost:xgboost]{xgboost::xgboost()}}.}
+\title{Wrapper for xgboost::xgboost()}
 \usage{
 mdl_xgboost(y, X, nrounds = 500, verbosity = 0, ...)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/crossval.R
 \name{crossval}
 \alias{crossval}
-\title{Estimator of the Mean Squared Prediction Error using Cross-Validation.}
+\title{Estimator of the Mean Squared Prediction Error Using Cross-Validation}
 \usage{
 crossval(
   y,
@@ -124,6 +124,8 @@ cv_res$mspe
 \seealso{
 Other utilities: 
 \code{\link{crosspred}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
 \code{\link{ensemble}()},
 \code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}

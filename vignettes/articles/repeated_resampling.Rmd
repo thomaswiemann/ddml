@@ -61,8 +61,9 @@ summary(fit_single)
 #> DDML estimation: Partially Linear Model 
 #> Obs: 1000   Folds: 5  Stacking: short-stack
 #> 
-#>     Estimate Std. Error t value Pr(>|t|)    
-#> D_r   -0.120      0.033   -3.62  0.00029 ***
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.11986    0.03306   -3.63  0.00029 ***
+#> (Intercept)  0.00422    0.01541    0.27  0.78425    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
@@ -83,11 +84,10 @@ fit_rep <- ddml_replicate(
   resamples = 5,
   silent = TRUE
 )
-#> Error in ddml_replicate(ddml_plm, y = y, D = D, X = X, learners = learners, : could not find function "ddml_replicate"
 
 # Observe the class of the returned object
 class(fit_rep)
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
+#> [1] "ddml_rep"
 ```
 
 # Interacting with ``ddml_rep`` Objects
@@ -100,19 +100,33 @@ When summary statistics or coefficients are requested, ``ddml_rep`` automaticall
 ```r
 # Print the object details
 fit_rep
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
+#> DDML replicated fits: Partially Linear Model 
+#>   Resamples: 5   Obs: 1000   Folds: 5 
+#> 
+#> Use summary() for aggregated inference.
+#> Use x[[i]] to access individual fits.
 
 # Aggregate inference (Median Aggregation)
 summary(fit_rep)
-#> Error in h(simpleError(msg, call)): error in evaluating the argument 'object' in selecting a method for function 'summary': object 'fit_rep' not found
+#> DDML estimation: Partially Linear Model 
+#> Obs: 1000   Folds: 5   Resamples: 5   Aggregation: median  Stacking: short-stack
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.11409    0.03318   -3.44  0.00058 ***
+#> (Intercept)  0.00384    0.01544    0.25  0.80372    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 # Extract only the coefficients
 coef(fit_rep)
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
+#>           D1  (Intercept) 
+#> -0.114085768  0.003836949
 
 # Extract confidence intervals (with HC3 standard errors passed to the VCoV estimator)
 confint(fit_rep, type = "HC3")
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
+#>                   2.5 %      97.5 %
+#> D1          -0.17920978 -0.04896176
+#> (Intercept) -0.02645093  0.03412483
 ```
 
 You can alternatively switch to **mean** aggregation (Ahrens et al., 2024), which computes the empirical mean across split estimates:
@@ -120,24 +134,30 @@ You can alternatively switch to **mean** aggregation (Ahrens et al., 2024), whic
 
 ```r
 summary(fit_rep, aggregation = "mean")
-#> Error in h(simpleError(msg, call)): error in evaluating the argument 'object' in selecting a method for function 'summary': object 'fit_rep' not found
+#> DDML estimation: Partially Linear Model 
+#> Obs: 1000   Folds: 5   Resamples: 5   Aggregation: mean  Stacking: short-stack
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.11553    0.03323   -3.48  0.00051 ***
+#> (Intercept)  0.00415    0.01548    0.27  0.78843    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ## Visualizing Splitting Variance
 
-We can inspect the exact variation across the five sample splits by extracting the point estimates from the underlying arrays of the ``ddml_rep`` object:
+We can inspect the exact variation across the five sample splits by extracting the point estimates from the underlying list of fits in the ``ddml_rep`` object:
 
 
 ```r
-# Individual point estimates for the 'nnls' ensemble across the 5 independent splits
-split_estimates <- fit_rep$coef_array[1, "nnls", ]
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
+# Individual point estimates for the primary ensemble across the 5 independent splits
+split_estimates <- vapply(fit_rep$fits, function(fit) coef(fit)[1], numeric(1))
 print(split_estimates)
-#> Error in h(simpleError(msg, call)): error in evaluating the argument 'x' in selecting a method for function 'print': object 'split_estimates' not found
+#> [1] -0.1117597 -0.1187530 -0.1133071 -0.1197519 -0.1140858
 
 # Variance of the point estimates across splits
 var(split_estimates)
-#> Error in eval(expr, envir, enclos): object 'split_estimates' not found
+#> [1] 1.23637e-05
 ```
 
 ## Multiple Treatment Variables and Joint Variance
@@ -158,11 +178,13 @@ fit_rep_multi <- ddml_replicate(
   resamples = 5,
   silent = TRUE
 )
-#> Error in ddml_replicate(ddml_plm, y = y, D = AE98[sub_idx, c("morekids", : could not find function "ddml_replicate"
 
 # Extract the full aggregated Variance-Covariance matrix
 vcov(fit_rep_multi)
-#> Error in eval(expr, envir, enclos): object 'fit_rep_multi' not found
+#>                  morekids        boy2nd   (Intercept)
+#> morekids     1.090179e-03 -2.156755e-05 -7.584066e-06
+#> boy2nd      -2.156755e-05  9.450183e-04  1.153763e-05
+#> (Intercept) -7.584066e-06  1.153763e-05  2.368640e-04
 ```
 
 ## Extracting Individual Fits
@@ -173,13 +195,23 @@ Because a ``ddml_rep`` object is essentially a structured list of pure ``ddml`` 
 ```r
 # Extract the 3rd replicate fit
 run_3 <- fit_rep[[3]]
-#> Error in eval(expr, envir, enclos): object 'fit_rep' not found
 class(run_3)
-#> Error in eval(expr, envir, enclos): object 'run_3' not found
+#> [1] "ddml_plm" "ddml"
 
 # View its specific diagnostics
 diagnostics(run_3)
-#> Error in eval(expr, envir, enclos): object 'run_3' not found
+#> Stacking diagnostics: Partially Linear Model 
+#> Obs: 1000 
+#> 
+#>   y_X:
+#>    learner   mspe     r2 weight_nnls
+#>  learner_1 0.2402 0.0394      0.0000
+#>  learner_2 0.2396 0.0415      0.9986
+#> 
+#>   D1_X:
+#>    learner   mspe     r2 weight_nnls
+#>  learner_1 0.2205 0.0659      0.0000
+#>  learner_2 0.2202 0.0671      0.9926
 ```
 
 # Manual Construction and HPC Compatibility
@@ -205,13 +237,19 @@ fits_list <- lapply(1:3, function(r) {
 
 # 2. Combine them into a ddml_rep object
 manual_rep <- ddml_rep(fits_list)
-#> Error in ddml_rep(fits_list): could not find function "ddml_rep"
 class(manual_rep)
-#> Error in eval(expr, envir, enclos): object 'manual_rep' not found
+#> [1] "ddml_rep"
 
 # 3. Aggregate results
 summary(manual_rep)
-#> Error in h(simpleError(msg, call)): error in evaluating the argument 'object' in selecting a method for function 'summary': object 'manual_rep' not found
+#> DDML estimation: Partially Linear Model 
+#> Obs: 1000   Folds: 5   Resamples: 3   Aggregation: median  Stacking: short-stack
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.11819    0.03308   -3.57  0.00035 ***
+#> (Intercept)  0.00309    0.01543    0.20  0.84144    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 This flexibility allows ``ddml`` to scale efficiently from local laptops to massive distributed compute environments, ensuring robust inference no matter your hardware setup.

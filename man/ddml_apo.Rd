@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_apo.R
 \name{ddml_apo}
 \alias{ddml_apo}
-\title{DDML Estimator for the Average Potential Outcome}
+\title{Estimator for the Average Potential Outcome}
 \usage{
 ddml_apo(
   y,
@@ -140,8 +140,8 @@ an example.}
 
 \item{splits}{An optional list of sample split objects. For
 \code{ddml_apo}, this must be a list with elements \code{subsamples} and
-\code{cv_subsamples} (and optionally \code{subsamples_byd} and
-\code{cv_subsamples_byd} for stratified splitting). Typically
+\code{cv_subsamples} (and optionally \code{subsamples_byD} and
+\code{cv_subsamples_byD} for stratified splitting). Typically
 obtained from a previous fit via \code{fit$splits}.}
 
 \item{save_crossval}{Logical indicating whether to store the inner
@@ -152,27 +152,23 @@ pass-through calls with data-driven ensembles (e.g.,
 \code{FALSE} to reduce object size at the cost of approximate
 weight recomputation.}
 
-\item{...}{Deprecated arguments (\code{subsamples_byd},
-\code{cv_subsamples_byd}) are still accepted for backward
-compatibility but should be replaced with the \code{splits}
-argument.}
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
 \code{ddml_apo} returns an object of S3 class
-\code{ddml_apo} and \code{ddml}. See \code{\link{ddml-class}}
+\code{ddml_apo} and \code{ddml}. See \code{\link{ddml-intro}}
 for the common output structure. Additional pass-through
 fields: \code{learners}, \code{learners_DX}.
 }
 \description{
-\code{ddml_apo} provides a Double/Debiased Machine Learning
-estimator for the average potential outcome, allowing for custom
-weights \eqn{\omega(X)}.
+Estimator for the average potential outcome, allowing for
+custom weights \eqn{\omega(X)}.
 }
 \details{
-\code{ddml_apo} provides a Double/Debiased Machine Learning
-estimator for the target parameter \eqn{\theta_0} in the model given by
+\strong{Parameter of Interest:} \code{ddml_apo} provides a Double/Debiased Machine Learning
+estimator for the target parameter \eqn{\theta_0} in the model given by:
 
-\eqn{Y = g_0(D, X) + U,}
+\deqn{Y = g_0(D, X) + U,}
 
 where \eqn{(Y, D, X, U)} is a random vector such that
 \eqn{E[U\vert D, X] = 0} and
@@ -182,21 +178,29 @@ and \eqn{g_0} is an unknown nuisance function.
 In this model, the average potential outcome (APO) for treatment
 level \eqn{d} is defined as
 
-\eqn{\theta_0^{\textrm{APO}} \equiv E[\omega(X) g_0(d, X)]},
+\deqn{\theta_0^{\textrm{APO}} \equiv E[\omega(X) g_0(d, X)],}
 
 where \eqn{\omega(X)} is a known weighting function. If \eqn{\omega(X) = 1},
 this parameter corresponds to the standard Average Potential Outcome (APO)
 at treatment level \eqn{d}.
 
-The estimating equation is
-\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-\eqn{W = (Y, D, X)}, and the Neyman orthogonal score is
+\strong{Nuisance Parameters:} The nuisance parameters are
+\eqn{\eta = (\ell, p)} taking true values \eqn{\ell_0(X) = E[Y|D=d, X]} and
+\eqn{p_0(X) = E[\mathbf{1}\{D=d\}|X]}.
 
-\eqn{m(W; \theta, \eta) = \left( \frac{\mathbbm{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X) - \theta}
+\strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell, p)} taking
-true values \eqn{\ell_0(X) = E[Y|D=d, X]} and \eqn{p_0(X) = E[\mathbbm{1}\{D=d\}|X]}.
-}\if{html}{\out{</div>}}
+\deqn{m(W; \theta, \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X) - \theta}
+
+\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+
+\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+
+where:
+
+\deqn{\psi_a(W; \eta) = -1}
+
+\deqn{\psi_b(W; \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X)}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -204,7 +208,7 @@ y = AE98[, "worked"]
 D = AE98[, "morekids"]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 
-# Estimate the APO for d = 1 using a single base learner: Ridge.
+# Estimate the APO for d = 1 using a single base learner, ridge.
 apo_fit <- ddml_apo(y, D, X,
                     learners = list(what = mdl_glmnet),
                     sample_folds = 2,
@@ -212,18 +216,9 @@ apo_fit <- ddml_apo(y, D, X,
 summary(apo_fit)
 
 }
-\references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
-Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-}
 \seealso{
-\code{\link[=summary.ddml]{summary.ddml()}}, \code{\link[=coef.ddml]{coef.ddml()}},
-\code{\link[=vcov.ddml]{vcov.ddml()}}, \code{\link[=confint.ddml]{confint.ddml()}},
-\code{\link[=hatvalues.ddml]{hatvalues.ddml()}}, \code{\link[=tidy.ddml]{tidy.ddml()}},
-\code{\link[=glance.ddml]{glance.ddml()}}, \code{\link[=diagnostics]{diagnostics()}}
-
 Other ddml estimators: 
-\code{\link{ddml-class}},
+\code{\link{ddml-intro}},
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},

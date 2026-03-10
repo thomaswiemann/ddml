@@ -192,10 +192,10 @@ summary(stacking_fit)
 ```
 Interestingly, the coefficient is closer to the OLS estimates than to the TSLS estimates (with or without lasso)!
 
-To better understand the composition of the final estimator, it is often useful to inspect the stacking weights. These may readily be retrieved from the fitted object. Here, we see that the boosted trees and the random forest learners have been assigned the most weight in the cross validation informed ensemble procedures. The linear methods -- ols, lasso, and ridge -- do not contribute substantially to the final estimates, suggesting that the user-defined expansions of the controls and instruments does little to improve bias and precision.
+To better understand the composition of the final estimator, it is often useful to inspect the stacking diagnostics. Here, we see that the boosted trees and the random forest learners have been assigned the most weight. The linear methods -- ols, lasso, and ridge -- do not contribute substantially to the final estimates, suggesting that the user-defined expansions of the controls and instruments does little to improve bias and precision.
 
 ```{r}
-sapply(stacking_fit$ensemble_weights, round, 4)
+diagnostics(stacking_fit)
 ```
 
 # Elasticities
@@ -222,10 +222,10 @@ compute_inelastic_demand(tsls_L_fit$coef[2])
 Double/Debiased Machine Learning estimates using only a single lasso base learner suggest the smallest number of inelastic products. In stark contrast, the estimates based on multiple machine learners suggest a number closer to the initial OLS estimates.
 ```{r}
 # ddml-lasso implied number of products with inelastic demand
-compute_inelastic_demand(lasso_fit$coef)
+compute_inelastic_demand(coef(lasso_fit))
 
 # ddml-stacking implied number of products with inelastic demand
-compute_inelastic_demand(stacking_fit$coef)
+compute_inelastic_demand(coef(stacking_fit))
 ```
 
 # Bonus: Post-Lasso Estimates without Sample-Splitting
@@ -271,10 +271,10 @@ stacking_r_fit <- ddml_fpliv(y, D = D,
 summary(stacking_r_fit)
 ```
 
-The similarity of the coefficient estimates to the initial stacking estimates suggest seems that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking weights, which again place substantial weight on the boosted trees.
+The similarity of the coefficient estimates to the initial stacking estimates suggests that adaptively created interactions are indeed the key driver between the coefficient differences. This is further confirmed by the stacking diagnostics, which again place substantial weight on the boosted trees.
 
 ```{r}
-sapply(stacking_r_fit$ensemble_weights, round, 4)
+diagnostics(stacking_r_fit)
 ```
 
 The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of Double/Debiased Machine Learning with stacking as a practical solution.

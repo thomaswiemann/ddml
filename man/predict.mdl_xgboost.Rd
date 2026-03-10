@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{predict.mdl_xgboost}
 \alias{predict.mdl_xgboost}
-\title{Predict method for \code{mdl_xgboost} objects.}
+\title{Predict Method for mdl_xgboost Objects}
 \usage{
 \method{predict}{mdl_xgboost}(object, newdata = NULL, ...)
 }
@@ -18,5 +18,5 @@
 A numeric vector of predicted values.
 }
 \description{
-Predict method for \code{mdl_xgboost} objects.
+Predict Method for mdl_xgboost Objects
 }

@@ -12,7 +12,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = requireNamespace("keras"),
+  eval = requireNamespace("keras", quietly = TRUE) && keras::is_keras_available(),
   warning = FALSE,
   message = FALSE
 )

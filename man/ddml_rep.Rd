@@ -29,8 +29,7 @@ An object of class \code{"ddml_rep"} with fields:
 \item{ensemble_type}{Ensemble types.}
 \item{nobs}{Number of observations.}
 \item{sample_folds}{Number of cross-fitting folds.}
-\item{shortstack}{Logical, whether short-stacking was
-used.}
+\item{shortstack}{Logical, whether short-stacking was used.}
 }
 }
 \description{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{predict.mdl_glmnet}
 \alias{predict.mdl_glmnet}
-\title{Predict method for \code{mdl_glmnet} objects.}
+\title{Predict Method for mdl_glmnet Objects}
 \usage{
 \method{predict}{mdl_glmnet}(object, newdata = NULL, ...)
 }
@@ -18,5 +18,5 @@
 A numeric vector of predicted values.
 }
 \description{
-Predict method for \code{mdl_glmnet} objects.
+Predict Method for mdl_glmnet Objects
 }

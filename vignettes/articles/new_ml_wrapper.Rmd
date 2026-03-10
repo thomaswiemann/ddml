@@ -78,9 +78,7 @@ gbm_fit <- mdl_gbm(y, X,
 fitted_values <- predict(gbm_fit, X)
 # Check class
 class(gbm_fit)
-#> [1] "mdl_gbm" "gbm"
 class(fitted_values)
-#> [1] "numeric"
 ```
 
 The classes are what we expected. The wrapper should now be compatible with the ``ddml`` machinery. As a final test, we estimate the local average treatment effect. (Computation can take a while, feel free to set ``n.trees`` or ``interaction.depth`` to a smaller value for this test.)
@@ -99,11 +97,6 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
-#> DDML estimation: Local Average Treatment Effect 
-#> Obs: 5000   Folds: 10
-#> 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.237      0.190   -1.25     0.21
 ```
 
 All works well!
@@ -228,7 +221,6 @@ callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                                      factor = 1/10,
                                                      patience = 10,
                                                      verbose = FALSE))
-#> Error in FUN(X[[i]], ...): 'CreateProcess' failed to run 'C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.11_3.11.2544.0_x64__qbz5n2kfra8p0\python.exe -c "import sys; print(sys.platform)"'
 
 # Use the neural network base learner
 learner_keras = list(what = mdl_keras,
@@ -237,20 +229,13 @@ learner_keras = list(what = mdl_keras,
                                  verbose = FALSE,
                                  validation_split = 0.1,
                                  callbacks = callbacks_list))
-#> Error in eval(expr, envir, enclos): object 'callbacks_list' not found
 
 # Estimate ddml_late
 late_fit <- ddml_late(y, D, Z, X,
                       learners = learner_keras,
                       sample_folds = 10,
                       silent = TRUE)
-#> Error in eval(expr, envir, enclos): object 'learner_keras' not found
 summary(late_fit)
-#> DDML estimation: Local Average Treatment Effect 
-#> Obs: 5000   Folds: 10
-#> 
-#>      Estimate Std. Error t value Pr(>|t|)
-#> LATE   -0.237      0.190   -1.25     0.21
 ```
 
 All works well!

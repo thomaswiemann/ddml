@@ -101,8 +101,9 @@ ddml_did_method <- function(y1, y0, D, covariates, ...) {
   global_ddml_fits[[length(global_ddml_fits) + 1]] <<- att_fit
   
   # Return results
-  inf.func <- att_fit$psi_b + att_fit$att * att_fit$psi_a
-  output <- list(ATT = att_fit$att, att.inf.func = inf.func)
+  att_est <- as.numeric(att_fit$coefficients)
+  inf.func <- as.vector(att_fit$psi_b[[1]]) + att_est * as.vector(att_fit$psi_a[[1]])
+  output <- list(ATT = att_est, att.inf.func = inf.func)
   return(output)
 }#DDML_DID_METHOD
 ```
@@ -113,7 +114,7 @@ A potentially suitable machine learning reduced form estimator is gradient tree 
 my_did_xgboost <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners
   learners = list(what = mdl_xgboost,
-                  args = list(nround = 50,
+                  args = list(nrounds = 50,
                               params = list(eta = 0.1, max_depth = 3),
                               early_stopping_rounds = 1))
   learners_DX = learners
@@ -179,11 +180,11 @@ my_did_stacking <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners for outcome reduced-form
   learners = list(list(what = ols),
                   list(what = mdl_xgboost,
-                       args = list(nround = 50,
+                       args = list(nrounds = 50,
                                    params = list(eta = 0.1, max_depth = 1),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_xgboost,
-                       args = list(nround = 50,
+                       args = list(nrounds = 50,
                                    params = list(eta = 0.1, max_depth = 3),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_ranger,
@@ -195,11 +196,11 @@ my_did_stacking <- function(y1, y0, D, covariates, ...) {
   # Hard-code learners for treatment reduced-form
   learners_DX = list(list(what = mdl_glm),
                   list(what = mdl_xgboost,
-                       args = list(nround = 50,
+                       args = list(nrounds = 50,
                                    params = list(eta = 0.1, max_depth = 1),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_xgboost,
-                       args = list(nround = 50,
+                       args = list(nrounds = 50,
                                    params = list(eta = 0.1, max_depth = 3),
                                    early_stopping_rounds = 1)),
                   list(what = mdl_ranger,
@@ -274,7 +275,7 @@ This diagnostic output displays the cross-validated Mean Squared Prediction Erro
 
 1. **$R^2$**: Evaluates the proportion of variance explained by each learner out-of-sample. Because these are computed on hold-out folds, negative values can occur and indicate that a learner performs worse than a simple constant mean prediction (often a sign of severe overfitting or algorithmic mismatch).
 2. **Weights**: The short-stacking algorithm assigns weights to optimally combine the learners and minimize the overall MSPE. Learners with $0$ weight do not contribute to the final predictions because their predictive power is either poor or entirely subsumed by other models in the ensemble.
-3. **CVC P-Values**: The ``cvc_pval`` column shows the p-value from a Cross-Validation Criteria test (Ahrens et al. 2024), comparing each learner's MSPE against the MSPE of the single-best ML model in the list. A high p-value (e.g. > 0.05) indicates that the learner's predictive performance is not statistically worse than the best learner. If simple linear models (e.g., ``ols``) show high p-values, it implies machine learning does not significantly improve prediction out-of-sample for this specific parameter, which can legally justify reverting to simpler, faster estimators.
+3. **CVC P-Values**: The ``cvc_pval`` column shows the p-value from a Cross-Validation Criteria test (Lei, 2020), comparing each learner's MSPE against the MSPE of the single-best ML model in the list. A high p-value (e.g. > 0.05) indicates that the learner's predictive performance is not statistically worse than the best learner. If simple linear models (e.g., ``ols``) show high p-values, it implies machine learning does not significantly improve prediction out-of-sample for this specific parameter, which can legally justify reverting to simpler, faster estimators.
 4. **Actionable Efficiency**: If your diagnostic output consistently assigns $0$ weight, negative $R^2$, and $0.000$ CVC p-values to computationally expensive models (like deep random forests), you can safely remove them from the ``learners`` list in future runs to dramatically reduce computation time without sacrificing accuracy.
 
 
@@ -287,4 +288,6 @@ Callaway B, Sant'Anna P (2021). “Difference-in-differences with multiple time 
 Callaway B, Sant'Anna P (2021). “did: Difference in Differences.” R package version 2.1.2, https://bcallaway11.github.io/did/.
 
 Chang NC (2020). "Double/debiased machine learning for difference-in-difference models." The Econometrics Journal, 177-191.
+
+Lei J (2020). "Cross-Validation With Confidence." Journal of the American Statistical Association, 115(532), 1978-1997.
 

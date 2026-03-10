@@ -38,10 +38,9 @@ Default 0.95.}
 \item{...}{Currently unused.}
 }
 \value{
-A \code{data.frame} with columns \code{term},
-\code{estimate}, \code{std.error}, \code{statistic},
-\code{p.value}, \code{ensemble_type}, and
-\code{aggregation}. If \code{conf.int = TRUE},
+A \code{data.frame} with columns \code{term}, \code{estimate},
+\code{std.error}, \code{statistic}, \code{p.value},
+\code{ensemble_type}, and \code{aggregation}. If \code{conf.int = TRUE},
 also \code{conf.low} and \code{conf.high}.
 }
 \description{

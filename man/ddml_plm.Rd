@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_plm.R
 \name{ddml_plm}
 \alias{ddml_plm}
-\title{Estimator for the Partially Linear Model.}
+\title{Estimator for the Partially Linear Regression Coefficient}
 \usage{
 ddml_plm(
   y,
@@ -135,40 +135,44 @@ pass-through calls with data-driven ensembles (e.g.,
 \code{FALSE} to reduce object size at the cost of approximate
 weight recomputation.}
 
-\item{...}{Deprecated arguments are still accepted for backward
-compatibility but should be replaced with the \code{splits}
-argument. See individual estimator pages for details.}
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
 \code{ddml_plm} returns an object of S3 class
-\code{ddml_plm} and \code{ddml}. See \code{\link{ddml-class}}
+\code{ddml_plm} and \code{ddml}. See \code{\link{ddml-intro}}
 for the common output structure. Additional pass-through
 fields: \code{learners}, \code{learners_DX}.
 }
 \description{
-Estimator for the partially linear model.
+Estimator for the partially linear regression coefficient.
 }
 \details{
-\code{ddml_plm} provides a Double/Debiased Machine Learning
+\strong{Parameter of Interest:} \code{ddml_plm} provides a Double/Debiased Machine Learning
 estimator for the target parameter \eqn{\theta_0} in the partially
-linear model given by
+linear model given by:
 
-\eqn{Y = \theta_0D + g_0(X) + U,}
+\deqn{Y = \theta_0 D + g_0(X) + U,}
 
 where \eqn{(Y, D, X, U)} is a random vector such that
 \eqn{E[Cov(U, D\vert X)] = 0} and \eqn{E[Var(D\vert X)] \neq 0}, and
 \eqn{g_0} is an unknown nuisance function.
 
-In this model, the target parameter \eqn{\theta_0} is identified by the
-estimating equation
-\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, X)} and
-\eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+\strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 
-\eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r(X)))(D - r(X)),}
+\deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r(X))](D - r(X))}
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell, r)} taking true values
-\eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
-}\if{html}{\out{</div>}}
+where the nuisance parameters are \eqn{\eta = (\ell, r)} taking
+true values \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
+
+\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+
+\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+
+where:
+
+\deqn{\psi_a(W; \eta) = -(D - r(X))(D - r(X))^\top}
+
+\deqn{\psi_b(W; \eta) = (D - r(X))(Y - \ell(X))}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -218,19 +222,9 @@ plm_fit2 <- ddml_plm(y, D, X,
 summary(plm_fit2)
 }
 }
-\references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
-Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
-}
 \seealso{
 Other ddml estimators: 
-\code{\link{ddml-class}},
+\code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},

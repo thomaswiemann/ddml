@@ -3,7 +3,7 @@
 \name{ddml_ate}
 \alias{ddml_ate}
 \alias{ddml_att}
-\title{Estimators of Average Treatment Effects.}
+\title{Estimator for the Average Treatment Effect}
 \usage{
 ddml_ate(
   y,
@@ -167,29 +167,26 @@ pass-through calls with data-driven ensembles (e.g.,
 \code{FALSE} to reduce object size at the cost of approximate
 weight recomputation.}
 
-\item{...}{Deprecated arguments (\code{subsamples},
-\code{subsamples_byD}, \code{cv_subsamples},
-\code{cv_subsamples_byD}) are still accepted for backward
-compatibility but should be replaced with \code{splits}.}
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
 \code{ddml_ate} and \code{ddml_att} return objects of S3
 class \code{ddml_ate}/\code{ddml_att} and \code{ddml}. See
-\code{\link{ddml-class}} for the common output structure.
+\code{\link{ddml-intro}} for the common output structure.
 Additional pass-through fields: \code{learners},
 \code{learners_DX}.
 }
 \description{
-Estimators of the average treatment effect and the average
+Estimator for the average treatment effect and the average
 treatment effect on the treated.
 }
 \details{
-\code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
+\strong{Parameter of Interest:} \code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
 Learning estimators for the average treatment effect and the average
 treatment effect on the treated, respectively, in the interactive model
-given by
+given by:
 
-\eqn{Y = g_0(D, X) + U,}
+\deqn{Y = g_0(D, X) + U,}
 
 where \eqn{(Y, D, X, U)} is a random vector such that
 \eqn{\operatorname{supp} D = \{0,1\}}, \eqn{E[U\vert D, X] = 0}, and
@@ -198,29 +195,34 @@ and \eqn{g_0} is an unknown nuisance function.
 
 In this model, the average treatment effect (ATE) is defined as
 
-\eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]},
+\deqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)],}
 
 and the average treatment effect on the treated (ATT) is defined as
 
-\eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+\deqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1].}
 
-The estimating equations are
-\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-\eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
-\eqn{W = (Y, D, X)}, and the Neyman orthogonal scores are
+\strong{Neyman Orthogonal Score:} The Neyman orthogonal scores are:
 
-\eqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{m(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+\deqn{m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta}
 
-\eqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+\deqn{m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))} - \frac{D\theta}{\pi}}
 
-\eqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{p} - \frac{m(X)(1-D)(Y-\ell_0(X))}{p(1-m(X))}}
+where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, p, \pi)} taking true values
+\eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{p_0(X) = E[D|X]}, and \eqn{\pi_0 = E[D]}.
 
-\eqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{p}}
+\strong{Linear Decomposition:} The scores decompose linearly in \eqn{\theta}:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, m, p)} taking
-true values \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{m_0(X) = E[D|X]},
-and \eqn{p_0 = E[D]}.
-}\if{html}{\out{</div>}}
+\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+
+where:
+
+\deqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+
+\deqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
+
+\deqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{\pi}}
+
+\deqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))}}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -253,16 +255,9 @@ ate_fit <- ddml_ate(y, D, X,
                     silent = TRUE)
 summary(ate_fit)
 }
-\references{
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
-}
 \seealso{
 Other ddml estimators: 
-\code{\link{ddml-class}},
+\code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},

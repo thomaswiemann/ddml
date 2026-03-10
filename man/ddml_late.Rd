@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_late.R
 \name{ddml_late}
 \alias{ddml_late}
-\title{Estimator of the Local Average Treatment Effect.}
+\title{Estimator for the Local Average Treatment Effect}
 \usage{
 ddml_late(
   y,
@@ -69,7 +69,7 @@ arguments being used in \code{what}. Omission of
 \code{X}.}
 
 \item{learners_DXZ, learners_ZX}{Optional arguments to allow for different
-estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
+base learners for estimation of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
 identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
@@ -152,27 +152,24 @@ pass-through calls with data-driven ensembles (e.g.,
 \code{FALSE} to reduce object size at the cost of approximate
 weight recomputation.}
 
-\item{...}{Deprecated arguments (\code{subsamples},
-\code{subsamples_byZ}, \code{cv_subsamples},
-\code{cv_subsamples_byZ}) are still accepted for backward
-compatibility but should be replaced with \code{splits}.}
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
 \code{ddml_late} returns an object of S3 class
 \code{ddml_late} and \code{ddml}. See
-\code{\link{ddml-class}} for the common output structure.
+\code{\link{ddml-intro}} for the common output structure.
 Additional pass-through fields: \code{learners},
 \code{learners_DXZ}, \code{learners_ZX}.
 }
 \description{
-Estimator of the local average treatment effect.
+Estimator for the local average treatment effect.
 }
 \details{
-\code{ddml_late} provides a Double/Debiased Machine Learning
+\strong{Parameter of Interest:} \code{ddml_late} provides a Double/Debiased Machine Learning
 estimator for the local average treatment effect in the interactive model
-given by
+given by:
 
-\eqn{Y = g_0(D, X) + U,}
+\deqn{Y = g_0(D, X) + U,}
 
 where \eqn{(Y, D, X, Z, U)} is a random vector such that
 \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
@@ -184,22 +181,26 @@ where \eqn{(Y, D, X, Z, U)} is a random vector such that
 
 In this model, the local average treatment effect (LATE) is defined as
 
-\eqn{\theta_0^{\textrm{LATE}} \equiv
-    E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)]}.
+\deqn{\theta_0^{\textrm{LATE}} \equiv E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)].}
 
-The estimating equation is
-\eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-\eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
-\eqn{W = (Y, D, Z, X)}, and the Neyman orthogonal scores are
+\strong{Nuisance Parameters:} The nuisance parameters are
+\eqn{\eta = (\ell_0, \ell_1, r_0, r_1, p)} taking true values
+\eqn{\ell_{z,0}(X) = E[Y|Z=z, X]}, \eqn{r_{z,0}(X) = E[D|Z=z, X]},
+and \eqn{p_0(X) = E[Z|X]}.
 
-\eqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{m(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+\strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 
-\eqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{m(X)} - \frac{(1-Z)(D-r_0(X))}{1-m(X)} + r_1(X) - r_0(X)\right)}
+\deqn{m(W; \theta, \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, m)} taking
-true values \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]},
-\eqn{r_{z,0}(X) = E[D|Z=z, X]}, and \eqn{m_0(X) = E[Z|X]}.
-}\if{html}{\out{</div>}}
+\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+
+\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+
+where:
+
+\deqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
+
+\deqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -220,7 +221,7 @@ summary(late_fit)
 \donttest{
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
-#     to estimate the ATE using every individual base learner.
+#     to estimate the LATE using every individual base learner.
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 late_fit <- ddml_late(y, D, Z, X,
@@ -237,21 +238,12 @@ summary(late_fit)
 }
 }
 \references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
-Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
 Imbens G, Angrist J (1994). "Identification and Estimation of Local Average
 Treatment Effects." Econometrica, 62(2), 467-475.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 }
 \seealso{
 Other ddml estimators: 
-\code{\link{ddml-class}},
+\code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
 \code{\link{ddml_fpliv}()},

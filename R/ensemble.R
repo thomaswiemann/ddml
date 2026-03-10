@@ -29,7 +29,6 @@
 #'         \item{\code{constant_y}}{Boolean indicating if y is
 #'             constant.}
 #'     }
-#' @family utilities
 #' @export
 #'
 #' @examples
@@ -170,7 +169,6 @@ predict.ensemble <- function(object, newdata, ...,
 #'
 #' @param y The outcome variable.
 #' @param X The feature matrix.
-
 #' @param type A character string or vector indicating the type(s) of ensemble
 #'     weights to compute. Default is \code{"average"}.
 #' @param learners Optional list of base learners.
@@ -192,7 +190,6 @@ predict.ensemble <- function(object, newdata, ...,
 #'         \item{\code{cv_results}}{Cross-validation results used
 #'             for computing weights.}
 #'     }
-#' @family utilities
 #' @export
 #'
 #' @examples

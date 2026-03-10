@@ -86,16 +86,21 @@ test_that("diagnostics with CVC", {
 
   diag <- diagnostics(fit, cvc = TRUE, bootnum = 100)
 
-  # CVC columns should be present
+  # CVC column should be present
   for (eq in names(diag$tables)) {
     expect_true("cvc_pval" %in% colnames(diag$tables[[eq]]))
-    expect_true("in_conf_set" %in%
+  }
+
+  # in_conf_set should NOT be present
+  for (eq in names(diag$tables)) {
+    expect_false("in_conf_set" %in%
                   colnames(diag$tables[[eq]]))
   }
 
-  # tidy should include CVC columns
+  # tidy should include CVC column
   td <- tidy(diag)
   expect_true("cvc_pval" %in% colnames(td))
+  expect_false("in_conf_set" %in% colnames(td))
 })
 
 test_that("diagnostics works with ATE", {
@@ -143,3 +148,40 @@ test_that("diagnostics rejects non-ddml objects", {
   expect_error(diagnostics(lm(1:10 ~ rnorm(10))),
                "class")
 })
+
+test_that("cvc_one_vs_many detects a dominant learner", {
+  set.seed(42)
+  n <- 500
+  resid_best <- rnorm(n, sd = 0.5)
+  resid_others <- cbind(rnorm(n, sd = 1.5), rnorm(n, sd = 2.0))
+  fid <- rep(seq_len(5), each = n / 5)
+
+  # Best learner: should NOT be rejected (large p-value)
+  pval <- cvc_one_vs_many(resid_best, resid_others, fid,
+                          bootnum = 500)
+  expect_true(pval > 0.5)
+})
+
+test_that("cvc_one_vs_many rejects a weak learner", {
+  set.seed(42)
+  n <- 500
+  resid_weak <- rnorm(n, sd = 2.0)
+  resid_others <- cbind(rnorm(n, sd = 0.5), rnorm(n, sd = 0.5))
+  fid <- rep(seq_len(5), each = n / 5)
+
+  # Weak learner: should be rejected (small p-value)
+  pval <- cvc_one_vs_many(resid_weak, resid_others, fid,
+                          bootnum = 500)
+  expect_true(pval < 0.1)
+})
+
+test_that("cvc_pvalues returns NA for single learner", {
+  # Mock a fitted object with single learner residuals
+  fitted <- list(y_X = list(
+    cf_resid_bylearner = matrix(rnorm(100), ncol = 1)))
+  splits <- list(subsamples = list(1:50, 51:100))
+  pvals <- cvc_pvalues(fitted, splits, "y_X", bootnum = 50)
+  expect_length(pvals, 1)
+  expect_true(is.na(pvals))
+})
+

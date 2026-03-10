@@ -265,8 +265,8 @@ test_that("ddml_pliv HC0/HC1 SEs close to sandwich::vcovHC on iv_fit", {
 
   # Reconstruct the final partialing-out regression since iv_fit is removed:
   y_r <- as.vector(y - fit$fitted$y_X$cf_fitted_bylearner[, 1])
-  D_r <- as.matrix(D - fit$fitted$D_X[[1]]$cf_fitted_bylearner[, 1])
-  V_r <- as.matrix(Z - fit$fitted$Z_X[[1]]$cf_fitted_bylearner[, 1])
+  D_r <- as.matrix(D - fit$fitted$D1_X$cf_fitted_bylearner[, 1])
+  V_r <- as.matrix(Z - fit$fitted$Z1_X$cf_fitted_bylearner[, 1])
   colnames(D_r) <- colnames(D)
   colnames(V_r) <- colnames(Z)
   iv_fit <- AER::ivreg(y_r ~ D_r | V_r, x = TRUE)

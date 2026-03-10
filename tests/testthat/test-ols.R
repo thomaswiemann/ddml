@@ -3,7 +3,7 @@ test_that("ols returns output of correct types", {
   # Simulate small dataset and fit ols
   X <- matrix(rnorm(100*3), 100, 3)
   y <- 1 + X %*% c(-1, 1, 0) + rnorm(100)
-  mdl_fit <- ols(y, X, const = T)
+  mdl_fit <- ols(y, X, const = TRUE)
   # Check output with expectations
   expect_equal(dim(mdl_fit$coef), c(1+ncol(X), 1)) # Return a vector
 })#TEST_THAT
