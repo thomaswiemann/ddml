@@ -224,12 +224,13 @@ crosspred <- function(y, X,
     auxiliary_fitted_bylearner[[k]] <- res$auxiliary_fitted_bylearner_k
   }#FOR
 
-  # Assign dimnames to weights
+  # Assign dimnames to weights and cf_fitted
   if (calc_ensemble) {
     wnames <- fold_results[[1]]$weight_colnames
     dimnames(weights) <- list(
       NULL, wnames,
       paste("sample fold ", seq_len(sample_folds)))
+    colnames(cf_fitted) <- wnames
   }#IF
 
   # Compute per-learner OOS residuals

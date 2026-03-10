@@ -121,15 +121,14 @@ ddml_apo <- function(y, D, X,
                   cluster_variable = cluster_variable,
                   require_binary_D = TRUE)
   validate_custom_weights(custom_ensemble_weights, learners)
-  validate_custom_weights(custom_ensemble_weights_DX,
-                          learners_DX)
+  validate_custom_weights(custom_ensemble_weights_DX, learners_DX)
 
   nobs <- length(y)
   is_d <- which(D == d)
   if (is.null(weights)) weights <- rep(1, nobs)
 
   # Construct sample splits for cross-fitting and cross-validation
-  validate_fitted_splits_pair(fitted, splits, !shortstack)
+  validate_fitted_splits_pair(fitted, splits)
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
     sample_folds = sample_folds,
@@ -140,17 +139,8 @@ ddml_apo <- function(y, D, X,
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D_ind)
 
-  # Prepare paralllelization and estimation start
   t0 <- proc.time()[3]
-  mode_str <- if (!is.null(parallel)) {
-    p <- parse_parallel(parallel)
-    paste0("parallel, ", p$num_cores, " cores")
-  } else {
-    "sequential"
-  }#IFELSE
-  if (!is.null(messages$start) && messages$start != "") {
-    info_msg(sprintf(messages$start, mode_str), silent = silent)
-  }#IF
+  announce_start(messages, parallel, silent)
 
   # == Reduced-form estimation ======================================
 
@@ -183,9 +173,9 @@ ddml_apo <- function(y, D, X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
-  ensb_info <- update_ensemble_info(y_X_res$weights, D_X_res$cf_fitted)
-  ensemble_type <- ensb_info$ensemble_type
-  nensb <- ensb_info$nensb
+  ensemble_type <- y_X_res$ensemble_type
+  nensb <- if (is.null(ensemble_type)) 1L
+    else length(ensemble_type)
 
   # == Score construction ===========================================
 
@@ -232,11 +222,7 @@ ddml_apo <- function(y, D, X,
 
   # == Output =======================================================
 
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
+  announce_finish(t0, messages, silent)
 
   ddml(
     coefficients = coef,

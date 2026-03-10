@@ -24,6 +24,29 @@ resolve_messages <- function(dots, name, labels = list()) {
   c(user, defaults[setdiff(names(defaults), names(user))])
 }#RESOLVE_MESSAGES
 
+# Emit the estimator start message with mode info.
+announce_start <- function(messages, parallel, silent) {
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }#IFELSE
+  if (!is.null(messages$start) && messages$start != "") {
+    info_msg(sprintf(messages$start, mode_str),
+             silent = silent)
+  }#IF
+}#ANNOUNCE_START
+
+# Emit the estimator finish message with elapsed time.
+announce_finish <- function(t0, messages, silent) {
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+}#ANNOUNCE_FINISH
+
 # Simple generalized inverse wrapper.
 csolve <- function(X) {
   # Attempt inversion
@@ -123,9 +146,6 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
                                     auxiliary_fitted_bylearner = NULL) {
   nobs <- length(y)
   cf <- as.matrix(cf_fitted_bylearner_eq)
-  nlearners <- ncol(cf)
-  dummy_learners <- lapply(seq_len(nlearners),
-    function(i) list(what = identity))
 
   cf_resid_bylearner <- drop(y) - cf
   mspe <- colMeans(cf_resid_bylearner^2)
@@ -133,8 +153,10 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
   if (!is.null(cv_resid_byfold) && !is.null(cv_resid_byfold[[1]]) &&
       !is.null(subsamples)) {
     K <- length(subsamples)
-    nensb <- NULL
-    cf_fitted <- matrix(0, nobs, 1)
+    ncustom <- if (!is.null(custom_ensemble_weights))
+      ncol(custom_ensemble_weights) else 0L
+    nensb <- length(ensemble_type) + ncustom
+    cf_fitted <- matrix(0, nobs, nensb)
     all_weights <- vector("list", K)
     for (k in seq_len(K)) {
       train_idx <- setdiff(seq_len(nobs), subsamples[[k]])
@@ -144,19 +166,14 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
       ew_k <- ensemble_weights(
         y[train_idx], cf[train_idx, ],
         type = ensemble_type,
-        learners = dummy_learners,
         cv_results = fakecv_k,
         custom_weights = custom_ensemble_weights,
         silent = TRUE)
       all_weights[[k]] <- ew_k$weights
-      if (is.null(nensb)) nensb <- ncol(ew_k$weights)
-      if (ncol(cf_fitted) < nensb) {
-        cf_fitted <- matrix(0, nobs, nensb)
-      }#IF
       cf_fitted[subsamples[[k]], ] <- cf[subsamples[[k]], ] %*%
         ew_k$weights
     }#FOR
-    weights <- array(0, dim = c(nlearners, nensb, K))
+    weights <- array(0, dim = c(ncol(cf), nensb, K))
     for (k in seq_len(K)) weights[, , k] <- all_weights[[k]]
     dimnames(weights) <- list(NULL, colnames(all_weights[[1]]),
                               paste("sample fold ", seq_len(K)))
@@ -165,7 +182,6 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
                    mspe = mspe)
     ew <- ensemble_weights(
       y, cf, type = ensemble_type,
-      learners = dummy_learners,
       cv_results = fakecv,
       custom_weights = custom_ensemble_weights,
       silent = TRUE)
@@ -173,38 +189,18 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
     cf_fitted <- cf %*% weights
   }#IFELSE
 
-  ens_names <- if (length(dim(weights)) == 3) {
-    colnames(weights[, , 1])
-  } else {
-    colnames(weights)
-  }
+  ens_names <- colnames(weights)
   if (!is.null(ens_names)) colnames(cf_fitted) <- ens_names
 
-  # Fold-level auxiliary predictions (ATE/ATT/LATE extrapolation)
-  auxiliary_fitted <- NULL
-  if (!is.null(auxiliary_fitted_bylearner)) {
-    K <- length(auxiliary_fitted_bylearner)
-    auxiliary_fitted <- vector("list", K)
-    if (length(dim(weights)) == 3) {
-      for (k in seq_len(K)) {
-        auxiliary_fitted[[k]] <-
-          as.matrix(auxiliary_fitted_bylearner[[k]]) %*%
-          weights[, , k]
-      }#FOR
-    } else {
-      for (k in seq_len(K)) {
-        auxiliary_fitted[[k]] <-
-          as.matrix(auxiliary_fitted_bylearner[[k]]) %*%
-          weights
-      }#FOR
-    }#IFELSE
-  }#IF
+  auxiliary_fitted <- extrapolate_auxiliary(
+    auxiliary_fitted_bylearner, weights)
   y_var <- as.numeric(stats::var(y))
   r2 <- if (y_var > 0) 1 - mspe / y_var else
     rep(NA_real_, length(mspe))
 
   list(cf_fitted = cf_fitted,
        weights = weights,
+       ensemble_type = ens_names,
        mspe = mspe,
        r2 = r2,
        auxiliary_fitted = auxiliary_fitted,
@@ -213,8 +209,22 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
        cv_resid_byfold = cv_resid_byfold)
 }#BUILD_CEF_FROM_CROSSFIT
 
-validate_fitted_splits_pair <- function(fitted, splits,
-                                        w_cv = FALSE) {
+# Apply ensemble weights to per-learner auxiliary predictions.
+extrapolate_auxiliary <- function(auxiliary_fitted_bylearner,
+                                  weights) {
+  if (is.null(auxiliary_fitted_bylearner)) return(NULL)
+  K <- length(auxiliary_fitted_bylearner)
+  per_fold <- length(dim(weights)) == 3
+  auxiliary_fitted <- vector("list", K)
+  for (k in seq_len(K)) {
+    w_k <- if (per_fold) weights[, , k] else weights
+    auxiliary_fitted[[k]] <-
+      as.matrix(auxiliary_fitted_bylearner[[k]]) %*% w_k
+  }#FOR
+  auxiliary_fitted
+}#EXTRAPOLATE_AUXILIARY
+
+validate_fitted_splits_pair <- function(fitted, splits) {
   if (is.null(fitted)) return(invisible(NULL))
   if (is.null(splits)) {
     stop("'splits' must be supplied when 'fitted' is ",
@@ -238,27 +248,20 @@ build_fitted_entry <- function(res, save_crossval,
   entry
 }#BUILD_FITTED_ENTRY
 
-build_fitted_from_list <- function(res_list, save_crossval) {
-  lapply(res_list, build_fitted_entry,
-         save_crossval = save_crossval)
-}#BUILD_FITTED_FROM_LIST
+build_fitted_flat <- function(res_list, save_crossval,
+                              key_prefix, key_suffix) {
+  out <- list()
+  for (k in seq_along(res_list)) {
+    key <- paste0(key_prefix, k, key_suffix)
+    out[[key]] <- build_fitted_entry(res_list[[k]],
+                                     save_crossval)
+  }#FOR
+  out
+}#BUILD_FITTED_FLAT
 
 get_cf_resid_bylearner_for_eq <- function(fitted, eq) {
   entry <- fitted[[eq]]
-  if (!is.null(entry) && !is.null(entry$cf_resid_bylearner)) {
-    return(entry$cf_resid_bylearner)
-  }#IF
-  m <- regmatches(eq, regexec("^([A-Za-z]+)(\\d+)(_\\w+)$",
-                              eq))[[1]]
-  if (length(m) == 4) {
-    group <- paste0(m[2], m[4])
-    idx <- as.integer(m[3])
-    entry <- fitted[[group]]
-    if (is.list(entry) && length(entry) >= idx) {
-      return(entry[[idx]]$cf_resid_bylearner)
-    }#IF
-  }#IF
-  NULL
+  if (!is.null(entry)) entry$cf_resid_bylearner else NULL
 }#GET_CF_RESID_BYLEARNER_FOR_EQ
 
 # Validate common arguments for S3 inference methods.
@@ -410,32 +413,6 @@ validate_custom_weights <- function(custom_weights, learners) {
          "the number of base learners.", call. = FALSE)
   }
 }#VALIDATE_CUSTOM_WEIGHTS
-
-# Compute ncustom and nensb from ensemble config.
-compute_ncustom_nensb <- function(ensemble_type,
-                                  custom_ensemble_weights) {
-  ncustom <- ncol(custom_ensemble_weights)
-  ncustom <- if (is.null(ncustom)) 0L else ncustom
-  nensb <- length(ensemble_type) + ncustom
-  list(ncustom = ncustom, nensb = nensb)
-}#COMPUTE_NCUSTOM_NENSB
-
-# Update ensemble info from CEF result weights or cf_fitted.
-update_ensemble_info <- function(res_weights = NULL,
-                                 cf_fitted = NULL) {
-  if (!is.null(res_weights)) {
-    ensemble_type <- dimnames(res_weights)[[2]]
-  } else if (!is.null(cf_fitted)) {
-    ensemble_type <- colnames(as.matrix(cf_fitted))
-  } else {
-    ensemble_type <- NULL
-  }#IFELSE
-  nensb <- if (is.null(ensemble_type)) 1L
-    else length(ensemble_type)
-  multiple_ensembles <- nensb > 1
-  list(ensemble_type = ensemble_type, nensb = nensb,
-       multiple_ensembles = multiple_ensembles)
-}#UPDATE_ENSEMBLE_INFO
 
 # Compute CEF for each column of M, collecting results in a list.
 compute_CEF_list <- function(M, X,

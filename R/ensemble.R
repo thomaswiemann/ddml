@@ -165,8 +165,12 @@ predict.ensemble <- function(object, newdata, ...){
 
 #' @param type A character string or vector indicating the type(s) of ensemble
 #'     weights to compute. Default is \code{"average"}.
-#' @param learners A list of base learners. See
-#'     \code{\link{ddml-intro}} for the full specification.
+#' @param learners Optional list of base learners.
+#'     Required when \code{cv_results} is not supplied (learners are
+#'     needed to run cross-validation). When \code{cv_results} is
+#'     supplied, \code{learners} may be omitted; the number of
+#'     learners is inferred from the cross-validation residuals.
+#'     See \code{\link{ddml-intro}} for the full specification.
 #' @param cv_folds Number of cross-validation folds.
 #' @param cv_subsamples Optional list of subsamples for cross-validation.
 #' @param cv_results Optional pre-computed cross-validation results.
@@ -199,14 +203,18 @@ predict.ensemble <- function(object, newdata, ...){
 #' }
 ensemble_weights <- function(y, X,
                              type = "average",
-                             learners,
+                             learners = NULL,
                              cv_folds = 5,
                              cv_subsamples = NULL,
                              cv_results = NULL,
                              custom_weights = NULL,
                              silent = FALSE) {
   # Data parameters
-  nlearners <- length(learners)
+  nlearners <- if (!is.null(cv_results)) {
+    ncol(cv_results$cv_resid)
+  } else {
+    length(learners)
+  }
   ncustom <- ncol(custom_weights)
   ncustom <- ifelse(is.null(ncustom), 0, ncustom)
   ntype <- length(type)

@@ -108,7 +108,7 @@ ddml_fpliv <- function(y, D, Z, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  validate_fitted_splits_pair(fitted, splits, !shortstack)
+  validate_fitted_splits_pair(fitted, splits)
 
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
@@ -119,16 +119,7 @@ ddml_fpliv <- function(y, D, Z, X,
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   t0 <- proc.time()[3]
-  mode_str <- if (!is.null(parallel)) {
-    p <- parse_parallel(parallel)
-    paste0("parallel, ", p$num_cores, " cores")
-  } else {
-    "sequential"
-  }#IFELSE
-  if (!is.null(messages$start) && messages$start != "") {
-    info_msg(sprintf(messages$start, mode_str),
-             silent = silent)
-  }#IF
+  announce_start(messages, parallel, silent)
 
   # == Reduced-form estimation ======================================
 
@@ -158,8 +149,8 @@ ddml_fpliv <- function(y, D, Z, X,
       l$assign_X <- c(ax, nX + az)
       l$assign_Z <- NULL
       l
-    })
-  }
+    })#LAPPLY
+  }#IF
   D_XZ_res_list <- compute_CEF_list(
     D, XZ, learners = learners_DXZ,
     ensemble_type = ensemble_type,
@@ -170,7 +161,7 @@ ddml_fpliv <- function(y, D, Z, X,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X,Z]",
     parallel = parallel,
-    fitted = fitted$D_XZ)
+    fitted = unname(fitted[paste0("D", seq_len(nD), "_XZ")]))
 
   # E[D|X]
   D_X_res_list <- compute_CEF_list(
@@ -183,11 +174,11 @@ ddml_fpliv <- function(y, D, Z, X,
     silent = silent,
     label_prefix = "E[D", label_suffix = "|X]",
     parallel = parallel,
-    fitted = fitted$D_X)
+    fitted = unname(fitted[paste0("D", seq_len(nD), "_X")]))
 
-  ensb_info <- update_ensemble_info(y_X_res$weights)
-  ensemble_type <- ensb_info$ensemble_type
-  nensb <- ensb_info$nensb
+  ensemble_type <- y_X_res$ensemble_type
+  nensb <- if (is.null(ensemble_type)) 1L
+    else length(ensemble_type)
 
   # == Score construction ===========================================
 
@@ -258,11 +249,7 @@ ddml_fpliv <- function(y, D, Z, X,
     r2[[eq]] <- D_XZ_res_list[[k]]$r2
   }#FOR
 
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
+  announce_finish(t0, messages, silent)
 
   ddml(
     coefficients = coef,
@@ -279,12 +266,12 @@ ddml_fpliv <- function(y, D, Z, X,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
     cluster_variable = cluster_variable,
-    fitted = list(
-      y_X = build_fitted_entry(y_X_res, save_crossval),
-      D_XZ = build_fitted_from_list(D_XZ_res_list,
-                                    save_crossval),
-      D_X = build_fitted_from_list(D_X_res_list,
-                                   save_crossval)),
+    fitted = c(
+      list(y_X = build_fitted_entry(y_X_res, save_crossval)),
+      build_fitted_flat(D_XZ_res_list, save_crossval,
+                        "D", "_XZ"),
+      build_fitted_flat(D_X_res_list, save_crossval,
+                        "D", "_X")),
     splits = setNames(
       rep(list(list(subsamples = indxs$subsamples,
                     cv_subsamples = indxs$cv_subsamples)),

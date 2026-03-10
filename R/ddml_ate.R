@@ -134,7 +134,7 @@ ddml_ate <- function(y, D, X,
 
   nobs <- length(y)
 
-  validate_fitted_splits_pair(fitted, splits, !shortstack)
+  validate_fitted_splits_pair(fitted, splits)
 
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
@@ -153,16 +153,7 @@ ddml_ate <- function(y, D, X,
                    stratify, D)
 
   t0 <- proc.time()[3]
-  mode_str <- if (!is.null(parallel)) {
-    p <- parse_parallel(parallel)
-    paste0("parallel, ", p$num_cores, " cores")
-  } else {
-    "sequential"
-  }#IFELSE
-  if (!is.null(messages$start) && messages$start != "") {
-    info_msg(sprintf(messages$start, mode_str),
-             silent = silent)
-  }#IF
+  announce_start(messages, parallel, silent)
 
   # == Reduced-form estimation ======================================
 
@@ -254,11 +245,7 @@ ddml_ate <- function(y, D, X,
 
   # == Output =======================================================
 
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
+  announce_finish(t0, messages, silent)
 
   ddml(
     coefficients = coef,

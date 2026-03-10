@@ -51,7 +51,10 @@ get_CEF <- function(y, X,
     if (!is.null(fitted$cf_fitted)) {
       # Rule 1: pre-ensembled predictions, use directly
       res <- list(cf_fitted = fitted$cf_fitted,
-                  weights = NULL, mspe = NULL, r2 = NULL,
+                  weights = NULL,
+                  ensemble_type = colnames(
+                    as.matrix(fitted$cf_fitted)),
+                  mspe = NULL, r2 = NULL,
                   auxiliary_fitted = NULL,
                   cf_fitted_bylearner = NULL,
                   cf_resid_bylearner = NULL,
@@ -85,7 +88,9 @@ get_CEF <- function(y, X,
 
     return(list(
       cf_fitted = matrix(constant_val, n, nensb),
-      weights = NULL, mspe = NULL, r2 = NULL,
+      weights = NULL,
+      ensemble_type = ensemble_type,
+      mspe = NULL, r2 = NULL,
       cf_fitted_bylearner = matrix(constant_val, n, nlearners),
       cf_resid_bylearner = matrix(0, n, nlearners),
       cv_resid_byfold = NULL,
@@ -121,8 +126,16 @@ get_CEF <- function(y, X,
                      parallel = parallel)
   }#IFELSE
 
-  # Return estimates
-  return(res)
+  # Attach ensemble_type derived from weights
+  if (is.null(res$ensemble_type)) {
+    res$ensemble_type <- if (!is.null(res$weights)) {
+      dimnames(res$weights)[[2]]
+    } else {
+      colnames(as.matrix(res$cf_fitted))
+    }
+  }#IF
+
+  res
 }#GET_CEF
 
 # Extrapolate CEF predictions across treatment levels.
