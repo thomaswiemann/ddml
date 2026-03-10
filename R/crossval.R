@@ -1,4 +1,4 @@
-#' Estimator of the Mean Squared Prediction Error using Cross-Validation.
+#' Estimator of the Mean Squared Prediction Error Using Cross-Validation
 #'
 #' @family utilities
 #'

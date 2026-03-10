@@ -3,6 +3,13 @@ url: https://www.thomaswiemann.com/ddml
 template:
   bootstrap: 5
 
+# Exclude AI-tooling artifacts from the site
+exclude:
+  - GEMINI.md
+  - .cursor
+  - .discussion
+  - .discussions
+
 home:
   title: Double/Debiased Machine Learning in R
   description: Estimate common causal parameters using double/debiased machine
@@ -32,10 +39,10 @@ navbar:
 reference:
 - title: internal
   contents:
-  - ddml
-  - ddml-class
+  - ddml-package
   - matches("print")
   - matches("summary")
+  - matches("sub-")
 - title: Supported DDML Estimators
   contents:
   - ddml_plm
@@ -48,16 +55,16 @@ reference:
 - title: Repeated Resampling
   contents:
   - ddml_replicate
-  - ddml_rep
 - title: internal
   contents:
+  - ddml-intro
+  - ddml
+  - ddml_rep
   - coef.ddml
   - confint.ddml
   - vcov.ddml
   - hatvalues.ddml
   - nobs.ddml
-  - "`$.ddml`"
-  - "`[.summary.ddml`"
   - tidy.ddml
   - glance.ddml
   - tidy.ddml_diagnostics

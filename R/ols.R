@@ -1,4 +1,4 @@
-#' Ordinary least squares.
+#' Ordinary Least Squares
 #'
 #' @family ml_wrapper
 #'
@@ -52,7 +52,7 @@ ols <- function(y, X,
 
 # Complementary methods ========================================================
 
-#' Predict method for \code{ols} objects.
+#' Predict Method for ols Objects
 #'
 #' @param object A fitted \code{ols} object.
 #' @param newdata A feature matrix for prediction. If \code{NULL},

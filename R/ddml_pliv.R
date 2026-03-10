@@ -1,33 +1,38 @@
-#' Estimator for the Partially Linear IV Model.
+#' Estimator for the Partially Linear IV Coefficient
 #'
 #' @family ddml estimators
 #'
-#' @seealso [AER::ivreg()]
+#' @description Estimator for the partially linear IV coefficient.
 #'
-#' @description Estimator for the partially linear IV model.
-#'
-#' @details \code{ddml_pliv} provides a Double/Debiased Machine Learning
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased Machine Learning
 #'     estimator for the target parameter \eqn{\theta_0} in the partially
-#'     linear IV model given by
+#'     linear IV model given by:
 #'
-#' \eqn{Y = \theta_0D + g_0(X) + U,}
+#' \deqn{Y = \theta_0 D + g_0(X) + U,}
 #'
 #' where \eqn{(Y, D, X, Z, U)} is a random vector such that
 #'     \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
 #'     \eqn{g_0} is an unknown nuisance function.
 #'
-#' In this model, the target parameter \eqn{\theta_0} is identified by the 
-#'     estimating equation 
-#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, Z, X)} and
-#'     \eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+#' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 #'
-#' \eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r_D(X)))(Z - r_Z(X)),}
+#' \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r_D(X))](Z - r_Z(X))}
 #'
-#'     with nuisance parameters \eqn{\eta = (\ell, r_D, r_Z)} taking true values
-#'     \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and
-#'     \eqn{r_{Z,0}(X) = E[Z|X]}.
+#' where the nuisance parameters are \eqn{\eta = (\ell, r_D, r_Z)} taking
+#'     true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and \eqn{r_{Z,0}(X) = E[Z|X]}.
 #'
-#' @inheritParams ddml-class
+#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#'
+#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#'
+#' where:
+#'
+#' \deqn{\psi_a(W; \eta) = -(D - r_D(X))(Z - r_Z(X))^\top}
+#'
+#' \deqn{\psi_b(W; \eta) = (Z - r_Z(X))(Y - \ell(X))}
+#'
+#' @inheritParams ddml-intro
 #' @param Z A matrix of instruments.
 #' @param learners_DX,learners_ZX Optional arguments to allow for different
 #'     base learners for estimation of \eqn{E[D|X]}, \eqn{E[Z|X]}. Setup is
@@ -41,24 +46,11 @@
 #'     have the same number of columns.
 #'
 #' @return \code{ddml_pliv} returns an object of S3 class
-#'     \code{ddml_pliv} and \code{ddml}. See \code{\link{ddml-class}}
+#'     \code{ddml_pliv} and \code{ddml}. See \code{\link{ddml-intro}}
 #'     for the common output structure. Additional pass-through
 #'     fields: \code{learners}, \code{learners_DX},
 #'     \code{learners_ZX}.
 #' @export
-#'
-#' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-#'
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
-#' Kleiber C, Zeileis A (2008). Applied Econometrics with R. Springer-Verlag,
-#'     New York.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -118,15 +110,14 @@ ddml_pliv <- function(y, D, Z, X,
   Z <- as.matrix(Z)
   nZ <- ncol(Z)
 
-  splits <- normalize_splits(splits = splits, ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
 
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
-    subsamples = splits$subsamples,
-    cv_subsamples = splits$cv_subsamples)
+    subsamples = splits[[1]]$subsamples,
+    cv_subsamples = splits[[1]]$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   t0 <- proc.time()[3]
@@ -251,7 +242,13 @@ ddml_pliv <- function(y, D, Z, X,
     r2[[eq]] <- Z_X_res_list[[k]]$r2
   }#FOR
 
-  ddml_fit <- list(
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+
+  ddml(
     coefficients = coef,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
@@ -265,9 +262,6 @@ ddml_pliv <- function(y, D, Z, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    learners = learners,
-    learners_DX = learners_DX,
-    learners_ZX = learners_ZX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X = build_fitted_entry(y_X_res, save_crossval),
@@ -275,16 +269,15 @@ ddml_pliv <- function(y, D, Z, X,
                                    save_crossval),
       Z_X = build_fitted_from_list(Z_X_res_list,
                                    save_crossval)),
-    splits = list(subsamples = indxs$subsamples,
-                  cv_subsamples = indxs$cv_subsamples),
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_pliv", "ddml")
-  return(ddml_fit)
+    splits = setNames(
+      rep(list(list(subsamples = indxs$subsamples,
+                    cv_subsamples = indxs$cv_subsamples)),
+          length(ensemble_weights)),
+      names(ensemble_weights)),
+    call = cl,
+    subclass = "ddml_pliv",
+    learners = learners,
+    learners_DX = learners_DX,
+    learners_ZX = learners_ZX
+  )
 }#DDML_PLIV

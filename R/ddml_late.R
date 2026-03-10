@@ -1,14 +1,15 @@
-#' Estimator of the Local Average Treatment Effect.
+#' Estimator for the Local Average Treatment Effect
 #'
 #' @family ddml estimators
 #'
-#' @description Estimator of the local average treatment effect.
+#' @description Estimator for the local average treatment effect.
 #'
-#' @details \code{ddml_late} provides a Double/Debiased Machine Learning
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_late} provides a Double/Debiased Machine Learning
 #'     estimator for the local average treatment effect in the interactive model
-#'     given by
+#'     given by:
 #'
-#' \eqn{Y = g_0(D, X) + U,}
+#' \deqn{Y = g_0(D, X) + U,}
 #'
 #' where \eqn{(Y, D, X, Z, U)} is a random vector such that
 #'     \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
@@ -20,27 +21,32 @@
 #'
 #' In this model, the local average treatment effect (LATE) is defined as
 #'
-#' \eqn{\theta_0^{\textrm{LATE}} \equiv
-#'     E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)]}.
+#' \deqn{\theta_0^{\textrm{LATE}} \equiv E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)].}
 #'
-#' The estimating equation is
-#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-#'     \eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
-#'     \eqn{W = (Y, D, Z, X)}, and the Neyman orthogonal scores are
+#' \strong{Nuisance Parameters:} The nuisance parameters are
+#'     \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, p)} taking true values
+#'     \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]}, \eqn{r_{z,0}(X) = E[D|Z=z, X]},
+#'     and \eqn{p_0(X) = E[Z|X]}.
 #'
-#' \eqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{m(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+#' \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 #'
-#' \eqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{m(X)} - \frac{(1-Z)(D-r_0(X))}{1-m(X)} + r_1(X) - r_0(X)\right)}
+#' \deqn{m(W; \theta, \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
 #'
-#'     with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, m)} taking
-#'     true values \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]},
-#'     \eqn{r_{z,0}(X) = E[D|Z=z, X]}, and \eqn{m_0(X) = E[Z|X]}.
+#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
 #'
-#' @inheritParams ddml-class
-#' @inheritParams ddml_ate
+#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#'
+#' where:
+#'
+#' \deqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
+#'
+#' \deqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
+#'
+#' @inheritParams ddml-intro
+#' @inheritParams ddml_apo
 #' @param Z Binary instrumental variable.
 #' @param learners_DXZ,learners_ZX Optional arguments to allow for different
-#'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
+#'     base learners for estimation of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
 #'     identical to \code{learners}.
 #' @param custom_ensemble_weights_DXZ,custom_ensemble_weights_ZX Optional
 #'     arguments to allow for different
@@ -53,30 +59,18 @@
 #'     \code{ddml_late}, recommended keys are \code{subsamples},
 #'     \code{subsamples_byZ}, \code{cv_subsamples}, and
 #'     \code{cv_subsamples_byZ}.
-#' @param ... Deprecated arguments (\code{subsamples},
-#'     \code{subsamples_byZ}, \code{cv_subsamples},
-#'     \code{cv_subsamples_byZ}) are still accepted for backward
-#'     compatibility but should be replaced with \code{splits}.
+#' @param ... Additional arguments passed to internal methods.
 #'
 #' @return \code{ddml_late} returns an object of S3 class
 #'     \code{ddml_late} and \code{ddml}. See
-#'     \code{\link{ddml-class}} for the common output structure.
+#'     \code{\link{ddml-intro}} for the common output structure.
 #'     Additional pass-through fields: \code{learners},
 #'     \code{learners_DXZ}, \code{learners_ZX}.
 #' @export
 #'
 #' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-#'
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
 #' Imbens G, Angrist J (1994). "Identification and Estimation of Local Average
 #'     Treatment Effects." Econometrica, 62(2), 467-475.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -97,7 +91,7 @@
 #' \donttest{
 #' # Estimate the local average treatment effect using short-stacking with base
 #' #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
-#' #     to estimate the ATE using every individual base learner.
+#' #     to estimate the LATE using every individual base learner.
 #' weights_everylearner <- diag(1, 3)
 #' colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 #' late_fit <- ddml_late(y, D, Z, X,
@@ -159,8 +153,6 @@ ddml_late <- function(y, D, Z, X,
 
   nobs <- length(y)
 
-  splits <- normalize_splits(
-    splits = splits, by_label = "Z", ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
 
   indxs <- get_sample_splits(
@@ -168,10 +160,14 @@ ddml_late <- function(y, D, Z, X,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
     D = Z, stratify = stratify,
-    subsamples = splits$subsamples,
-    subsamples_byD = splits$subsamples_byZ,
-    cv_subsamples = splits$cv_subsamples,
-    cv_subsamples_byD = splits$cv_subsamples_byZ)
+    subsamples = splits$Z_X$subsamples,
+    subsamples_byD = list(
+      splits$y_X_Z0$subsamples,
+      splits$y_X_Z1$subsamples),
+    cv_subsamples = splits$Z_X$cv_subsamples,
+    cv_subsamples_byD = list(
+      splits$y_X_Z0$cv_subsamples,
+      splits$y_X_Z1$cv_subsamples))
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, Z)
 
@@ -202,10 +198,15 @@ ddml_late <- function(y, D, Z, X,
                      fitted = fitted$Z_X)
 
   splits_Z <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byD = indxs$subsamples_byD,
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byD = indxs$cv_subsamples_byD)
+    y_X_D0 = list(
+      subsamples = indxs$subsamples_byD[[1]],
+      cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+    y_X_D1 = list(
+      subsamples = indxs$subsamples_byD[[2]],
+      cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+    D_X = list(
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples))
 
   fitted_Z_X <- build_fitted_entry(Z_X_res, save_crossval)
 
@@ -278,15 +279,13 @@ ddml_late <- function(y, D, Z, X,
 
   # == Output =======================================================
 
-  splits_export <- ate_rf$splits
-  names(splits_export)[names(splits_export) ==
-    "subsamples_byD"] <- "subsamples_byZ"
-  if ("cv_subsamples_byD" %in% names(splits_export)) {
-    names(splits_export)[names(splits_export) ==
-      "cv_subsamples_byD"] <- "cv_subsamples_byZ"
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
   }#IF
 
-  ddml_fit <- list(
+  ddml(
     coefficients = coef,
     ensemble_weights = list(
       y_X_Z0 = ate_rf$ensemble_weights$y_X_D0,
@@ -315,9 +314,6 @@ ddml_late <- function(y, D, Z, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    learners = learners,
-    learners_DXZ = learners_DXZ,
-    learners_ZX = learners_ZX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X_Z0 = ate_rf$fitted$y_X_D0,
@@ -325,15 +321,16 @@ ddml_late <- function(y, D, Z, X,
       D_X_Z0 = ate_fs$fitted$y_X_D0,
       D_X_Z1 = ate_fs$fitted$y_X_D1,
       Z_X = ate_rf$fitted$D_X),
-    splits = splits_export,
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_late", "ddml")
-  return(ddml_fit)
+    splits = list(
+      y_X_Z0 = ate_rf$splits$y_X_D0,
+      y_X_Z1 = ate_rf$splits$y_X_D1,
+      D_X_Z0 = ate_fs$splits$y_X_D0,
+      D_X_Z1 = ate_fs$splits$y_X_D1,
+      Z_X = ate_rf$splits$D_X),
+    call = cl,
+    subclass = "ddml_late",
+    learners = learners,
+    learners_DXZ = learners_DXZ,
+    learners_ZX = learners_ZX
+  )
 }#DDML_LATE

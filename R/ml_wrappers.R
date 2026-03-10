@@ -1,6 +1,6 @@
 # glmnet =======================================================================
 
-#' Wrapper for [glmnet::glmnet()].
+#' Wrapper for glmnet::glmnet()
 #'
 #' @family ml_wrapper
 #'
@@ -47,7 +47,7 @@ mdl_glmnet <- function(y, X,
   return(mdl_fit)
 }#MDL_GLMNET
 
-#' Predict method for \code{mdl_glmnet} objects.
+#' Predict Method for mdl_glmnet Objects
 #'
 #' @param object A fitted \code{mdl_glmnet} object.
 #' @param newdata A (sparse) feature matrix for prediction.
@@ -83,7 +83,7 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 
 # xgboost ======================================================================
 
-#' Wrapper for [xgboost::xgboost()].
+#' Wrapper for xgboost::xgboost()
 #'
 #' @family ml_wrapper
 #'
@@ -128,7 +128,7 @@ mdl_xgboost <- function(y, X,
   return(mdl_fit)
 }#MDL_XGBOOST
 
-#' Predict method for \code{mdl_xgboost} objects.
+#' Predict Method for mdl_xgboost Objects
 #'
 #' @param object A fitted \code{mdl_xgboost} object.
 #' @param newdata A feature matrix for prediction.
@@ -146,7 +146,7 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
 
 # ranger =======================================================================
 
-#' Wrapper for [ranger::ranger()].
+#' Wrapper for ranger::ranger()
 #'
 #' @family ml_wrapper
 #'
@@ -184,7 +184,7 @@ mdl_ranger <- function(y, X, ...){
   return(mdl_fit)
 }#MDL_RANGER
 
-#' Predict method for \code{mdl_ranger} objects.
+#' Predict Method for mdl_ranger Objects
 #'
 #' @param object A fitted \code{mdl_ranger} object.
 #' @param newdata A feature matrix for prediction.
@@ -215,7 +215,7 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
 
 # glm ==========================================================================
 
-#' Wrapper for [stats::glm()].
+#' Wrapper for stats::glm()
 #'
 #' @family ml_wrapper
 #'
@@ -243,7 +243,7 @@ mdl_glm <- function(y, X, ...) {
   return(glm_fit) # return fitted glm object
 }#MDL_GLM
 
-#' Predict method for \code{mdl_glm} objects.
+#' Predict Method for mdl_glm Objects
 #'
 #' @param object A fitted \code{mdl_glm} object.
 #' @param newdata A feature matrix for prediction.
@@ -260,7 +260,7 @@ predict.mdl_glm <- function(object, newdata, ...) {
 
 # bigGLM =======================================================================
 
-#' Wrapper for [glmnet::bigGlm()].
+#' Wrapper for glmnet::bigGlm()
 #'
 #' @family ml_wrapper
 #'
@@ -286,7 +286,7 @@ mdl_bigGLM <- function(y, X, ...) {
   return(mdl_fit)
 }#MDL_BIGGLM
 
-#' Predict method for \code{mdl_bigGLM} objects.
+#' Predict Method for mdl_bigGLM Objects
 #'
 #' @param object A fitted \code{mdl_bigGLM} object.
 #' @param newdata A (sparse) feature matrix for prediction.

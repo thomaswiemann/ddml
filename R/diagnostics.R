@@ -10,34 +10,34 @@
 #'     learner is significantly outperformed by the others.
 #' @param bootnum Number of bootstrap replications for CVC.
 #'     Default 500. Ignored when \code{cvc = FALSE}.
-#' @param alpha Significance level for the model confidence
-#'     set. Default 0.05.
 #' @param ... Currently unused.
 #'
-#' @return An object of class \code{ddml_diagnostics}
-#'     containing per-equation learner diagnostics. Use
-#'     \code{print()} for formatted output or \code{tidy()}
-#'     for a flat data.frame.
+#' @return An object of class \code{ddml_diagnostics} containing per-equation
+#'     learner diagnostics. Use \code{print()} for formatted output or
+#'     \code{tidy()} for a flat data.frame.
 #'
 #' @examples
 #' \donttest{
 #' y = AE98[, "worked"]
 #' D = AE98[, "morekids"]
 #' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' learners = list(list(what = ols),
+#'                list(what = mdl_glmnet))
 #' plm_fit = ddml_plm(y, D, X,
-#'                     learners = list(what = ols),
+#'                     learners = learners,
 #'                     sample_folds = 2, silent = TRUE)
-#' diagnostics(plm_fit)
-#' tidy(diagnostics(plm_fit))
+#' diagnostics(plm_fit, cvc = TRUE)
+#' tidy(diagnostics(plm_fit, cvc = TRUE))
 #' }
 #'
 #' @references
 #' Lei J (2020). "Cross-Validation With Confidence." Journal of the American
 #'     Statistical Association, 115(532), 1978-1997.
 #'
+#' @family utilities
 #' @export
 diagnostics <- function(object, cvc = FALSE,
-                        bootnum = 500, alpha = 0.05,
+                        bootnum = 500,
                         ...) {
   if (!inherits(object, "ddml")) {
     stop("object must be of class 'ddml'.", call. = FALSE)
@@ -53,27 +53,24 @@ diagnostics <- function(object, cvc = FALSE,
     r <- object$r2[[eq]]
 
     # Build per-learner table
-    if (single_learner) {
-      m_val <- if (is.null(m) || length(m) == 0) {
-        NA_real_
-      } else {
-        as.numeric(m[1])
-      }#IFELSE
-      r_val <- if (is.null(r) || length(r) == 0) {
-        NA_real_
-      } else {
-        as.numeric(r[1])
-      }#IFELSE
-      tbl <- data.frame(
-        learner = "single",
-        mspe = m_val,
-        r2 = r_val,
-        weight = 1,
-        stringsAsFactors = FALSE)
-    } else {
-      nlearners <- nrow(w)
-      learner_names <- paste0("learner_", seq_len(nlearners))
+    nlearners <- if (single_learner) 1L else nrow(w)
+    learner_names <- if (single_learner) "single" else
+      paste0("learner_", seq_len(nlearners))
 
+    # Per-learner OOS mspe and r2
+    m_vec <- if (is.null(m) || length(m) == 0) rep(NA_real_, nlearners) else as.numeric(m)
+    r_vec <- if (is.null(r) || length(r) == 0) rep(NA_real_, nlearners) else as.numeric(r)
+
+    tbl <- data.frame(
+      learner = learner_names,
+      mspe = m_vec,
+      r2 = r_vec,
+      stringsAsFactors = FALSE,
+      row.names = NULL)
+
+    if (single_learner) {
+      tbl$weight <- 1
+    } else {
       # Weights: average across folds if 3D array
       if (length(dim(w)) == 3) {
         w_avg <- apply(w, c(1, 2), mean)
@@ -81,34 +78,11 @@ diagnostics <- function(object, cvc = FALSE,
         w_avg <- as.matrix(w)
       }#IFELSE
 
-      # MSPE: average across folds if matrix
-      if (is.matrix(m) && ncol(m) > 1) {
-        m_avg <- rowMeans(m)
-      } else {
-        m_avg <- as.numeric(m)
-      }#IFELSE
-
-      # R-squared: average across folds if matrix
-      if (is.matrix(r) && ncol(r) > 1) {
-        r_avg <- rowMeans(r)
-      } else {
-        r_avg <- as.numeric(r)
-      }#IFELSE
-
-      # Display weights for all ensemble types
       ens_names <- colnames(w_avg)
       if (is.null(ens_names)) {
         ens_names <- paste0("weight_", seq_len(ncol(w_avg)))
       }#IF
 
-      tbl <- data.frame(
-        learner = learner_names,
-        mspe = m_avg,
-        r2 = r_avg,
-        stringsAsFactors = FALSE,
-        row.names = NULL)
-
-      # Add a weight column per ensemble type
       for (j in seq_len(ncol(w_avg))) {
         col_name <- paste0("weight_", ens_names[j])
         tbl[[col_name]] <- w_avg[, j]
@@ -117,17 +91,7 @@ diagnostics <- function(object, cvc = FALSE,
 
     # CVC p-values (opt-in)
     if (cvc && !single_learner) {
-      resid <- get_cf_resid_bylearner_for_eq(object$fitted, eq)
-      subs <- get_diag_subsamples(object, eq)
-      if (!is.null(resid) && !is.null(subs) &&
-          ncol(resid) > 1) {
-        cvc_res <- cvc_test(resid, subs, bootnum, alpha)
-        tbl$cvc_pval <- cvc_res$pvalues
-        tbl$in_conf_set <- cvc_res$confidence_set
-      } else {
-        tbl$cvc_pval <- NA_real_
-        tbl$in_conf_set <- NA
-      }#IFELSE
+      tbl$cvc_pval <- cvc_pvalues(object$fitted, object$splits, eq, bootnum)
     }#IF
 
     tables[[eq]] <- tbl
@@ -139,35 +103,101 @@ diagnostics <- function(object, cvc = FALSE,
     estimator_name = object$estimator_name,
     nobs = object$nobs,
     shortstack = object$shortstack,
-    cvc = cvc,
-    alpha = alpha)
+    cvc = cvc)
   class(result) <- "ddml_diagnostics"
   result
 }#DIAGNOSTICS
 
-# Resolve the correct subsamples for a given equation.
-get_diag_subsamples <- function(object, eq) {
-  splits <- object$splits
-  if (grepl("D0|d0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byD)) return(splits$subsamples_byD[[1]])
-  if (grepl("D1|d1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byD)) return(splits$subsamples_byD[[2]])
-  if (grepl("D0|d0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byd)) return(splits$subsamples_byd[[1]])
-  if (grepl("D1|d1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byd)) return(splits$subsamples_byd[[2]])
+# Cross-validation comparison p-values (Lei, 2020).
+#
+# For each learner, tests whether it is significantly outperformed
+# by any other learner using a sup-type multiplier bootstrap on
+# the squared-residual differences.
+#
+# @param fitted  Named list of per-equation cross-fitted objects.
+# @param splits  The splits structure from a ddml object.
+# @param eq      Character name of the nuisance equation.
+# @param bootnum Number of bootstrap replications.
+#
+# @return Numeric vector of p-values (length = nlearners),
+#     or NA_real_ vector if residuals are unavailable.
+cvc_pvalues <- function(fitted, splits, eq, bootnum = 500) {
+  resid <- get_cf_resid_bylearner_for_eq(fitted, eq)
+  subs <- splits[[eq]]$subsamples
+  if (is.null(resid) || is.null(subs) || ncol(resid) < 2) {
+    nL <- if (!is.null(resid)) ncol(resid) else 1L
+    return(rep(NA_real_, nL))
+  }#IF
 
-  if (grepl("Z0", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byZ)) return(splits$subsamples_byZ[[1]])
-  if (grepl("Z1", eq, ignore.case = TRUE) && !is.null(splits$subsamples_byZ)) return(splits$subsamples_byZ[[2]])
+  # Derive fold IDs from subsamples
+  n <- nrow(resid)
+  fid <- integer(n)
+  for (k in seq_along(subs)) {
+    fid[subs[[k]]] <- k
+  }#FOR
 
-  if (!is.null(splits$subsamples)) return(splits$subsamples)
-  object$subsamples
-}#GET_DIAG_SUBSAMPLES
+  nlearners <- ncol(resid)
+  pvalues <- numeric(nlearners)
+  for (i in seq_len(nlearners)) {
+    pvalues[i] <- cvc_one_vs_many(
+      resid[, i], resid[, -i, drop = FALSE], fid, bootnum)
+  }#FOR
+  pvalues
+}#CVC_PVALUES
 
-# Reconstruct full-sample folds from stratified folds.
-merge_subsamples <- function(subsamples_by) {
-  K <- length(subsamples_by[[1]])
-  lapply(seq_len(K), function(k) {
-    sort(unlist(lapply(subsamples_by,
-                       function(s) s[[k]])))
-  })
-}#MERGE_SUBSAMPLES
+# One-vs-many cross-validation comparison test.
+#
+# Tests whether learner i is dominated by any learner in the
+# comparison set. Uses a sup-type statistic with multiplier
+# bootstrap.
+#
+# Reference: Lei J (2020). "Cross-Validation With Confidence."
+#   Journal of the American Statistical Association,
+#   115(532), 1978-1997.
+#
+# @param resid_base   Numeric vector of OOS residuals from the
+#     base learner being tested.
+# @param resid_others Matrix (n x K) of OOS residuals from
+#     the comparison learners.
+# @param fid          Integer vector of fold IDs.
+# @param bootnum      Number of bootstrap replications.
+#
+# @return P-value. Large p-value means the base learner is
+#     not significantly worse than the best alternative.
+cvc_one_vs_many <- function(resid_base, resid_others, fid,
+                            bootnum = 500) {
+  n <- length(resid_base)
+  K <- ncol(resid_others)
+  resid_base_mat <- matrix(resid_base, n, K)
+
+  zeta <- resid_base_mat^2 - resid_others^2
+
+  # Demean by fold
+  fid_unique <- unique(fid)
+  zeta_til <- zeta
+  for (k in fid_unique) {
+    sel <- which(fid == k)
+    fold_means <- colMeans(zeta[sel, , drop = FALSE])
+    zeta_til[sel, ] <- sweep(
+      zeta[sel, , drop = FALSE], 2, fold_means)
+  }#FOR
+
+  zeta_m <- colMeans(zeta)
+  zeta_sd <- apply(zeta_til, 2, stats::sd)
+  zeta_sd[zeta_sd < .Machine$double.eps] <- Inf
+
+  # Sup-type test statistic
+  Tx <- max(sqrt(n) * zeta_m / zeta_sd)
+
+  # Multiplier bootstrap
+  zeta_scaled <- sweep(zeta_til, 2, zeta_sd, FUN = "/")
+  Txb <- vapply(seq_len(bootnum), function(b) {
+    bw <- stats::rnorm(n)
+    max(colSums(zeta_scaled * bw) / sqrt(n))
+  }, numeric(1))
+
+  mean(Txb > Tx)
+}#CVC_ONE_VS_MANY
 
 #' Print Stacking Diagnostics
 #'
@@ -198,9 +228,6 @@ print.ddml_diagnostics <- function(x, digits = 4, ...) {
         display[[col]] <- round(display[[col]], digits)
       }#IF
     }#FOR
-    if ("in_conf_set" %in% names(display)) {
-      display$in_conf_set <- NULL
-    }#IF
 
     print(display, row.names = FALSE, right = TRUE)
     cat("\n")
@@ -225,20 +252,20 @@ print.ddml_diagnostics <- function(x, digits = 4, ...) {
 #' @param x An object of class \code{ddml_diagnostics}.
 #' @param ... Currently unused.
 #'
-#' @return A \code{data.frame} with columns \code{equation},
-#'     \code{learner}, \code{mspe}, \code{r2}, \code{weight},
-#'     and optionally \code{cvc_pval} and
-#'     \code{in_conf_set}.
+#' @return A \code{data.frame} with columns \code{equation}, \code{learner},
+#'     \code{mspe}, \code{r2}, \code{weight}, and optionally \code{cvc_pval}.
 #'
 #' @examples
 #' \donttest{
 #' y = AE98[, "worked"]
 #' D = AE98[, "morekids"]
 #' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' learners = list(list(what = ols),
+#'                list(what = mdl_glmnet))
 #' plm_fit = ddml_plm(y, D, X,
-#'                     learners = list(what = ols),
+#'                     learners = learners,
 #'                     sample_folds = 2, silent = TRUE)
-#' tidy(diagnostics(plm_fit))
+#' tidy(diagnostics(plm_fit, cvc = TRUE))
 #' }
 #'
 #' @export

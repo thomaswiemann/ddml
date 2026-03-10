@@ -1,16 +1,17 @@
-#' Estimators of Average Treatment Effects.
+#' Estimator for the Average Treatment Effect
 #'
 #' @family ddml estimators
 #'
-#' @description Estimators of the average treatment effect and the average
+#' @description Estimator for the average treatment effect and the average
 #'     treatment effect on the treated.
 #'
-#' @details \code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
 #'     Learning estimators for the average treatment effect and the average
 #'     treatment effect on the treated, respectively, in the interactive model
-#'     given by
+#'     given by:
 #'
-#' \eqn{Y = g_0(D, X) + U,}
+#' \deqn{Y = g_0(D, X) + U,}
 #'
 #' where \eqn{(Y, D, X, U)} is a random vector such that
 #'     \eqn{\operatorname{supp} D = \{0,1\}}, \eqn{E[U\vert D, X] = 0}, and
@@ -19,58 +20,50 @@
 #'
 #' In this model, the average treatment effect (ATE) is defined as
 #'
-#' \eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]},
+#' \deqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)],}
 #'
 #' and the average treatment effect on the treated (ATT) is defined as
 #'
-#' \eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+#' \deqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1].}
 #'
-#' The estimating equations are
-#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-#'     \eqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta},
-#'     \eqn{W = (Y, D, X)}, and the Neyman orthogonal scores are
+#' \strong{Neyman Orthogonal Score:} The Neyman orthogonal scores are:
 #'
-#' \eqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{m(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-m(X)} + \ell_1(X) - \ell_0(X)}
+#' \deqn{m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta}
 #'
-#' \eqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+#' \deqn{m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))} - \frac{D\theta}{\pi}}
 #'
-#' \eqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{p} - \frac{m(X)(1-D)(Y-\ell_0(X))}{p(1-m(X))}}
+#' where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, p, \pi)} taking true values
+#'     \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{p_0(X) = E[D|X]}, and \eqn{\pi_0 = E[D]}.
 #'
-#' \eqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{p}}
+#' \strong{Linear Decomposition:} The scores decompose linearly in \eqn{\theta}:
 #'
-#'     with nuisance parameters \eqn{\eta = (\ell_0, \ell_1, m, p)} taking
-#'     true values \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{m_0(X) = E[D|X]},
-#'     and \eqn{p_0 = E[D]}.
+#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
 #'
-#' @inheritParams ddml-class
-#' @inheritParams ddml_plm
+#' where:
+#'
+#' \deqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
+#'
+#' \deqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
+#'
+#' \deqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{\pi}}
+#'
+#' \deqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))}}
+#'
+#' @inheritParams ddml-intro
+#' @inheritParams ddml_apo
 #' @param D The binary endogenous variable of interest.
 #' @param splits An optional list of sample split objects. For
 #'     \code{ddml_ate}/\code{ddml_att}, recommended keys are
 #'     \code{subsamples}, \code{subsamples_byD}, \code{cv_subsamples},
 #'     and \code{cv_subsamples_byD}.
-#' @param ... Deprecated arguments (\code{subsamples},
-#'     \code{subsamples_byD}, \code{cv_subsamples},
-#'     \code{cv_subsamples_byD}) are still accepted for backward
-#'     compatibility but should be replaced with \code{splits}.
-#' @param stratify Boolean for stratified cross-fitting: if \code{TRUE},
-#'     subsamples are constructed to be balanced across treatment levels.
-#' @param trim Number in (0, 1) for trimming the estimated propensity scores at
-#'     \code{trim} and \code{1-trim}.
+#' @param ... Additional arguments passed to internal methods.
 #'
 #' @return \code{ddml_ate} and \code{ddml_att} return objects of S3
 #'     class \code{ddml_ate}/\code{ddml_att} and \code{ddml}. See
-#'     \code{\link{ddml-class}} for the common output structure.
+#'     \code{\link{ddml-intro}} for the common output structure.
 #'     Additional pass-through fields: \code{learners},
 #'     \code{learners_DX}.
 #' @export
-#'
-#' @references
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -141,7 +134,6 @@ ddml_ate <- function(y, D, X,
 
   nobs <- length(y)
 
-  splits <- normalize_splits(splits = splits, by_label = "D", ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
 
   indxs <- get_sample_splits(
@@ -149,10 +141,14 @@ ddml_ate <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
     D = D, stratify = stratify,
-    subsamples = splits$subsamples,
-    subsamples_byD = splits$subsamples_byD,
-    cv_subsamples = splits$cv_subsamples,
-    cv_subsamples_byD = splits$cv_subsamples_byD)
+    subsamples = splits$D_X$subsamples,
+    subsamples_byD = list(
+      splits$y_X_D0$subsamples,
+      splits$y_X_D1$subsamples),
+    cv_subsamples = splits$D_X$cv_subsamples,
+    cv_subsamples_byD = list(
+      splits$y_X_D0$cv_subsamples,
+      splits$y_X_D1$cv_subsamples))
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
@@ -183,21 +179,16 @@ ddml_ate <- function(y, D, X,
                      parallel = parallel,
                      fitted = fitted$D_X)
 
-  # Splits for apo(d=1): byD indices match D_ind = D
+  shared_splits <- list(subsamples = indxs$subsamples,
+                        cv_subsamples = indxs$cv_subsamples)
   apo_splits_1 <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byd = indxs$subsamples_byD,
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byd = indxs$cv_subsamples_byD)
-  # Splits for apo(d=0): swap byD indices since D_ind = 1-D
+    y_X = list(subsamples = indxs$subsamples_byD[[2]],
+               cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+    D_X = shared_splits)
   apo_splits_0 <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byd = list(indxs$subsamples_byD[[2]],
-                          indxs$subsamples_byD[[1]]),
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byd = if (!is.null(indxs$cv_subsamples_byD))
-      list(indxs$cv_subsamples_byD[[2]],
-           indxs$cv_subsamples_byD[[1]]))
+    y_X = list(subsamples = indxs$subsamples_byD[[1]],
+               cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+    D_X = shared_splits)
 
   # Pre-ensembled propensity for ddml_apo delegation.
   # For d=0, flip: P(D=0|X) = 1 - P(D=1|X).
@@ -263,7 +254,13 @@ ddml_ate <- function(y, D, X,
 
   # == Output =======================================================
 
-  ddml_fit <- list(
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+
+  ddml(
     coefficients = coef,
     ensemble_weights = list(
       y_X_D0 = apo_0$ensemble_weights$y_X,
@@ -284,26 +281,24 @@ ddml_ate <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    learners = learners,
-    learners_DX = learners_DX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X_D0 = apo_0$fitted$y_X,
       y_X_D1 = apo_1$fitted$y_X,
       D_X = build_fitted_entry(D_X_res, save_crossval)),
     splits = list(
-      subsamples = indxs$subsamples,
-      subsamples_byD = indxs$subsamples_byD,
-      cv_subsamples = indxs$cv_subsamples,
-      cv_subsamples_byD = indxs$cv_subsamples_byD),
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_ate", "ddml")
-  return(ddml_fit)
+      y_X_D0 = list(
+        subsamples = indxs$subsamples_byD[[1]],
+        cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+      y_X_D1 = list(
+        subsamples = indxs$subsamples_byD[[2]],
+        cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+      D_X = list(
+        subsamples = indxs$subsamples,
+        cv_subsamples = indxs$cv_subsamples)),
+    call = cl,
+    subclass = "ddml_ate",
+    learners = learners,
+    learners_DX = learners_DX
+  )
 }#DDML_ATE

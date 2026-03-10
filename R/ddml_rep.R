@@ -52,7 +52,10 @@ spectral_median_psd <- function(matrices) {
     obj <- obj + CVXR::norm(V - matrices[[r]], "2")
   }#FOR
 
-  result <- CVXR::psolve(CVXR::Problem(CVXR::Minimize(obj)))
+  # Retrieve psolve from CVXR namespace to avoid S4 dispatch
+  # issues with CVXR::solve / CVXR::psolve across versions.
+  cvxr_solve <- utils::getFromNamespace("psolve", "CVXR")
+  result <- cvxr_solve(CVXR::Problem(CVXR::Minimize(obj)))
 
   if (result$status != "optimal") {
     warning("SDP solver returned status '",
@@ -163,8 +166,7 @@ aggregate_reps <- function(object, aggregation = "median",
 #'   \item{ensemble_type}{Ensemble types.}
 #'   \item{nobs}{Number of observations.}
 #'   \item{sample_folds}{Number of cross-fitting folds.}
-#'   \item{shortstack}{Logical, whether short-stacking was
-#'       used.}
+#'   \item{shortstack}{Logical, whether short-stacking was used.}
 #' }
 #'
 #' @examples
@@ -439,7 +441,7 @@ coef.ddml_rep <- function(object,
 #' @inheritParams vcov.ddml
 #' @param ... Currently unused.
 #'
-#' @return A p x p variance-covariance matrix.
+#' @return A \eqn{p \times p}{p x p} variance-covariance matrix.
 #'
 #' @examples
 #' \donttest{
@@ -692,10 +694,9 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #'     Default 0.95.
 #' @param ... Currently unused.
 #'
-#' @return A \code{data.frame} with columns \code{term},
-#'     \code{estimate}, \code{std.error}, \code{statistic},
-#'     \code{p.value}, \code{ensemble_type}, and
-#'     \code{aggregation}. If \code{conf.int = TRUE},
+#' @return A \code{data.frame} with columns \code{term}, \code{estimate},
+#'     \code{std.error}, \code{statistic}, \code{p.value},
+#'     \code{ensemble_type}, and \code{aggregation}. If \code{conf.int = TRUE},
 #'     also \code{conf.low} and \code{conf.high}.
 #'
 #' @examples
@@ -769,10 +770,9 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
 #' @param x A \code{ddml_rep} object.
 #' @param ... Currently unused.
 #'
-#' @return A one-row \code{data.frame} with columns
-#'     \code{nobs}, \code{sample_folds}, \code{shortstack},
-#'     \code{ensemble_type}, \code{model_type}, and
-#'     \code{nresamples}.
+#' @return A one-row \code{data.frame} with columns \code{nobs},
+#'     \code{sample_folds}, \code{shortstack}, \code{ensemble_type},
+#'     \code{model_type}, and \code{nresamples}.
 #'
 #' @examples
 #' \donttest{

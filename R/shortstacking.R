@@ -1,11 +1,11 @@
-#' Predictions using Short-Stacking.
+#' Predictions using Short-Stacking
 #'
 #' @family utilities
 #'
 #' @description Predictions using short-stacking.
 #'
 #' @inheritParams crosspred
-#' @inheritParams ddml-class
+#' @inheritParams ddml-intro
 #' @param shortstack_y Optional vector of the outcome variable to form
 #'     short-stacking predictions for. Base learners are always trained on
 #'     \code{y}.
@@ -18,20 +18,20 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{mspe}}{A numeric vector of per-ensemble MSPEs for
-#'             the short-stacked predictions.}
-#'         \item{\code{r2}}{A numeric vector of per-ensemble
-#'             out-of-sample R-squared values.}
+#'         \item{\code{mspe}}{A numeric vector of per-learner out-of-sample
+#'             MSPEs, computed from cross-fitted residuals.}
+#'         \item{\code{r2}}{A numeric vector of per-learner out-of-sample
+#'             R-squared values.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{cf_fitted_bylearner}}{A matrix of
-#'             out-of-sample predictions, each column corresponding to a base
-#'             learner (in chronological order).}
+#'         \item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
+#'             predictions, each column corresponding to a base learner (in
+#'             chronological order).}
 #'         \item{\code{cf_resid_bylearner}}{A matrix of per-learner
 #'             out-of-sample residuals used for weight estimation.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
-#'             not \code{NULL}, a
-#'             list of matrices with additional predictions for each learner.}
+#'             not \code{NULL}, a list of matrices with additional predictions
+#'             for each learner.}
 #'     }
 #'     Note that unlike \code{crosspred}, \code{shortstack} always computes
 #'        out-of-sample predictions for each base learner (at no additional
@@ -127,14 +127,12 @@ shortstacking <- function(y, X,
     }#FOR
   }#IF
 
-  # Compute mspe and r-squared
-  mspe <- colMeans((matrix(shortstack_y, nobs, nensb) - cf_fitted)^2)
+  # Per-learner OOS mspe and r-squared
+  cf_resid_bylearner <- as.matrix(fakecv$cv_resid)
+  mspe <- colMeans(cf_resid_bylearner^2)
   y_var <- as.numeric(stats::var(shortstack_y))
   r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_,
                                                    length(mspe))
-
-  # Per-learner OOS residuals (already computed for weight estimation)
-  cf_resid_bylearner <- as.matrix(fakecv$cv_resid)
 
   # return shortstacking output
   output <- list(cf_fitted = cf_fitted,

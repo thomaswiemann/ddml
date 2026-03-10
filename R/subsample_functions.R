@@ -12,6 +12,14 @@ get_sample_splits <- function(cluster_variable,
                               cv_subsamples_byD = NULL) {
   by_D <- !is.null(D)
 
+  # Normalize list(NULL, NULL) to NULL (from per-eq inline access)
+  if (!is.null(subsamples_byD) &&
+      all(vapply(subsamples_byD, is.null, logical(1))))
+    subsamples_byD <- NULL
+  if (!is.null(cv_subsamples_byD) &&
+      all(vapply(cv_subsamples_byD, is.null, logical(1))))
+    cv_subsamples_byD <- NULL
+
   # Auto-merge subsamples_byD into subsamples when only byD is given
   if (is.null(subsamples) && !is.null(subsamples_byD)) {
     if (!by_D) stop("subsamples_byD requires D to be specified.", call. = FALSE)
@@ -56,6 +64,20 @@ get_sample_splits <- function(cluster_variable,
     }#IF
   }#IF
 
+  # Derive cv_subsamples_byD when cv_subsamples is provided
+  # but cv_subsamples_byD is not (e.g., per-eq pass-through).
+  if (by_D && !is.null(cv_subsamples) &&
+      is.null(cv_subsamples_byD)) {
+    n_sf <- length(subsamples)
+    cv_byD_raw <- rep(list(NULL), n_sf)
+    for (k in seq_len(n_sf)) {
+      D_k <- D[-subsamples[[k]]]
+      cv_byD_raw[[k]] <- derive_subsamples_byD(
+        cv_subsamples[[k]], D_k)
+    }#FOR
+    cv_subsamples_byD <- switch_list_levels(cv_byD_raw)
+  }#IF
+
   # Build auxiliary indices when D is given
   aux_indx <- NULL
   if (by_D) {
@@ -96,6 +118,27 @@ merge_subsamples_byD <- function(subsamples_byD, D) {
   subsamples
 }#MERGE_SUBSAMPLES_BYD
 
+# Derive within-stratum fold indices from full-sample folds and D.
+derive_subsamples_byD <- function(subsamples, D) {
+  D_levels <- sort(unique(D))
+  nD_levels <- length(D_levels)
+  nobs <- length(D)
+  sample_folds <- length(subsamples)
+  subsamples_byD <- rep(list(NULL), nD_levels)
+  for (d in seq_len(nD_levels)) {
+    is_Dd <- which(D == D_levels[d])
+    tmp_indx <- rep(NA_integer_, nobs)
+    tmp_indx[is_Dd] <- seq_along(is_Dd)
+    subsamples_byD[[d]] <- rep(list(NULL), sample_folds)
+    for (k in seq_len(sample_folds)) {
+      tmp_indx_k <- tmp_indx[subsamples[[k]]]
+      subsamples_byD[[d]][[k]] <-
+        tmp_indx_k[!is.na(tmp_indx_k)]
+    }#FOR
+  }#FOR
+  subsamples_byD
+}#DERIVE_SUBSAMPLES_BYD
+
 # Internal: dispatcher for crossfit index construction
 get_crossfit_indices <- function(cluster_variable,
                                  sample_folds = 10,
@@ -113,8 +156,7 @@ get_crossfit_indices <- function(cluster_variable,
     stop(paste0("``subsamples`` must also be set when setting ",
                 "``subsamples_byD``."), call. = FALSE)
   } else if (!is.null(subsamples) && is.null(subsamples_byD) && by_D) {
-    stop(paste0("When ``by_D==TRUE``, ``subsamples_byD`` must also be set ",
-                "when setting ``subsamples``."), call. = FALSE)
+    subsamples_byD <- derive_subsamples_byD(subsamples, D)
   }#IF
 
   # Compute crossfit indices
@@ -370,22 +412,8 @@ get_cf_indices_simple <- function(cluster_variable, sample_folds,
     subsamples <- generate_subsamples(nobs, sample_folds)
   }#IFELSE
 
-  # Create subsamples_byD (optional)
-  subsamples_byD <- NULL
-  if (by_D) {
-    D_levels <- sort(unique(D))
-    nD_levels <- length(D_levels)
-    subsamples_byD <- rep(list(NULL), nD_levels)
-    for (d in seq_len(nD_levels)) {
-      tmp_indx <- rep(NA, nobs)
-      is_Dd <- which(D == D_levels[d])
-      tmp_indx[is_Dd] <- seq_along(is_Dd)
-      subsamples_byD[[d]] <- rep(list(NULL), sample_folds)
-      for (k in seq_len(sample_folds)) {
-        tmp_indx_k <- tmp_indx[subsamples[[k]]]
-        subsamples_byD[[d]][[k]] <- tmp_indx_k[!is.na(tmp_indx_k)]
-      }#FOR
-    }#FOR
+  subsamples_byD <- if (by_D) {
+    derive_subsamples_byD(subsamples, D)
   }#IF
 
   list(subsamples = subsamples,

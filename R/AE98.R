@@ -1,4 +1,4 @@
-#' Random subsample from the data of Angrist & Evans (1998).
+#' Random Subsample from the Data of Angrist & Evans (1998)
 #'
 #' @description Random subsample from the data of Angrist & Evans (1998).
 #'

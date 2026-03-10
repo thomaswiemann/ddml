@@ -40,7 +40,6 @@ ddml_att <- function(y, D, X,
 
   nobs <- length(y)
 
-  splits <- normalize_splits(splits = splits, by_label = "D", ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
 
   indxs <- get_sample_splits(
@@ -48,10 +47,14 @@ ddml_att <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
     D = D, stratify = stratify,
-    subsamples = splits$subsamples,
-    subsamples_byD = splits$subsamples_byD,
-    cv_subsamples = splits$cv_subsamples,
-    cv_subsamples_byD = splits$cv_subsamples_byD)
+    subsamples = splits$D_X$subsamples,
+    subsamples_byD = list(
+      splits$y_X_D0$subsamples,
+      splits$y_X_D1$subsamples),
+    cv_subsamples = splits$D_X$cv_subsamples,
+    cv_subsamples_byD = list(
+      splits$y_X_D0$cv_subsamples,
+      splits$y_X_D1$cv_subsamples))
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D)
 
@@ -84,14 +87,12 @@ ddml_att <- function(y, D, X,
   # E[Y|D=0,X] via ddml_apo(d=0)
   # Swap byD indices: apo uses D_ind = 1*(D==0), so byD
   # levels are reversed relative to the ATT's D.
+  shared_splits <- list(subsamples = indxs$subsamples,
+                        cv_subsamples = indxs$cv_subsamples)
   apo_splits_0 <- list(
-    subsamples = indxs$subsamples,
-    subsamples_byd = list(indxs$subsamples_byD[[2]],
-                          indxs$subsamples_byD[[1]]),
-    cv_subsamples = indxs$cv_subsamples,
-    cv_subsamples_byd = if (!is.null(indxs$cv_subsamples_byD))
-      list(indxs$cv_subsamples_byD[[2]],
-           indxs$cv_subsamples_byD[[1]]))
+    y_X = list(subsamples = indxs$subsamples_byD[[1]],
+               cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+    D_X = shared_splits)
 
   # Pre-ensembled propensity: P(D=0|X) = 1 - E[D|X]
   fitted_D_X_0 <- list(
@@ -158,7 +159,13 @@ ddml_att <- function(y, D, X,
 
   # == Output =======================================================
 
-  ddml_fit <- list(
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+
+  ddml(
     coefficients = coef,
     ensemble_weights = list(
       y_X_D0 = apo_0$ensemble_weights$y_X,
@@ -177,25 +184,23 @@ ddml_att <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    learners = learners,
-    learners_DX = learners_DX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X_D0 = apo_0$fitted$y_X,
       D_X = build_fitted_entry(D_X_res, save_crossval)),
     splits = list(
-      subsamples = indxs$subsamples,
-      subsamples_byD = indxs$subsamples_byD,
-      cv_subsamples = indxs$cv_subsamples,
-      cv_subsamples_byD = indxs$cv_subsamples_byD),
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_att", "ddml")
-  return(ddml_fit)
+      y_X_D0 = list(
+        subsamples = indxs$subsamples_byD[[1]],
+        cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+      y_X_D1 = list(
+        subsamples = indxs$subsamples_byD[[2]],
+        cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+      D_X = list(
+        subsamples = indxs$subsamples,
+        cv_subsamples = indxs$cv_subsamples)),
+    call = cl,
+    subclass = "ddml_att",
+    learners = learners,
+    learners_DX = learners_DX
+  )
 }#DDML_ATT

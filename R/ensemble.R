@@ -1,4 +1,4 @@
-#' Stacking estimator using combinations of base learners
+#' Stacking Estimator Using Combinations of Base Learners
 #'
 #' @family utilities
 #'
@@ -8,10 +8,10 @@
 #'
 #' @param y The outcome variable.
 #' @param X The feature matrix.
-
 #' @param type A character string indicating the type of ensemble to compute.
 #'     Default is \code{"average"}.
-#' @param learners A list of base learners.
+#' @param learners A list of base learners. See
+#'     \code{\link{ddml-intro}} for the full specification.
 #' @param cv_folds Number of cross-validation folds.
 #' @param cv_subsamples Optional list of subsamples for cross-validation.
 #' @param cv_results Optional pre-computed cross-validation results.
@@ -19,12 +19,17 @@
 #' @param silent A boolean indicating whether to suppress progress messages.
 #'
 #' @return An object of class \code{ensemble} containing:
-#'     \item{mdl_fits}{List of fitted base learners.}
-#'     \item{weights}{Computed ensemble weights.}
-#'     \item{learners}{The base learners used.}
-#'     \item{cv_results}{Cross-validation results if computed.}
-#'     \item{mean_y}{Mean of the outcome variable.}
-#'     \item{constant_y}{Boolean indicating if y is constant.}
+#'     \describe{
+#'         \item{\code{mdl_fits}}{List of fitted base learners.}
+#'         \item{\code{weights}}{Computed ensemble weights.}
+#'         \item{\code{learners}}{The base learners used.}
+#'         \item{\code{cv_results}}{Cross-validation results if
+#'             computed.}
+#'         \item{\code{mean_y}}{Mean of the outcome variable.}
+#'         \item{\code{constant_y}}{Boolean indicating if y is
+#'             constant.}
+#'     }
+#' @family utilities
 #' @export
 #'
 #' @examples
@@ -115,7 +120,7 @@ ensemble <- function(y, X,
 
 # Complementary methods ========================================================
 
-#' Predict method for \code{ensemble} objects.
+#' Predict Method for \code{ensemble} Objects
 #'
 #' @param object A fitted \code{ensemble} object.
 #' @param newdata A feature matrix for prediction.
@@ -160,7 +165,8 @@ predict.ensemble <- function(object, newdata, ...){
 
 #' @param type A character string or vector indicating the type(s) of ensemble
 #'     weights to compute. Default is \code{"average"}.
-#' @param learners A list of base learners.
+#' @param learners A list of base learners. See
+#'     \code{\link{ddml-intro}} for the full specification.
 #' @param cv_folds Number of cross-validation folds.
 #' @param cv_subsamples Optional list of subsamples for cross-validation.
 #' @param cv_results Optional pre-computed cross-validation results.
@@ -168,8 +174,13 @@ predict.ensemble <- function(object, newdata, ...){
 #' @param silent A boolean indicating whether to suppress progress messages.
 #'
 #' @return A list containing:
-#'     \item{weights}{A matrix of computed ensemble weights.}
-#'     \item{cv_results}{Cross-validation results used for computing weights.}
+#'     \describe{
+#'         \item{\code{weights}}{A matrix of computed ensemble
+#'             weights.}
+#'         \item{\code{cv_results}}{Cross-validation results used
+#'             for computing weights.}
+#'     }
+#' @family utilities
 #' @export
 #'
 #' @examples

@@ -217,17 +217,8 @@ validate_fitted_splits_pair <- function(fitted, splits,
                                         w_cv = FALSE) {
   if (is.null(fitted)) return(invisible(NULL))
   if (is.null(splits)) {
-    stop("Argument 'splits' must be supplied when 'fitted' is supplied.",
-         call. = FALSE)
-  }#IF
-  if (is.null(splits$subsamples)) {
-    stop("splits must contain 'subsamples' when 'fitted' is supplied.",
-         call. = FALSE)
-  }#IF
-  if (w_cv && is.null(splits$cv_subsamples)) {
-    stop(paste("splits must contain 'cv_subsamples' for data-driven",
-               "stacking when 'fitted' is supplied."),
-         call. = FALSE)
+    stop("'splits' must be supplied when 'fitted' is ",
+         "supplied.", call. = FALSE)
   }#IF
 }#VALIDATE_FITTED_SPLITS_PAIR
 
@@ -269,52 +260,6 @@ get_cf_resid_bylearner_for_eq <- function(fitted, eq) {
   }#IF
   NULL
 }#GET_CF_RESID_BYLEARNER_FOR_EQ
-
-normalize_splits <- function(splits = NULL,
-                             by_label = NULL, ...) {
-  dots <- list(...)
-  subsamples <- dots[["subsamples"]]
-  cv_subsamples <- dots[["cv_subsamples"]]
-  # Handle cv_subsamples_list (older deprecated name)
-  if (!is.null(dots[["cv_subsamples_list"]])) {
-    if (!is.null(cv_subsamples))
-      stop("Specify cv_subsamples or cv_subsamples_list, ",
-           "not both.", call. = FALSE)
-    message("Note: cv_subsamples_list has been renamed to ",
-            "cv_subsamples.")
-    cv_subsamples <- dots[["cv_subsamples_list"]]
-  }#IF
-  # Handle grouped split args (ATE/ATT/LATE)
-  subsamples_by <- NULL
-  cv_subsamples_by <- NULL
-  if (!is.null(by_label)) {
-    sub_by <- paste0("subsamples_by", by_label)
-    cv_sub_by <- paste0("cv_subsamples_by", by_label)
-    subsamples_by <- dots[[sub_by]]
-    cv_subsamples_by <- dots[[cv_sub_by]]
-  }#IF
-  legacy_used <- !is.null(subsamples) || !is.null(cv_subsamples) ||
-    !is.null(subsamples_by) || !is.null(cv_subsamples_by)
-  if (legacy_used) {
-    warning("Deprecated split arguments detected. ",
-            "Use 'splits' instead.", call. = FALSE)
-  }#IF
-  if (is.null(splits) && !legacy_used) return(NULL)
-  if (is.null(splits)) splits <- list()
-  if (!is.list(splits)) stop("'splits' must be a list.", call. = FALSE)
-  if (is.null(splits$subsamples) && !is.null(subsamples))
-    splits$subsamples <- subsamples
-  if (is.null(splits$cv_subsamples) && !is.null(cv_subsamples))
-    splits$cv_subsamples <- cv_subsamples
-  if (!is.null(by_label)) {
-    if (is.null(splits[[sub_by]]) && !is.null(subsamples_by))
-      splits[[sub_by]] <- subsamples_by
-    if (is.null(splits[[cv_sub_by]]) &&
-        !is.null(cv_subsamples_by))
-      splits[[cv_sub_by]] <- cv_subsamples_by
-  }#IF
-  splits
-}#NORMALIZE_SPLITS
 
 # Validate common arguments for S3 inference methods.
 # Returns the validated type (via match.arg) invisibly.

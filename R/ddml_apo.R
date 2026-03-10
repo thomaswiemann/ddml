@@ -1,72 +1,72 @@
-#' Estimator for the Average Potential Outcome.
+#' Estimator for the Average Potential Outcome
 #'
 #' @family ddml estimators
 #'
-#' @description \code{ddml_apo} provides a Double/Debiased Machine Learning
-#'     estimator for the average potential outcome, allowing for custom 
-#'     weights \eqn{\omega(X)}.
+#' @description Estimator for the average potential outcome, allowing for
+#'     custom weights \eqn{\omega(X)}.
 #'
-#' @details \code{ddml_apo} provides a Double/Debiased Machine Learning
-#'     estimator for the target parameter \eqn{\theta_0} in the model given by
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_apo} provides a Double/Debiased Machine Learning
+#'     estimator for the target parameter \eqn{\theta_0} in the model given by:
 #'
-#' \eqn{Y = g_0(D, X) + U,}
+#' \deqn{Y = g_0(D, X) + U,}
 #'
 #' where \eqn{(Y, D, X, U)} is a random vector such that
 #'     \eqn{E[U\vert D, X] = 0} and
 #'     \eqn{\Pr(D=d\vert X) \in (0, 1)} with probability 1,
 #'     and \eqn{g_0} is an unknown nuisance function.
 #'
-#' In this model, the average potential outcome (APO) for treatment 
+#' In this model, the average potential outcome (APO) for treatment
 #'     level \eqn{d} is defined as
 #'
-#' \eqn{\theta_0^{\textrm{APO}} \equiv E[\omega(X) g_0(d, X)]},
+#' \deqn{\theta_0^{\textrm{APO}} \equiv E[\omega(X) g_0(d, X)],}
 #'
 #' where \eqn{\omega(X)} is a known weighting function. If \eqn{\omega(X) = 1},
 #'     this parameter corresponds to the standard Average Potential Outcome (APO)
 #'     at treatment level \eqn{d}.
 #'
-#' The estimating equation is
-#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where
-#'     \eqn{W = (Y, D, X)}, and the Neyman orthogonal score is
+#' \strong{Nuisance Parameters:} The nuisance parameters are
+#'     \eqn{\eta = (\ell, p)} taking true values \eqn{\ell_0(X) = E[Y|D=d, X]} and
+#'     \eqn{p_0(X) = E[\mathbf{1}\{D=d\}|X]}.
 #'
-#' \eqn{m(W; \theta, \eta) = \left( \frac{\mathbbm{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X) - \theta}
+#' \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 #'
-#'     with nuisance parameters \eqn{\eta = (\ell, p)} taking
-#'     true values \eqn{\ell_0(X) = E[Y|D=d, X]} and \eqn{p_0(X) = E[\mathbbm{1}\{D=d\}|X]}.
+#' \deqn{m(W; \theta, \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X) - \theta}
 #'
-#' @inheritParams ddml-class
+#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#'
+#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#'
+#' where:
+#'
+#' \deqn{\psi_a(W; \eta) = -1}
+#'
+#' \deqn{\psi_b(W; \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X)}
+#'
+#' @inheritParams ddml-intro
 #' @inheritParams ddml_plm
-#' @inheritParams ddml_ate
 #' @param D The endogenous variable of interest. Can be discrete or continuous.
 #' @param d The treatment level of interest. The default is \code{d = 1}.
 #' @param weights A numeric vector of length \code{nobs} specifying the weights 
 #'     \eqn{\omega(X)}. If \code{weights = NULL} (the default), a vector of 1s 
 #'     is used, which estimates the Average Potential Outcome (APO).
+#' @param stratify Boolean for stratified cross-fitting: if \code{TRUE},
+#'     subsamples are constructed to be balanced across treatment levels.
+#' @param trim Number in (0, 1) for trimming the estimated propensity scores at
+#'     \code{trim} and \code{1-trim}.
 #' @param splits An optional list of sample split objects. For
 #'     \code{ddml_apo}, this must be a list with elements \code{subsamples} and
-#'     \code{cv_subsamples} (and optionally \code{subsamples_byd} and
-#'     \code{cv_subsamples_byd} for stratified splitting). Typically
+#'     \code{cv_subsamples} (and optionally \code{subsamples_byD} and
+#'     \code{cv_subsamples_byD} for stratified splitting). Typically
 #'     obtained from a previous fit via \code{fit$splits}.
-#' @param ... Deprecated arguments (\code{subsamples_byd},
-#'     \code{cv_subsamples_byd}) are still accepted for backward
-#'     compatibility but should be replaced with the \code{splits}
-#'     argument.
+#' @param ... Additional arguments passed to internal methods.
 #'
 #' @return \code{ddml_apo} returns an object of S3 class
-#'     \code{ddml_apo} and \code{ddml}. See \code{\link{ddml-class}}
+#'     \code{ddml_apo} and \code{ddml}. See \code{\link{ddml-intro}}
 #'     for the common output structure. Additional pass-through
 #'     fields: \code{learners}, \code{learners_DX}.
 #'
-#' @seealso [ddml::summary.ddml()], [ddml::coef.ddml()],
-#'     [ddml::vcov.ddml()], [ddml::confint.ddml()],
-#'     [ddml::hatvalues.ddml()], [ddml::tidy.ddml()],
-#'     [ddml::glance.ddml()], [ddml::diagnostics()]
-#'
 #' @export
-#'
-#' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -74,7 +74,7 @@
 #' D = AE98[, "morekids"]
 #' X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 #'
-#' # Estimate the APO for d = 1 using a single base learner: Ridge.
+#' # Estimate the APO for d = 1 using a single base learner, ridge.
 #' apo_fit <- ddml_apo(y, D, X,
 #'                     learners = list(what = mdl_glmnet),
 #'                     sample_folds = 2,
@@ -129,17 +129,14 @@ ddml_apo <- function(y, D, X,
   if (is.null(weights)) weights <- rep(1, nobs)
 
   # Construct sample splits for cross-fitting and cross-validation
-  splits <- normalize_splits(splits = splits, by_label = "d", ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
     D = D_ind, stratify = stratify,
-    subsamples = splits$subsamples,
-    subsamples_byD = splits$subsamples_byd,
-    cv_subsamples = splits$cv_subsamples,
-    cv_subsamples_byD = splits$cv_subsamples_byd)
+    subsamples = splits$D_X$subsamples,
+    cv_subsamples = splits$D_X$cv_subsamples)
   check_subsamples(indxs$subsamples, indxs$subsamples_byD,
                    stratify, D_ind)
 
@@ -235,7 +232,13 @@ ddml_apo <- function(y, D, X,
 
   # == Output =======================================================
 
-  ddml_fit <- list(
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+
+  ddml(
     coefficients = coef,
     ensemble_weights = list(y_X = y_X_res$weights,
                             D_X = D_X_res$weights),
@@ -252,29 +255,24 @@ ddml_apo <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    d = d,
-    weights = weights,
-    learners = learners,
-    learners_DX = learners_DX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X = build_fitted_entry(y_X_res, save_crossval,
                                include_auxiliary = TRUE),
       D_X = build_fitted_entry(D_X_res, save_crossval)),
     splits = list(
-      subsamples = indxs$subsamples,
-      subsamples_byd = indxs$subsamples_byD,
-      cv_subsamples = indxs$cv_subsamples,
-      cv_subsamples_byd = indxs$cv_subsamples_byD),
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_apo", "ddml")
-  return(ddml_fit)
+      y_X = list(
+        subsamples = indxs$subsamples_byD[[2]],
+        cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+      D_X = list(
+        subsamples = indxs$subsamples,
+        cv_subsamples = indxs$cv_subsamples)),
+    call = cl,
+    subclass = "ddml_apo",
+    d = d,
+    weights = weights,
+    learners = learners,
+    learners_DX = learners_DX
+  )
 }#DDML_APO
 

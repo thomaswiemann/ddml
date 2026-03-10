@@ -1,30 +1,38 @@
-#' Estimator for the Partially Linear Model.
+#' Estimator for the Partially Linear Regression Coefficient
 #'
 #' @family ddml estimators
 #'
-#' @description Estimator for the partially linear model.
+#' @description Estimator for the partially linear regression coefficient.
 #'
-#' @details \code{ddml_plm} provides a Double/Debiased Machine Learning
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_plm} provides a Double/Debiased Machine Learning
 #'     estimator for the target parameter \eqn{\theta_0} in the partially
-#'     linear model given by
+#'     linear model given by:
 #'
-#' \eqn{Y = \theta_0D + g_0(X) + U,}
+#' \deqn{Y = \theta_0 D + g_0(X) + U,}
 #'
 #' where \eqn{(Y, D, X, U)} is a random vector such that
 #'     \eqn{E[Cov(U, D\vert X)] = 0} and \eqn{E[Var(D\vert X)] \neq 0}, and
 #'     \eqn{g_0} is an unknown nuisance function.
 #'
-#' In this model, the target parameter \eqn{\theta_0} is identified by the 
-#'     estimating equation 
-#'     \eqn{E[m(W; \theta_0, \eta_0)] = 0}, where \eqn{W = (Y, D, X)} and
-#'     \eqn{m(W; \theta, \eta)} is the Neyman orthogonal score
+#' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 #'
-#' \eqn{m(W; \theta, \eta) = (Y - \ell(X) - \theta(D - r(X)))(D - r(X)),}
+#' \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r(X))](D - r(X))}
 #'
-#'     with nuisance parameters \eqn{\eta = (\ell, r)} taking true values
-#'     \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
+#' where the nuisance parameters are \eqn{\eta = (\ell, r)} taking
+#'     true values \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
 #'
-#' @inheritParams ddml-class
+#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#'
+#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#'
+#' where:
+#'
+#' \deqn{\psi_a(W; \eta) = -(D - r(X))(D - r(X))^\top}
+#'
+#' \deqn{\psi_b(W; \eta) = (D - r(X))(Y - \ell(X))}
+#'
+#' @inheritParams ddml-intro
 #' @param learners_DX Optional argument to allow for different estimators of
 #'     \eqn{E[D|X]}. Setup is identical to \code{learners}.
 #' @param custom_ensemble_weights_DX Optional argument to allow for different
@@ -33,20 +41,10 @@
 #'     \code{custom_ensemble_weights_DX} must have the same number of columns.
 #'
 #' @return \code{ddml_plm} returns an object of S3 class
-#'     \code{ddml_plm} and \code{ddml}. See \code{\link{ddml-class}}
+#'     \code{ddml_plm} and \code{ddml}. See \code{\link{ddml-intro}}
 #'     for the common output structure. Additional pass-through
 #'     fields: \code{learners}, \code{learners_DX}.
 #' @export
-#'
-#' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-#'
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -132,15 +130,14 @@ ddml_plm <- function(y, D, X,
   D <- as.matrix(D)
   nD <- ncol(D)
 
-  splits <- normalize_splits(splits = splits, ...)
   validate_fitted_splits_pair(fitted, splits, !shortstack)
 
   indxs <- get_sample_splits(
     cluster_variable = cluster_variable,
     sample_folds = sample_folds,
     cv_folds = cv_folds,
-    subsamples = splits$subsamples,
-    cv_subsamples = splits$cv_subsamples)
+    subsamples = splits[[1]]$subsamples,
+    cv_subsamples = splits[[1]]$cv_subsamples)
   check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
 
   t0 <- proc.time()[3]
@@ -165,7 +162,7 @@ ddml_plm <- function(y, D, X,
                      custom_ensemble_weights = custom_ensemble_weights,
                      subsamples = indxs$subsamples,
                      cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = "E[Y|X]",
+                     silent = silent, label = messages$y_X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
@@ -235,7 +232,13 @@ ddml_plm <- function(y, D, X,
     r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
 
-  ddml_fit <- list(
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+
+  ddml(
     coefficients = coef,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
@@ -249,23 +252,19 @@ ddml_plm <- function(y, D, X,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    learners = learners,
-    learners_DX = learners_DX,
     cluster_variable = cluster_variable,
     fitted = list(
       y_X = build_fitted_entry(y_X_res, save_crossval),
       D_X = build_fitted_from_list(D_X_res_list,
                                    save_crossval)),
-    splits = list(subsamples = indxs$subsamples,
-                  cv_subsamples = indxs$cv_subsamples),
-    call = cl)
-
-  elapsed <- round(proc.time()[3] - t0, 1)
-  if (!is.null(messages$finish) && messages$finish != "") {
-    info_msg(sprintf(messages$finish, elapsed),
-             silent = silent)
-  }#IF
-
-  class(ddml_fit) <- c("ddml_plm", "ddml")
-  return(ddml_fit)
+    splits = setNames(
+      rep(list(list(subsamples = indxs$subsamples,
+                    cv_subsamples = indxs$cv_subsamples)),
+          length(ensemble_weights)),
+      names(ensemble_weights)),
+    call = cl,
+    subclass = "ddml_plm",
+    learners = learners,
+    learners_DX = learners_DX
+  )
 }#DDML_PLM

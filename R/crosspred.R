@@ -1,4 +1,4 @@
-#' Cross-Fitted Predictions using Stacking.
+#' Cross-Fitted Predictions Using Stacking
 #'
 #' @family utilities
 #'
@@ -45,7 +45,7 @@
 #'     \eqn{\mathcal{T}_s} and predictions are made for \eqn{I_s}.
 #'
 #' @inheritParams crossval
-#' @inheritParams ddml-class
+#' @inheritParams ddml-intro
 #' @param subsamples List of vectors with sample indices for cross-fitting.
 #' @param cv_subsamples List of lists, each corresponding to a subsample
 #'     containing vectors with subsample indices for cross-validation.
@@ -62,16 +62,13 @@
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{mspe}}{A matrix of per-learner MSPEs, with
-#'             rows for learners and columns for sample folds.
-#'             \code{NULL} when a single learner is used.}
-#'         \item{\code{r2}}{A matrix of per-learner out-of-sample
-#'             R-squared values. Same dimensions as \code{mspe}.
-#'             \code{NULL} when a single learner is used.}
-#'         \item{\code{cv_resid_byfold}}{A list (length
-#'             \code{sample_folds}) of inner cross-validation
-#'             residual matrices used for ensemble weight estimation.
-#'             \code{NULL} when a single learner is used.}
+#'         \item{\code{mspe}}{A numeric vector of per-learner out-of-sample
+#'             MSPEs, computed from cross-fitted residuals.}
+#'         \item{\code{r2}}{A numeric vector of per-learner out-of-sample
+#'             R-squared values.}
+#'         \item{\code{cv_resid_byfold}}{A list (length \code{sample_folds})
+#'             of inner cross-validation residual matrices used for ensemble
+#'             weight estimation. \code{NULL} when a single learner is used.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
 #'         \item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
@@ -210,10 +207,8 @@ crosspred <- function(y, X,
   cf_fitted_bylearner <- matrix(0, nobs, nlearners)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   auxiliary_fitted_bylearner <- rep(list(NULL), sample_folds)
-  mspe <- matrix(0, nlearners^(calc_ensemble), sample_folds)
-  r2 <- matrix(NA_real_, nlearners^(calc_ensemble), sample_folds)
-  colnames(mspe) <- colnames(r2) <-
-    paste("sample fold ", seq_len(sample_folds))
+  mspe_inner <- matrix(0, nlearners^(calc_ensemble), sample_folds)
+  colnames(mspe_inner) <- paste("sample fold ", seq_len(sample_folds))
   weights <- array(0, dim = c(nlearners, nensb, sample_folds))
 
   cv_resid_byfold <- rep(list(NULL), sample_folds)
@@ -221,8 +216,7 @@ crosspred <- function(y, X,
     k <- res$k
     cf_fitted[res$test_indices, ] <- res$cf_fitted_rows
     if (!is.null(res$weights_k)) weights[, , k] <- res$weights_k
-    if (!is.null(res$mspe_k)) mspe[, k] <- res$mspe_k
-    if (!is.null(res$r2_k)) r2[, k] <- res$r2_k
+    if (!is.null(res$mspe_k)) mspe_inner[, k] <- res$mspe_k
     cv_resid_byfold[[k]] <- res$cv_resid_byfold_k
     auxiliary_fitted[[k]] <- res$auxiliary_fitted_k
     cf_fitted_bylearner[res$test_indices, ] <-
@@ -241,8 +235,14 @@ crosspred <- function(y, X,
   # Compute per-learner OOS residuals
   cf_resid_bylearner <- drop(y) - cf_fitted_bylearner
 
+  # Per-learner OOS mspe and r-squared (always available)
+  mspe <- colMeans(cf_resid_bylearner^2)
+  y_var <- as.numeric(stats::var(y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else
+    rep(NA_real_, length(mspe))
+
   # Organize and return output
-  if (!calc_ensemble) weights <- mspe <- r2 <- cv_resid_byfold <- NULL
+  if (!calc_ensemble) weights <- cv_resid_byfold <- NULL
   output <- list(cf_fitted = cf_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
                  cv_resid_byfold = cv_resid_byfold,
