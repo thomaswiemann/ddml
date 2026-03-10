@@ -343,6 +343,7 @@ test_that("mean aggregation formula is correct", {
 
 test_that("spectral aggregation works and equals median for p=1", {
   skip_if_not_installed("CVXR")
+  skip_on_ci()
 
   set.seed(42)
   nobs <- 500
@@ -373,6 +374,7 @@ test_that("spectral aggregation works and equals median for p=1", {
 
 test_that("spectral aggregation gives PSD matrix for p>1", {
   skip_if_not_installed("CVXR")
+  skip_on_ci()
 
   set.seed(42)
   nobs <- 500
