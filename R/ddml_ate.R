@@ -157,19 +157,6 @@ ddml_ate <- function(y, D, X,
 
   # == Reduced-form estimation ======================================
 
-  # E[D|X]
-  D_X_res <- get_CEF(D, X,
-                     learners = learners_DX,
-                     ensemble_type = ensemble_type,
-                     shortstack = shortstack,
-                     custom_ensemble_weights =
-                       custom_ensemble_weights_DX,
-                     subsamples = indxs$subsamples,
-                     cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = messages$D_X,
-                     parallel = parallel,
-                     fitted = fitted$D_X)
-
   shared_splits <- list(subsamples = indxs$subsamples,
                         cv_subsamples = indxs$cv_subsamples)
   apo_splits_1 <- list(
@@ -181,12 +168,7 @@ ddml_ate <- function(y, D, X,
                cv_subsamples = indxs$cv_subsamples_byD[[1]]),
     D_X = shared_splits)
 
-  # Pre-ensembled propensity for ddml_apo delegation.
-  # For d=0, flip: P(D=0|X) = 1 - P(D=1|X).
-  fitted_D_X_1 <- list(cf_fitted = D_X_res$cf_fitted)
-  fitted_D_X_0 <- list(cf_fitted = 1 - D_X_res$cf_fitted)
-
-  # E[g(1,X)] via ddml_apo
+  # E[g(1,X)] via ddml_apo (also estimates P(D=1|X) internally)
   apo_1 <- ddml_apo(
     y = y, D = D, X = X, d = 1, weights = NULL,
     learners = learners, learners_DX = learners_DX,
@@ -198,9 +180,13 @@ ddml_ate <- function(y, D, X,
     trim = trim, parallel = parallel, silent = silent,
     splits = apo_splits_1,
     fitted = list(y_X = fitted$y_X_D1,
-                  D_X = fitted_D_X_1),
+                  D_X = fitted$D_X),
     messages = list(start = "", finish = "",
-                    y_X = messages$y_D1, D_X = ""))
+                    y_X = messages$y_D1,
+                    D_X = messages$D_X))
+
+  # Flip propensity: P(D=0|X) = 1 - P(D=1|X).
+  fitted_D_X_0 <- list(cf_fitted = 1 - apo_1$fitted$D_X$cf_fitted)
 
   # E[g(0,X)] via ddml_apo
   apo_0 <- ddml_apo(
@@ -252,13 +238,13 @@ ddml_ate <- function(y, D, X,
     ensemble_weights = list(
       y_X_D0 = apo_0$ensemble_weights$y_X,
       y_X_D1 = apo_1$ensemble_weights$y_X,
-      D_X = D_X_res$weights),
+      D_X = apo_1$ensemble_weights$D_X),
     mspe = list(y_X_D0 = apo_0$mspe$y_X,
                 y_X_D1 = apo_1$mspe$y_X,
-                D_X = D_X_res$mspe),
+                D_X = apo_1$mspe$D_X),
     r2 = list(y_X_D0 = apo_0$r2$y_X,
               y_X_D1 = apo_1$r2$y_X,
-              D_X = D_X_res$r2),
+              D_X = apo_1$r2$D_X),
     psi_a = psi_a, psi_b = psi_b,
     scores = scores, J = J,
     coef_names = coef_names,
@@ -272,7 +258,7 @@ ddml_ate <- function(y, D, X,
     fitted = list(
       y_X_D0 = apo_0$fitted$y_X,
       y_X_D1 = apo_1$fitted$y_X,
-      D_X = build_fitted_entry(D_X_res, save_crossval)),
+      D_X = apo_1$fitted$D_X),
     splits = list(
       y_X_D0 = list(
         subsamples = indxs$subsamples_byD[[1]],

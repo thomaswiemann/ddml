@@ -155,54 +155,22 @@ ddml_late <- function(y, D, Z, X,
 
   validate_fitted_splits_pair(fitted, splits)
 
-  indxs <- get_sample_splits(
-    cluster_variable = cluster_variable,
-    sample_folds = sample_folds,
-    cv_folds = cv_folds,
-    D = Z, stratify = stratify,
-    subsamples = splits$Z_X$subsamples,
-    subsamples_byD = list(
-      splits$y_X_Z0$subsamples,
-      splits$y_X_Z1$subsamples),
-    cv_subsamples = splits$Z_X$cv_subsamples,
-    cv_subsamples_byD = list(
-      splits$y_X_Z0$cv_subsamples,
-      splits$y_X_Z1$cv_subsamples))
-  check_subsamples(indxs$subsamples, indxs$subsamples_byD,
-                   stratify, Z)
-
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
   # == Reduced-form estimation ======================================
 
-  # E[Z|X]
-  Z_X_res <- get_CEF(Z, X,
-                     learners = learners_ZX,
-                     ensemble_type = ensemble_type,
-                     shortstack = shortstack,
-                     custom_ensemble_weights =
-                       custom_ensemble_weights_ZX,
-                     subsamples = indxs$subsamples,
-                     cv_subsamples = indxs$cv_subsamples,
-                     silent = silent, label = messages$Z_X,
-                     parallel = parallel,
-                     fitted = fitted$Z_X)
+  # Map LATE splits/fitted to ATE's expected format.
+  ate_splits <- if (!is.null(splits)) list(
+    y_X_D0 = splits$y_X_Z0,
+    y_X_D1 = splits$y_X_Z1,
+    D_X = splits$Z_X)
+  ate_fitted_rf <- if (!is.null(fitted)) list(
+    y_X_D0 = fitted$y_X_Z0,
+    y_X_D1 = fitted$y_X_Z1,
+    D_X = fitted$Z_X)
 
-  splits_Z <- list(
-    y_X_D0 = list(
-      subsamples = indxs$subsamples_byD[[1]],
-      cv_subsamples = indxs$cv_subsamples_byD[[1]]),
-    y_X_D1 = list(
-      subsamples = indxs$subsamples_byD[[2]],
-      cv_subsamples = indxs$cv_subsamples_byD[[2]]),
-    D_X = list(
-      subsamples = indxs$subsamples,
-      cv_subsamples = indxs$cv_subsamples))
-
-  fitted_Z_X <- build_fitted_entry(Z_X_res, save_crossval)
-
-  # Second stage: Y ~ Z via ddml_ate
+  # Reduced form: Y ~ Z via ddml_ate
   ate_rf <- ddml_ate(
     y = y, D = Z, X = X,
     learners = learners, learners_DX = learners_ZX,
@@ -211,17 +179,17 @@ ddml_late <- function(y, D, Z, X,
     custom_ensemble_weights_DX = custom_ensemble_weights_ZX,
     cluster_variable = cluster_variable,
     ensemble_type = ensemble_type, shortstack = shortstack,
+    stratify = stratify,
     trim = trim, parallel = parallel, silent = silent,
-    splits = splits_Z,
-    fitted = list(y_X_D0 = fitted$y_X_Z0,
-                  y_X_D1 = fitted$y_X_Z1,
-                  D_X = fitted_Z_X),
+    splits = ate_splits,
+    fitted = ate_fitted_rf,
     save_crossval = save_crossval,
     messages = list(start = "", finish = "",
                     y_D1 = messages$y_Z1,
-                    y_D0 = messages$y_Z0, D_X = ""))
+                    y_D0 = messages$y_Z0,
+                    D_X = messages$Z_X))
 
-  # First stage: D ~ Z via ddml_ate
+  # First stage: D ~ Z via ddml_ate (reuses splits + propensity)
   ate_fs <- ddml_ate(
     y = D, D = Z, X = X,
     learners = learners_DXZ, learners_DX = learners_ZX,
@@ -230,11 +198,12 @@ ddml_late <- function(y, D, Z, X,
     custom_ensemble_weights_DX = custom_ensemble_weights_ZX,
     cluster_variable = cluster_variable,
     ensemble_type = ensemble_type, shortstack = shortstack,
+    stratify = stratify,
     trim = trim, parallel = parallel, silent = silent,
-    splits = splits_Z,
+    splits = ate_rf$splits,
     fitted = list(y_X_D0 = fitted$D_X_Z0,
                   y_X_D1 = fitted$D_X_Z1,
-                  D_X = fitted_Z_X),
+                  D_X = ate_rf$fitted$D_X),
     save_crossval = save_crossval,
     messages = list(start = "", finish = "",
                     y_D1 = messages$D_Z1,
