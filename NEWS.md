@@ -7,7 +7,6 @@
 * Adds `hatvalues()` method for generalized leverage diagnostics.
 * Adds `nobs()` method returning the number of observations.
 * Learner specifications now use `what` instead of `fun`. `fun` is accepted with a deprecation message.
-* Sample split arguments consolidated into a single `splits` parameter.
 * Adds parallel computation via the `parallel` parameter and progress reporting via `pbapply`.
 * Adds stratified cross-fitting to `ddml_ate()`, `ddml_att()`, and `ddml_late()` via `stratify`. Enabled by default.
 * Adds `cluster_variable` for cluster-aware sample splitting.
@@ -18,11 +17,14 @@
 * Adds `mdl_bigGLM` sparse-matrix unpenalized regression wrapper.
 * `mdl_xgboost()` auto-detects binary factor outcomes.
 * Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median or mean aggregation.
+* `predict.ensemble()` gains `type` argument (`"ensemble"` or `"bylearner"`).
 * Fixes `ddml_fpliv()` with custom weights.
 * Breaking changes:
-    - `crosspred()`, `crossval()`, `ensemble()`, `ensemble_weights()`, and `shortstacking()` no longer accept `Z`/`newZ` arguments. Users must pre-concatenate instruments with covariates (e.g., `cbind(X, Z)`). Estimator-level APIs are unchanged.
-    - `crosspred()` and `shortstacking()` no longer support `compute_insample_predictions`. The `insample_fitted` output components have been removed.
-    - `ddml_fpliv()` no longer accepts the `enforce_LIE` argument.
+    - Utility functions (`crosspred`, `crossval`, `ensemble`, `ensemble_weights`, `shortstacking`) no longer accept `Z`/`newZ`. Pre-concatenate instruments with covariates (e.g., `cbind(X, Z)`).
+    - `crosspred()` and `shortstacking()` drop `compute_insample_predictions` and `insample_fitted` output.
+    - `ddml_fpliv()` drops the `enforce_LIE` argument.
+    - `shortstacking()` drops `shortstack_y`.
+    - `ddml_*()` estimators drop `subsamples`, `cv_subsamples`, `subsamples_byD`, `cv_subsamples_byD`. Use the new `splits` parameter instead.
 
 # ddml 0.3.0
 
