@@ -42,6 +42,33 @@ parse_parallel <- function(parallel) {
   )
 }#PARSE_PARALLEL
 
+# Run a function over seq_len(njobs) with optional parallel cluster.
+# Encapsulates parsing, cluster lifecycle, fallback, and pbapply.
+with_parallel <- function(njobs, fun, parallel, silent) {
+  p <- parse_parallel(parallel)
+  cl <- NULL
+  if (p$num_cores > 1) {
+    cl <- tryCatch(
+      setup_parallel_cluster(p$num_cores, p$export,
+                             p$packages),
+      error = function(e) {
+        warning("Parallel setup failed: ",
+                conditionMessage(e),
+                ". Falling back to sequential.",
+                call. = FALSE)
+        NULL
+      })
+  }#IF
+  on.exit({
+    if (!is.null(cl)) parallel::stopCluster(cl)
+  }, add = TRUE)
+  if (silent) {
+    op <- pbapply::pboptions(type = "none")
+    on.exit(pbapply::pboptions(op), add = TRUE)
+  }#IF
+  pbapply::pblapply(seq_len(njobs), fun, cl = cl)
+}#WITH_PARALLEL
+
 # Internal helper for silent-aware messages.
 info_msg <- function(..., silent = FALSE) {
   if (!silent) message(...)

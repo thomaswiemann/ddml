@@ -139,30 +139,38 @@ ddml_pliv <- function(y, D, Z, X,
                      fitted = fitted$y_X)
 
   # E[Z|X]
-  Z_X_res_list <- compute_CEF_list(
-    Z, X, learners = learners_ZX,
-    ensemble_type = ensemble_type,
-    shortstack = shortstack,
-    custom_ensemble_weights = custom_ensemble_weights_ZX,
-    subsamples = indxs$subsamples,
-    cv_subsamples = indxs$cv_subsamples,
-    silent = silent,
-    label_prefix = "E[Z", label_suffix = "|X]",
-    parallel = parallel,
-    fitted = unname(fitted[paste0("Z", seq_len(nZ), "_X")]))
+  Z_X_res_list <- vector("list", nZ)
+  for (k in seq_len(nZ)) {
+    Z_X_res_list[[k]] <- get_CEF(
+      Z[, k, drop = FALSE], X,
+      learners = learners_ZX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_ZX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      silent = silent,
+      label = paste0("E[Z", k, "|X]"),
+      parallel = parallel,
+      fitted = fitted[[paste0("Z", k, "_X")]])
+  }#FOR
 
   # E[D|X]
-  D_X_res_list <- compute_CEF_list(
-    D, X, learners = learners_DX,
-    ensemble_type = ensemble_type,
-    shortstack = shortstack,
-    custom_ensemble_weights = custom_ensemble_weights_DX,
-    subsamples = indxs$subsamples,
-    cv_subsamples = indxs$cv_subsamples,
-    silent = silent,
-    label_prefix = "E[D", label_suffix = "|X]",
-    parallel = parallel,
-    fitted = unname(fitted[paste0("D", seq_len(nD), "_X")]))
+  D_X_res_list <- vector("list", nD)
+  for (k in seq_len(nD)) {
+    D_X_res_list[[k]] <- get_CEF(
+      D[, k, drop = FALSE], X,
+      learners = learners_DX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_DX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      silent = silent,
+      label = paste0("E[D", k, "|X]"),
+      parallel = parallel,
+      fitted = fitted[[paste0("D", k, "_X")]])
+  }#FOR
 
   ensemble_type <- y_X_res$ensemble_type
   nensb <- if (is.null(ensemble_type)) 1L

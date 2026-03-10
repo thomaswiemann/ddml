@@ -22,10 +22,10 @@ get_CEF <- function(y, X,
                     silent = FALSE,
                     label = NULL,
                     auxiliary_X = NULL,
-                    shortstack_y = y,
                     parallel = NULL,
                     fitted = NULL) {
-  t0 <- proc.time()[3]
+  # Normalize learner specs once at the entry gate
+  learners <- normalize_learners(learners)
 
   # Use pre-computed predictions if supplied
   if (!is.null(fitted)) {
@@ -63,13 +63,16 @@ get_CEF <- function(y, X,
     }#IF
   }#IF
 
-  # Constant or empty y: return trivial predictions
+  # Constant or empty y: return trivial predictions.
+  # This is the first layer of constant-y defense. ensemble()
+  # handles per-fold constant y via constant_y = TRUE (layer 2),
+  # and predict.ensemble() returns correctly-shaped predictions
+  # for constant-y ensembles (layer 3).
   if (length(unique(y)) <= 1) {
     constant_val <- if (length(y) > 0) y[1] else 0
     nlearners <- if (is_single_learner(learners)) 1L
       else length(learners)
-    ncustom <- if (!is.null(custom_ensemble_weights))
-      ncol(custom_ensemble_weights) else 0L
+    ncustom <- n_custom(custom_ensemble_weights)
     nensb <- length(ensemble_type) + ncustom
     n <- length(y)
 
@@ -111,7 +114,6 @@ get_CEF <- function(y, X,
                          subsamples = subsamples,
                          silent = silent,
                          auxiliary_X = auxiliary_X,
-                         shortstack_y = shortstack_y,
                          parallel = parallel)
   } else {
     res <- crosspred(y, X,

@@ -157,18 +157,22 @@ ddml_plm <- function(y, D, X,
                      parallel = parallel,
                      fitted = fitted$y_X)
 
-  # Compute estimates of E[D|X], loop through endogenous variables
-  D_X_res_list <- compute_CEF_list(
-    D, X, learners = learners_DX,
-    ensemble_type = ensemble_type,
-    shortstack = shortstack,
-    custom_ensemble_weights = custom_ensemble_weights_DX,
-    subsamples = indxs$subsamples,
-    cv_subsamples = indxs$cv_subsamples,
-    silent = silent,
-    label_prefix = "E[D", label_suffix = "|X]",
-    parallel = parallel,
-    fitted = unname(fitted[paste0("D", seq_len(nD), "_X")]))
+  # E[D|X]
+  D_X_res_list <- vector("list", nD)
+  for (k in seq_len(nD)) {
+    D_X_res_list[[k]] <- get_CEF(
+      D[, k, drop = FALSE], X,
+      learners = learners_DX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_DX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      silent = silent,
+      label = paste0("E[D", k, "|X]"),
+      parallel = parallel,
+      fitted = fitted[[paste0("D", k, "_X")]])
+  }#FOR
 
   ensemble_type <- y_X_res$ensemble_type
   nensb <- if (is.null(ensemble_type)) 1L

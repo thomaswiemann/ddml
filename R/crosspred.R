@@ -123,12 +123,6 @@ crosspred <- function(y, X,
                       silent = FALSE,
                       auxiliary_X = NULL,
                       parallel = NULL) {
-  # Unpack parallel options
-  p <- parse_parallel(parallel)
-  num_cores <- p$num_cores
-  parallel_export <- p$export
-  parallel_packages <- p$packages
-
   # Backward compatibility for renamed parameter
   if (!is.null(cv_subsamples_list)) {
     if (!is.null(cv_subsamples))
@@ -138,19 +132,12 @@ crosspred <- function(y, X,
     cv_subsamples <- cv_subsamples_list
   }#IF
 
-  # Normalize learner specs before parallel dispatch
-  learners <- normalize_learners(learners)
-
   # Data parameters
   nobs <- nrow(X)
-  nlearners <- length(learners)
-  calc_ensemble <- !is_single_learner(learners)
-  ncustom <- ncol(custom_ensemble_weights)
-  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+  nlearners <- if (is_single_learner(learners)) 1L
+    else length(learners)
+  ncustom <- n_custom(custom_ensemble_weights)
   nensb <- length(ensemble_type) + ncustom
-  # Check whether ddml uses conventional stacking w/ data driven weights
-  w_cv <- any(ensemble_type %in% c("nnls", "nnls1", "singlebest", "ols")) &
-    (!is.function(learners[[1]]))
 
   # Create crossfitting and cv tuples
   indxs <- get_sample_splits(cluster_variable = cluster_variable,
@@ -161,7 +148,10 @@ crosspred <- function(y, X,
   subsamples <- indxs$subsamples
   cv_subsamples <- indxs$cv_subsamples
   sample_folds <- length(subsamples)
-  cv_folds <- if (!is.null(cv_subsamples)) length(cv_subsamples[[1]]) else 0L
+  cv_folds <- if (!is.null(cv_subsamples))
+    length(cv_subsamples[[1]]) else 0L
+  if (cv_folds == 0L)
+    cv_subsamples <- rep(list(NULL), sample_folds)
 
   # Dispatch fold computation
   fold_fun <- function(k) {
@@ -173,42 +163,18 @@ crosspred <- function(y, X,
       ensemble_type = ensemble_type,
       cv_folds = cv_folds,
       custom_ensemble_weights = custom_ensemble_weights,
-      calc_ensemble = calc_ensemble,
       nensb = nensb, nlearners = nlearners,
       auxiliary_X = auxiliary_X)
   }#FOLD_FUN
 
-  cl <- NULL
-  if (num_cores > 1) {
-    cl <- tryCatch(
-      setup_parallel_cluster(num_cores, parallel_export,
-                             parallel_packages),
-      error = function(e) {
-        warning("Parallel setup failed: ",
-                conditionMessage(e),
-                ". Falling back to sequential.",
-                call. = FALSE)
-        NULL
-      }
-    )
-    if (!is.null(cl))
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-  }#IF
-
-  if (silent) {
-    op <- pbapply::pboptions(type = "none")
-    on.exit(pbapply::pboptions(op), add = TRUE)
-  }#IF
-  fold_results <- pbapply::pblapply(seq_len(sample_folds),
-                                    fold_fun, cl = cl)
+  fold_results <- with_parallel(sample_folds, fold_fun,
+                                parallel, silent)
 
   # Assemble results from fold_results list
-  cf_fitted <- matrix(0, nobs, nensb^(calc_ensemble))
+  cf_fitted <- matrix(0, nobs, nensb)
   cf_fitted_bylearner <- matrix(0, nobs, nlearners)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   auxiliary_fitted_bylearner <- rep(list(NULL), sample_folds)
-  mspe_inner <- matrix(0, nlearners^(calc_ensemble), sample_folds)
-  colnames(mspe_inner) <- paste("sample fold ", seq_len(sample_folds))
   weights <- array(0, dim = c(nlearners, nensb, sample_folds))
 
   cv_resid_byfold <- rep(list(NULL), sample_folds)
@@ -216,7 +182,6 @@ crosspred <- function(y, X,
     k <- res$k
     cf_fitted[res$test_indices, ] <- res$cf_fitted_rows
     if (!is.null(res$weights_k)) weights[, , k] <- res$weights_k
-    if (!is.null(res$mspe_k)) mspe_inner[, k] <- res$mspe_k
     cv_resid_byfold[[k]] <- res$cv_resid_byfold_k
     auxiliary_fitted[[k]] <- res$auxiliary_fitted_k
     cf_fitted_bylearner[res$test_indices, ] <-
@@ -225,25 +190,21 @@ crosspred <- function(y, X,
   }#FOR
 
   # Assign dimnames to weights and cf_fitted
-  if (calc_ensemble) {
-    wnames <- fold_results[[1]]$weight_colnames
-    dimnames(weights) <- list(
-      NULL, wnames,
-      paste("sample fold ", seq_len(sample_folds)))
-    colnames(cf_fitted) <- wnames
-  }#IF
+  wnames <- fold_results[[1]]$weight_colnames
+  dimnames(weights) <- list(
+    NULL, wnames,
+    paste("sample fold ", seq_len(sample_folds)))
+  colnames(cf_fitted) <- wnames
 
   # Compute per-learner OOS residuals
   cf_resid_bylearner <- drop(y) - cf_fitted_bylearner
 
   # Per-learner OOS mspe and r-squared (always available)
-  mspe <- colMeans(cf_resid_bylearner^2)
-  y_var <- as.numeric(stats::var(y))
-  r2 <- if (y_var > 0) 1 - mspe / y_var else
-    rep(NA_real_, length(mspe))
+  oos_stats <- compute_mspe_r2(cf_resid_bylearner, y)
+  mspe <- oos_stats$mspe
+  r2 <- oos_stats$r2
 
   # Organize and return output
-  if (!calc_ensemble) weights <- cv_resid_byfold <- NULL
   output <- list(cf_fitted = cf_fitted,
                  weights = weights, mspe = mspe, r2 = r2,
                  cv_resid_byfold = cv_resid_byfold,
@@ -257,93 +218,52 @@ crosspred <- function(y, X,
 crosspred_compute_fold <- function(
     k, y, X, learners, subsamples, cv_subsamples_k,
     ensemble_type, cv_folds, custom_ensemble_weights,
-    calc_ensemble, nensb, nlearners,
-    auxiliary_X) {
+    nensb, nlearners, auxiliary_X) {
 
   test_idx <- subsamples[[k]]
   train_idx <- -test_idx
 
-  if (!calc_ensemble) {
-    learners$args$X <- X[train_idx, ]
-    learners$args$y <- y[train_idx]
-    mdl_fit <- do.call(do.call, learners)
-    cf_fitted_rows <-
-      as.numeric(stats::predict(mdl_fit,
-                                X[test_idx, ]))
-  } else {
-    mdl_fit <- ensemble(y[train_idx],
-                        X[train_idx, , drop = FALSE],
-                        ensemble_type, learners,
-                        cv_folds, cv_subsamples_k,
-                        custom_weights = custom_ensemble_weights,
-                        silent = TRUE)
-    cf_fitted_rows <-
-      as.numeric(stats::predict(mdl_fit,
-                                newdata = X[test_idx, , drop = FALSE]))
-  }#IFELSE
+  # Always route through ensemble() (handles J=1 trivially)
+  mdl_fit <- ensemble(y[train_idx],
+                      X[train_idx, , drop = FALSE],
+                      ensemble_type, learners,
+                      cv_folds, cv_subsamples_k,
+                      custom_weights = custom_ensemble_weights,
+                      silent = TRUE)
+  cf_fitted_rows <-
+    as.numeric(stats::predict(mdl_fit,
+                              newdata = X[test_idx,
+                                          , drop = FALSE]))
 
   # Ensemble metadata
-  weights_k <- if (calc_ensemble) mdl_fit$weights else NULL
-  mspe_k <- if (calc_ensemble &&
-      !is.null(mdl_fit$cv_results)) {
-    mdl_fit$cv_results$mspe
-  } else {
-    NULL
-  }
-  r2_k <- if (calc_ensemble &&
-      !is.null(mdl_fit$cv_results)) {
-    mdl_fit$cv_results$r2
-  } else {
-    NULL
-  }
-  cv_resid_byfold_k <- if (calc_ensemble &&
-      !is.null(mdl_fit$cv_results)) {
+  weights_k <- mdl_fit$weights
+  cv_resid_byfold_k <- if (!is.null(mdl_fit$cv_results)) {
     mdl_fit$cv_results$cv_resid
-  } else {
-    NULL
   }
-  weight_colnames <- if (calc_ensemble) {
-    colnames(mdl_fit$weights)
-  } else {
-    NULL
-  }
+  weight_colnames <- colnames(mdl_fit$weights)
 
   # Auxiliary predictions (optional)
   auxiliary_fitted_k <- NULL
   if (!is.null(auxiliary_X)) {
-    auxiliary_fitted_k <- stats::predict(mdl_fit, auxiliary_X[[k]])
+    auxiliary_fitted_k <- stats::predict(mdl_fit,
+                                         auxiliary_X[[k]])
   }#IF
 
   # By-learner predictions
+  cf_fitted_bylearner_rows <- stats::predict(
+    mdl_fit, newdata = X[test_idx, , drop = FALSE],
+    type = "bylearner")
   auxiliary_fitted_bylearner_k <- NULL
-  if (!calc_ensemble) {
-    cf_fitted_bylearner_rows <- matrix(cf_fitted_rows, ncol = 1)
-    if (!is.null(auxiliary_X)) {
-      auxiliary_fitted_bylearner_k <- matrix(auxiliary_fitted_k,
-                                             ncol = 1)
-    }#IF
-  } else {
-    mdl_fit_bylearner <- mdl_fit
-    mdl_fit_bylearner$weights <- diag(1, nlearners)
-    cf_fitted_bylearner_rows <- stats::predict(
-      mdl_fit_bylearner,
-      newdata = X[test_idx, , drop = FALSE]
-    )
-    if (!is.null(auxiliary_X)) {
-      auxiliary_fitted_bylearner_k <- stats::predict(
-        mdl_fit_bylearner,
-        auxiliary_X[[k]]
-      )
-    }#IF
-  }#IFELSE
+  if (!is.null(auxiliary_X)) {
+    auxiliary_fitted_bylearner_k <- stats::predict(
+      mdl_fit, auxiliary_X[[k]], type = "bylearner")
+  }#IF
 
   list(
     k = k,
     test_indices = test_idx,
     cf_fitted_rows = cf_fitted_rows,
     weights_k = weights_k,
-    mspe_k = mspe_k,
-    r2_k = r2_k,
     cv_resid_byfold_k = cv_resid_byfold_k,
     weight_colnames = weight_colnames,
     auxiliary_fitted_k = auxiliary_fitted_k,

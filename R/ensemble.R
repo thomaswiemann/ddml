@@ -61,24 +61,33 @@ ensemble <- function(y, X,
   # Normalize learner specs
   learners <- normalize_learners(learners)
 
+  # Wrap single-learner spec into a 1-element list
+  if (is_single_learner(learners)) {
+    learners <- list(learners)
+  }#IF
+
   # Data parameters
   nlearners <- length(learners)
-  # Check if y is constant
+
+  # Constant-y: return trivial average weights of correct shape
   if (length(unique(y)) == 1) {
-    warning(paste("Outcome variable y is constant. Ensemble will return",
-                   "mean(y) for all predictions."), call. = FALSE)
-    # Return minimal output needed for predictions
+    warning(paste("Outcome variable y is constant. Ensemble will",
+                  "return mean(y) for all predictions."),
+            call. = FALSE)
+    nensb <- length(type) + n_custom(custom_weights)
+    weights <- matrix(1 / nlearners, nlearners, nensb)
+    colnames(weights) <- c(type, colnames(custom_weights))
     output <- list(
       mdl_fits = NULL,
-      weights = NULL,
+      weights = weights,
       learners = learners,
       cv_results = NULL,
       mean_y = mean(y),
-      constant_y = TRUE
-    )
+      constant_y = TRUE)
     class(output) <- "ensemble"
     return(output)
   }#IF
+
   # Compute ensemble weights
   ens_w_res <- ensemble_weights(y, X,
                                 type = type, learners = learners,
@@ -91,23 +100,16 @@ ensemble <- function(y, X,
   cv_results <- ens_w_res$cv_results
   # Warn if all learner weights are zero across ensemble columns
   if (!any(rowSums(abs(weights)) > 0)) {
-    warning("None of the learners are assigned positive stacking weights.",
-            call. = FALSE)
+    warning("None of the learners are assigned positive stacking ",
+            "weights.", call. = FALSE)
   }#IF
-  # Fit all base learners to keep per-learner outputs always available
+
+  # Fit all base learners
   mdl_fits <- rep(list(NULL), nlearners)
   for (m in seq_len(nlearners)) {
-    # Check whether X assignment has been specified. If not, include all.
     if (is.null(learners[[m]]$assign_X))
       learners[[m]]$assign_X <- seq_len(ncol(X))
-    # Select the model constructor and the variable assignment.
-    mdl_fun <- list(what = learners[[m]]$what,
-                    args = learners[[m]]$args)
-    assign_X <- learners[[m]]$assign_X
-    # Fit the model
-    mdl_fun$args$y <- y
-    mdl_fun$args$X <- X[, assign_X, drop = FALSE]
-    mdl_fits[[m]] <- do.call(do.call, mdl_fun)
+    mdl_fits[[m]] <- fit_learner(learners[[m]], y, X)
   }#FOR
 
   # Organize and return output
@@ -125,17 +127,24 @@ ensemble <- function(y, X,
 #' @param object A fitted \code{ensemble} object.
 #' @param newdata A feature matrix for prediction.
 #' @param ... Currently unused.
+#' @param type Character; \code{"ensemble"} (default) returns
+#'     weighted ensemble predictions, \code{"bylearner"} returns
+#'     the raw per-learner prediction matrix.
 #'
-#' @return A matrix of per-learner predictions with one column per
-#'     base learner.
+#' @return A matrix of predictions. When \code{type = "ensemble"},
+#'     one column per ensemble type; when \code{type = "bylearner"},
+#'     one column per base learner.
 #'
 #' @exportS3Method
-predict.ensemble <- function(object, newdata, ...){
-  # Data parameters
+predict.ensemble <- function(object, newdata, ...,
+                             type = "ensemble") {
+  type <- match.arg(type, c("ensemble", "bylearner"))
   nlearners <- length(object$learners)
-  # If y was constant, return mean_y for all observations
+  # Constant-y: return mean_y with the correct number of columns
   if (!is.null(object$constant_y) && object$constant_y) {
-    return(matrix(object$mean_y, nrow(newdata), nlearners))
+    ncols <- if (type == "bylearner") nlearners
+      else ncol(object$weights)
+    return(matrix(object$mean_y, nrow(newdata), ncols))
   }#IF
   # Calculate fitted values for each learner
   fitted_mat <- matrix(0, nrow(newdata), nlearners)
@@ -146,9 +155,8 @@ predict.ensemble <- function(object, newdata, ...){
                                                drop = FALSE])
     fitted_mat[, m] <- methods::as(fitted, "matrix")
   }#FOR
-  # Compute matrix of fitted values by ensemble type and return
-  fitted_ens <- fitted_mat %*% object$weights
-  return(fitted_ens)
+  if (type == "bylearner") return(fitted_mat)
+  fitted_mat %*% object$weights
 }#PREDICT.ENSEMBLE
 
 # Complementary functions ======================================================
@@ -214,82 +222,98 @@ ensemble_weights <- function(y, X,
     ncol(cv_results$cv_resid)
   } else {
     length(learners)
-  }
-  ncustom <- ncol(custom_weights)
-  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+  }#IFELSE
+  ncustom <- n_custom(custom_weights)
   ntype <- length(type)
 
-  # Check whether out-of-sample residuals should be calculated to inform the
-  #     ensemble weights, and whether previous results are available.
+  # Single learner: trivial weight of 1, skip cross-validation
+  if (nlearners == 1) {
+    weights <- matrix(1, 1, ntype + ncustom)
+    if (ncustom > 0)
+      weights[, (ntype + 1):(ntype + ncustom)] <- custom_weights
+    if (ncustom > 0 && is.null(colnames(custom_weights)))
+      colnames(custom_weights) <- paste0("custom_", seq_len(ncustom))
+    colnames(weights) <- c(type, colnames(custom_weights))
+    return(list(weights = weights, cv_results = NULL))
+  }#IF
+
+  # Check whether cross-validation is needed for data-driven weights
   cv_stacking <- c("ols", "nnls", "nnls1", "singlebest")
   if (any(cv_stacking %in% type) && is.null(cv_results)) {
-    # Run crossvalidation procedure
     cv_results <- crossval(y, X,
                            learners = learners,
                            cv_folds = cv_folds,
                            cv_subsamples = cv_subsamples,
                            silent = silent)
   }#IF
-  # Compute weights for each ensemble type
+
+  # Compute weights for each ensemble type via dispatch
   weights <- matrix(0, nlearners, ntype + ncustom)
   for (k in seq_len(ntype)) {
-    if (type[k] == "average") {
-      # Assign 1 to all included learners and normalize
-      weights[, k] <- 1
-      weights[, k] <- weights[, k] / sum(weights[, k])
-    } else if (type[k] == "nnls1") {
-      # For stacking with weights constrained between 0 and 1: |w|_1 = 1, solve
-      # the quadratic programming problem.
-      sq_resid <- Matrix::crossprod(cv_results$cv_resid)
-      A <- cbind(matrix(1, nlearners, 1), diag(1, nlearners))
-      # Calculate solution
-      # Note: quadprog only solves for pos.def matrices. nearPD finds nearest
-      #     pos.def matrix as a workaround.
-      r <- tryCatch(
-        quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
-                           dvec = matrix(0, nlearners, 1),
-                           Amat = A,
-                           bvec = c(1, rep(0, nlearners))),
-        error = function(e) {
-          warning("nnls1 weight optimization failed: ",
-                  conditionMessage(e),
-                  ". Falling back to equal weights.",
-                  call. = FALSE)
-          NULL
-        })
-      if (!is.null(r)) {
-        weights[, k] <- r$solution
-      } else {
-        weights[, k] <- rep(1 / nlearners, nlearners)
-      }#IFELSE
-    } else if (type[k] == "nnls") {
-      # Reconstruct out of sample fitted values
-      cv_fitted <- as.numeric(y) - cv_results$cv_resid
-      # For non-negative stacking, calculate the non-negatuve ols coefficients
-      weights[, k] <- nnls::nnls(cv_fitted, y)$x
-    } else if (type[k] == "ols") {
-      # Reconstruct out of sample fitted values
-      cv_fitted <- as.numeric(y) - cv_results$cv_resid
-      # For unconstrained stacking, simply calculate the ols coefficients
-      weights[, k] <- ols(y, cv_fitted, const = FALSE)$coef
-    } else if (type[k] == "singlebest") {
-      # Find MSPE-minimizing model
-      mdl_min <- which.min(Matrix::colMeans(cv_results$cv_resid^2)[, drop = FALSE])
-      mdl_min <- (seq_len(nlearners))[mdl_min]
-      # Assign unit weight to the best model
-      weights[mdl_min, k] <- 1
-    }#IFELSE
+    weights[, k] <- compute_w(type[k], nlearners,
+                              cv_results, y)
   }#FOR
-  # Append weights with custom weights
-  if (!(ncustom == 0)) {
+
+  # Append custom weights
+  if (ncustom > 0) {
     weights[, (ntype + 1):(ntype + ncustom)] <- custom_weights
   }#IF
-  # Assign ensemble types to columns
-  if (!(ncustom == 0) && is.null(colnames(custom_weights))) {
+  if (ncustom > 0 && is.null(colnames(custom_weights))) {
     colnames(custom_weights) <- paste0("custom_", seq_len(ncustom))
   }#IF
   colnames(weights) <- c(type, colnames(custom_weights))
-  # Organize and return output
-  output <- list(weights = weights, cv_results = cv_results)
-  return(output)
+
+  list(weights = weights, cv_results = cv_results)
 }#ENSEMBLE_WEIGHTS
+
+# Weight-type dispatch: maps a type string to a weight vector.
+compute_w <- function(type, nlearners, cv_results, y) {
+  switch(type,
+    average = rep(1 / nlearners, nlearners),
+    nnls1   = compute_w_nnls1(nlearners, cv_results),
+    nnls    = compute_w_nnls(cv_results, y),
+    ols     = compute_w_ols(cv_results, y),
+    singlebest = compute_w_singlebest(nlearners, cv_results))
+}#COMPUTE_W
+
+compute_w_nnls1 <- function(nlearners, cv_results) {
+  # QP solver requires a positive-definite matrix. Empirical
+  # cross-products of CV residuals can be PSD (not PD) when
+  # learners are collinear. nearPD finds the nearest PD matrix.
+  sq_resid <- Matrix::crossprod(cv_results$cv_resid)
+  A <- cbind(matrix(1, nlearners, 1), diag(1, nlearners))
+  r <- tryCatch(
+    quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
+                       dvec = matrix(0, nlearners, 1),
+                       Amat = A,
+                       bvec = c(1, rep(0, nlearners))),
+    error = function(e) {
+      warning("nnls1 weight optimization failed: ",
+              conditionMessage(e),
+              ". Falling back to equal weights.",
+              call. = FALSE)
+      NULL
+    })
+  if (!is.null(r)) r$solution
+  else rep(1 / nlearners, nlearners)
+}#COMPUTE_W_NNLS1
+
+# Unconstrained non-negative least squares (Wolpert-style).
+# Unlike nnls1, weights are NOT normalized to sum to 1.
+compute_w_nnls <- function(cv_results, y) {
+  cv_fitted <- as.numeric(y) - cv_results$cv_resid
+  nnls::nnls(cv_fitted, y)$x
+}#COMPUTE_W_NNLS
+
+compute_w_ols <- function(cv_results, y) {
+  cv_fitted <- as.numeric(y) - cv_results$cv_resid
+  ols(y, cv_fitted, const = FALSE)$coef
+}#COMPUTE_W_OLS
+
+compute_w_singlebest <- function(nlearners, cv_results) {
+  mdl_min <- which.min(Matrix::colMeans(cv_results$cv_resid^2))
+  mdl_min <- (seq_len(nlearners))[mdl_min]
+  w <- rep(0, nlearners)
+  w[mdl_min] <- 1
+  w
+}#COMPUTE_W_SINGLEBEST

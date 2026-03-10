@@ -134,6 +134,35 @@ normalize_learners <- function(learners) {
   learners
 }#NORMALIZE_LEARNERS
 
+# Compute MSPE and R-squared from a residual matrix and outcome.
+compute_mspe_r2 <- function(resid, y) {
+  mspe <- colMeans(resid^2)
+  y_var <- as.numeric(stats::var(y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else
+    rep(NA_real_, length(mspe))
+  list(mspe = mspe, r2 = r2)
+}#COMPUTE_MSPE_R2
+
+# Fit a single base learner to y and X, with tryCatch wrapping.
+fit_learner <- function(learner, y, X) {
+  if (is.null(learner$assign_X))
+    learner$assign_X <- seq_len(ncol(X))
+  mdl_fun <- list(what = learner$what, args = learner$args)
+  mdl_fun$args$y <- y
+  mdl_fun$args$X <- X[, learner$assign_X, drop = FALSE]
+  tryCatch(
+    do.call(do.call, mdl_fun),
+    error = function(e) {
+      stop("Learner fitting failed: ", conditionMessage(e),
+           call. = FALSE)
+    })
+}#FIT_LEARNER
+
+# Count custom ensemble weight columns (0L when NULL).
+n_custom <- function(custom_weights) {
+  if (is.null(custom_weights)) 0L else ncol(custom_weights)
+}#N_CUSTOM
+
 # Build a CEF-like result from pre-computed per-learner predictions.
 # When cv_resid_byfold + subsamples are available, recomputes
 # per-fold weights from inner-CV residuals (exact). Otherwise
@@ -148,13 +177,18 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
   cf <- as.matrix(cf_fitted_bylearner_eq)
 
   cf_resid_bylearner <- drop(y) - cf
-  mspe <- colMeans(cf_resid_bylearner^2)
+  mspe_bylearner <- colMeans(cf_resid_bylearner^2)
 
+  # Two weight-computation paths:
+  # Per-fold: uses inner-CV residuals from the training fold to
+  #   compute fold-specific weights (exact stacking).
+  # Pooled: uses OOS cross-fitted residuals from the full sample
+  #   to compute a single set of weights (approximate; exact for
+  #   short-stacking where OOS residuals ARE the stacking residuals).
   if (!is.null(cv_resid_byfold) && !is.null(cv_resid_byfold[[1]]) &&
       !is.null(subsamples)) {
     K <- length(subsamples)
-    ncustom <- if (!is.null(custom_ensemble_weights))
-      ncol(custom_ensemble_weights) else 0L
+    ncustom <- n_custom(custom_ensemble_weights)
     nensb <- length(ensemble_type) + ncustom
     cf_fitted <- matrix(0, nobs, nensb)
     all_weights <- vector("list", K)
@@ -179,7 +213,7 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
                               paste("sample fold ", seq_len(K)))
   } else {
     fakecv <- list(cv_resid = cf_resid_bylearner,
-                   mspe = mspe)
+                   mspe = mspe_bylearner)
     ew <- ensemble_weights(
       y, cf, type = ensemble_type,
       cv_results = fakecv,
@@ -194,15 +228,13 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
 
   auxiliary_fitted <- extrapolate_auxiliary(
     auxiliary_fitted_bylearner, weights)
-  y_var <- as.numeric(stats::var(y))
-  r2 <- if (y_var > 0) 1 - mspe / y_var else
-    rep(NA_real_, length(mspe))
+  oos_stats <- compute_mspe_r2(cf_resid_bylearner, y)
 
   list(cf_fitted = cf_fitted,
        weights = weights,
        ensemble_type = ens_names,
-       mspe = mspe,
-       r2 = r2,
+       mspe = oos_stats$mspe,
+       r2 = oos_stats$r2,
        auxiliary_fitted = auxiliary_fitted,
        cf_fitted_bylearner = cf,
        cf_resid_bylearner = cf_resid_bylearner,
@@ -413,35 +445,3 @@ validate_custom_weights <- function(custom_weights, learners) {
          "the number of base learners.", call. = FALSE)
   }
 }#VALIDATE_CUSTOM_WEIGHTS
-
-# Compute CEF for each column of M, collecting results in a list.
-compute_CEF_list <- function(M, X,
-                             learners, ensemble_type,
-                             shortstack,
-                             custom_ensemble_weights,
-                             subsamples, cv_subsamples,
-                             silent = FALSE,
-                             label_prefix, label_suffix,
-                             parallel = NULL,
-                             fitted = NULL) {
-  nM <- ncol(M)
-  res_list <- vector("list", nM)
-  for (k in seq_len(nM)) {
-    fit_k <- if (!is.null(fitted)) {
-      fitted[[k]]
-    }#IF
-    res_list[[k]] <- get_CEF(
-      M[, k, drop = FALSE], X,
-      learners = learners,
-      ensemble_type = ensemble_type,
-      shortstack = shortstack,
-      custom_ensemble_weights = custom_ensemble_weights,
-      subsamples = subsamples,
-      cv_subsamples = cv_subsamples,
-      silent = silent,
-      label = paste0(label_prefix, k, label_suffix),
-      parallel = parallel,
-      fitted = fit_k)
-  }#FOR
-  res_list
-}#COMPUTE_CEF_LIST

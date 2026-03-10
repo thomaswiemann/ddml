@@ -103,12 +103,6 @@ crossval <- function(y, X,
                      cv_subsamples = NULL,
                      silent = FALSE,
                      parallel = NULL) {
-  # Unpack parallel options
-  p <- parse_parallel(parallel)
-  num_cores <- p$num_cores
-  parallel_export <- p$export
-  parallel_packages <- p$packages
-
   # Normalize learner specs before parallel dispatch
   learners <- normalize_learners(learners)
 
@@ -130,8 +124,8 @@ crossval <- function(y, X,
 
   # Define the computation function
   cv_fun <- function(x) {
-    j <- ceiling(x / cv_folds)
-    i <- x - cv_folds * (ceiling(x / cv_folds) - 1)
+    j <- (x - 1) %/% cv_folds + 1
+    i <- (x - 1) %% cv_folds + 1
     fold_x <- cv_subsamples[[i]]
     crossval_compute(test_sample = fold_x,
                      learner = learners[[j]],
@@ -140,29 +134,7 @@ crossval <- function(y, X,
 
   # Compute out-of-sample errors
   njobs <- cv_folds * nlearners
-  cl <- NULL
-  if (num_cores > 1) {
-    cl <- tryCatch(
-      setup_parallel_cluster(num_cores, parallel_export,
-                             parallel_packages),
-      error = function(e) {
-        warning("Parallel setup failed: ",
-                conditionMessage(e),
-                ". Falling back to sequential.",
-                call. = FALSE)
-        NULL
-      }
-    )
-    if (!is.null(cl))
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-  }#IF
-
-  if (silent) {
-    op <- pbapply::pboptions(type = "none")
-    on.exit(pbapply::pboptions(op), add = TRUE)
-  }#IF
-  cv_res <- pbapply::pbsapply(seq_len(njobs), cv_fun,
-                              cl = cl)
+  cv_res <- with_parallel(njobs, cv_fun, parallel, silent)
 
   # Compile residual matrix
   cv_resid <- unlist(cv_res)
@@ -170,9 +142,9 @@ crossval <- function(y, X,
   cv_resid <- cv_resid[order(unlist(cv_subsamples)), , drop = FALSE]
 
   # Compute MSPE and R-squared by learner
-  mspe <- colMeans(cv_resid^2)
-  y_var <- as.numeric(stats::var(y))
-  r2 <- if (y_var > 0) 1 - mspe / y_var else rep(NA_real_, length(mspe))
+  cv_stats <- compute_mspe_r2(cv_resid, y)
+  mspe <- cv_stats$mspe
+  r2 <- cv_stats$r2
 
   # Organize and return output
   output <- list(mspe = mspe, r2 = r2,
@@ -184,22 +156,11 @@ crossval <- function(y, X,
 # Complementary functions ======================================================
 crossval_compute <- function(test_sample, learner,
                              y, X) {
-  if (is.null(learner$assign_X)) learner$assign_X <- seq_len(ncol(X))
-
-  mdl_fun <- list(what = learner$what, args = learner$args)
-  assign_X <- learner$assign_X
-
-  mdl_fun$args$y <- y[-test_sample]
-  mdl_fun$args$X <- X[-test_sample, assign_X, drop = FALSE]
-
-  mdl_fit <- tryCatch(
-    do.call(do.call, mdl_fun),
-    error = function(e) {
-      stop("Learner fitting failed: ", conditionMessage(e),
-           call. = FALSE)
-    }
-  )
-
+  assign_X <- if (is.null(learner$assign_X)) seq_len(ncol(X))
+    else learner$assign_X
+  mdl_fit <- fit_learner(learner,
+                         y[-test_sample],
+                         X[-test_sample, , drop = FALSE])
   cv_fitted <- stats::predict(mdl_fit,
                               X[test_sample, assign_X,
                                 drop = FALSE])
