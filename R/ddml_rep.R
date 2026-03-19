@@ -1,28 +1,4 @@
-# Internal helpers -----------------------------------------------
-
-# Build inference results array from aggregated coef/SE.
-build_inf_from_agg <- function(agg, coef_names,
-                               ensemble_type) {
-  p <- nrow(agg$coefficients)
-  nensb <- ncol(agg$coefficients)
-  inf_results <- array(0, dim = c(p, 4, nensb))
-  for (j in seq_len(nensb)) {
-    theta_j <- agg$coefficients[, j]
-    se_j <- agg$se[, j]
-    t_val <- theta_j / se_j
-    p_val <- 2 * stats::pnorm(abs(t_val),
-                               lower.tail = FALSE)
-    inf_results[, 1, j] <- theta_j
-    inf_results[, 2, j] <- se_j
-    inf_results[, 3, j] <- t_val
-    inf_results[, 4, j] <- p_val
-  }#FOR
-  dimnames(inf_results) <- list(
-    coef_names,
-    c("Estimate", "Std. Error", "z value", "Pr(>|z|)"),
-    ensemble_type)
-  inf_results
-}#BUILD_INF_FROM_AGG
+# Internal helpers ================================================================
 
 # Spectral-norm median of PSD matrices via SDP (CVXR).
 #
@@ -34,39 +10,31 @@ spectral_median_psd <- function(matrices) {
   R <- length(matrices)
 
   if (p == 1) {
-    vals <- vapply(matrices, function(m) m[1, 1],
-                   numeric(1))
+    vals <- vapply(matrices, function(m) m[1, 1], numeric(1))
     return(matrix(stats::median(vals), 1, 1))
   }#IF
 
   if (!requireNamespace("CVXR", quietly = TRUE)) {
     stop("Package 'CVXR' is required for spectral ",
          "aggregation. Install it with:\n",
-         "  install.packages('CVXR')",
-         call. = FALSE)
+         "  install.packages('CVXR')", call. = FALSE)
   }#IF
 
   V <- CVXR::Variable(c(p, p), PSD = TRUE)
   obj <- 0
-  for (r in seq_len(R)) {
-    obj <- obj + CVXR::norm(V - matrices[[r]], "2")
-  }#FOR
-
+  for (r in seq_len(R)) obj <- obj + CVXR::norm(V - matrices[[r]], "2")
+  
   result <- CVXR::psolve(CVXR::Problem(CVXR::Minimize(obj)))
 
   if (result$status != "optimal") {
-    warning("SDP solver returned status '",
-            result$status,
-            "'; falling back to element-wise median.",
-            call. = FALSE)
-    arr <- array(
-      unlist(lapply(matrices, as.vector)),
-      dim = c(p, p, R))
+    warning("SDP solver returned status '", result$status,
+            "'; falling back to element-wise median.", call. = FALSE)
+    arr <- array(unlist(lapply(matrices, as.vector)), dim = c(p, p, R))
     return(apply(arr, c(1, 2), stats::median))
   }#IF
 
   V_sol <- result$getValue(V)
-  (V_sol + t(V_sol)) / 2
+  (V_sol + t(V_sol)) / 2 # symmetrize to avoid minimal numerical errors
 }#SPECTRAL_MEDIAN_PSD
 
 # Core aggregation workhorse.
@@ -76,37 +44,32 @@ spectral_median_psd <- function(matrices) {
 # where theta_tilde is the aggregated coefficient vector.
 # The three aggregation rules then differ only in how they
 # summarise {V_1, ..., V_R} into a single matrix.
-aggregate_reps <- function(object, aggregation = "median",
-                           type = "HC1") {
-  aggregation <- match.arg(aggregation,
-                           c("median", "mean",
-                             "spectral"))
+aggregate_reps <- function(object, aggregation = "median", type = "HC1") {
+  aggregation <- match.arg(aggregation, c("median", "mean", "spectral"))
   R <- object$nresamples
   nensb <- length(object$ensemble_type)
   p <- length(object$coef_names)
 
-  # == Collect per-replication estimates ==
+  # Collect per-replication estimates
   coef_array <- array(0, dim = c(p, nensb, R))
   vcov_array <- array(0, dim = c(p, p, nensb, R))
   for (r in seq_len(R)) {
     fit <- object$fits[[r]]
     coef_array[, , r] <- fit$coefficients
     for (j in seq_len(nensb)) {
-      vcov_array[, , j, r] <- stats::vcov(fit,
-        ensemble_idx = j, type = type)
+      vcov_array[, , j, r] <- stats::vcov(fit, ensemble_idx = j, type = type)
     }#FOR
   }#FOR
 
-  # == Aggregate coefficients ==
+  # Aggregate coefficients
   if (aggregation == "mean") {
     agg_coef <- apply(coef_array, c(1, 2), mean)
   } else {
     agg_coef <- apply(coef_array, c(1, 2), stats::median)
   }#IFELSE
 
-  # == Inflate & aggregate covariance ==
+  # Inflate & aggregate covariance
   agg_vcov <- array(0, dim = c(p, p, nensb))
-
   for (j in seq_len(nensb)) {
     V_list <- vector("list", R)
     for (r in seq_len(R)) {
@@ -121,19 +84,15 @@ aggregate_reps <- function(object, aggregation = "median",
     } else if (aggregation == "spectral") {
       agg_vcov[, , j] <- spectral_median_psd(V_list)
     } else {
-      V_arr <- array(
-        unlist(lapply(V_list, as.vector)),
-        dim = c(p, p, R))
-      agg_vcov[, , j] <- apply(V_arr, c(1, 2),
-                                stats::median)
+      V_arr <- array(unlist(lapply(V_list, as.vector)), dim = c(p, p, R))
+      agg_vcov[, , j] <- apply(V_arr, c(1, 2), stats::median)
     }#IFELSE
   }#FOR
 
-  # == Standard errors ==
+  # Standard errors
   agg_se <- matrix(0, nrow = p, ncol = nensb)
   for (j in seq_len(nensb)) {
-    V_j <- matrix(agg_vcov[, , j, drop = FALSE],
-                  nrow = p, ncol = p)
+    V_j <- matrix(agg_vcov[, , j, drop = FALSE], nrow = p, ncol = p)
     agg_se[, j] <- sqrt(diag(V_j))
   }#FOR
 
@@ -142,7 +101,7 @@ aggregate_reps <- function(object, aggregation = "median",
        vcov_array = vcov_array)
 }#AGGREGATE_REPS
 
-# Exported functions ---------------------------------------------
+# Exported functions ===========================================================
 
 #' Construct a Multi-Resample DDML Object
 #'
@@ -184,61 +143,45 @@ aggregate_reps <- function(object, aggregation = "median",
 #' @seealso [ddml_replicate()]
 #' @export
 ddml_rep <- function(fits) {
+  # Input validation
   if (!is.list(fits) || length(fits) < 2) {
-    stop("'fits' must be a list of at least 2 ddml objects.",
-         call. = FALSE)
+    stop("'fits' must be a list of at least 2 ddml objects.", call. = FALSE)
   }#IF
-
   for (i in seq_along(fits)) {
     if (!inherits(fits[[i]], "ddml")) {
-      stop("Element ", i,
-           " does not inherit from class 'ddml'.",
-           call. = FALSE)
+      stop("Element ", i, " does not inherit from class 'ddml'.", call. = FALSE)
     }#IF
   }#FOR
-
-  primary <- vapply(fits, function(f) class(f)[1],
-                    character(1))
+  primary <- vapply(fits, function(f) class(f)[1], character(1))
   if (length(unique(primary)) != 1) {
-    stop("All fits must have the same primary class. ",
-         "Found: ",
-         paste(unique(primary), collapse = ", "),
-         call. = FALSE)
+    stop("All fits must have the same primary class. Found: ",
+         paste(unique(primary), collapse = ", "), call. = FALSE)
   }#IF
-
   ref <- fits[[1]]
   for (i in seq_along(fits)[-1]) {
-    if (!identical(fits[[i]]$coef_names,
-                   ref$coef_names)) {
-      stop("Fit ", i,
-           " has different 'coef_names' than fit 1.",
-           call. = FALSE)
+    if (!identical(fits[[i]]$coef_names, ref$coef_names)) {
+      stop("Fit ", i, " has different 'coef_names' than fit 1.", call. = FALSE)
     }#IF
-    if (!identical(fits[[i]]$ensemble_type,
-                   ref$ensemble_type)) {
-      stop("Fit ", i,
-           " has different 'ensemble_type' than fit 1.",
+    if (!identical(fits[[i]]$ensemble_type, ref$ensemble_type)) {
+      stop("Fit ", i, " has different 'ensemble_type' than fit 1.",
            call. = FALSE)
     }#IF
     if (!identical(fits[[i]]$nobs, ref$nobs)) {
-      stop("Fit ", i,
-           " has different 'nobs' than fit 1.",
-           call. = FALSE)
+      stop("Fit ", i, " has different 'nobs' than fit 1.", call. = FALSE)
     }#IF
   }#FOR
 
+  # Return ddml_rep object
   ens_type <- ref$ensemble_type
-  if (is.null(ens_type)) {
-    ens_type <- "single base learner"
-  }#IF
-
+  if (is.null(ens_type)) ens_type <- "single base learner"
   structure(
     list(
       fits          = fits,
       nresamples    = length(fits),
       model_type    = primary[1],
       coef_names    = ref$coef_names,
-      estimator_name= if (!is.null(ref$estimator_name)) ref$estimator_name else primary[1],
+      estimator_name= if (!is.null(ref$estimator_name)) ref$estimator_name
+                       else primary[1],
       ensemble_type = ens_type,
       nobs          = ref$nobs,
       sample_folds  = ref$sample_folds,
@@ -294,15 +237,13 @@ ddml_replicate <- function(fn, ..., resamples = 5,
   }
   fits <- vector("list", resamples)
   for (r in seq_len(resamples)) {
-    if (!silent) {
-      message("[Resample ", r, "/", resamples, "]")
-    }#IF
+    if (!silent) message("[Resample ", r, "/", resamples, "]")
     fits[[r]] <- do.call(fn, dots)
   }#FOR
   ddml_rep(fits)
 }#DDML_REPLICATE
 
-# S3 methods -----------------------------------------------------
+# S3 methods ===================================================================
 
 #' Extract a Single Fit from a ddml_rep Object
 #'
@@ -349,9 +290,7 @@ ddml_replicate <- function(fn, ..., resamples = 5,
 #'
 #' @export
 #' @method length ddml_rep
-length.ddml_rep <- function(x) {
-  x$nresamples
-}#LENGTH.DDML_REP
+length.ddml_rep <- function(x) x$nresamples
 
 #' Extract Number of Observations from a ddml_rep Object
 #'
@@ -363,9 +302,7 @@ length.ddml_rep <- function(x) {
 #' @importFrom stats nobs
 #' @export
 #' @method nobs ddml_rep
-nobs.ddml_rep <- function(object, ...) {
-  object$nobs
-}#NOBS.DDML_REP
+nobs.ddml_rep <- function(object, ...) object$nobs
 
 #' @rdname ddml_rep
 #'
@@ -462,9 +399,7 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
                           type = "HC1", ...) {
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
   aggregation <- match.arg(aggregation)
-  agg <- aggregate_reps(object,
-                        aggregation = aggregation,
-                        type = type)
+  agg <- aggregate_reps(object, aggregation = aggregation, type = type)
   V <- agg$vcov[, , ensemble_idx]
   if (!is.matrix(V)) {
     V <- matrix(V, nrow = length(object$coef_names),
@@ -485,6 +420,9 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 #' @param ... Currently unused.
 #'
 #' @return A matrix with columns for lower and upper bounds.
+#'     When \code{uniform = TRUE}, the attribute
+#'     \code{"crit_val"} contains the aggregated uniform
+#'     critical value.
 #'
 #' @examples
 #' \donttest{
@@ -502,23 +440,26 @@ vcov.ddml_rep <- function(object, ensemble_idx = 1,
 #' @seealso \code{\link{summary.ddml_rep}} for the
 #'     aggregation equations.
 #'
+#' @importFrom stats confint coef
 #' @export
 #' @method confint ddml_rep
 confint.ddml_rep <- function(object, parm,
                              level = 0.95,
                              ensemble_idx = 1,
                              aggregation = c("median", "mean", "spectral"),
-                             type = "HC1", ...) {
+                             type = "HC1",
+                             uniform = FALSE,
+                             bootstraps = 999L, ...) {
+  # Aggregae coefficients and vcov matrices
   aggregation <- match.arg(aggregation)
-  agg <- aggregate_reps(object,
-                        aggregation = aggregation,
-                        type = type)
+  agg <- aggregate_reps(object, aggregation = aggregation, type = type)
   cf <- agg$coefficients[, ensemble_idx]
   se <- agg$se[, ensemble_idx]
   cf_names <- object$coef_names
   names(cf) <- cf_names
   names(se) <- cf_names
 
+  # Select parameters & results
   if (missing(parm)) {
     parm <- cf_names
   } else if (is.numeric(parm)) {
@@ -527,18 +468,34 @@ confint.ddml_rep <- function(object, parm,
     parm <- intersect(parm, cf_names)
     if (length(parm) == 0) {
       stop("None of the specified 'parm' were found ",
-           "in the model coefficients.",
-           call. = FALSE)
+           "in the model coefficients.", call. = FALSE)
     }#IF
   }#IFELSE
-
   cf <- cf[parm]
   se <- se[parm]
-  z <- stats::qnorm((1 + level) / 2)
+
+  # Construct confidence intervalus
+  if (uniform) {
+    R <- object$nresamples
+    crit_vals <- vapply(seq_len(R), function(r) {
+      ci_r <- confint(object$fits[[r]],
+                       level = level,
+                       ensemble_idx = ensemble_idx,
+                       type = type,
+                       uniform = TRUE,
+                       bootstraps = bootstraps) # multiplier bootstrap
+      attr(ci_r, "crit_val")
+    }, numeric(1))
+    agg_fn <- if (aggregation == "mean") mean else stats::median
+    z <- agg_fn(crit_vals) # aggregated critical values...
+  } else {
+    z <- stats::qnorm((1 + level) / 2)
+  }#IFELSE
   ci <- cbind(cf - z * se, cf + z * se)
   pct <- c((1 - level) / 2, (1 + level) / 2) * 100
   colnames(ci) <- paste0(format(pct, digits = 3), " %")
   rownames(ci) <- parm
+  attr(ci, "crit_val") <- z
   ci
 }#CONFINT.DDML_REP
 
@@ -604,13 +561,28 @@ confint.ddml_rep <- function(object, parm,
 summary.ddml_rep <- function(object,
                              aggregation = c("median", "mean", "spectral"),
                              type = "HC1", ...) {
+  # Aggregae coefficients and vcov matrices
   aggregation <- match.arg(aggregation)
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
-  agg <- aggregate_reps(object,
-                        aggregation = aggregation,
-                        type = type)
-  inf_results <- build_inf_from_agg(
-    agg, object$coef_names, object$ensemble_type)
+  agg <- aggregate_reps(object, aggregation = aggregation, type = type)
+  # Construct inference results
+  p <- length(object$coef_names)
+  nensb <- length(object$ensemble_type)
+  inf_results <- array(0, dim = c(p, 4, nensb))
+  for (j in seq_len(nensb)) {
+    theta_j <- agg$coefficients[, j]
+    se_j <- agg$se[, j]
+    t_val <- theta_j / se_j
+    p_val <- 2 * stats::pnorm(abs(t_val), lower.tail = FALSE)
+    inf_results[, 1, j] <- theta_j
+    inf_results[, 2, j] <- se_j
+    inf_results[, 3, j] <- t_val
+    inf_results[, 4, j] <- p_val
+  }#FOR
+  dimnames(inf_results) <- list(
+    object$coef_names,
+    c("Estimate", "Std. Error", "z value", "Pr(>|z|)"),
+    object$ensemble_type)
   result <- list(
     coefficients  = inf_results,
     type          = type,
@@ -640,29 +612,19 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
       "  Folds:", x$sample_folds,
       "  Resamples:", x$nresamples,
       "  Aggregation:", x$aggregation)
-  if (!is.null(x$shortstack) && x$shortstack) {
-    cat("  Stacking: short-stack")
-  }#IF
-  if (!is.null(x$type) && x$type != "HC1") {
-    cat("  SE:", x$type)
-  }#IF
+  if (!is.null(x$shortstack) && x$shortstack) cat("  Stacking: short-stack")
+  if (!is.null(x$type) && x$type != "HC1") cat("  SE:", x$type)
   cat("\n\n")
 
   nensb <- dim(x$coefficients)[3]
   for (j in seq_len(nensb)) {
-    if (nensb > 1) {
-      cat("Ensemble type:",
-          dimnames(x$coefficients)[[3]][j], "\n")
-    }#IF
+    if (nensb > 1) cat("Ensemble type:", dimnames(x$coefficients)[[3]][j], "\n")
     tbl <- x$coefficients[, , j]
     if (!is.matrix(tbl)) {
-      tbl <- matrix(tbl, nrow = 1,
-                    dimnames = list(
-                      dimnames(x$coefficients)[[1]],
-                      dimnames(x$coefficients)[[2]]))
+      tbl <- matrix(tbl, nrow = 1, dimnames = list(
+        dimnames(x$coefficients)[[1]], dimnames(x$coefficients)[[2]]))
     }#IF
-    stats::printCoefmat(tbl, digits = digits,
-                        has.Pvalue = TRUE,
+    stats::printCoefmat(tbl, digits = digits, has.Pvalue = TRUE, 
                         signif.stars = TRUE)
     if (j < nensb) cat("\n")
   }#FOR
@@ -689,6 +651,12 @@ print.summary.ddml_rep <- function(x, digits = 3, ...) {
 #'     columns? Default \code{FALSE}.
 #' @param conf.level Confidence level for intervals.
 #'     Default 0.95.
+#' @param uniform Logical. If \code{TRUE}, computes
+#'     uniform confidence intervals using the multiplier
+#'     bootstrap. Only used when \code{conf.int = TRUE}.
+#'     Default \code{FALSE}.
+#' @param bootstraps Integer number of bootstrap draws.
+#'     Only used when \code{uniform = TRUE}. Default 999.
 #' @param ... Currently unused.
 #'
 #' @return A \code{data.frame} with columns \code{term}, \code{estimate},
@@ -718,10 +686,11 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
                           aggregation = c("median", "mean", "spectral"),
                           type = "HC1",
                           conf.int = FALSE,
-                          conf.level = 0.95, ...) {
+                          conf.level = 0.95,
+                          uniform = FALSE,
+                          bootstraps = 999L, ...) {
   aggregation <- match.arg(aggregation)
-  s <- summary(x, aggregation = aggregation,
-               type = type)
+  s <- summary(x, aggregation = aggregation, type = type)
   inf <- s$coefficients
   nensb <- dim(inf)[3]
   p <- dim(inf)[1]
@@ -745,17 +714,22 @@ tidy.ddml_rep <- function(x, ensemble_idx = 1,
         aggregation = aggregation,
         stringsAsFactors = FALSE
       )
-      if (conf.int) {
-        z <- stats::qnorm((1 + conf.level) / 2)
-        row$conf.low <-
-          inf[k, 1, j] - z * inf[k, 2, j]
-        row$conf.high <-
-          inf[k, 1, j] + z * inf[k, 2, j]
-      }#IF
       rows[[length(rows) + 1]] <- row
     }#FOR
   }#FOR
-  do.call(rbind, rows)
+
+  res <- do.call(rbind, rows)
+  if (conf.int) {
+    ci_list <- lapply(j_seq, function(j) {
+      confint(x, level = conf.level, ensemble_idx = j,
+              aggregation = aggregation, type = type,
+              uniform = uniform, bootstraps = bootstraps)
+    })
+    ci_mat <- do.call(rbind, ci_list)
+    res$conf.low <- as.numeric(ci_mat[, 1])
+    res$conf.high <- as.numeric(ci_mat[, 2])
+  }#IF
+  res
 }#TIDY.DDML_REP
 
 #' Glance at a ddml_rep Object
@@ -789,13 +763,8 @@ glance.ddml_rep <- function(x, ...) {
   data.frame(
     nobs = x$nobs,
     sample_folds = x$sample_folds,
-    shortstack = if (is.null(x$shortstack)) {
-      FALSE
-    } else {
-      x$shortstack
-    },
-    ensemble_type = paste(x$ensemble_type,
-                          collapse = ", "),
+    shortstack = x$shortstack,
+    ensemble_type = paste(x$ensemble_type, collapse = ", "),
     model_type = x$model_type,
     estimator_name = x$estimator_name,
     nresamples = x$nresamples,

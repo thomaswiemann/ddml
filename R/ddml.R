@@ -376,20 +376,8 @@ ddml <- function(coefficients, scores, J,
   obj
 }#DDML
 
-# == S3 Methods =============================================================
+# S3 methods ================================================================
 
-#' @rdname ddml
-#' @param x An object of class \code{ddml}.
-#' @param name Name of the element to extract.
-#' @export
-`$.ddml` <- function(x, name) {
-  if (name == "weights") {
-    message("Note: '$weights' is deprecated for ddml ",
-            "objects. Use '$ensemble_weights' instead.")
-    return(.subset2(x, "ensemble_weights"))
-  }#IF
-  .subset2(x, name)
-}#`$.DDML`
 
 #' Extract Model Coefficients
 #'
@@ -558,12 +546,7 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #' @export
 vcov.ddml <- function(object, ensemble_idx = 1,
                       type = "HC1", ...) {
-  type <- validate_method_args(object,
-    ensemble_idx = ensemble_idx, type = type)
-
-  h <- if (type == "HC3") {
-    stats::hatvalues(object, ensemble_idx = ensemble_idx)
-  }#IF
+  type <- validate_method_args(object, ensemble_idx = ensemble_idx, type = type)
 
   sc <- object$scores[, , ensemble_idx, drop = FALSE]
   dim(sc) <- dim(sc)[1:2]
@@ -574,16 +557,12 @@ vcov.ddml <- function(object, ensemble_idx = 1,
   # Cluster aggregation: rowsum scores to cluster level
   clustered <- !is.null(object$cluster_variable) &&
     length(unique(object$cluster_variable)) < nrow(sc)
-  if (clustered) {
-    sc <- rowsum(sc, object$cluster_variable)
-  }#IF
+  if (clustered) sc <- rowsum(sc, object$cluster_variable)
 
   n_eff <- nrow(sc)
-
   if (type == "HC3") {
-    if (clustered) {
-      h <- as.vector(tapply(h, object$cluster_variable, sum))
-    }#IF
+    h <- stats::hatvalues(object, ensemble_idx = ensemble_idx)
+    if (clustered) h <- as.vector(tapply(h, object$cluster_variable, sum))
     sc <- sc / (1 - h)
   }#IF
 
@@ -607,14 +586,25 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 #'
 #' @param object An object of class \code{ddml}.
 #' @param parm A specification of which parameters are to be
-#' given confidence intervals, either a vector of numbers
-#' or a vector of names. If missing, all parameters are
-#' considered.
+#'     given confidence intervals, either a vector of numbers
+#'     or a vector of names. If missing, all parameters are
+#'     considered.
 #' @param level Confidence level. Default 0.95.
 #' @inheritParams vcov.ddml
+#' @param uniform Logical. If \code{TRUE}, computes
+#'     uniform confidence bands using the
+#'     multiplier bootstrap. The critical value replaces
+#'     the pointwise Gaussian quantile. Default
+#'     \code{FALSE}.
+#' @param bootstraps Integer number of bootstrap draws for
+#'     the multiplier bootstrap. Only used when
+#'     \code{uniform = TRUE}. Default 999.
 #' @param ... Currently unused.
 #'
 #' @return A matrix with columns for lower and upper bounds.
+#'     When \code{uniform = TRUE}, the attribute
+#'     \code{"crit_val"} contains the uniform critical
+#'     value.
 #'
 #' @examples
 #' \donttest{
@@ -627,8 +617,15 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 #' confint(plm_fit)
 #' confint(plm_fit, parm = "D1")
 #' confint(plm_fit, level = 0.90)
+#' confint(plm_fit, uniform = TRUE)
 #' }
-#' 
+#'
+#' @references
+#' Chernozhukov V, Chetverikov D, Kato K (2013). "Gaussian
+#' approximations and multiplier bootstrap for maxima of sums
+#' of high-dimensional random vectors." Annals of Statistics,
+#' 41(6), 2786-2819.
+#'
 #' @seealso \code{\link{vcov.ddml}}
 #'
 #' @family ddml inference
@@ -637,9 +634,12 @@ vcov.ddml <- function(object, ensemble_idx = 1,
 #' @export
 confint.ddml <- function(object, parm, level = 0.95,
                          ensemble_idx = 1,
-                         type = "HC1", ...) {
+                         type = "HC1",
+                         uniform = FALSE,
+                         bootstraps = 999L, ...) {
   cf <- object$coefficients[, ensemble_idx]
   cf_names <- object$coef_names
+  names(cf) <- cf_names
 
   if (missing(parm)) {
     parm <- cf_names
@@ -655,15 +655,34 @@ confint.ddml <- function(object, parm, level = 0.95,
   
   cf <- cf[parm]
 
-  V <- vcov(object, ensemble_idx = ensemble_idx,
-            type = type)
-  se <- sqrt(diag(V))[parm]
-  
-  z <- stats::qnorm((1 + level) / 2)
+  V <- vcov(object, ensemble_idx = ensemble_idx, type = type)
+  se_all <- sqrt(diag(V))
+  se <- se_all[parm]
+
+  if (uniform) {
+    # Multiplier bootstrap
+    sc <- object$scores[, , ensemble_idx, drop = FALSE]
+    dim(sc) <- dim(sc)[1:2]
+    J_j <- object$J[, , ensemble_idx, drop = FALSE]
+    dim(J_j) <- dim(J_j)[1:2]
+    cl <- object$cluster_variable
+    if (!is.null(cl) && length(unique(cl)) < nrow(sc)) sc <- rowsum(sc, cl)
+    n_eff <- nrow(sc)
+    inf_func <- sc %*% t(csolve(J_j))
+    parm_idx <- match(parm, cf_names)
+    xi <- matrix(stats::rnorm(bootstraps * n_eff), bootstraps, n_eff)
+    bres <- xi %*% inf_func[, parm_idx, drop = FALSE] / sqrt(n_eff)
+    sigma <- se_all[parm_idx] * sqrt(n_eff)
+    bT <- apply(bres, 1, function(b) max(abs(b / sigma)))
+    z <- as.numeric(stats::quantile(bT, level, type = 1, names = FALSE))
+  } else {
+    z <- stats::qnorm((1 + level) / 2)
+  }#IFELSE
   ci <- cbind(cf - z * se, cf + z * se)
   pct <- c((1 - level) / 2, (1 + level) / 2) * 100
   colnames(ci) <- paste0(format(pct, digits = 3), " %")
   rownames(ci) <- parm
+  attr(ci, "crit_val") <- z
   ci
 }#CONFINT.DDML
 
@@ -723,25 +742,19 @@ summary.ddml <- function(object, type = "HC1", ...) {
   type <- match.arg(type, c("HC0", "HC1", "HC3"))
   
   single_learner <- is_single_learner(object$learners)
-  ens_type <- if (single_learner) {
-    "single base learner"
-  } else {
+  ens_type <- if (single_learner) "single base learner" else
     object$ensemble_type
-  }#IFELSE
   
   nensb <- length(ens_type)
   p <- nrow(object$coefficients)
-
   inf <- array(0, dim = c(p, 4, nensb))
-
   for (j in seq_len(nensb)) {
     theta_j <- object$coefficients[, j]
 
     V <- stats::vcov(object, ensemble_idx = j, type = type)
     se <- sqrt(diag(V))
     z_val <- theta_j / se
-    p_val <- 2 * stats::pnorm(abs(z_val),
-                               lower.tail = FALSE)
+    p_val <- 2 * stats::pnorm(abs(z_val), lower.tail = FALSE)
 
     inf[, 1, j] <- theta_j
     inf[, 2, j] <- se
@@ -840,6 +853,12 @@ generics::glance
 #' @param type Character string specifying the
 #' variance-covariance estimator. One of \code{"HC1"}
 #' (default), \code{"HC0"}, or \code{"HC3"}.
+#' @param uniform Logical. If \code{TRUE}, computes uniform confidence intervals 
+#'     using the multiplier bootstrap. Only used when
+#'     \code{conf.int = TRUE}. Default \code{FALSE}.
+#' @param bootstraps Integer number of bootstrap draws for
+#'     the multiplier bootstrap. Only used when
+#'     \code{uniform = TRUE}. Default 999.
 #' @param ... Currently unused.
 #'
 #' @return A \code{data.frame} with columns \code{term},
@@ -847,6 +866,12 @@ generics::glance
 #' \code{p.value}, and \code{ensemble_type}. If
 #' \code{conf.int = TRUE}, also \code{conf.low} and
 #' \code{conf.high}.
+#'
+#' @references
+#' Chernozhukov V, Chetverikov D, Kato K (2013). "Gaussian
+#' approximations and multiplier bootstrap for maxima of sums
+#' of high-dimensional random vectors." Annals of Statistics,
+#' 41(6), 2786-2819.
 #'
 #' @examples
 #' \donttest{
@@ -864,7 +889,9 @@ generics::glance
 #' @method tidy ddml
 tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
                       conf.level = 0.95,
-                      type = "HC1", ...) {
+                      type = "HC1",
+                      uniform = FALSE,
+                      bootstraps = 999L, ...) {
   type <- match.arg(type, c("HC1", "HC0", "HC3"))
 
   s <- summary(x, type = type)
@@ -876,22 +903,16 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
     j_seq <- seq_len(nensb)
   } else {
     if (any(ensemble_idx < 1) || any(ensemble_idx > nensb)) {
-      stop(sprintf("ensemble_idx must be between 1 and %d", nensb),
-           call. = FALSE)
+      stop(sprintf("ensemble_idx must be between 1 and %d", nensb), call. = FALSE)
     }#IF
     j_seq <- ensemble_idx
   }#IFELSE
 
-  # Pre-allocate rows
+  # Generate tidy output by ensemble
   n_rows <- length(j_seq) * p
   term <- rep(dimnames(inf)[[1]], length(j_seq))
   ensemble_type <- rep(dimnames(inf)[[3]][j_seq], each = p)
-  
-  estimate <- numeric(n_rows)
-  std.error <- numeric(n_rows)
-  statistic <- numeric(n_rows)
-  p.value <- numeric(n_rows)
-
+  estimate <- std.error <- statistic <- p.value <- numeric(n_rows)
   idx <- 1
   for (j in j_seq) {
     for (k in seq_len(p)) {
@@ -914,9 +935,14 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
   )
 
   if (conf.int) {
-    z <- stats::qnorm((1 + conf.level) / 2)
-    res$conf.low <- res$estimate - z * res$std.error
-    res$conf.high <- res$estimate + z * res$std.error
+    ci_list <- lapply(j_seq, function(j) {
+      stats::confint(x, ensemble_idx = j,
+        level = conf.level, type = type,
+        uniform = uniform, bootstraps = bootstraps)
+    })
+    ci_mat <- do.call(rbind, ci_list)
+    res$conf.low <- as.numeric(ci_mat[, 1])
+    res$conf.high <- as.numeric(ci_mat[, 2])
   }#IF
 
   res
