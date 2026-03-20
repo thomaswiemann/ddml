@@ -21,7 +21,7 @@ ddml_att <- function(y, D, X,
                      ...) {
   cl <- match.call()
 
-  # == Preliminaries ================================================
+  # Preliminaries --------------------------------------------------------------
 
   dots <- list(...)
   messages <- resolve_messages(dots, "ddml_att", list(
@@ -62,7 +62,7 @@ ddml_att <- function(y, D, X,
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
-  # == Reduced-form estimation ======================================
+  # Reduced-form estimation ----------------------------------------------------
 
   # E[D|X]
   D_X_res <- get_CEF(D, X,
@@ -110,7 +110,7 @@ ddml_att <- function(y, D, X,
   nensb <- if (is.null(ensemble_type)) 1L
     else length(ensemble_type)
 
-  # == Score construction ===========================================
+  # Score construction ---------------------------------------------------------
 
   # Extrapolate E[Y|D=0,X] to full sample. aux_indx is indexed by
   # sorted D levels {0, 1}: [[1]] holds positions of {D=1}
@@ -131,18 +131,22 @@ ddml_att <- function(y, D, X,
   psi_b_mat <- D_mat * (y_mat - g_X_D0) / p_mat -
     m_X_tr * (1 - D_mat) * (y_mat - g_X_D0) / (p_mat * (1 - m_X_tr))
   psi_a_vec <- -D / p
-  psi_b <- lapply(seq_len(nensb), function(j) psi_b_mat[, j, drop = FALSE])
-  psi_a <- lapply(seq_len(nensb), function(j) array(psi_a_vec, dim = c(nobs, 1, 1)))
 
-  # == Target parameter =============================================
+  # Target parameter & influence function --------------------------------------
 
   att <- -colMeans(psi_b_mat) / mean(psi_a_vec)
 
   scores <- array(NA_real_, dim = c(nobs, 1, nensb))
   J <- array(NA_real_, dim = c(1, 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
   for (j in seq_len(nensb)) {
     scores[, 1, j] <- psi_a_vec * att[j] + psi_b_mat[, j]
     J[1, 1, j] <- mean(psi_a_vec)
+    
+    J_inv <- csolve(matrix(J[, , j], 1, 1))
+    inf_func[, 1, j] <- matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    dinf_dtheta[, 1, 1, j] <- psi_a_vec * J_inv[1, 1]
   }#FOR
 
   coef_names <- "ATT"
@@ -150,7 +154,7 @@ ddml_att <- function(y, D, X,
   rownames(coef) <- coef_names
   colnames(coef) <- ensemble_type
 
-  # == Output =======================================================
+  # Output ---------------------------------------------------------------------
 
   announce_finish(t0, messages, silent)
 
@@ -166,7 +170,7 @@ ddml_att <- function(y, D, X,
     r2 = list(y_X_D0 = y_X_D0_res$r2,
               D_X = D_X_res$r2,
               D = D_res$r2),
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name =
@@ -198,6 +202,7 @@ ddml_att <- function(y, D, X,
         cv_subsamples = indxs$cv_subsamples)),
     call = cl,
     subclass = "ddml_att",
+    # ddml_att-specific fields
     learners = learners,
     learners_DX = learners_DX
   )

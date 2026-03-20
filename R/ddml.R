@@ -24,18 +24,8 @@
 #'
 #' where \eqn{W} denotes observed random variables and
 #' \eqn{\eta_0} is a (potentially high-dimensional) nuisance
-#' parameter, typically a vector of conditional expectation
-#' functions. The score \eqn{m} is \emph{Neyman orthogonal},
-#' meaning the moment condition is locally insensitive to
-#' perturbations of \eqn{\eta} around \eqn{\eta_0}.
-#'
-#' Each estimator in \code{ddml} uses a score that decomposes
-#' linearly in \eqn{\theta}:
-#'
-#' \deqn{m(W_i; \theta, \eta) = \psi_b(W_i; \eta) + \psi_a(W_i; \eta)\,\theta.}
-#'
-#' See the individual estimator pages for the specific forms
-#' of \eqn{\psi_a} and \eqn{\psi_b}.
+#' parameter. Throughout, the score \eqn{m} is assumed to be
+#' \emph{Neyman orthogonal}.
 #'
 #' Estimation proceeds via cross-fitting: the sample is randomly
 #' partitioned into \eqn{K} folds \eqn{\{I_k\}_{k=1}^K}. For
@@ -47,32 +37,46 @@
 #' \deqn{\frac{1}{n} \sum_{k=1}^{K} \sum_{i \in I_k}
 #' m(W_i; \hat\theta, \hat\eta_{-k}) = 0.}
 #'
-#' For the linear scores used in \code{ddml}, this yields the
-#' closed-form solution
+#' Inference is based on the influence function. Define the
+#' Jacobian
 #'
-#' \deqn{\hat\theta = -\hat{J}^{-1}\,\hat\psi_b,}
+#' \deqn{J(\theta, \eta) = E\!\left[
+#'   \frac{\partial m(W; \theta, \eta)}
+#'   {\partial \theta'}\right]}
 #'
-#' where \eqn{\hat\psi_b = n^{-1}\sum_{k}\sum_{i \in I_k}
-#' \psi_b(W_i; \hat\eta_{-k})} and
-#' \eqn{\hat{J} = n^{-1}\sum_k \sum_{i \in I_k}
-#' \psi_a(W_i; \hat\eta_{-k})} is the sample Jacobian.
+#' and the influence function
 #'
-#' Inference is based on the sandwich variance estimator
+#' \deqn{\phi_\theta(W_i; \theta, \eta, J)
+#'   = -J^{-1}\,m(W_i; \theta, \eta).}
 #'
-#' \deqn{\hat\Sigma = \hat{J}^{-1} \left(\frac{1}{n}
-#' \sum_i m_i m_i^\top\right)
-#' \hat{J}^{-\top} / n}
+#' The variance of \eqn{\hat\theta} is then estimated by
 #'
-#' where \eqn{m_i = m(W_i; \hat\theta, \hat\eta_{-k(i)})};
-#' see \code{\link{vcov.ddml}} for HC0/HC1/HC3 variants.
-#' Under regularity conditions and sufficient convergence of \eqn{\hat\eta}, 
-#' the DML estimator is asymptotically normal:
+#' \deqn{\hat{V} = \frac{1}{n} \sum_i
+#'   \phi_\theta(W_i; \hat\theta, \hat\eta_{-k(i)},
+#'   \hat{J})\,\phi_\theta(W_i; \hat\theta,
+#'   \hat\eta_{-k(i)}, \hat{J})'},
 #'
-#' \deqn{\sqrt{n}\,\hat\Sigma^{-1/2}(\hat\theta - \theta_0)
+#' where \eqn{\hat{J}} is the sample analog of the Jacobian:
+#'
+#' \deqn{\hat{J} = \frac{1}{n} \sum_i
+#'   \frac{\partial m(W_i; \hat\theta, \hat\eta_{-k(i)})}
+#'   {\partial \theta'}.}
+#'
+#' HC1 and HC3 variance estimators are described in
+#' \code{\link{vcov.ddml}}. The generalized leverage used in
+#' HC3 is defined in \code{\link{hatvalues.ddml}}.
+#'
+#' Under regularity conditions and sufficient convergence of
+#' \eqn{\hat\eta}, the DML estimator is asymptotically normal:
+#'
+#' \deqn{\sqrt{n}\,\hat{V}^{-1/2}(\hat\theta - \theta_0)
 #' \overset{d}{\to} N(0, I).}
 #'
 #' Further details and regularity conditions are given in
-#' Chernozhukov et al. (2018).
+#' Chernozhukov et al. (2018). The specific forms of the
+#' score \eqn{m} and Jacobian \eqn{J} for each estimator
+#' are documented on their respective help pages (e.g.,
+#' \code{\link{ddml_plm}}, \code{\link{ddml_ate}}).
 #'
 #' @references
 #' Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E,
@@ -99,11 +103,13 @@
 #'     from cross-fitted residuals.}
 #' \item{\code{r2}}{A named list of numeric vectors
 #'     containing per-learner out-of-sample R-squared values.}
-#' \item{\code{psi_a}, \code{psi_b}}{Score component lists
-#'     (length \code{nensb}). \code{psi_a[[j]]} is an
-#'     \code{(n x p x p)} array and \code{psi_b[[j]]} is an
-#'     \code{(n x p)} matrix. Used internally by
-#'     \code{\link{hatvalues.ddml}}.}
+#' \item{\code{inf_func}}{A 3D array of evaluated influence
+#'     functions (\code{n x p x nensb}).}
+#' \item{\code{dinf_dtheta}}{An optional list of length \code{nensb}
+#'     containing the derivatives of the influence functions with
+#'     respect to \eqn{\theta}. Each element is an \code{(n x p x p)}
+#'     array. Used internally by \code{\link{hatvalues.ddml}}
+#'     for HC3 inference.}
 #' \item{\code{scores}}{A 3D array of evaluated Neyman
 #'     orthogonal scores (\code{n x p x nensb}).}
 #' \item{\code{J}}{A 3D array of evaluated Jacobians
@@ -248,12 +254,8 @@ NULL
 #' with dimensions \code{(n x p x nensb)}.
 #' @param J A 3D array of evaluated Jacobians with dimensions
 #' \code{(p x p x nensb)}.
-#' @param psi_a A list of length \code{nensb}. Each element is an
-#' \code{(n x p x p)} array of individual-level Jacobian
-#' contributions.
-#' @param psi_b A list of length \code{nensb}. Each element is an
-#' \code{(n x p)} matrix of individual-level score
-#' contributions.
+#' @param inf_func A 3D array of evaluated influence functions
+#' with dimensions \code{(n x p x nensb)}.
 #' @param nobs Number of observations.
 #' @param coef_names Character vector of coefficient names
 #' (length \code{p}).
@@ -278,6 +280,8 @@ NULL
 #' @param subclass Optional character string for a subclass name. If
 #' provided, the object will have class
 #' \code{c(subclass, "ddml")}.
+#' @param dinf_dtheta An optional 4D array of dimensions \code{(nobs x p x p x nensb)}
+#'     containing the derivatives of the influence functions.
 #' @param ... Additional named components to include in the object.
 #'
 #' @return An object of S3 class \code{"ddml"} (or
@@ -297,16 +301,16 @@ NULL
 #' J <- array(-1, dim = c(1, 1, 1))
 #' psi_b <- list(matrix(y, ncol = 1))
 #' psi_a <- list(array(-1, dim = c(n, 1, 1)))
-#' coef <- matrix(theta, 1, 1,
-#'            dimnames = list("mean", "custom"))
+#' inf_func <- array(y - theta, dim = c(n, 1, 1))
+#' dinf_dtheta <- list(array(1, dim = c(n, 1, 1)))
+#' coef <- matrix(theta, 1, 1, dimnames = list("mean", "custom"))
 #'
 #' fit <- ddml(coefficients = coef, scores = scores, J = J,
-#'         psi_a = psi_a, psi_b = psi_b,
-#'         nobs = n, coef_names = "mean",
+#'         inf_func = inf_func, nobs = n, coef_names = "mean",
+#'         dinf_dtheta = dinf_dtheta,
 #'         estimator_name = "Sample Mean")
 #' summary(fit)
-ddml <- function(coefficients, scores, J,
-                 psi_a, psi_b,
+ddml <- function(coefficients, scores, J, inf_func,
                  nobs, coef_names, estimator_name,
                  ensemble_type = colnames(coefficients),
                  cluster_variable = seq_len(nobs),
@@ -318,6 +322,7 @@ ddml <- function(coefficients, scores, J,
                  fitted = NULL, splits = NULL,
                  call = match.call(),
                  subclass = NULL,
+                 dinf_dtheta = NULL,
                  ...) {
   # Validate required fields
   if (!is.matrix(coefficients)) {
@@ -329,8 +334,11 @@ ddml <- function(coefficients, scores, J,
   if (length(dim(J)) != 3) {
     stop("'J' must be a 3D array.", call. = FALSE)
   }#IF
-  if (!is.list(psi_a) || !is.list(psi_b)) {
-    stop("'psi_a' and 'psi_b' must be lists.", call. = FALSE)
+  if (!is.numeric(inf_func) || length(dim(inf_func)) != 3) {
+    stop("'inf_func' must be a 3D numeric array.", call. = FALSE)
+  }#IF
+  if (!is.null(dinf_dtheta) && !is.array(dinf_dtheta)) {
+    stop("'dinf_dtheta' must be a 4D array or NULL.", call. = FALSE)
   }#IF
 
   # Dimension consistency
@@ -343,12 +351,18 @@ ddml <- function(coefficients, scores, J,
   }#IF
   if (dim(J)[1] != p || dim(J)[2] != p ||
       dim(J)[3] != nensb) {
-    stop("'J' dimensions must be (p x p x nensb).",
-         call. = FALSE)
+    stop("'J' dimensions must be (p x p x nensb).", call. = FALSE)
   }#IF
-  if (length(psi_a) != nensb || length(psi_b) != nensb) {
-    stop("'psi_a' and 'psi_b' must have length nensb.",
-         call. = FALSE)
+  if (dim(inf_func)[1] != nobs || dim(inf_func)[2] != p ||
+      dim(inf_func)[3] != nensb) {
+    stop("'inf_func' dimensions must be (nobs x p x nensb).", call. = FALSE)
+  }#IF
+  if (!is.null(dinf_dtheta)) {
+    if (length(dim(dinf_dtheta)) != 4 ||
+        dim(dinf_dtheta)[1] != nobs || dim(dinf_dtheta)[2] != p ||
+        dim(dinf_dtheta)[3] != p || dim(dinf_dtheta)[4] != nensb) {
+      stop("'dinf_dtheta' dimensions must be (nobs x p x p x nensb).", call. = FALSE)
+    }
   }#IF
 
   # Assemble the object
@@ -357,7 +371,8 @@ ddml <- function(coefficients, scores, J,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
     r2 = r2,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func,
+    dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = estimator_name,
@@ -377,7 +392,6 @@ ddml <- function(coefficients, scores, J,
 }#DDML
 
 # S3 methods ================================================================
-
 
 #' Extract Model Coefficients
 #'
@@ -439,13 +453,20 @@ nobs.ddml <- function(object, ...) {
 #' estimator. These values are used internally to compute
 #' heteroskedasticity-robust HC3 standard errors.
 #'
-#' @details See \code{\link{ddml-intro}} for the DML framework and
-#' the definition of \eqn{\psi_a} and \eqn{\hat{J}}.
-#' For the linear scores used in \code{ddml},
-#' the generalized leverage simplifies to
+#' @details See \code{\link{ddml-intro}} for the definition of
+#' the influence function \eqn{\phi_\theta(W_i;
+#' \theta, \eta, J)}. The generalized leverage is
 #'
-#' \eqn{h_{ii} = \mathrm{tr}(\psi_a(W_i;
-#' \hat\eta)\,(n\hat{J})^{-1}).}
+#' \deqn{h_\theta(W_i; \theta, \eta, J)
+#'   = \mathrm{tr}\!\left(
+#'   -\frac{1}{n}
+#'   \frac{\partial \phi_\theta(W_i; \theta, \eta, J)}
+#'   {\partial \theta}
+#' \right).}
+#'
+#' This function returns the estimated hat values
+#' \eqn{\hat{h}_{\theta,i} =
+#' h_\theta(W_i; \hat\theta, \hat\eta, \hat{J})}.
 #'
 #' @param model An object of class \code{ddml}.
 #' @param ensemble_idx Integer index of the ensemble type to extract leverage
@@ -473,14 +494,20 @@ nobs.ddml <- function(object, ...) {
 #' @export
 hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
   validate_method_args(model, ensemble_idx = ensemble_idx)
-  psi_a_j <- model$psi_a[[ensemble_idx]]
-  J_j <- model$J[, , ensemble_idx, drop = FALSE]
-  dim(J_j) <- dim(J_j)[1:2]
-  J_inv <- csolve(J_j)
-  p <- ncol(J_j)
+  if (is.null(model$dinf_dtheta)) {
+    warning("hatvalues: dinf_dtheta not available; returning NA", call. = FALSE)
+    return(rep(NA_real_, nobs(model)))
+  }#IF
+
   n <- model$nobs
-  dim(psi_a_j) <- c(n, p * p)
-  as.vector((psi_a_j %*% as.vector(t(J_inv))) / n)
+  p <- dim(model$J)[1]
+  dinf_j <- model$dinf_dtheta[, , , ensemble_idx, drop = FALSE]
+
+  h <- rep(0, n)
+  for (k in seq_len(p)) h <- h + dinf_j[, k, k, 1]
+  h <- h / n
+
+  as.vector(h)
 }#HATVALUES.DDML
 
 #' Variance-Covariance Matrix for DDML Estimators
@@ -489,16 +516,17 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #' variance-covariance matrix for the DDML estimator
 #' \eqn{\hat\theta}.
 #'
-#' @details See \code{\link{ddml-intro}} for the DML framework,
-#' including the definitions of the score \eqn{m_i},
-#' the Jacobian \eqn{\hat{J}}, and the base sandwich
-#' estimator \eqn{\hat\Sigma}. This function provides
-#' three variants:
+#' @details See \code{\link{ddml-intro}} for the DML framework
+#' and the definition of the influence function
+#' \eqn{\phi_\theta}. Let \eqn{\hat\phi_i =
+#' \phi_\theta(W_i; \hat\theta, \hat\eta, \hat{J})}
+#' denote the estimated influence function evaluated at
+#' observation \eqn{i}. This function provides three
+#' variance estimator variants:
 #'
 #' \strong{HC0}:
-#' \deqn{V_{\mathrm{HC0}} = \hat{J}^{-1}
-#'   \left(\frac{1}{n}\sum_i m_i m_i'\right)
-#'   \hat{J}^{-\top} / n}
+#' \deqn{V_{\mathrm{HC0}} = \frac{1}{n^2}\sum_i
+#'   \hat\phi_i\,\hat\phi_i'}
 #'
 #' \strong{HC1} (default):
 #' \deqn{V_{\mathrm{HC1}} = V_{\mathrm{HC0}}
@@ -507,12 +535,11 @@ hatvalues.ddml <- function(model, ensemble_idx = 1, ...) {
 #' where \eqn{p} is the dimension of \eqn{\theta}.
 #'
 #' \strong{HC3}:
-#' \deqn{V_{\mathrm{HC3}} = \hat{J}^{-1}
-#'   \left(\frac{1}{n}\sum_i
-#'   \frac{m_i m_i'}{(1 - h_{ii})^2}\right)
-#'   \hat{J}^{-\top} / n}
+#' \deqn{V_{\mathrm{HC3}} = \frac{1}{n^2}\sum_i
+#'   \frac{\hat\phi_i\,\hat\phi_i'}
+#'   {(1 - \hat{h}_{\theta,i})^2}}
 #'
-#' where \eqn{h_{ii}} is the generalized leverage;
+#' where \eqn{\hat{h}_{\theta,i}} is the generalized leverage;
 #' see \code{\link{hatvalues.ddml}}.
 #'
 #' @param object An object of class \code{ddml}.
@@ -548,32 +575,26 @@ vcov.ddml <- function(object, ensemble_idx = 1,
                       type = "HC1", ...) {
   type <- validate_method_args(object, ensemble_idx = ensemble_idx, type = type)
 
-  sc <- object$scores[, , ensemble_idx, drop = FALSE]
-  dim(sc) <- dim(sc)[1:2]
-  J_j <- object$J[, , ensemble_idx, drop = FALSE]
-  dim(J_j) <- dim(J_j)[1:2]
-  p <- ncol(sc)
+  if_j <- object$inf_func[, , ensemble_idx, drop = FALSE]
+  dim(if_j) <- dim(if_j)[1:2]
+  p <- ncol(if_j)
 
-  # Cluster aggregation: rowsum scores to cluster level
+  # Cluster aggregation: rowsum influence functions to cluster level
   clustered <- !is.null(object$cluster_variable) &&
-    length(unique(object$cluster_variable)) < nrow(sc)
-  if (clustered) sc <- rowsum(sc, object$cluster_variable)
+    length(unique(object$cluster_variable)) < nrow(if_j)
+  if (clustered) if_j <- rowsum(if_j, object$cluster_variable)
 
-  n_eff <- nrow(sc)
+  n_eff <- nrow(if_j)
   if (type == "HC3") {
     h <- stats::hatvalues(object, ensemble_idx = ensemble_idx)
     if (clustered) h <- as.vector(tapply(h, object$cluster_variable, sum))
-    sc <- sc / (1 - h)
+    if_j <- if_j / (1 - h)
   }#IF
 
-  meat <- crossprod(sc) / n_eff
-  J_inv <- csolve(J_j)
-  V <- J_inv %*% meat %*% t(J_inv) / n_eff
+  V <- crossprod(if_j) / n_eff^2
 
   # HC1 degrees-of-freedom correction
-  if (type == "HC1") {
-    V <- V * n_eff / (n_eff - p)
-  }#IF
+  if (type == "HC1") V <- V * n_eff / (n_eff - p)
   
   rownames(V) <- colnames(V) <- object$coef_names
   V
@@ -661,14 +682,13 @@ confint.ddml <- function(object, parm, level = 0.95,
 
   if (uniform) {
     # Multiplier bootstrap
-    sc <- object$scores[, , ensemble_idx, drop = FALSE]
-    dim(sc) <- dim(sc)[1:2]
-    J_j <- object$J[, , ensemble_idx, drop = FALSE]
-    dim(J_j) <- dim(J_j)[1:2]
-    cl <- object$cluster_variable
-    if (!is.null(cl) && length(unique(cl)) < nrow(sc)) sc <- rowsum(sc, cl)
-    n_eff <- nrow(sc)
-    inf_func <- sc %*% t(csolve(J_j))
+    inf_func <- object$inf_func[, , ensemble_idx, drop = FALSE]
+    dim(inf_func) <- dim(inf_func)[1:2]
+    cl <- object$cluster_variable # check for clustering
+    if (!is.null(cl) && length(unique(cl)) < nrow(inf_func)) {
+      inf_func <- rowsum(inf_func, cl)
+    }#IF
+    n_eff <- nrow(inf_func)
     parm_idx <- match(parm, cf_names)
     xi <- matrix(stats::rnorm(bootstraps * n_eff), bootstraps, n_eff)
     bres <- xi %*% inf_func[, parm_idx, drop = FALSE] / sqrt(n_eff)
@@ -936,8 +956,7 @@ tidy.ddml <- function(x, ensemble_idx = 1, conf.int = FALSE,
 
   if (conf.int) {
     ci_list <- lapply(j_seq, function(j) {
-      stats::confint(x, ensemble_idx = j,
-        level = conf.level, type = type,
+      stats::confint(x, ensemble_idx = j, level = conf.level, type = type,
         uniform = uniform, bootstraps = bootstraps)
     })
     ci_mat <- do.call(rbind, ci_list)

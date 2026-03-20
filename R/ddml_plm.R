@@ -22,15 +22,12 @@
 #' where the nuisance parameters are \eqn{\eta = (\ell, r)} taking
 #'     true values \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
 #'
-#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#' \strong{Jacobian:}
 #'
-#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#' \deqn{J = -E[(D - r_0(X))(D - r_0(X))^\top]}
 #'
-#' where:
-#'
-#' \deqn{\psi_a(W; \eta) = -(D - r(X))(D - r(X))^\top}
-#'
-#' \deqn{\psi_b(W; \eta) = (D - r(X))(Y - \ell(X))}
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
 #'
 #' @inheritParams ddml-intro
 #' @param learners_DX Optional argument to allow for different estimators of
@@ -111,7 +108,7 @@ ddml_plm <- function(y, D, X,
                      ...) {
   cl <- match.call()
 
-  # == Preliminaries ================================================
+  # Preliminaries --------------------------------------------------------------
 
   dots <- list(...)
   messages <- resolve_messages(dots, "ddml_plm", list(
@@ -143,7 +140,7 @@ ddml_plm <- function(y, D, X,
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
-  # == Reduced-form estimation ======================================
+  # Reduced-form estimation ----------------------------------------------------
 
   # E[Y|X]
   y_X_res <- get_CEF(y, X,
@@ -178,13 +175,13 @@ ddml_plm <- function(y, D, X,
   nensb <- if (is.null(ensemble_type)) 1L
     else length(ensemble_type)
 
-  # == Score construction ===========================================
+  # Target parameter & influence function --------------------------------------
 
   coef <- matrix(0, nD + 1, nensb)
   scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
   J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
-  psi_a <- vector("list", nensb)
-  psi_b <- vector("list", nensb)
+  inf_func <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, nD + 1, nD + 1, nensb))
   for (j in seq_len(nensb)) {
     D_r <- D - get_cf_fitted(D_X_res_list, j)
     y_r <- y - cbind(y_X_res$cf_fitted)[, j]
@@ -199,13 +196,15 @@ ddml_plm <- function(y, D, X,
     scores[, , j] <- X_full * e_j
     J[, , j] <- -crossprod(X_full) / nobs
 
-    psi_b[[j]] <- X_full * as.vector(y_r)
-    psi_a[[j]] <- -sapply(seq_len(nD + 1),
-                          function(k) X_full * X_full[, k],
-                          simplify = "array")
+    J_inv <- csolve(matrix(J[, , j], nD + 1, nD + 1))
+    inf_func[, , j] <- matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
+    
+    U <- X_full %*% t(J_inv)
+    dinf_dtheta[, , , j] <- sapply(seq_len(nD + 1), function(k) {
+      -X_full[, k] * U
+    }, simplify = "array")
   }#FOR
 
-  # == Target parameter =============================================
 
   cn_weights <- dimnames(y_X_res$weights)[[2]]
   colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights
@@ -214,7 +213,7 @@ ddml_plm <- function(y, D, X,
   rownames(coef) <- c(cn_j, "(Intercept)")
   coef_names <- rownames(coef)
 
-  # == Output =======================================================
+  # Output ---------------------------------------------------------------------
 
   # Ensemble metrics
   ensemble_weights <- list(y_X = y_X_res$weights)
@@ -234,7 +233,7 @@ ddml_plm <- function(y, D, X,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
     r2 = r2,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Partially Linear Model",
@@ -255,6 +254,7 @@ ddml_plm <- function(y, D, X,
       names(ensemble_weights)),
     call = cl,
     subclass = "ddml_plm",
+    # ddml_plm-specific fields
     learners = learners,
     learners_DX = learners_DX
   )

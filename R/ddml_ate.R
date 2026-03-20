@@ -35,19 +35,14 @@
 #' where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, p, \pi)} taking true values
 #'     \eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{p_0(X) = E[D|X]}, and \eqn{\pi_0 = E[D]}.
 #'
-#' \strong{Linear Decomposition:} The scores decompose linearly in \eqn{\theta}:
+#' \strong{Jacobian:}
 #'
-#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#' \deqn{J^{\textrm{ATE}} = -1}
 #'
-#' where:
+#' \deqn{J^{\textrm{ATT}} = -E[D / \pi]}
 #'
-#' \deqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
-#'
-#' \deqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
-#'
-#' \deqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{\pi}}
-#'
-#' \deqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))}}
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
 #'
 #' @inheritParams ddml-intro
 #' @inheritParams ddml_apo
@@ -115,7 +110,7 @@ ddml_ate <- function(y, D, X,
                      ...) {
   cl <- match.call()
 
-  # == Preliminaries ================================================
+  # Preliminaries --------------------------------------------------------------
 
   dots <- list(...)
   messages <- resolve_messages(dots, "ddml_ate", list(
@@ -155,7 +150,7 @@ ddml_ate <- function(y, D, X,
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
-  # == Reduced-form estimation ======================================
+  # Reduced-form estimation ----------------------------------------------------
 
   shared_splits <- list(subsamples = indxs$subsamples,
                         cv_subsamples = indxs$cv_subsamples)
@@ -207,29 +202,26 @@ ddml_ate <- function(y, D, X,
   ensemble_type <- apo_1$ensemble_type
   nensb <- ncol(apo_1$coefficients)
 
-  # == Score construction ===========================================
-  psi_b <- lapply(seq_len(nensb), function(j) {
-    apo_1$psi_b[[j]] - apo_0$psi_b[[j]]
-  })
-  psi_a <- lapply(seq_len(nensb), function(j) array(-1, dim = c(nobs, 1, 1)))
-
-  # == Target parameter =============================================
+  # Target parameter & influence function --------------------------------------
 
   ate <- as.vector(apo_1$coefficients) - as.vector(apo_0$coefficients)
 
   scores <- array(NA_real_, dim = c(nobs, 1, nensb))
   J <- array(NA_real_, dim = c(1, 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
   for (j in seq_len(nensb)) {
-    scores[, 1, j] <- -ate[j] + as.vector(psi_b[[j]])
+    inf_func[, 1, j] <- apo_1$inf_func[, 1, j] - apo_0$inf_func[, 1, j]
+    scores[, 1, j] <- -inf_func[, 1, j]
     J[1, 1, j] <- -1
+    dinf_dtheta[, 1, 1, j] <- 1
   }#FOR
-
   coef_names <- "ATE"
   coef <- matrix(ate, nrow = 1, ncol = nensb)
   rownames(coef) <- coef_names
   colnames(coef) <- ensemble_type
 
-  # == Output =======================================================
+  # Output ---------------------------------------------------------------------
 
   announce_finish(t0, messages, silent)
 
@@ -245,7 +237,7 @@ ddml_ate <- function(y, D, X,
     r2 = list(y_X_D0 = apo_0$r2$y_X,
               y_X_D1 = apo_1$r2$y_X,
               D_X = apo_1$r2$D_X),
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Average Treatment Effect",
@@ -271,6 +263,7 @@ ddml_ate <- function(y, D, X,
         cv_subsamples = indxs$cv_subsamples)),
     call = cl,
     subclass = "ddml_ate",
+    # ddml_ate-specific fields
     learners = learners,
     learners_DX = learners_DX
   )

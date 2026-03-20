@@ -22,15 +22,12 @@
 #' where the nuisance parameters are \eqn{\eta = (\ell, r, v)} taking
 #'     true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_0(X) = E[D|X]}, and \eqn{v_0(X, Z) = E[D|X, Z]}.
 #'
-#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#' \strong{Jacobian:}
 #'
-#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#' \deqn{J = -E[(D - r(X))(v(X, Z) - r(X))^\top]}
 #'
-#' where:
-#'
-#' \deqn{\psi_a(W; \eta) = -(D - r(X))(v(X, Z) - r(X))^\top}
-#'
-#' \deqn{\psi_b(W; \eta) = (v(X, Z) - r(X))(Y - \ell(X))}
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
 #'
 #' @inheritParams ddml-intro
 #' @param Z A (sparse) matrix of instruments.
@@ -86,7 +83,7 @@ ddml_fpliv <- function(y, D, Z, X,
                        ...) {
   cl <- match.call()
 
-  # == Preliminaries ================================================
+  # Preliminaries --------------------------------------------------------------
 
   dots <- list(...)
   messages <- resolve_messages(dots, "ddml_fpliv", list(
@@ -121,7 +118,7 @@ ddml_fpliv <- function(y, D, Z, X,
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
-  # == Reduced-form estimation ======================================
+  # Reduced-form estimation ----------------------------------------------------
 
   # E[Y|X]
   y_X_res <- get_CEF(y, X,
@@ -189,13 +186,13 @@ ddml_fpliv <- function(y, D, Z, X,
   nensb <- if (is.null(ensemble_type)) 1L
     else length(ensemble_type)
 
-  # == Score construction ===========================================
+  # Target parameter & influence function --------------------------------------
 
   coef <- matrix(0, nD + 1, nensb)
   scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
   J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
-  psi_a <- vector("list", nensb)
-  psi_b <- vector("list", nensb)
+  inf_func <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, nD + 1, nD + 1, nensb))
 
   cn_weights <- dimnames(y_X_res$weights)[[2]]
   colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights
@@ -227,20 +224,22 @@ ddml_fpliv <- function(y, D, Z, X,
     scores[, , j] <- X_hat * e_j
     J[, , j] <- -crossprod(X_hat, X_full) / nobs
 
-    psi_b[[j]] <- X_hat * as.vector(y_r)
-    psi_a[[j]] <- -sapply(seq_len(nD + 1),
-                          function(k) X_hat * X_full[, k],
-                          simplify = "array")
+    J_inv <- csolve(matrix(J[, , j], nD + 1, nD + 1))
+    inf_func[, , j] <- matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
+    
+    U <- X_hat %*% t(J_inv)
+    dinf_dtheta[, , , j] <- sapply(seq_len(nD + 1), function(k) {
+      -X_full[, k] * U
+    }, simplify = "array")
   }#FOR
 
-  # == Target parameter =============================================
 
   cn_j <- colnames(D)
   if (is.null(cn_j)) cn_j <- paste0("D", seq_len(nD))
   rownames(coef) <- c(cn_j, "(Intercept)")
   coef_names <- rownames(coef)
 
-  # == Output =======================================================
+  # Output ---------------------------------------------------------------------
 
   ensemble_weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
@@ -265,7 +264,7 @@ ddml_fpliv <- function(y, D, Z, X,
     ensemble_weights = ensemble_weights,
     mspe = mspe,
     r2 = r2,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Flexible Partially Linear IV Model",
@@ -288,6 +287,7 @@ ddml_fpliv <- function(y, D, Z, X,
       names(ensemble_weights)),
     call = cl,
     subclass = "ddml_fpliv",
+    # ddml_fpliv-specific fields
     learners = learners,
     learners_DXZ = learners_DXZ,
     learners_DX = learners_DX
