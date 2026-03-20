@@ -196,15 +196,16 @@ ddml_plm <- function(y, D, X,
     scores[, , j] <- X_full * e_j
     J[, , j] <- -crossprod(X_full) / nobs
 
+    # Influence function
     J_inv <- csolve(matrix(J[, , j], nD + 1, nD + 1))
     inf_func[, , j] <- matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
     
+    # Derivative of the influence function with respect to theta
     U <- X_full %*% t(J_inv)
     dinf_dtheta[, , , j] <- sapply(seq_len(nD + 1), function(k) {
       -X_full[, k] * U
     }, simplify = "array")
   }#FOR
-
 
   cn_weights <- dimnames(y_X_res$weights)[[2]]
   colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights

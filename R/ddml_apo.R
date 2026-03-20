@@ -198,6 +198,7 @@ ddml_apo <- function(y, D, X,
   y_mat <- matrix(y, nobs, nensb)
 
   psi_b_mat <- (D_ind_mat * (y_mat - g_X) / m_X_tr + g_X) * weights_mat
+  
   # Target parameter & influence function --------------------------------------
 
   apo <- colMeans(psi_b_mat)

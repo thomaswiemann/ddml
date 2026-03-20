@@ -296,25 +296,6 @@ get_cf_resid_bylearner_for_eq <- function(fitted, eq) {
   if (!is.null(entry)) entry$cf_resid_bylearner else NULL
 }#GET_CF_RESID_BYLEARNER_FOR_EQ
 
-# Validate common arguments for S3 inference methods.
-# Returns the validated type (via match.arg) invisibly.
-validate_method_args <- function(object,
-                                 ensemble_idx = NULL,
-                                 type = NULL) {
-  if (!is.null(type)) {
-    type <- match.arg(type, c("HC0", "HC1", "HC3"))
-  }#IF
-  if (!is.null(ensemble_idx)) {
-    nensb <- length(object$ensemble_type)
-    if (nensb == 0) nensb <- 1L
-    if (ensemble_idx < 1 || ensemble_idx > nensb) {
-      stop("ensemble_idx must be between 1 and ",
-           nensb, ".", call. = FALSE)
-    }#IF
-  }#IF
-  invisible(type)
-}#VALIDATE_METHOD_ARGS
-
 # Input validation checks for DDML estimators
 validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
                             learners = NULL,
@@ -445,3 +426,24 @@ validate_custom_weights <- function(custom_weights, learners) {
          "the number of base learners.", call. = FALSE)
   }
 }#VALIDATE_CUSTOM_WEIGHTS
+
+# print a 3D coefficient array.
+# Used by print.summary.ral, print.summary.ddml, and their
+# _rep counterparts.
+print_coef_tables <- function(coefficients, fit_label = "Fit", digits = 3) {
+  nfit <- dim(coefficients)[3]
+  for (j in seq_len(nfit)) {
+    if (nfit > 1) {
+      cat(fit_label, ": ", dimnames(coefficients)[[3]][j], "\n", sep = "")
+    }#IF
+    tbl <- coefficients[, , j]
+    if (!is.matrix(tbl)) {
+      tbl <- matrix(tbl, nrow = 1, dimnames = list(
+        dimnames(coefficients)[[1]],
+        dimnames(coefficients)[[2]]))
+    }#IF
+    stats::printCoefmat(tbl, digits = digits, has.Pvalue = TRUE,
+                        signif.stars = TRUE)
+    if (j < nfit) cat("\n")
+  }#FOR
+}#PRINT_COEF_TABLES
