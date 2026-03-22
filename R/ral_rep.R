@@ -35,16 +35,21 @@ spectral_median_psd <- function(matrices) {
   obj <- 0
   for (r in seq_len(R)) obj <- obj + CVXR::norm(V - matrices[[r]], "2")
 
-  result <- CVXR::psolve(CVXR::Problem(CVXR::Minimize(obj)))
+  prob <- CVXR::Problem(CVXR::Minimize(obj))
+  result <- CVXR::psolve(prob)
 
-  if (result$status != "optimal") {
-    warning("SDP solver returned status '", result$status,
-            "'; falling back to element-wise median.", call. = FALSE)
-    arr <- array(unlist(lapply(matrices, as.vector)), dim = c(p, p, R))
-    return(apply(arr, c(1, 2), stats::median))
-  }#IF
-
-  V_sol <- result$getValue(V)
+  # CVXR 1.8.x (S7): psolve may return a plain numeric (optimal value)
+  # CVXR < 1.8 (S4): psolve returns an object with $status and $getValue
+  if (is.atomic(result)) {
+    # S7: variable value populated after solve
+    V_sol <- tryCatch(CVXR::value(V), error = function(e) V@value)
+  } else {
+    status <- if (is.list(result)) result$status else result@status
+    if (!identical(status, "optimal")) {
+      stop("SDP solver returned status '", status, "'.", call. = FALSE)
+    }#IF
+    V_sol <- if (is.list(result)) result$getValue(V) else result@getValue(V)
+  }#IFELSE
   (V_sol + t(V_sol)) / 2
 }#SPECTRAL_MEDIAN_PSD
 
@@ -55,8 +60,7 @@ spectral_median_psd <- function(matrices) {
 # where theta_tilde is the aggregated coefficient vector.
 # The three aggregation rules differ only in how they
 # summarise {V_1, ..., V_R} into a single matrix.
-aggregate_reps <- function(object, aggregation = "median",
-                           type = "HC1") {
+aggregate_reps <- function(object, aggregation = "median", type = "HC1") {
   aggregation <- match.arg(aggregation, c("median", "mean", "spectral"))
   R <- object$nresamples
   nfit <- object$nfit
@@ -69,9 +73,7 @@ aggregate_reps <- function(object, aggregation = "median",
     fit <- object$fits[[r]]
     coef_array[, , r] <- fit$coefficients
     for (j in seq_len(nfit)) {
-      vcov_array[, , j, r] <- stats::vcov(fit,
-                                           fit_idx = j,
-                                           type = type)
+      vcov_array[, , j, r] <- stats::vcov(fit, fit_idx = j, type = type)
     }#FOR
   }#FOR
 
@@ -98,18 +100,15 @@ aggregate_reps <- function(object, aggregation = "median",
     } else if (aggregation == "spectral") {
       agg_vcov[, , j] <- spectral_median_psd(V_list)
     } else {
-      V_arr <- array(unlist(lapply(V_list, as.vector)),
-                     dim = c(p, p, R))
-      agg_vcov[, , j] <- apply(V_arr, c(1, 2),
-                                stats::median)
+      V_arr <- array(unlist(lapply(V_list, as.vector)), dim = c(p, p, R))
+      agg_vcov[, , j] <- apply(V_arr, c(1, 2), stats::median)
     }#IFELSE
   }#FOR
 
   # Standard errors
   agg_se <- matrix(0, nrow = p, ncol = nfit)
   for (j in seq_len(nfit)) {
-    V_j <- matrix(agg_vcov[, , j, drop = FALSE],
-                  nrow = p, ncol = p)
+    V_j <- matrix(agg_vcov[, , j, drop = FALSE], nrow = p, ncol = p)
     agg_se[, j] <- sqrt(diag(V_j))
   }#FOR
 
@@ -181,9 +180,7 @@ ral_rep <- function(fits, subclass = NULL, ...) {
 
 #' @method [[ ral_rep
 #' @export
-`[[.ral_rep` <- function(x, i) {
-  x$fits[[i]]
-}#[[.RAL_REP
+`[[.ral_rep` <- function(x, i) x$fits[[i]]
 
 #' @method length ral_rep
 #' @export
@@ -328,8 +325,7 @@ confint.ral_rep <- function(object, parm = NULL,
                        bootstraps = bootstraps)
       attr(ci_r, "crit_val")
     }, numeric(1))
-    agg_fn <- if (aggregation == "mean") mean else
-      stats::median
+    agg_fn <- if (aggregation == "mean") mean else stats::median
     z <- agg_fn(crit_vals)
   } else {
     z <- stats::qnorm((1 + level) / 2)
@@ -469,8 +465,7 @@ print.summary.ral_rep <- function(x, digits = 3, ...) {
 #' @method tidy ral_rep
 #' @export
 tidy.ral_rep <- function(x, fit_idx = 1,
-                         aggregation = c("median", "mean",
-                                         "spectral"),
+                         aggregation = c("median", "mean", "spectral"),
                          type = "HC1",
                          conf.int = FALSE,
                          conf.level = 0.95,
@@ -549,15 +544,14 @@ glance.ral_rep <- function(x, ...) {
 #' @method plot ral_rep
 #' @export
 plot.ral_rep <- function(x, parm = NULL, level = 0.95,
-                         uniform = FALSE,
+                         uniform = TRUE,
                          type = "HC1",
                          xlab = NULL, ylab = NULL,
                          main = NULL,
                          col = "black", pch = 19, lwd = 1.5,
                          ...) {
   # Compute CIs using ral_rep method (aggregates across reps)
-  ci <- confint(x, parm = parm, level = level,
-                type = type, uniform = uniform)
+  ci <- confint(x, parm = parm, level = level, type = type, uniform = uniform)
   cf <- coef(x)
   labels <- rownames(ci)
   cf <- cf[labels]
@@ -571,8 +565,7 @@ plot.ral_rep <- function(x, parm = NULL, level = 0.95,
   if (is.null(ylab)) ylab <- "Estimate"
   if (is.null(main)) {
     ci_type <- if (uniform) "uniform" else "pointwise"
-    main <- paste0(format(level * 100, digits = 3),
-                   "% ", ci_type, " CI")
+    main <- paste0(format(level * 100, digits = 3), "% ", ci_type, " CI")
   }#IF
 
   # Plot
@@ -583,8 +576,7 @@ plot.ral_rep <- function(x, parm = NULL, level = 0.95,
     xaxt = "n", xlab = xlab, ylab = ylab,
     main = main, ...)
   graphics::abline(h = 0, lty = 2, col = "grey50")
-  graphics::segments(idx, ci[, 1], idx, ci[, 2],
-                     col = col, lwd = lwd)
+  graphics::segments(idx, ci[, 1], idx, ci[, 2], col = col, lwd = lwd)
   graphics::points(idx, cf, pch = pch, col = col)
   graphics::axis(1, at = idx, labels = labels, las = 2)
 

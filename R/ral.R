@@ -180,7 +180,7 @@ nobs.ral <- function(object, ...) {
 #'
 #' \deqn{h_i(\theta)
 #'   = \mathrm{tr}\!\left(
-#'   -\frac{1}{n}
+#'   \frac{1}{n}
 #'   \frac{\partial \phi_i(\theta)}
 #'   {\partial \theta}
 #' \right).}
@@ -207,7 +207,7 @@ nobs.ral <- function(object, ...) {
 hatvalues.ral <- function(model, fit_idx = 1, ...) {
   validate_fit_idx(model, fit_idx = fit_idx)
   if (is.null(model$dinf_dtheta)) {
-    warning("hatvalues: dinf_dtheta not available; ", "returning NA", 
+    warning("hatvalues: dinf_dtheta not available; returning NA", 
             call. = FALSE)
     return(rep(NA_real_, nobs(model)))
   }#IF
@@ -588,8 +588,7 @@ glance.ral <- function(x, ...) {
 #' Plot Coefficients from a RAL Estimator
 #'
 #' @description Plots point estimates with confidence intervals
-#'     from an object inheriting from class \code{ral}. Useful
-#'     for event-study style coefficient plots.
+#'     from an object inheriting from class \code{ral}. 
 #'
 #' @param x An object inheriting from class \code{ral}.
 #' @param parm A specification of which parameters to plot.
@@ -597,7 +596,7 @@ glance.ral <- function(x, ...) {
 #' @param level Numeric. Confidence level. Default \code{0.95}.
 #' @param uniform Logical. If \code{TRUE}, uses uniform
 #'     confidence bands via the multiplier bootstrap. Default
-#'     \code{FALSE}.
+#'     \code{TRUE}.
 #' @param fit_idx Integer. Which fit to plot (column index of
 #'     \code{coefficients}). Default \code{1}.
 #' @param type Character. HC type for standard errors.
@@ -624,6 +623,7 @@ glance.ral <- function(x, ...) {
 #' inf <- matrix(stats::rnorm(n * 2), n, 2)
 #' obj <- ral(matrix(theta, 2, 1),
 #'            array(inf, c(n, 2, 1)),
+#'            nobs = n,
 #'            coef_names = c("b1", "b2"))
 #' plot(obj)
 #'
@@ -633,7 +633,7 @@ glance.ral <- function(x, ...) {
 #' @method plot ral
 #' @export
 plot.ral <- function(x, parm = NULL, level = 0.95,
-                     uniform = FALSE,
+                     uniform = TRUE,
                      fit_idx = 1,
                      type = "HC1",
                      xlab = NULL, ylab = NULL,
@@ -641,8 +641,7 @@ plot.ral <- function(x, parm = NULL, level = 0.95,
                      col = "black", pch = 19, lwd = 1.5,
                      ...) {
   # Get coefficients and confidence intervals
-  ci <- confint(x, parm = parm, level = level,
-                fit_idx = fit_idx,
+  ci <- confint(x, parm = parm, level = level, fit_idx = fit_idx,
                 type = type, uniform = uniform)
   cf <- x$coefficients[, fit_idx]
   labels <- rownames(ci)
@@ -657,8 +656,7 @@ plot.ral <- function(x, parm = NULL, level = 0.95,
   if (is.null(ylab)) ylab <- "Estimate"
   if (is.null(main)) {
     ci_type <- if (uniform) "uniform" else "pointwise"
-    main <- paste0(format(level * 100, digits = 3),
-                   "% ", ci_type, " CI")
+    main <- paste0(format(level * 100, digits = 3), "% ", ci_type, " CI")
   }#IF
 
   # Plot
