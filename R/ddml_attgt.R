@@ -4,41 +4,42 @@
 #'
 #' @description Estimator for group-time average treatment effects
 #'     on the treated (GT-ATT) in staggered Difference-in-Differences
-#'     designs, using cross-fitted AIPW scores.
+#'     designs.
 #'
 #' @details
 #' \strong{Parameter of Interest:} \code{ddml_attgt} provides a
 #'     Double/Debiased Machine Learning estimator for the group-time
 #'     average treatment effects on the treated (GT-ATT) in the
-#'     staggered adoption model given by:
+#'     staggered adoption model. For each group \eqn{g} and time
+#'     period \eqn{t}, define the differenced outcome
+#'     \eqn{\Delta_g Y_{i,t} = Y_{i,t} - Y_{i,g^*}} where
+#'     \eqn{g^*} is the universal base period. The GT-ATT is:
 #'
 #' \deqn{\theta_0^{(g,t)} = E[\Delta_g Y_{i,t} | G_i = g]
 #'     - E[E[\Delta_g Y_{i,t} | X_i, G_i \ne g, G_i > t] | G_i = g]}
 #'
-#' where \eqn{\Delta_g Y_{i,t} = Y_{i,t} - Y_{i,g^*}} is the
-#'     difference relative to the universal base period
-#'     \eqn{g^* = \max\{s : s < g - \text{anticipation}\}}.
+#' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score
+#'     is:
 #'
-#' \strong{Neyman Orthogonal Score:} For each cell \eqn{(g,t)}, the
-#'     AIPW score is:
+#' \deqn{m_i^{(g,t)} =
+#'     \frac{\mathbf{1}\{G_i = g\} (\Delta_g Y_{i,t}
+#'     - \ell^{(g,t)}(X_i))}{\pi^g}
+#'     - \frac{q^{(g,t)}(X_i) \mathbf{1}\{G_i \ne g\}
+#'     \mathbf{1}\{G_i > t\} (\Delta_g Y_{i,t}
+#'     - \ell^{(g,t)}(X_i))}{\pi^g (1 - q^{(g,t)}(X_i))}
+#'     - \frac{\mathbf{1}\{G_i = g\}}{\pi^g} \theta}
 #'
-#' \deqn{m^{(g,t)}(W_i; \theta, \eta) =
-#'     \frac{D_i(\Delta_g Y_{i,t} - \ell(X_i))}{\pi}
-#'     - \frac{q(X_i)(1-D_i)(\Delta_g Y_{i,t}
-#'     - \ell(X_i))}{\pi(1 - q(X_i))}
-#'     - \frac{D_i}{\pi} \theta}
-#'
-#' where \eqn{D_i = \mathbb{1}\{G_i = g\}} is the cell-level
-#'     treatment indicator, and the nuisance parameters are
-#'     \eqn{\eta = (q, \ell, \pi)} taking true values
-#'     \eqn{q_0(X) = \Pr(G_i = g | X_i, \{G_i = g\} \cup
-#'     \{G_i > t\})}, \eqn{\ell_0(X) = E[\Delta_g Y_{i,t} |
-#'     G_i \ne g, G_i > t, X_i]}, and
-#'     \eqn{\pi_0 = \Pr(G_i = g)}.
+#' where the nuisance parameters are
+#'     \eqn{\eta = (\ell, q, \pi)} taking true values
+#'     \eqn{\ell_0^{(g,t)}(X) = E[\Delta_g Y_{i,t} \mid
+#'     G_i \ne g, G_i > t, X_i]},
+#'     \eqn{q_0^{(g,t)}(X) = \Pr(G_i = g \mid X_i,
+#'     \{G_i = g\} \cup \{G_i > t\})},
+#'     and \eqn{\pi_0^g = \Pr(G_i = g)}.
 #'
 #' \strong{Jacobian:}
 #'
-#' \deqn{J = -E[D / \pi]}
+#' \deqn{J^{(g,t)} = -1}
 #'
 #' See \code{\link{ddml-intro}} for how the influence function
 #' and inference are derived from these components.
@@ -180,6 +181,7 @@ ddml_attgt <- function(y, X = NULL, t, G,
     D = G, stratify = TRUE,
     subsamples = global_subsamples_init)
   global_subsamples <- global_indxs$subsamples
+  global_cv_subsamples <- global_indxs$cv_subsamples
 
   # Convert to fold-vector for fast projection
   global_fold_vec <- integer(n)
@@ -220,35 +222,58 @@ ddml_attgt <- function(y, X = NULL, t, G,
          "'t' define at least one post-treatment period.", call. = FALSE)
   }#IF
 
+  # Reduced-form estimation ----------------------------------------------------
 
-  # Pre-allocate ---------------------------------------------------------------
+  # Cross-fit global pi^g = Pr(G_i = g) per group
+  pi_g_fitted <- list()
+  for (g_val in groups) {
+    g_key <- as.character(g_val)
+    D_g <- as.integer(G == g_val)
+    pi_fitted_init <- if (!is.null(fitted)) fitted[[paste0("pi_g:", g_key)]]
+    pi_g_res <- get_CEF(D_g, matrix(1, n, 1),
+                        learners = list(what = ols, args = list(const = FALSE)),
+                        ensemble_type = "average",
+                        shortstack = FALSE,
+                        subsamples = global_subsamples,
+                        cv_subsamples = global_cv_subsamples,
+                        silent = TRUE,
+                        label = paste0("pi(G=", g_key, ")"),
+                        fitted = pi_fitted_init)
+    pi_g_fitted[[g_key]] <- pi_g_res
+  }#FOR
 
+  # Pre-allocate output arrays
   nensb <- NULL
-  coef_mat <- NULL
-  scores_arr <- NULL
-  J_arr <- NULL
-  psi_b_full <- NULL
-  psi_a_full <- NULL
+  coef <- NULL
+  scores <- NULL
+  J <- NULL
 
-  # Flat diagnostics lists — keyed by "ATT(g,t):equation"
-  all_ensemble_weights <- list()
-  all_mspe <- list()
-  all_r2 <- list()
-  all_fitted <- list()
-  all_splits <- list()
+  ensemble_weights <- list()
+  mspe <- list()
+  r2 <- list()
+  fitted_list <- list()
+  splits_list <- list()
   cell_info <- data.frame(
     group = integer(C), time = integer(C),
     base_period = integer(C),
     n_treated = integer(C), n_control = integer(C))
 
-  # Main loop: per-cell ATT estimation -----------------------------------------
+  # Store global pi^g fitted entries for pass-through
+  for (g_key in names(pi_g_fitted)) {
+    fitted_list[[paste0("pi_g:", g_key)]] <-
+      build_fitted_entry(pi_g_fitted[[g_key]], save_crossval)
+  }#FOR
+  splits_list[["global"]] <- list(subsamples = global_subsamples)
 
+  # Per-cell reduced-form estimation and score construction
   for (idx in seq_len(C)) {
     gtp <- gt_list[[idx]]
     g_val <- gtp$g; tt <- gtp$t
     cell_prefix <- paste0("ATT(", g_val, ",", tt, ")")
+    g_key <- as.character(g_val)
 
-    # Identify treated and control units
+    # Cell membership ---------------------------------------------------------
+
     treated <- (G == g_val)
     if (control_group == "nevertreated") {
       control <- never_treated
@@ -302,7 +327,8 @@ ddml_attgt <- function(y, X = NULL, t, G,
       list(D_X = list(subsamples = cell_subsamples))
     }#IFELSE
 
-    # Run ddml_att for this cell
+    # Cell-level reduced forms via ddml_att ------------------------------------
+
     fit <- ddml_att(
       y = delta_y, D = D_cell, X = X_cell,
       learners = learners, learners_DX = learners_qX,
@@ -321,17 +347,17 @@ ddml_attgt <- function(y, X = NULL, t, G,
     # Collect per-cell diagnostics (flat keying)
     for (eq in names(fit$ensemble_weights)) {
       key <- paste0(cell_prefix, ":", eq)
-      all_ensemble_weights[[key]] <- fit$ensemble_weights[[eq]]
-      all_mspe[[key]] <- fit$mspe[[eq]]
-      all_r2[[key]] <- fit$r2[[eq]]
+      ensemble_weights[[key]] <- fit$ensemble_weights[[eq]]
+      mspe[[key]] <- fit$mspe[[eq]]
+      r2[[key]] <- fit$r2[[eq]]
     }#FOR
     for (eq in names(fit$fitted)) {
       key <- paste0(cell_prefix, ":", eq)
-      all_fitted[[key]] <- fit$fitted[[eq]]
+      fitted_list[[key]] <- fit$fitted[[eq]]
     }#FOR
     for (eq in names(fit$splits)) {
       key <- paste0(cell_prefix, ":", eq)
-      all_splits[[key]] <- fit$splits[[eq]]
+      splits_list[[key]] <- fit$splits[[eq]]
     }#FOR
 
     # Determine nensb from first fit and allocate
@@ -339,60 +365,88 @@ ddml_attgt <- function(y, X = NULL, t, G,
       nensb <- ncol(fit$coefficients)
       ens_type <- colnames(fit$coefficients)
       if (is.null(ens_type)) ens_type <- fit$ensemble_type
-      coef_mat <- matrix(NA_real_, C, nensb)
-      scores_arr <- array(0, dim = c(n, C, nensb))
-      J_arr <- array(0, dim = c(C, C, nensb))
-      inf_func_full <- array(0, dim = c(n, C, nensb))
-      dinf_dtheta_full <- array(0, dim = c(n, C, C, nensb))
+      coef <- matrix(NA_real_, C, nensb)
+      psi_a_arr <- array(0, dim = c(n, C))
+      psi_b_arr <- array(0, dim = c(n, C, nensb))
+      scores <- array(0, dim = c(n, C, nensb))
+      J <- array(0, dim = c(C, C, nensb))
+      inf_func <- array(0, dim = c(n, C, nensb))
+      dinf_dtheta <- array(0, dim = c(n, C, C, nensb))
     }#IF
 
-    # Embed cell scores into full-sample arrays
-    for (j in seq_len(nensb)) {
-      att_val <- fit$coefficients[1, j]
-      coef_mat[idx, j] <- att_val
+    # Score construction -------------------------------------------------------
+    # Extract nuisance estimates from ddml_att fitted entry and construct
+    # population-level scores.
 
-      # Cell-level components (p = 1 for ATT)
-      cell_scores <- fit$scores[, 1, j]
-      cell_J <- fit$J[1, 1, j]
-      cell_inf_func <- fit$inf_func[, 1, j]
-      cell_dinf_dtheta <- fit$dinf_dtheta[, 1, 1, j]
-
-      # Rescale from cell-level to population-level:
-      # J_pop = (n_cell/n) * J_cell, so IF_pop = scores/J_pop
-      #       = (n/n_cell) * scores/J_cell = (n/n_cell) * IF_cell
-      pop_scale <- n / n_cell
-
-      scores_arr[keep, idx, j] <- cell_scores
-      inf_func_full[keep, idx, j] <- cell_inf_func * pop_scale
-      # Jacobian: rescale to full-sample average
-      J_arr[idx, idx, j] <- (n_cell / n) * cell_J
-      # dinf_dtheta: same rescaling (used for HC3 leverage)
-      dinf_dtheta_full[keep, idx, idx, j] <- cell_dinf_dtheta * pop_scale
+    # E[DeltaY | D=0, X] extrapolated to all cell units
+    y_X_D0_entry <- fit$fitted$y_X_D0
+    g_X_D0 <- matrix(NA_real_, n_cell, nensb)
+    g_X_D0[D_cell == 0, ] <- as.matrix(y_X_D0_entry$cf_fitted)
+    for (k in seq_along(cell_subsamples)) {
+      fold_k <- cell_subsamples[[k]]
+      d1_in_k <- fold_k[D_cell[fold_k] == 1]
+      if (length(d1_in_k) > 0) {
+        g_X_D0[d1_in_k, ] <- as.matrix(
+          y_X_D0_entry$auxiliary_fitted[[k]])
+      }#IF
     }#FOR
+
+    # E[D|X] trimmed propensity
+    m_X <- as.matrix(fit$fitted$D_X$cf_fitted)
+    m_X_tr <- trim_propensity_scores(m_X, trim, ens_type)
+
+    # Global pi^g = Pr(G_i = g)
+    pi_g_cell <- pi_g_fitted[[g_key]]$cf_fitted[keep, 1]
+
+    # Score components
+    D_cell_mat <- matrix(D_cell, n_cell, nensb)
+    delta_y_mat <- matrix(delta_y, n_cell, nensb)
+    pi_g_mat <- matrix(pi_g_cell, n_cell, nensb)
+
+    psi_b_arr[keep, idx, ] <- D_cell_mat *
+      (delta_y_mat - g_X_D0) / pi_g_mat -
+      m_X_tr * (1 - D_cell_mat) * (delta_y_mat - g_X_D0) /
+      (pi_g_mat * (1 - m_X_tr))
+    psi_a_arr[keep, idx] <- -D_cell / pi_g_cell
   }#FOR
 
-  # Coefficient names ----------------------------------------------------------
+  # Target parameter & influence function --------------------------------------
+
+  mean_psi_a <- colMeans(psi_a_arr)     # C-vector (= J diagonal)
+  J_inv_vec <- 1 / mean_psi_a           # C-vector
+
+  # J and dinf_dtheta are ensemble-independent, they only depend on constants...
+  J_diag_idx <- cbind(seq_len(C), seq_len(C))
+  dinf_dtheta_common <- t(t(psi_a_arr) * J_inv_vec)
+  for (j in seq_len(nensb)) {
+    J[, , j][J_diag_idx] <- mean_psi_a
+    dinf_dtheta[, , , j] <- dinf_dtheta_common
+  }#FOR
+
+  for (j in seq_len(nensb)) {
+    coef[, j] <- -colMeans(psi_b_arr[, , j]) / mean_psi_a
+
+    scores[, , j] <- t(t(psi_a_arr) * coef[, j]) + psi_b_arr[, , j]
+    inf_func[, , j] <- t(t(scores[, , j]) * J_inv_vec)
+  }#FOR
 
   coef_names <- paste0("ATT(", cell_info$group, ",", cell_info$time, ")")
-  rownames(coef_mat) <- coef_names
-  colnames(coef_mat) <- ens_type
-
-  # Store global subsamples for pass-through round-trip
-  all_splits[["global"]] <- list(subsamples = global_subsamples)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ens_type
 
   # Output ---------------------------------------------------------------------
 
   announce_finish(t0, messages, silent)
 
   ddml(
-    coefficients = coef_mat,
-    ensemble_weights = all_ensemble_weights,
-    mspe = all_mspe,
-    r2 = all_r2,
-    scores = scores_arr,
-    J = J_arr,
-    inf_func = inf_func_full,
-    dinf_dtheta = dinf_dtheta_full,
+    coefficients = coef,
+    ensemble_weights = ensemble_weights,
+    mspe = mspe,
+    r2 = r2,
+    scores = scores,
+    J = J,
+    inf_func = inf_func,
+    dinf_dtheta = dinf_dtheta,
     nobs = n,
     coef_names = coef_names,
     estimator_name = "Group-Time Average Treatment Effects on the Treated",
@@ -401,8 +455,8 @@ ddml_attgt <- function(y, X = NULL, t, G,
     sample_folds = sample_folds,
     cv_folds = if (shortstack) NULL else cv_folds,
     shortstack = shortstack,
-    fitted = all_fitted,
-    splits = all_splits,
+    fitted = fitted_list,
+    splits = splits_list,
     call = cl,
     subclass = "ddml_attgt",
     # ddml_attgt-specific fields
