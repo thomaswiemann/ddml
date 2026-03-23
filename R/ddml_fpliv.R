@@ -5,16 +5,16 @@
 #' @description Estimator for the flexible partially linear IV coefficient.
 #'
 #' @details
-#' \strong{Parameter of Interest:} \code{ddml_fpliv} provides a Double/Debiased Machine Learning
-#'     estimator for the target parameter \eqn{\theta_0} in the partially
-#'     linear IV model given by:
+#' \strong{Parameter of Interest:} \code{ddml_fpliv} provides a Double/Debiased 
+#'     Machine Learning estimator for the flexible partially linear instrumental 
+#'     variable (IV) coefficient \eqn{\theta_0}, defined by the partially linear 
+#'     IV model:
 #'
-#' \deqn{Y = \theta_0 D + g_0(X) + U,}
+#' \deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[\varepsilon|X, Z] = 0,}
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{E[U\vert X, Z] = 0} and \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
-#'     and \eqn{g_0} is an unknown nuisance function.
-#'
+#' where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+#'     \eqn{E[Var(E[D|X, Z]|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
+#' 
 #' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 #'
 #' \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r(X))](v(X, Z) - r(X))}

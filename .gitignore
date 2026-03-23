@@ -14,3 +14,5 @@ inst/doc
 .discussions/
 GEMINI.md
 README.html
+R/ddml_to_did.R
+tests/testthat/test-ddml_to_did.R

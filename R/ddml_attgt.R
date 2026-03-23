@@ -18,10 +18,13 @@
 #' \deqn{\theta_0^{(g,t)} = E[\Delta_g Y_{i,t} | G_i = g]
 #'     - E[E[\Delta_g Y_{i,t} | X_i, G_i \ne g, G_i > t] | G_i = g]}
 #'
+#' where \eqn{W_i \equiv (Y_{i,1}, \dots, Y_{i,T}, G_i, X_i)} is the 
+#'     observed random vector.
+#'
 #' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score
 #'     is:
 #'
-#' \deqn{m_i^{(g,t)} =
+#' \deqn{m^{(g,t)}(W_i; \theta, \eta) =
 #'     \frac{\mathbf{1}\{G_i = g\} (\Delta_g Y_{i,t}
 #'     - \ell^{(g,t)}(X_i))}{\pi^g}
 #'     - \frac{q^{(g,t)}(X_i) \mathbf{1}\{G_i \ne g\}

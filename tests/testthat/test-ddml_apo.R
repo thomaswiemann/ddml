@@ -40,7 +40,7 @@ test_that("ddml_apo computes with weights", {
 })#TEST_THAT
 
 test_that("ddml_apo computes with a single model and dependence", {
-  # Simulate small dataset
+  set.seed(1)
   n_cluster <- 200
   nobs <- 500
   X <- matrix(rnorm(n_cluster * 5), n_cluster, 5)

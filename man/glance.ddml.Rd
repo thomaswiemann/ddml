@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml.R
 \name{glance.ddml}
 \alias{glance.ddml}
-\title{Glance at a ddml Object}
+\title{Glance at a DDML Object}
 \usage{
 \method{glance}{ddml}(x, ...)
 }
@@ -12,14 +12,12 @@
 \item{...}{Currently unused.}
 }
 \value{
-A one-row \code{data.frame} with columns
-\code{nobs}, \code{sample_folds}, \code{shortstack},
-\code{ensemble_type}, and \code{model_type}.
+A one-row \code{data.frame}.
 }
 \description{
-Returns a one-row summary of model-level statistics,
-compatible with \pkg{modelsummary} and the \pkg{broom}
-ecosystem.
+DML-specific glance method. Includes DML fields like
+\code{sample_folds}, \code{shortstack}, and
+\code{model_type}.
 }
 \examples{
 \donttest{
@@ -32,8 +30,4 @@ plm_fit = ddml_plm(y, D, X,
 glance(plm_fit)
 }
 
-}
-\seealso{
-\code{\link{tidy.ddml}},
-\code{\link{summary.ddml}}
 }

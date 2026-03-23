@@ -131,18 +131,8 @@ parameter \eqn{\theta_0} identified by a moment condition
 
 where \eqn{W} denotes observed random variables and
 \eqn{\eta_0} is a (potentially high-dimensional) nuisance
-parameter, typically a vector of conditional expectation
-functions. The score \eqn{m} is \emph{Neyman orthogonal},
-meaning the moment condition is locally insensitive to
-perturbations of \eqn{\eta} around \eqn{\eta_0}.
-
-Each estimator in \code{ddml} uses a score that decomposes
-linearly in \eqn{\theta}:
-
-\deqn{m(W_i; \theta, \eta) = \psi_b(W_i; \eta) + \psi_a(W_i; \eta)\,\theta.}
-
-See the individual estimator pages for the specific forms
-of \eqn{\psi_a} and \eqn{\psi_b}.
+parameter. Throughout, the score \eqn{m} is assumed to be
+\emph{Neyman orthogonal}.
 
 Estimation proceeds via cross-fitting: the sample is randomly
 partitioned into \eqn{K} folds \eqn{\{I_k\}_{k=1}^K}. For
@@ -154,32 +144,57 @@ evaluated on fold \eqn{k}. The DML estimator
 \deqn{\frac{1}{n} \sum_{k=1}^{K} \sum_{i \in I_k}
 m(W_i; \hat\theta, \hat\eta_{-k}) = 0.}
 
-For the linear scores used in \code{ddml}, this yields the
-closed-form solution
+Inference is based on the influence function. Define the Jacobian
 
-\deqn{\hat\theta = -\hat{J}^{-1}\,\hat\psi_b,}
+\deqn{J(\theta, \eta) = E\!\left[
+  \frac{\partial m(W; \theta, \eta)}
+  {\partial \theta'}\right]}
 
-where \eqn{\hat\psi_b = n^{-1}\sum_{k}\sum_{i \in I_k}
-\psi_b(W_i; \hat\eta_{-k})} and
-\eqn{\hat{J} = n^{-1}\sum_k \sum_{i \in I_k}
-\psi_a(W_i; \hat\eta_{-k})} is the sample Jacobian.
+and the influence function
 
-Inference is based on the sandwich variance estimator
+\deqn{\phi_\theta(W_i; \theta, \eta, J)
+  = -J^{-1}\,m(W_i; \theta, \eta).}
 
-\deqn{\hat\Sigma = \hat{J}^{-1} \left(\frac{1}{n}
-\sum_i m_i m_i^\top\right)
-\hat{J}^{-\top} / n}
+The variance of \eqn{\hat\theta} is then estimated by
 
-where \eqn{m_i = m(W_i; \hat\theta, \hat\eta_{-k(i)})};
-see \code{\link{vcov.ddml}} for HC0/HC1/HC3 variants.
-Under regularity conditions and sufficient convergence of \eqn{\hat\eta},
-the DML estimator is asymptotically normal:
+\deqn{\hat{V} = \frac{1}{n} \sum_i
+  \phi_\theta(W_i; \hat\theta, \hat\eta_{-k(i)},
+  \hat{J})\,\phi_\theta(W_i; \hat\theta,
+  \hat\eta_{-k(i)}, \hat{J})'},
 
-\deqn{\sqrt{n}\,\hat\Sigma^{-1/2}(\hat\theta - \theta_0)
+where \eqn{\hat{J}} is the sample analog of the Jacobian:
+
+\deqn{\hat{J} = \frac{1}{n} \sum_i
+  \frac{\partial m(W_i; \hat\theta, \hat\eta_{-k(i)})}
+  {\partial \theta'}.}
+
+HC1 and HC3 variance estimators are described in
+\code{\link{vcov.ral}}. The leverage
+(see \code{\link{hatvalues.ral}}) for the DML estimator
+is
+
+\deqn{h_\theta(W_i; \theta, \eta, J)
+  = \mathrm{tr}\!\left(
+  -J^{-1} \frac{1}{n}
+  \frac{\partial m(W_i; \theta, \eta)}
+  {\partial \theta'}\right),}
+
+and its sample analog is
+\eqn{\hat{h}_{\theta,i} = h_\theta(W_i; \hat\theta,
+\hat\eta_{-k(i)}, \hat{J})}, stored in
+\code{dinf_dtheta}.
+
+Under regularity conditions and sufficient convergence of
+\eqn{\hat\eta}, the DML estimator is asymptotically normal:
+
+\deqn{\sqrt{n}\,\hat{V}^{-1/2}(\hat\theta - \theta_0)
 \overset{d}{\to} N(0, I).}
 
 Further details and regularity conditions are given in
-Chernozhukov et al. (2018).
+Chernozhukov et al. (2018). The specific forms of the
+score \eqn{m} and Jacobian \eqn{J} for each estimator
+are documented on their respective help pages (e.g.,
+\code{\link{ddml_plm}}, \code{\link{ddml_ate}}).
 }
 \section{Common output components}{
 
@@ -197,11 +212,13 @@ containing per-learner out-of-sample MSPEs, computed
 from cross-fitted residuals.}
 \item{\code{r2}}{A named list of numeric vectors
 containing per-learner out-of-sample R-squared values.}
-\item{\code{psi_a}, \code{psi_b}}{Score component lists
-(length \code{nensb}). \code{psi_a[[j]]} is an
-\code{(n x p x p)} array and \code{psi_b[[j]]} is an
-\code{(n x p)} matrix. Used internally by
-\code{\link{hatvalues.ddml}}.}
+\item{\code{inf_func}}{A 3D array of evaluated influence
+functions (\code{n x p x nensb}).}
+\item{\code{dinf_dtheta}}{An optional 4D array of dimension
+\code{(n x p x p x nensb)} containing the derivatives of the
+influence functions with respect to \eqn{\theta}. Used
+internally by \code{\link{hatvalues.ral}} for HC3
+inference.}
 \item{\code{scores}}{A 3D array of evaluated Neyman
 orthogonal scores (\code{n x p x nensb}).}
 \item{\code{J}}{A 3D array of evaluated Jacobians
@@ -234,9 +251,9 @@ the estimator (e.g., \code{"Partially Linear Model"}).}
 
 The following generic methods are available for all
 \code{ddml} objects: \code{\link{summary.ddml}},
-\code{\link{coef.ddml}}, \code{\link{vcov.ddml}},
-\code{\link{confint.ddml}}, \code{\link{hatvalues.ddml}},
-\code{\link{nobs.ddml}}, \code{\link{tidy.ddml}},
+\code{\link{coef.ral}}, \code{\link{vcov.ral}},
+\code{\link{confint.ral}}, \code{\link{hatvalues.ral}},
+\code{\link{nobs.ral}}, \code{\link{tidy.ddml}},
 \code{\link{glance.ddml}}, and
 \code{\link{diagnostics}}.
 }
@@ -255,6 +272,7 @@ Journal, 21(1), C1-C68.
 Other ddml estimators: 
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},

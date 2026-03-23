@@ -147,15 +147,15 @@ fields: \code{learners}, \code{learners_DX}.
 Estimator for the partially linear regression coefficient.
 }
 \details{
-\strong{Parameter of Interest:} \code{ddml_plm} provides a Double/Debiased Machine Learning
-estimator for the target parameter \eqn{\theta_0} in the partially
-linear model given by:
+\strong{Parameter of Interest:} \code{ddml_plm} provides a Double/Debiased
+Machine Learning estimator for the partially linear regression
+coefficient \eqn{\theta_0}, defined by the partially linear regression
+model:
 
-\deqn{Y = \theta_0 D + g_0(X) + U,}
+\deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[D\varepsilon] = 0, \quad E[\varepsilon|X] = 0,}
 
-where \eqn{(Y, D, X, U)} is a random vector such that
-\eqn{E[Cov(U, D\vert X)] = 0} and \eqn{E[Var(D\vert X)] \neq 0}, and
-\eqn{g_0} is an unknown nuisance function.
+where \eqn{W\equiv(Y, D, X, \varepsilon)} is a random vector such that
+\eqn{E[Var(D|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
 
 \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 
@@ -164,15 +164,12 @@ where \eqn{(Y, D, X, U)} is a random vector such that
 where the nuisance parameters are \eqn{\eta = (\ell, r)} taking
 true values \eqn{\ell_0(X) = E[Y|X]} and \eqn{r_0(X) = E[D|X]}.
 
-\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+\strong{Jacobian:}
 
-\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+\deqn{J = -E[(D - r_0(X))(D - r_0(X))^\top]}
 
-where:
-
-\deqn{\psi_a(W; \eta) = -(D - r(X))(D - r(X))^\top}
-
-\deqn{\psi_b(W; \eta) = (D - r(X))(Y - \ell(X))}
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -227,6 +224,7 @@ Other ddml estimators:
 \code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()}

@@ -165,42 +165,33 @@ Estimator for the average potential outcome, allowing for
 custom weights \eqn{\omega(X)}.
 }
 \details{
-\strong{Parameter of Interest:} \code{ddml_apo} provides a Double/Debiased Machine Learning
-estimator for the target parameter \eqn{\theta_0} in the model given by:
+\strong{Parameter of Interest:} \code{ddml_apo} provides a
+Double/Debiased Machine Learning estimator for the average potential
+outcome. Under conditional unconfoundedness and overlap, the parameter
+is identified by the following reduced form conditional expectation:
 
-\deqn{Y = g_0(D, X) + U,}
+\deqn{\theta_0^{\textrm{APO}} = E[\omega(X) E[Y|D=d, X]],}
 
-where \eqn{(Y, D, X, U)} is a random vector such that
-\eqn{E[U\vert D, X] = 0} and
-\eqn{\Pr(D=d\vert X) \in (0, 1)} with probability 1,
-and \eqn{g_0} is an unknown nuisance function.
-
-In this model, the average potential outcome (APO) for treatment
-level \eqn{d} is defined as
-
-\deqn{\theta_0^{\textrm{APO}} \equiv E[\omega(X) g_0(d, X)],}
+where \eqn{W \equiv (Y, D, X)} is the observed random vector.
 
 where \eqn{\omega(X)} is a known weighting function. If \eqn{\omega(X) = 1},
-this parameter corresponds to the standard Average Potential Outcome (APO)
+this parameter corresponds to the average potential outcome
 at treatment level \eqn{d}.
 
 \strong{Nuisance Parameters:} The nuisance parameters are
-\eqn{\eta = (\ell, p)} taking true values \eqn{\ell_0(X) = E[Y|D=d, X]} and
-\eqn{p_0(X) = E[\mathbf{1}\{D=d\}|X]}.
+\eqn{\eta = (\ell, r)} taking true values \eqn{\ell_0(X) = E[Y|D=d, X]} and
+\eqn{r_0(X) = \Pr(D=d|X)}.
 
 \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 
-\deqn{m(W; \theta, \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X) - \theta}
+\deqn{m(W; \theta, \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{r(X)} + \ell(X) \right) \omega(X) - \theta}
 
-\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+\strong{Jacobian:}
 
-\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+\deqn{J = -1}
 
-where:
-
-\deqn{\psi_a(W; \eta) = -1}
-
-\deqn{\psi_b(W; \eta) = \left( \frac{\mathbf{1}\{D=d\} (Y - \ell(X))}{p(X)} + \ell(X) \right) \omega(X)}
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -220,6 +211,7 @@ summary(apo_fit)
 Other ddml estimators: 
 \code{\link{ddml-intro}},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},

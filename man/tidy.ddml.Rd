@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml.R
 \name{tidy.ddml}
 \alias{tidy.ddml}
-\title{Tidy a ddml Object}
+\title{Tidy a DDML Object}
 \usage{
 \method{tidy}{ddml}(
   x,
@@ -10,6 +10,8 @@
   conf.int = FALSE,
   conf.level = 0.95,
   type = "HC1",
+  uniform = FALSE,
+  bootstraps = 999L,
   ...
 )
 }
@@ -17,33 +19,31 @@
 \item{x}{A \code{ddml} object.}
 
 \item{ensemble_idx}{Integer index of the ensemble type to
-report. Defaults to 1 (first ensemble type). Set to
-\code{NULL} to return results for all ensemble types.}
+report. Defaults to 1. Set to \code{NULL} for all.}
 
-\item{conf.int}{Logical. Include confidence interval
-columns? Default \code{FALSE}.}
+\item{conf.int}{Logical. Include confidence intervals?
+Default \code{FALSE}.}
 
-\item{conf.level}{Confidence level for intervals.
-Default 0.95.}
+\item{conf.level}{Confidence level. Default 0.95.}
 
-\item{type}{Character string specifying the
-variance-covariance estimator. One of \code{"HC1"}
-(default), \code{"HC0"}, or \code{"HC3"}.}
+\item{type}{Character. HC type. Default \code{"HC1"}.}
+
+\item{uniform}{Logical. Uniform CIs? Default \code{FALSE}.}
+
+\item{bootstraps}{Integer. Bootstrap draws. Default 999.}
 
 \item{...}{Currently unused.}
 }
 \value{
 A \code{data.frame} with columns \code{term},
 \code{estimate}, \code{std.error}, \code{statistic},
-\code{p.value}, and \code{ensemble_type}. If
-\code{conf.int = TRUE}, also \code{conf.low} and
-\code{conf.high}.
+\code{p.value}, and \code{ensemble_type}.
 }
 \description{
-Extracts coefficient estimates, standard errors, test
-statistics, and p-values from a \code{ddml} estimator in a
-format compatible with \pkg{modelsummary} and the
-\pkg{broom} ecosystem.
+DML-specific tidy method. Adds \code{ensemble_type}
+column labeling based on the estimator's learner/ensemble
+configuration. Delegates to \code{tidy.ral} for the base
+table computation.
 }
 \examples{
 \donttest{

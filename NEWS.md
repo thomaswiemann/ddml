@@ -4,7 +4,7 @@
 * Adds `fitted` and `splits` parameters to all `ddml_*()` estimators for re-estimation with different ensemble types without re-fitting base learners.
 * Adds `diagnostics()` for per-equation MSPE, R-squared, stacking weights, and cross-validated comparison (CVC) tests.
 * Adds HC0 and HC3 variance estimators alongside default HC1 via `type` argument in `vcov()`, `confint()`, `summary()`, and `tidy()`.
-* Adds `hatvalues()` method for generalized leverage diagnostics.
+* Adds `hatvalues()` method for leverage diagnostics.
 * Adds `nobs()` method returning the number of observations.
 * Learner specifications now use `what` instead of `fun`. `fun` is accepted with a deprecation message.
 * Adds parallel computation via the `parallel` parameter and progress reporting via `pbapply`.

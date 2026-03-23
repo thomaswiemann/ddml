@@ -181,48 +181,37 @@ Estimator for the average treatment effect and the average
 treatment effect on the treated.
 }
 \details{
-\strong{Parameter of Interest:} \code{ddml_ate} and \code{ddml_att} provide Double/Debiased Machine
-Learning estimators for the average treatment effect and the average
-treatment effect on the treated, respectively, in the interactive model
-given by:
+\strong{Parameter of Interest:} \code{ddml_ate} and \code{ddml_att} provide
+Double/Debiased Machine Learning estimators for the average treatment
+effect and the average treatment effect on the treated, respectively.
+Under conditional unconfoundedness and overlap, the parameters
+are identified by the following reduced form parameters:
 
-\deqn{Y = g_0(D, X) + U,}
-
-where \eqn{(Y, D, X, U)} is a random vector such that
-\eqn{\operatorname{supp} D = \{0,1\}}, \eqn{E[U\vert D, X] = 0}, and
-\eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
-and \eqn{g_0} is an unknown nuisance function.
-
-In this model, the average treatment effect (ATE) is defined as
-
-\deqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)],}
+\deqn{\theta_0^{\textrm{ATE}} = E[E[Y|D=1, X] - E[Y|D=0, X]]}
 
 and the average treatment effect on the treated (ATT) is defined as
 
-\deqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1].}
+\deqn{\theta_0^{\textrm{ATT}} = E[Y|D=1] - E[E[Y|D=0, X]|D = 1].}
+
+where \eqn{W \equiv (Y, D, X)} is the observed random vector.
 
 \strong{Neyman Orthogonal Score:} The Neyman orthogonal scores are:
 
-\deqn{m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta}
+\deqn{m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{r(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-r(X)} + \ell_1(X) - \ell_0(X) - \theta}
 
-\deqn{m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))} - \frac{D\theta}{\pi}}
+\deqn{m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{r(X)(1-D)(Y-\ell_0(X))}{\pi(1-r(X))} - \frac{D}{\pi}\theta}
 
-where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, p, \pi)} taking true values
-\eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{p_0(X) = E[D|X]}, and \eqn{\pi_0 = E[D]}.
+where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, r, \pi)} taking true values
+\eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{r_0(X) = \Pr(D=1|X)}, and \eqn{\pi_0 = \Pr(D=1)}.
 
-\strong{Linear Decomposition:} The scores decompose linearly in \eqn{\theta}:
+\strong{Jacobian:}
 
-\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+\deqn{J^{\textrm{ATE}} = -1}
 
-where:
+\deqn{J^{\textrm{ATT}} = -1}
 
-\deqn{\psi_a^{\textrm{ATE}}(W; \eta) = -1}
-
-\deqn{\psi_b^{\textrm{ATE}}(W; \eta) = \frac{D(Y - \ell_1(X))}{p(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
-
-\deqn{\psi_a^{\textrm{ATT}}(W; \eta) = -\frac{D}{\pi}}
-
-\deqn{\psi_b^{\textrm{ATT}}(W; \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{p(X)(1-D)(Y-\ell_0(X))}{\pi(1-p(X))}}
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -259,6 +248,7 @@ summary(ate_fit)
 Other ddml estimators: 
 \code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},

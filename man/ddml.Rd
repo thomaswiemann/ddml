@@ -2,15 +2,13 @@
 % Please edit documentation in R/ddml.R
 \name{ddml}
 \alias{ddml}
-\alias{$.ddml}
 \title{Construct a \code{ddml} Object.}
 \usage{
 ddml(
   coefficients,
   scores,
   J,
-  psi_a,
-  psi_b,
+  inf_func,
   nobs,
   coef_names,
   estimator_name,
@@ -26,10 +24,9 @@ ddml(
   splits = NULL,
   call = match.call(),
   subclass = NULL,
+  dinf_dtheta = NULL,
   ...
 )
-
-\method{$}{ddml}(x, name)
 }
 \arguments{
 \item{coefficients}{A \code{(p x nensb)} matrix of estimated
@@ -42,13 +39,8 @@ with dimensions \code{(n x p x nensb)}.}
 \item{J}{A 3D array of evaluated Jacobians with dimensions
 \code{(p x p x nensb)}.}
 
-\item{psi_a}{A list of length \code{nensb}. Each element is an
-\code{(n x p x p)} array of individual-level Jacobian
-contributions.}
-
-\item{psi_b}{A list of length \code{nensb}. Each element is an
-\code{(n x p)} matrix of individual-level score
-contributions.}
+\item{inf_func}{A 3D array of evaluated influence functions
+with dimensions \code{(n x p x nensb)}.}
 
 \item{nobs}{Number of observations.}
 
@@ -89,11 +81,10 @@ objects. Optional.}
 provided, the object will have class
 \code{c(subclass, "ddml")}.}
 
+\item{dinf_dtheta}{An optional 4D array of dimensions \code{(nobs x p x p x nensb)}
+containing the derivatives of the influence functions.}
+
 \item{...}{Additional named components to include in the object.}
-
-\item{x}{An object of class \code{ddml}.}
-
-\item{name}{Name of the element to extract.}
 }
 \value{
 An object of S3 class \code{"ddml"} (or
@@ -104,8 +95,8 @@ See \code{\link{ddml-intro}} for the output structure.
 Build a \code{"ddml"} object from user-supplied score
 components. The resulting object inherits all S3 methods
 available for \code{ddml} objects, including
-\code{\link{summary.ddml}}, \code{\link{confint.ddml}},
-\code{\link{vcov.ddml}}, and \code{\link{tidy.ddml}}.
+\code{\link{summary.ddml}}, \code{\link{confint.ral}},
+\code{\link{vcov.ral}}, and \code{\link{tidy.ddml}}.
 }
 \examples{
 # A minimal example: construct a ddml object from pre-computed
@@ -118,12 +109,13 @@ scores <- array(y - theta, dim = c(n, 1, 1))
 J <- array(-1, dim = c(1, 1, 1))
 psi_b <- list(matrix(y, ncol = 1))
 psi_a <- list(array(-1, dim = c(n, 1, 1)))
-coef <- matrix(theta, 1, 1,
-           dimnames = list("mean", "custom"))
+inf_func <- array(y - theta, dim = c(n, 1, 1))
+dinf_dtheta <- array(1, dim = c(n, 1, 1, 1))
+coef <- matrix(theta, 1, 1, dimnames = list("mean", "custom"))
 
 fit <- ddml(coefficients = coef, scores = scores, J = J,
-        psi_a = psi_a, psi_b = psi_b,
-        nobs = n, coef_names = "mean",
+        inf_func = inf_func, nobs = n, coef_names = "mean",
+        dinf_dtheta = dinf_dtheta,
         estimator_name = "Sample Mean")
 summary(fit)
 }

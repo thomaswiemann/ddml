@@ -23,17 +23,18 @@ RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.3)
 Imports: 
-    methods,
-    stats,
+    generics,
+    glmnet,
+    graphics,
     MASS,
     Matrix,
+    methods,
     nnls,
     pbapply,
     quadprog,
-    glmnet,
     ranger,
-    xgboost,
-    generics
+    stats,
+    xgboost
 Suggests: 
     AER,
     covr,

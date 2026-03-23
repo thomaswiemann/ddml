@@ -5,15 +5,14 @@
 #' @description Estimator for the partially linear IV coefficient.
 #'
 #' @details
-#' \strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased Machine Learning
-#'     estimator for the target parameter \eqn{\theta_0} in the partially
-#'     linear IV model given by:
+#' \strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased 
+#'     Machine Learning estimator for the partially linear instrumental variable 
+#'     (IV) coefficient \eqn{\theta_0}, defined by the partially linear IV model:
 #'
-#' \deqn{Y = \theta_0 D + g_0(X) + U,}
+#' \deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[Z\varepsilon] = 0, \quad E[\varepsilon|X] = 0,}
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
-#'     \eqn{g_0} is an unknown nuisance function.
+#' where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+#'     \eqn{E[Cov(D, Z|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
 #'
 #' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 #'

@@ -157,16 +157,14 @@ fields: \code{learners}, \code{learners_DX},
 Estimator for the partially linear IV coefficient.
 }
 \details{
-\strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased Machine Learning
-estimator for the target parameter \eqn{\theta_0} in the partially
-linear IV model given by:
+\strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased
+Machine Learning estimator for the partially linear instrumental variable
+(IV) coefficient \eqn{\theta_0}, defined by the partially linear IV model:
 
-\deqn{Y = \theta_0 D + g_0(X) + U,}
+\deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[Z\varepsilon] = 0, \quad E[\varepsilon|X] = 0,}
 
-where \eqn{(Y, D, X, Z, U)} is a random vector such that
-\eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
-\eqn{g_0} is an unknown nuisance function.
-
+where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+\eqn{E[Cov(D, Z|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
 \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 
 \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r_D(X))](Z - r_Z(X))}
@@ -174,15 +172,12 @@ where \eqn{(Y, D, X, Z, U)} is a random vector such that
 where the nuisance parameters are \eqn{\eta = (\ell, r_D, r_Z)} taking
 true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and \eqn{r_{Z,0}(X) = E[Z|X]}.
 
-\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+\strong{Jacobian:}
 
-\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+\deqn{J = -E[(D - r_D(X))(Z - r_Z(X))^\top]}
 
-where:
-
-\deqn{\psi_a(W; \eta) = -(D - r_D(X))(Z - r_Z(X))^\top}
-
-\deqn{\psi_b(W; \eta) = (Z - r_Z(X))(Y - \ell(X))}
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -204,6 +199,7 @@ Other ddml estimators:
 \code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_plm}()}

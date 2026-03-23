@@ -20,7 +20,8 @@ number of observations.}
 \item{...}{Currently unused.}
 }
 \value{
-An object of class \code{"ddml_rep"} with fields:
+An object of class \code{c("ddml_rep", "ral_rep")}
+with fields:
 \describe{
 \item{fits}{List of \code{ddml} objects.}
 \item{nresamples}{Number of resamples.}

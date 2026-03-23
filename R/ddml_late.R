@@ -5,28 +5,22 @@
 #' @description Estimator for the local average treatment effect.
 #'
 #' @details
-#' \strong{Parameter of Interest:} \code{ddml_late} provides a Double/Debiased Machine Learning
-#'     estimator for the local average treatment effect in the interactive model
-#'     given by:
+#' \strong{Parameter of Interest:} \code{ddml_late} provides a
+#'     Double/Debiased Machine Learning estimator for the local average
+#'     treatment effect. Under the standard instrumental variable assumptions
+#'     (conditional independence, exclusion restriction, relevance, and 
+#'     monotonicity) with a binary instrument \eqn{Z} and a binary treatment 
+#'     \eqn{D}, the parameter is identified by the following reduced form 
+#'     parameter:
 #'
-#' \deqn{Y = g_0(D, X) + U,}
+#' \deqn{\theta_0^{\textrm{LATE}} = \frac{E[E[Y|Z=1, X] - E[Y|Z=0, X]]}{E[E[D|Z=1, X] - E[D|Z=0, X]]}}
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
-#'     \eqn{E[U\vert X, Z] = 0}, \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
-#'     \eqn{\Pr(Z=1\vert X) \in (0, 1)} with probability 1,
-#'     \eqn{p_0(1, X) \geq p_0(0, X)} with probability 1 where
-#'     \eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
-#'     \eqn{g_0} is an unknown nuisance function.
-#'
-#' In this model, the local average treatment effect (LATE) is defined as
-#'
-#' \deqn{\theta_0^{\textrm{LATE}} \equiv E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)].}
+#' where \eqn{W \equiv (Y, D, X, Z)} is the observed random vector.
 #'
 #' \strong{Nuisance Parameters:} The nuisance parameters are
 #'     \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, p)} taking true values
 #'     \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]}, \eqn{r_{z,0}(X) = E[D|Z=z, X]},
-#'     and \eqn{p_0(X) = E[Z|X]}.
+#'     and \eqn{p_0(X) = \Pr(Z=1|X)}.
 #'
 #' \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 #'
@@ -34,9 +28,7 @@
 #'
 #' \strong{Jacobian:}
 #'
-#' \deqn{J = -E\left[\frac{Z(D - r_1(X))}{p(X)}
-#'     - \frac{(1-Z)(D-r_0(X))}{1-p(X)}
-#'     + r_1(X) - r_0(X)\right]}
+#' \deqn{J = -E[r_1(X) - r_0(X)]}
 #'
 #' See \code{\link{ddml-intro}} for how the influence function
 #' and inference are derived from these components.

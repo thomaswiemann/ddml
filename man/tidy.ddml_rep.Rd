@@ -11,6 +11,8 @@
   type = "HC1",
   conf.int = FALSE,
   conf.level = 0.95,
+  uniform = FALSE,
+  bootstraps = 999L,
   ...
 )
 }
@@ -18,36 +20,35 @@
 \item{x}{A \code{ddml_rep} object.}
 
 \item{ensemble_idx}{Integer index of the ensemble type
-to report. Defaults to 1. Set to \code{NULL} to
-return results for all ensemble types.}
+to report. Defaults to 1. Set to \code{NULL} for
+all ensemble types.}
 
-\item{aggregation}{Character string: \code{"median"}
-(default), \code{"mean"}, or \code{"spectral"}.
-See \code{\link{summary.ddml_rep}} for details.}
+\item{aggregation}{Character string. Aggregation method.}
 
-\item{type}{Character string specifying the
-variance-covariance estimator. One of \code{"HC1"}
-(default), \code{"HC0"}, or \code{"HC3"}.}
+\item{type}{Character. HC type. Default \code{"HC1"}.}
 
-\item{conf.int}{Logical. Include confidence interval
-columns? Default \code{FALSE}.}
+\item{conf.int}{Logical. Include CIs? Default
+\code{FALSE}.}
 
-\item{conf.level}{Confidence level for intervals.
-Default 0.95.}
+\item{conf.level}{Confidence level. Default 0.95.}
+
+\item{uniform}{Logical. Uniform CIs? Default
+\code{FALSE}.}
+
+\item{bootstraps}{Integer. Bootstrap draws. Default 999.}
 
 \item{...}{Currently unused.}
 }
 \value{
-A \code{data.frame} with columns \code{term}, \code{estimate},
-\code{std.error}, \code{statistic}, \code{p.value},
-\code{ensemble_type}, and \code{aggregation}. If \code{conf.int = TRUE},
-also \code{conf.low} and \code{conf.high}.
+A \code{data.frame} with columns \code{term},
+\code{estimate}, \code{std.error}, \code{statistic},
+\code{p.value}, \code{ensemble_type}, and
+\code{aggregation}.
 }
 \description{
-Extracts aggregated coefficient estimates, standard
-errors, test statistics, and p-values from a
-\code{ddml_rep} object in a format compatible with
-\pkg{modelsummary} and the \pkg{broom} ecosystem.
+DML-specific tidy method. Adds \code{ensemble_type} and
+\code{aggregation} columns. Delegates to
+\code{tidy.ral_rep} for the base table computation.
 }
 \examples{
 \donttest{
