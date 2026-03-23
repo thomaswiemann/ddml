@@ -76,15 +76,19 @@ for (v in VIGNETTES) {
     next
   }
 
+  if (!file.exists(v$src)) {
+    message("[SKIP] ", v$name, " -- source not found: ", v$src)
+    next
+  }
+
   message("[KNIT] ", v$name, " (", v$src, " -> ", v$out, ")")
   t0 <- proc.time()
 
-  if (identical(v$name, "did")) {
+  if (identical(v$name, "did") || identical(v$name, "did_native")) {
     old_wd <- setwd("vignettes/articles")
-    on.exit(setwd(old_wd), add = TRUE)
-    knit("did.Rmd.txt", "did.Rmd")
-    setwd(old_wd)
-    on.exit(NULL)
+    tryCatch(
+      knit(basename(v$src), basename(v$out)),
+      finally = setwd(old_wd))
   } else {
     knit(v$src, v$out)
   }

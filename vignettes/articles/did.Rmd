@@ -1,9 +1,9 @@
 ---
-title: "Diff-in-Diff with Double/Debiased Machine Learning"
-description: "Tutorial on difference-in-difference estimation with Double/Debiased Machine Learning."
+title: "Diff-in-Diff Estimation and Aggregation"
+description: "Tutorial on DiD estimation with ddml_attgt, lincom aggregation, and uniform inference."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Diff-in-Diff with Double/Debiased Machine Learning}
+  %\VignetteIndexEntry{Diff-in-Diff Estimation and Aggregation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,93 +12,71 @@ vignette: >
 
 # Introduction
 
-This article illustrates how ``ddml`` can complement the highly popular [``did``](https://bcallaway11.github.io/did/index.html) package to compute group-time average treatment effects under a _conditional_ parallel trends assumption. The result is a doubly-robust difference-in-difference estimator for staggered treatment adoption designs that leverages machine learning and (short-)stacking to flexibly control for covariates -- or: difference-in-difference with machine learning.
+This article illustrates how ``ddml`` provides a fully self-contained pipeline for difference-in-differences estimation in staggered adoption designs. The workflow consists of four steps:
 
-For an excellent introduction to differences-in-differences with multiple time periods, see also [this article](https://bcallaway11.github.io/did/articles/multi-period-did.html). For a detailed discussion of the relevant asymptotic theory for Double/Debiased Machine Learning difference-in-difference estimators see Chang (2020). See also Ahrens et al. (2026) for an example of staggered differences-in-differences estimated with ddml.
+1. **Estimation** of group-time average treatment effects (GT-ATTs) via ``ddml_attgt``.
+2. **Aggregation** into dynamic event-study parameters via ``lincom_weights_did`` and ``lincom``.
+3. **Diagnostics** to inspect stacking weights and learner performance.
+4. **Inference** including uniform confidence bands via the multiplier bootstrap, and event-study plots via ``plot``.
 
-# Estimation using ``did``'s Default Estimator
+This pipeline does not require the ``did`` package for inference or plotting. However, we begin by computing baseline estimates with ``did::att_gt`` for comparison.
 
-For illustration, consider the data of Callaway and Sant'Anna (2020) on county-level teen employment rates from 2003-2007 for additional details. We are interested in the effect of treatment on the log-employment rate ``lemp`` and assume that parallel trends holds conditional on county population (``lpop`` is the log of county population).
+
+# Data
+
+We use the dataset of Callaway and Sant'Anna (2021) on county-level teen employment rates from 2003--2007. The outcome is log-employment (``lemp``) and we assume parallel trends hold conditional on log county population (``lpop``).
 
 
 ```r
-# Load ddml and did
 library(ddml)
 library(did)
 set.seed(588239)
 
-# Print the data
+# Load data
 data(mpdta)
-head(mpdta)
-#>     year countyreal     lpop     lemp first.treat treat
-#> 866 2003       8001 5.896761 8.461469        2007     1
-#> 841 2004       8001 5.896761 8.336870        2007     1
-#> 842 2005       8001 5.896761 8.340217        2007     1
-#> 819 2006       8001 5.896761 8.378161        2007     1
-#> 827 2007       8001 5.896761 8.487352        2007     1
-#> 937 2003       8019 2.232377 4.997212        2007     1
 ```
 
-By default, the group-time average treatment effect estimator of the ``did`` package controls _linearly_ for additional covariates. (In particular, the propensity score is estimated using [logistic regression](https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L96) and the outcome reduced form is estimated via  [linear regression](https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L107)). The below code snippet runs the default linear specification (similar to [this article](https://bcallaway11.github.io/did/articles/did-basics.html#an-example-with-real-data)).
+``ddml_attgt`` takes data in wide format: an $n \times T$ outcome matrix, a time-invariant covariate matrix, and a group vector:
 
 
 ```r
-# Estimate group-time average treatment effects with covariates
+# Reshape to wide format
+ids <- sort(unique(mpdta$countyreal))
+times <- sort(unique(mpdta$year))
+n <- length(ids)
+T_ <- length(times)
+
+# Build outcome matrix (n x T_)
+y <- matrix(NA_real_, n, T_)
+for (j in seq_along(times)) {
+  sub <- mpdta[mpdta$year == times[j], ]
+  y[match(sub$countyreal, ids), j] <- sub$lemp
+}
+
+# Extract time-invariant covariates and group membership
+first_obs <- mpdta[match(ids, mpdta$countyreal), ]
+G <- first_obs$first.treat
+G[G == 0] <- Inf  # ddml convention for never-treated
+X <- as.matrix(first_obs[, "lpop", drop = FALSE])
+
+cat("Units:", n, " Periods:", T_, " Groups:", length(unique(G)))
+#> Units: 500  Periods: 5  Groups: 4
+```
+
+
+# Baseline: ``did`` Package
+
+For comparison, we first estimate the GT-ATTs using the ``did`` package with linear controls. We set ``base_period = "universal"`` to match the base period convention used by ``ddml_attgt``:
+
+
+```r
 attgt_lm <- att_gt(yname = "lemp",
                    gname = "first.treat",
                    idname = "countyreal",
                    tname = "year",
                    xformla = ~lpop,
+                   base_period = "universal",
                    data = mpdta)
-
-# summarize the results
-summary(attgt_lm)
-#> 
-#> Call:
-#> att_gt(yname = "lemp", tname = "year", idname = "countyreal", 
-#>     gname = "first.treat", xformla = ~lpop, data = mpdta)
-#> 
-#> Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. <https://doi.org/10.1016/j.jeconom.2020.12.001>, <https://arxiv.org/abs/1803.09015> 
-#> 
-#> Group-Time Average Treatment Effects:
-#>  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band]  
-#>   2004 2004  -0.0145     0.0214       -0.0718      0.0427  
-#>   2004 2005  -0.0764     0.0313       -0.1601      0.0072  
-#>   2004 2006  -0.1404     0.0397       -0.2465     -0.0344 *
-#>   2004 2007  -0.1069     0.0373       -0.2065     -0.0073 *
-#>   2006 2004  -0.0005     0.0223       -0.0599      0.0590  
-#>   2006 2005  -0.0062     0.0192       -0.0574      0.0450  
-#>   2006 2006   0.0010     0.0199       -0.0523      0.0542  
-#>   2006 2007  -0.0413     0.0191       -0.0924      0.0098  
-#>   2007 2004   0.0267     0.0136       -0.0096      0.0630  
-#>   2007 2005  -0.0046     0.0171       -0.0503      0.0411  
-#>   2007 2006  -0.0284     0.0169       -0.0735      0.0166  
-#>   2007 2007  -0.0288     0.0173       -0.0749      0.0174  
-#> ---
-#> Signif. codes: `*' confidence band does not cover 0
-#> 
-#> P-value for pre-test of parallel trends assumption:  0.23267
-#> Control Group:  Never Treated,  Anticipation Periods:  0
-#> Estimation Method:  Doubly Robust
-```
-
-The ``did`` package offers visualization methods using ``gglpot2``:
-
-
-```r
-ggdid(attgt_lm)
-```
-
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%" />
-<p class="caption">Diff-in-Diff Estimates.</p>
-</div>
-
-Further, the group-time average treatment effects can easily be aggregated, for example, to estimate dynamic average treatment effects:
-
-
-```r
-# aggregate the group-time average treatment effects
 dyn_lm <- aggte(attgt_lm, type = "dynamic")
 summary(dyn_lm)
 #> 
@@ -110,402 +88,329 @@ summary(dyn_lm)
 #> 
 #> Overall summary of ATT's based on event-study/dynamic aggregation:  
 #>      ATT    Std. Error     [ 95%  Conf. Int.]  
-#>  -0.0804        0.0196    -0.1188     -0.0419 *
+#>  -0.0804        0.0209    -0.1213     -0.0394 *
 #> 
 #> 
 #> Dynamic Effects:
 #>  Event time Estimate Std. Error [95% Simult.  Conf. Band]  
-#>          -3   0.0267     0.0143       -0.0092      0.0627  
-#>          -2  -0.0036     0.0134       -0.0373      0.0301  
-#>          -1  -0.0232     0.0147       -0.0603      0.0138  
-#>           0  -0.0211     0.0127       -0.0529      0.0108  
-#>           1  -0.0530     0.0165       -0.0946     -0.0114 *
-#>           2  -0.1404     0.0349       -0.2281     -0.0528 *
-#>           3  -0.1069     0.0333       -0.1907     -0.0231 *
+#>          -4   0.0063     0.0234       -0.0517      0.0643  
+#>          -3   0.0269     0.0183       -0.0186      0.0724  
+#>          -2   0.0232     0.0150       -0.0140      0.0605  
+#>          -1   0.0000         NA            NA          NA  
+#>           0  -0.0211     0.0124       -0.0518      0.0096  
+#>           1  -0.0530     0.0163       -0.0935     -0.0125 *
+#>           2  -0.1404     0.0393       -0.2379     -0.0430 *
+#>           3  -0.1069     0.0355       -0.1950     -0.0188 *
 #> ---
 #> Signif. codes: `*' confidence band does not cover 0
 #> 
 #> Control Group:  Never Treated,  Anticipation Periods:  0
 #> Estimation Method:  Doubly Robust
-ggdid(dyn_lm)
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%" />
-<p class="caption">Dynamic Treatment Effect Estimates.</p>
-</div>
 
-# Constructing a ``xgboost``-based Diff-in-Diff Estimator
+# GT-ATT Estimation with ``ddml_attgt``
 
-Without additional _parametric_ functional form assumptions on the reduced form equations, it is _not_ guaranteed that the default ``att_gt`` estimator returns a convex combination of causal effects. This is because linear predictors do not necessarily correspond to the conditional expectation functions arising in the doubly-robust score of the group-time average treatment effect. The resulting misspecification error can then lead to negative weights in the aggregation of individual-level treatment effects.
-
-Fortunately, a convex combination of causal effects can be guaranteed (without parametric functional form assumptions) when using machine learning (nonparametric) reduced form estimators.
-
-``ddml`` facilitates the use of a large set of machine learning reduced form estimators, including simultaneous considerations of multiple estimators via (short-)stacking.
-
-To use ``ddml`` estimators with the ``did`` package, we can make use of the ``est_method`` argument of the ``att_gt`` function (see also ``?did::att_gt``). It is useful to construct this method in two steps:
-
-1. A simple wrapper for ``ddml_att`` that returns the objects needed by ``att_gt``
-2. A second wrapper that hard-codes arguments passed to ``ddml_att``
-
-This two-step approach allows for cleaner code when considering multiple ddml-based estimators (as we do in this article).
-
-The below code-snippet constructs a simple estimation method following step 1:
-
-```r
-# Initialize a global list to store fits for diagnostic inspection
-global_ddml_fits <- list()
-
-# write a general wrapper for ddml_att
-ddml_did_method <- function(y1, y0, D, covariates, ...) {
-  # Compute difference in outcomes
-  delta_y <- y1 - y0
-  # Compute the ATT
-  att_fit <- ddml_att(y = delta_y, D = D, X = covariates, ...)
-  
-  # Store the fit in the global list
-  global_ddml_fits[[length(global_ddml_fits) + 1]] <<- att_fit
-  
-  # Return results
-  att_est <- as.numeric(att_fit$coefficients)
-  inf.func <- as.vector(att_fit$psi_b[[1]]) + att_est * as.vector(att_fit$psi_a[[1]])
-  output <- list(ATT = att_est, att.inf.func = inf.func)
-  return(output)
-}#DDML_DID_METHOD
-```
-
-A potentially suitable machine learning reduced form estimator is gradient tree boosting (see also ``?mdl_xgboost``). The below code snippet completes the second wrapper by hard-coding both the learner and its arguments. Here, we consider 10-fold cross-fitting with a gradient tree boosting estimator (``eta`` is the learning rate, see also ``?mdl_xgboost``).
+We estimate GT-ATTs using ``ddml_attgt``. To validate against the ``did`` baseline, we start with OLS:
 
 
 ```r
-my_did_xgboost <- function(y1, y0, D, covariates, ...) {
-  # Hard-code learners
-  learners = list(what = mdl_xgboost,
-                  args = list(nrounds = 50,
-                              params = list(eta = 0.1, max_depth = 3),
-                              early_stopping_rounds = 1))
-  learners_DX = learners
-
-  # Call the general ddml_did method w/ additional hard-coded arguments
-  ddml_did_method(y1, y0, D, covariates,
-                  learners = learners,
-                  learners_DX = learners_DX,
-                  sample_folds = 5,
-                  silent = TRUE)
-}#MY_DID_XGBOOST
-```
-
-We can now use the reduced form estimator ``my_did_xgboost`` and pass it via the ``est_method`` argument:
-
-
-```r
-# estimate group-time average treatment effects with ddml
-attgt_xgboost <- att_gt(yname = "lemp",
-                        gname = "first.treat",
-                        idname = "countyreal",
-                        tname = "year",
-                        xformla = ~lpop,
-                        data = mpdta,
-                        est_method = my_did_xgboost)
-
-# summarize the results
-summary(attgt_xgboost)
+fit_ols <- ddml_attgt(y, X, t = times, G = G,
+                      learners = list(what = ols),
+                      learners_qX = list(what = mdl_glm),
+                      sample_folds = 10,
+                      silent = TRUE)
+summary(fit_ols)
+#> DDML estimation: Group-Time Average Treatment Effects on the Treated 
+#> Obs: 500   Folds: 10
 #> 
-#> Call:
-#> att_gt(yname = "lemp", tname = "year", idname = "countyreal", 
-#>     gname = "first.treat", xformla = ~lpop, data = mpdta, est_method = my_did_xgboost)
-#> 
-#> Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. <https://doi.org/10.1016/j.jeconom.2020.12.001>, <https://arxiv.org/abs/1803.09015> 
-#> 
-#> Group-Time Average Treatment Effects:
-#>  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band] 
-#>   2004 2004  -0.8753     1.2320       -3.8769      2.1263 
-#>   2004 2005   0.2318     0.8761       -1.9026      2.3661 
-#>   2004 2006  -1.1267     1.9940       -5.9845      3.7312 
-#>   2004 2007   2.2817     1.3789       -1.0777      5.6410 
-#>   2006 2004  -0.2555     0.1502       -0.6215      0.1104 
-#>   2006 2005   0.2194     0.1394       -0.1201      0.5590 
-#>   2006 2006  -0.0250     0.0988       -0.2656      0.2156 
-#>   2006 2007   0.1796     0.3459       -0.6631      1.0224 
-#>   2007 2004  -0.0174     0.1516       -0.3866      0.3519 
-#>   2007 2005   0.1452     0.1666       -0.2607      0.5510 
-#>   2007 2006   0.0346     0.2012       -0.4556      0.5248 
-#>   2007 2007  -0.1585     0.2331       -0.7264      0.4095 
+#>                Estimate Std. Error z value Pr(>|z|)    
+#> ATT(2004,2004) -0.02329    0.02200   -1.06   0.2899    
+#> ATT(2004,2005) -0.08196    0.02871   -2.85   0.0043 ** 
+#> ATT(2004,2006) -0.14114    0.03434   -4.11    4e-05 ***
+#> ATT(2004,2007) -0.10817    0.03346   -3.23   0.0012 ** 
+#> ATT(2006,2003)  0.01463    0.03026    0.48   0.6286    
+#> ATT(2006,2004)  0.00572    0.01818    0.31   0.7531    
+#> ATT(2006,2006)  0.00913    0.01716    0.53   0.5949    
+#> ATT(2006,2007) -0.04021    0.01993   -2.02   0.0436 *  
+#> ATT(2007,2003)  0.00527    0.02499    0.21   0.8331    
+#> ATT(2007,2004)  0.03271    0.02152    1.52   0.1284    
+#> ATT(2007,2005)  0.02758    0.01855    1.49   0.1370    
+#> ATT(2007,2007) -0.02853    0.01647   -1.73   0.0831 .  
 #> ---
-#> Signif. codes: `*' confidence band does not cover 0
-#> 
-#> P-value for pre-test of parallel trends assumption:  0.26144
-#> Control Group:  Never Treated,  Anticipation Periods:  0
-
-# plot the coefficients
-ggdid(attgt_xgboost)
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%" />
-<p class="caption">xgboost-based Diff-in-Diff Estimates.</p>
-</div>
 
-Of course, use of the ``ddml``-based reduced form estimator still allows us to leverage the various other methods of the ``did`` package, including the construction (and visualization of) dynamic average treatment effects:
+# Dynamic Aggregation via ``lincom``
+
+The ``lincom_weights_did`` function constructs the contrast matrix $R$ and the influence function for the estimated weights. The output is passed directly to ``lincom`` for inference. For the dynamic type, both pre-treatment (placebo) and post-treatment event times are included:
 
 
 ```r
-# aggregate the group-time average treatment effects
-dyn_xgboost <- aggte(attgt_xgboost, type = "dynamic")
-summary(dyn_xgboost)
+w_dyn <- lincom_weights_did(fit_ols, type = "dynamic")
+lc_dyn <- lincom(fit_ols, R = w_dyn$R,
+                 inf_func_R = w_dyn$inf_func_R,
+                 labels = w_dyn$labels)
+summary(lc_dyn)
+#> RAL estimation: Linear Combination 
+#> Obs: 500
 #> 
-#> Call:
-#> aggte(MP = attgt_xgboost, type = "dynamic")
-#> 
-#> Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. <https://doi.org/10.1016/j.jeconom.2020.12.001>, <https://arxiv.org/abs/1803.09015> 
-#> 
-#> 
-#> Overall summary of ATT's based on event-study/dynamic aggregation:  
-#>     ATT    Std. Error     [ 95%  Conf. Int.] 
-#>  0.2866        0.6471    -0.9817      1.5549 
-#> 
-#> 
-#> Dynamic Effects:
-#>  Event time Estimate Std. Error [95% Simult.  Conf. Band] 
-#>          -3  -0.0174     0.1556       -0.3593      0.3245 
-#>          -2   0.0514     0.1360       -0.2473      0.3502 
-#>          -1   0.0779     0.1405       -0.2308      0.3865 
-#>           0  -0.2056     0.1859       -0.6140      0.2028 
-#>           1   0.1970     0.3309       -0.5299      0.9239 
-#>           2  -1.1267     1.9879       -5.4935      3.2401 
-#>           3   2.2817     1.3781       -0.7456      5.3089 
+#>      Estimate Std. Error z value Pr(>|z|)    
+#> e=-4  0.00527    0.02487    0.21   0.8323    
+#> e=-3  0.02848    0.01783    1.60   0.1102    
+#> e=-2  0.02247    0.01479    1.52   0.1287    
+#> e=0  -0.02010    0.01172   -1.71   0.0865 .  
+#> e=1  -0.05413    0.01652   -3.28   0.0011 ** 
+#> e=2  -0.14114    0.03417   -4.13  3.6e-05 ***
+#> e=3  -0.10817    0.03329   -3.25   0.0012 ** 
 #> ---
-#> Signif. codes: `*' confidence band does not cover 0
-#> 
-#> Control Group:  Never Treated,  Anticipation Periods:  0
-ggdid(dyn_xgboost)
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+Pre-treatment event times (e < 0) serve as placebo tests: under the parallel trends assumption, these should be close to zero.
+
+The ``plot`` method produces an event-study style coefficient plot:
+
+
+```r
+plot(lc_dyn, uniform = TRUE, ylab = "ATT", main = "Dynamic ATT (OLS)")
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%" />
-<p class="caption">xgboost-based Dynamic Treatment Effect Estimates.</p>
+<img src="figures/did-unnamed-chunk-7-1.png" alt="Dynamic Treatment Effect Estimates (OLS)." width="90%" />
+<p class="caption">Dynamic Treatment Effect Estimates (OLS).</p>
 </div>
 
-The gradient tree boosting-based ATT estimate is only slightly different from the ATT estimate using the linear estimator of the ``did`` package, however, it is statistically insignificant.
 
-Given these two coefficients, is there a good reason to choose one over the other?
 
-It is ex-ante difficult to trade-off the potential bias from misspecification that the linear estimator suffers from with the potential bias from estimation error that the gradient tree boosting estimator may suffer from. ``ddml`` allows to resolve this conflict in a data-driven manner by simultaneous consideration of multiple machine learners via (short-)stacking. We turn to this in the next section.
+# Stacking-based Estimation
 
-# Constructing a Shortstacking-based Diff-in-Diff Estimator
-
-Instead of considering just a single machine learner -- that may or may not be suitable for the given application -- we can leverage (short-)stacking and simultaneously consider multiple machine learners. As in other settings, this substantially increases robustness to the underlying structure of the data.
-
-We construct a new wrapper for our ``ddml_did_method`` that hard-codes different reduced form estimators:
-
-- linear or logistic regression
-- gradient tree boosting with more and less regularization
-- random forests with more and less regularization
-
-The reduced form estimators are then optimally combined via non-negative least squares. Note that this specification also includes the linear control specifications considered by the default ``did`` learner, ensuring that machine learners are not spuriously selected. We leverage shortstacking to reduce computational time (see also ``vignette("stacking")``).
+We next leverage (short-)stacking to combine multiple base learners. Including OLS and logit ensures that the simpler specifications are never spuriously discarded:
 
 
 ```r
-my_did_stacking <- function(y1, y0, D, covariates, ...) {
-  # Hard-code learners for outcome reduced-form
-  learners = list(list(what = ols),
-                  list(what = mdl_xgboost,
-                       args = list(nrounds = 50,
-                                   params = list(eta = 0.1, max_depth = 1),
-                                   early_stopping_rounds = 1)),
-                  list(what = mdl_xgboost,
-                       args = list(nrounds = 50,
-                                   params = list(eta = 0.1, max_depth = 3),
-                                   early_stopping_rounds = 1)),
-                  list(what = mdl_ranger,
-                       args = list(num.trees = 100,
-                                   max.depth = 5)),
-                  list(what = mdl_ranger,
-                       args = list(num.trees = 100,
-                                   max.depth = 10)))
-  # Hard-code learners for treatment reduced-form
-  learners_DX = list(list(what = mdl_glm),
-                  list(what = mdl_xgboost,
-                       args = list(nrounds = 50,
-                                   params = list(eta = 0.1, max_depth = 1),
-                                   early_stopping_rounds = 1)),
-                  list(what = mdl_xgboost,
-                       args = list(nrounds = 50,
-                                   params = list(eta = 0.1, max_depth = 3),
-                                   early_stopping_rounds = 1)),
-                  list(what = mdl_ranger,
-                       args = list(num.trees = 100,
-                                   max.depth = 5)),
-                  list(what = mdl_ranger,
-                       args = list(num.trees = 100,
-                                   max.depth = 10)))
-  # Call the general ddml_did method w/ additional hard-coded arguments
-  ddml_did_method(y1, y0, D, covariates,
-                  learners = learners,
-                  learners_DX = learners_DX,
-                  sample_folds = 5,
-                  ensemble_type = "nnls",
-                  shortstack = TRUE,
-                  silent = TRUE)
-}#MY_DID_STACKING
+# Outcome learners
+learners_y <- list(
+  list(what = ols),
+  list(what = mdl_xgboost,
+       args = list(nrounds = 50,
+                   params = list(eta = 0.1, max_depth = 1),
+                   early_stopping_rounds = 1)),
+  list(what = mdl_xgboost,
+       args = list(nrounds = 50,
+                   params = list(eta = 0.1, max_depth = 3),
+                   early_stopping_rounds = 1)),
+  list(what = mdl_ranger,
+       args = list(num.trees = 100, max.depth = 5)),
+  list(what = mdl_ranger,
+       args = list(num.trees = 100, max.depth = 10)))
+
+# Propensity score learners
+learners_ps <- list(
+  list(what = mdl_glm),
+  list(what = mdl_xgboost,
+       args = list(nrounds = 50,
+                   params = list(eta = 0.1, max_depth = 1),
+                   early_stopping_rounds = 1)),
+  list(what = mdl_xgboost,
+       args = list(nrounds = 50,
+                   params = list(eta = 0.1, max_depth = 3),
+                   early_stopping_rounds = 1)),
+  list(what = mdl_ranger,
+       args = list(num.trees = 100, max.depth = 5)),
+  list(what = mdl_ranger,
+       args = list(num.trees = 100, max.depth = 10)))
+
+# Estimate with short-stacking
+fit_stack <- ddml_attgt(y, X, t = times, G = G,
+                        learners = learners_y,
+                        learners_qX = learners_ps,
+                        sample_folds = 5,
+                        ensemble_type = "nnls",
+                        shortstack = TRUE,
+                        silent = TRUE)
 ```
 
-Finally, we recompute the group-time average treatment effects using our shortstacking estimator:
-
 
 ```r
-# Clear the global fits list from the previous xgboost runs
-global_ddml_fits <- list()
-
-# estimate group-time average treatment effects with ddml
-attgt_stacking <- att_gt(yname = "lemp",
-                         gname = "first.treat",
-                         idname = "countyreal",
-                         tname = "year",
-                         xformla = ~lpop ,
-                         data = mpdta,
-                         est_method = my_did_stacking)
-
-# summarize the results
-summary(attgt_stacking)
+w_dyn_s <- lincom_weights_did(fit_stack, type = "dynamic")
+lc_dyn_s <- lincom(fit_stack, R = w_dyn_s$R,
+                   inf_func_R = w_dyn_s$inf_func_R,
+                   labels = w_dyn_s$labels)
+summary(lc_dyn_s)
+#> RAL estimation: Linear Combination 
+#> Obs: 500
 #> 
-#> Call:
-#> att_gt(yname = "lemp", tname = "year", idname = "countyreal", 
-#>     gname = "first.treat", xformla = ~lpop, data = mpdta, est_method = my_did_stacking)
-#> 
-#> Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. <https://doi.org/10.1016/j.jeconom.2020.12.001>, <https://arxiv.org/abs/1803.09015> 
-#> 
-#> Group-Time Average Treatment Effects:
-#>  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band]  
-#>   2004 2004  -0.0105     0.0243       -0.0739      0.0529  
-#>   2004 2005  -0.0736     0.0299       -0.1516      0.0045  
-#>   2004 2006  -0.1393     0.0377       -0.2375     -0.0410 *
-#>   2004 2007  -0.1110     0.0331       -0.1973     -0.0248 *
-#>   2006 2004  -0.0016     0.0245       -0.0655      0.0623  
-#>   2006 2005  -0.0075     0.0186       -0.0559      0.0410  
-#>   2006 2006   0.0075     0.0215       -0.0486      0.0635  
-#>   2006 2007  -0.0414     0.0196       -0.0924      0.0096  
-#>   2007 2004   0.0266     0.0148       -0.0120      0.0651  
-#>   2007 2005  -0.0030     0.0155       -0.0434      0.0375  
-#>   2007 2006  -0.0325     0.0176       -0.0783      0.0134  
-#>   2007 2007  -0.0287     0.0164       -0.0715      0.0141  
+#>      Estimate Std. Error z value Pr(>|z|)    
+#> e=-4  0.00588    0.02457    0.24   0.8110    
+#> e=-3  0.02752    0.01779    1.55   0.1218    
+#> e=-2  0.02371    0.01457    1.63   0.1036    
+#> e=0  -0.02131    0.01180   -1.81   0.0708 .  
+#> e=1  -0.05714    0.01613   -3.54   0.0004 ***
+#> e=2  -0.14076    0.03499   -4.02  5.7e-05 ***
+#> e=3  -0.10395    0.03332   -3.12   0.0018 ** 
 #> ---
-#> Signif. codes: `*' confidence band does not cover 0
-#> 
-#> P-value for pre-test of parallel trends assumption:  0.18267
-#> Control Group:  Never Treated,  Anticipation Periods:  0
-
-# plot the coefficients
-ggdid(attgt_stacking)
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
-
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%" />
-<p class="caption">Stacking-based Diff-in-Diff Estimates.</p>
-</div>
-The results are largely similar to those of the default linear estimator of the ``did`` package, suggesting that the linear approximation of the reduced forms is sufficiently accurate. (Of course we didn't know that before -- now, at least, we can sleep easy!)
-
-Other settings, in particular settings with multiple control variables, may show starker difference in the final estimates.
 
 
 ```r
-# aggregate the group-time average treatment effects
-dyn_stacking <- aggte(attgt_stacking, type = "dynamic")
-summary(dyn_stacking)
+plot(lc_dyn_s, uniform = TRUE, ylab = "ATT", main = "Dynamic ATT (Stacking)")
+```
+
+<div class="figure" style="text-align: center">
+<img src="figures/did-unnamed-chunk-10-1.png" alt="Dynamic Treatment Effect Estimates (Stacking)." width="90%" />
+<p class="caption">Dynamic Treatment Effect Estimates (Stacking).</p>
+</div>
+
+
+# Learner Diagnostics
+
+The stacking weights reveal which learners contribute to the final estimates. We summarize the NNLS weights across all group-time cells for both the outcome and propensity score reduced forms:
+
+
+```r
+# Extract diagnostics
+diag_stack <- diagnostics(fit_stack)
+
+# Helper: summarize stacking weights across (g,t) cells
+summarize_weights <- function(diag, pattern) {
+  eqs <- grep(pattern, names(diag$tables), value = TRUE)
+  w_col <- grep("^weight_", names(diag$tables[[eqs[1]]]),
+                 value = TRUE)[1]
+  w_mat <- sapply(eqs, function(eq) diag$tables[[eq]][[w_col]])
+  learner_names <- diag$tables[[eqs[1]]]$learner
+  data.frame(
+    learner = learner_names,
+    min  = round(apply(w_mat, 1, min), 4),
+    mean = round(apply(w_mat, 1, mean), 4),
+    max  = round(apply(w_mat, 1, max), 4),
+    row.names = NULL)
+}
+
+cat("Outcome reduced form---stacking weights:\n")
+#> Outcome reduced form---stacking weights:
+print(summarize_weights(diag_stack, ":y_X_D0$"), row.names = FALSE)
+#>    learner    min   mean    max
+#>  learner_1 0.1962 0.6213 0.9516
+#>  learner_2 0.0000 0.0330 0.1629
+#>  learner_3 0.0000 0.0000 0.0000
+#>  learner_4 0.0000 0.0036 0.0434
+#>  learner_5 0.0000 0.0118 0.1030
+
+cat("\nPropensity score---stacking weights:\n")
 #> 
-#> Call:
-#> aggte(MP = attgt_stacking, type = "dynamic")
+#> Propensity score---stacking weights:
+print(summarize_weights(diag_stack, ":D_X$"), row.names = FALSE)
+#>    learner    min   mean    max
+#>  learner_1 0.8434 0.9128 0.9516
+#>  learner_2 0.0000 0.0475 0.1071
+#>  learner_3 0.0000 0.0000 0.0000
+#>  learner_4 0.0000 0.0004 0.0045
+#>  learner_5 0.0000 0.0046 0.0551
+```
+
+In this application with a single covariate, the parametric learners (OLS/logit) receive the vast majority of the stacking weight---reassuring us that the default linear estimator is adequate here.
+
+
+# Comparing Results
+
+We compare the dynamic treatment effects from the OLS, stacking, and ``did`` baseline estimators:
+
+
+```r
+# Build comparison with all event times; base period e=-1 is 0 by definition
+ols_full <- setNames(rep(0, length(dyn_lm$egt)), paste0("e=", dyn_lm$egt))
+ols_full[w_dyn$labels] <- coef(lc_dyn)
+stack_full <- setNames(rep(0, length(dyn_lm$egt)), paste0("e=", dyn_lm$egt))
+stack_full[w_dyn_s$labels] <- coef(lc_dyn_s)
+comparison <- data.frame(
+  event_time = paste0("e=", dyn_lm$egt),
+  did = round(dyn_lm$att.egt, 4),
+  ols = round(ols_full, 4),
+  stacking = round(stack_full, 4)
+)
+comparison$did[is.na(comparison$did)] <- 0
+print(comparison, row.names = FALSE)
+#>  event_time     did     ols stacking
+#>        e=-4  0.0063  0.0053   0.0059
+#>        e=-3  0.0269  0.0285   0.0275
+#>        e=-2  0.0232  0.0225   0.0237
+#>        e=-1  0.0000  0.0000   0.0000
+#>         e=0 -0.0211 -0.0201  -0.0213
+#>         e=1 -0.0530 -0.0541  -0.0571
+#>         e=2 -0.1404 -0.1411  -0.1408
+#>         e=3 -0.1069 -0.1082  -0.1040
+```
+
+
+# Repeated Resampling with Uniform Inference
+
+To account for sample-splitting variability, we can repeat cross-fitting several times and aggregate results. The ``ddml_replicate`` function provides this functionality. Combined with ``lincom``, we obtain aggregated dynamic treatment effects with uniform confidence bands:
+
+
+```r
+fit_rep <- ddml_replicate(
+  ddml_attgt,
+  y = y, X = X, t = times, G = G,
+  learners = learners_y,
+  learners_qX = learners_ps,
+  sample_folds = 5,
+  ensemble_type = "nnls",
+  shortstack = TRUE,
+  resamples = 5,
+  silent = TRUE
+)
+```
+
+
+```r
+# lincom on replicated fits
+w_dyn_r <- lincom_weights_did(fit_rep, type = "dynamic")
+lc_dyn_r <- lincom(fit_rep, R = w_dyn_r$R,
+                   inf_func_R = w_dyn_r$inf_func_R,
+                   labels = w_dyn_r$labels)
+summary(lc_dyn_r)
+#> RAL estimation: Linear Combination 
+#> Obs: 500   Resamples: 5   Aggregation: median
 #> 
-#> Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. <https://doi.org/10.1016/j.jeconom.2020.12.001>, <https://arxiv.org/abs/1803.09015> 
-#> 
-#> 
-#> Overall summary of ATT's based on event-study/dynamic aggregation:  
-#>      ATT    Std. Error     [ 95%  Conf. Int.]  
-#>  -0.0804         0.021    -0.1217     -0.0392 *
-#> 
-#> 
-#> Dynamic Effects:
-#>  Event time Estimate Std. Error [95% Simult.  Conf. Band]  
-#>          -3   0.0266     0.0143       -0.0088      0.0619  
-#>          -2  -0.0027     0.0131       -0.0352      0.0299  
-#>          -1  -0.0266     0.0145       -0.0626      0.0094  
-#>           0  -0.0192     0.0113       -0.0472      0.0087  
-#>           1  -0.0521     0.0158       -0.0914     -0.0128 *
-#>           2  -0.1393     0.0372       -0.2315     -0.0471 *
-#>           3  -0.1110     0.0339       -0.1949     -0.0271 *
+#>      Estimate Std. Error z value Pr(>|z|)    
+#> e=-4  0.00713    0.02429    0.29  0.76917    
+#> e=-3  0.02957    0.01761    1.68  0.09317 .  
+#> e=-2  0.02405    0.01448    1.66  0.09662 .  
+#> e=0  -0.01985    0.01167   -1.70  0.08898 .  
+#> e=1  -0.05498    0.01642   -3.35  0.00081 ***
+#> e=2  -0.14143    0.03446   -4.10  4.1e-05 ***
+#> e=3  -0.10858    0.03288   -3.30  0.00096 ***
 #> ---
-#> Signif. codes: `*' confidence band does not cover 0
-#> 
-#> Control Group:  Never Treated,  Anticipation Periods:  0
-ggdid(dyn_stacking)
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%" />
-<p class="caption">Stacking-based Dynamic Treatment Effect Estimates.</p>
-</div>
-
-# Stacking Diagnostics for Group-Time Effects
-
-Because the ``did`` package encapsulates the estimation of each group-time cell dynamically, the resulting ``MP`` object does not natively return the underlying ``ddml`` model estimators for inspection. 
-
-However, because we stored the intermediate fits in the ``global_ddml_fits`` list inside our ``ddml_did_method`` wrapper, we can easily run stacking diagnostics on any specific cell. 
-
-For example, let's look at the diagnostics for the ``(g=2004, t=2006)`` cell (which is the third group-time cell evaluated by the shortstacking estimator):
+The plot method for replicated objects displays median-aggregated estimates with confidence bands. We can request uniform bands via ``uniform = TRUE``:
 
 
 ```r
-# Extract the ddml_att fit computed for Group 2004 at Time 2006
-cell_fit <- global_ddml_fits[[3]]
-
-# Run stacking diagnostics on the computed cell, enabling CVC testing
-print(diagnostics(cell_fit, cvc = TRUE))
-#> Stacking diagnostics: Average Treatment Effect on the Treated 
-#> Obs: 329 
-#> 
-#>   y_X_D0:
-#>    learner   mspe      r2 weight_nnls cvc_pval
-#>  learner_1 0.0666 -0.0066      0.1921    0.982
-#>  learner_2 0.1238 -0.8696      0.0000    0.002
-#>  learner_3 0.1238 -0.8696      0.0000    0.000
-#>  learner_4 0.0676 -0.0218      0.0000    0.266
-#>  learner_5 0.0676 -0.0207      0.0000    0.280
-#> 
-#>   D_X:
-#>    learner   mspe      r2 weight_nnls cvc_pval
-#>  learner_1 0.0575 -0.0038      0.9231    0.998
-#>  learner_2 0.1011 -0.7655      0.0000    0.000
-#>  learner_3 0.1011 -0.7655      0.0000    0.000
-#>  learner_4 0.0580 -0.0135      0.0000    0.226
-#>  learner_5 0.0581 -0.0145      0.0000    0.130
-#> 
-#>   D:
-#>    learner   mspe    r2 weight_average cvc_pval
-#>  learner_1 0.0571 0.003              1       NA
-#> 
-#> Note: CVC compares individual base learners. 
-#> Shortstacked ensemble CVC is not available (weights use all data).
+plot(lc_dyn_r, uniform = TRUE,
+     ylab = "ATT", main = "Dynamic ATT (Median, Uniform CI)")
 ```
 
-This diagnostic output displays the cross-validated Mean Squared Prediction Error (MSPE), the out-of-sample $R^2$, the non-negative least squares (NNLS) weights assigned to each base learner, and the CVC p-value.
+<div class="figure" style="text-align: center">
+<img src="figures/did-unnamed-chunk-15-1.png" alt="Dynamic ATT with Uniform Confidence Bands." width="90%" />
+<p class="caption">Dynamic ATT with Uniform Confidence Bands.</p>
+</div>
 
-**How to Interpret These Metrics to Guide Learner Choice:**
-
-1. **$R^2$**: Evaluates the proportion of variance explained by each learner out-of-sample. Because these are computed on hold-out folds, negative values can occur and indicate that a learner performs worse than a simple constant mean prediction (often a sign of severe overfitting or algorithmic mismatch).
-2. **Weights**: The short-stacking algorithm assigns weights to optimally combine the learners and minimize the overall MSPE. Learners with $0$ weight do not contribute to the final predictions because their predictive power is either poor or entirely subsumed by other models in the ensemble.
-3. **CVC P-Values**: The ``cvc_pval`` column shows the p-value from a Cross-Validation Criteria test (Lei, 2020), comparing each learner's MSPE against the MSPE of the single-best ML model in the list. A high p-value (e.g. > 0.05) indicates that the learner's predictive performance is not statistically worse than the best learner. If simple linear models (e.g., ``ols``) show high p-values, it implies machine learning does not significantly improve prediction out-of-sample for this specific parameter, which can legally justify reverting to simpler, faster estimators.
-4. **Actionable Efficiency**: If your diagnostic output consistently assigns $0$ weight, negative $R^2$, and $0.000$ CVC p-values to computationally expensive models (like deep random forests), you can safely remove them from the ``learners`` list in future runs to dramatically reduce computation time without sacrificing accuracy.
+The uniform bands are wider than pointwise intervals, providing simultaneous coverage over all event times. Pointwise intervals are available for reference via ``uniform = FALSE`` (the default).
 
 
 # References
 
 Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). "An Introduction to Double/Debiased Machine Learning." Journal of Economic Literature, forthcoming.
 
-Callaway B, Sant'Anna P (2021). “Difference-in-differences with multiple time periods.” Journal of Econometrics, 200-230.
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
 
-Callaway B, Sant'Anna P (2021). “did: Difference in Differences.” R package version 2.1.2, https://bcallaway11.github.io/did/.
+Callaway B, Sant'Anna P (2021). "Difference-in-differences with multiple time periods." Journal of Econometrics, 225(2), 200-230.
 
-Chang NC (2020). "Double/debiased machine learning for difference-in-difference models." The Econometrics Journal, 177-191.
+Chang N-C (2020). "Double/debiased machine learning for difference-in-difference models." The Econometrics Journal, 23(2), 177-191.
 
-Lei J (2020). "Cross-Validation With Confidence." Journal of the American Statistical Association, 115(532), 1978-1997.
-
+Chernozhukov V, Chetverikov D, Kato K (2013). "Gaussian approximations and multiplier bootstrap for maxima of sums of high-dimensional random vectors." Annals of Statistics, 41(6), 2786-2819.

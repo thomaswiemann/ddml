@@ -211,3 +211,44 @@ head(tidy(diag_fit), 5)
 
 Because ``tidy(diagnostics(fit))`` evaluates exactly to a standard ``data.frame``, we can append it directly to any output artifact, knit it nicely with ``knitr::kable()``, or integrate it directly into supplementary appendix tables in an academic paper.
 
+# LaTeX Output
+
+All ``modelsummary`` tables can be rendered as LaTeX by setting ``output = "latex"``. This produces a complete ``tabular`` environment ready for inclusion in a paper:
+
+
+```r
+# Render a LaTeX table comparing OLS and DDML
+msummary(list("OLS" = ols_fit, "DDML (NNLS)" = ddml_fit),
+         output = "latex",
+         stars = TRUE,
+         title = "Treatment Effect Estimates",
+         gof_omit = "AIC|BIC|Log.Lik.|F|RMSE")
+```
+
+To write the table directly to a ``.tex`` file, replace ``output = "latex"`` with a file path:
+
+
+```r
+msummary(list("OLS" = ols_fit, "DDML" = ddml_fit),
+         output = "tables/estimates.tex",
+         stars = TRUE)
+```
+
+For diagnostics tables, pipe ``tidy(diagnostics())`` through ``kableExtra``:
+
+
+```r
+library(kableExtra)
+tidy(diagnostics(ddml_fit)) |>
+  kbl(format = "latex", booktabs = TRUE, digits = 4,
+      caption = "Base Learner Performance") |>
+  kable_styling(latex_options = "hold_position") |>
+  save_kable("tables/diagnostics.tex")
+```
+
+# References
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
+
+Arel-Bundock V (2022). "modelsummary: Data and Model Summaries in R." Journal of Statistical Software, 103(1), 1-23.
+

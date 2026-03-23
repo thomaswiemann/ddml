@@ -37,12 +37,6 @@ navbar:
     - github
 
 reference:
-- title: internal
-  contents:
-  - ddml-package
-  - matches("print")
-  - matches("summary")
-  - matches("sub-")
 - title: Supported DDML Estimators
   contents:
   - ddml_plm
@@ -52,33 +46,17 @@ reference:
   - ddml_att
   - ddml_late
   - ddml_apo
+  - ddml_attgt
+
 - title: Repeated Resampling
   contents:
   - ddml_replicate
-- title: internal
+
+- title: Linear Combinations and Aggregation
   contents:
-  - ddml-intro
-  - ddml
-  - ddml_rep
-  - coef.ddml
-  - confint.ddml
-  - vcov.ddml
-  - hatvalues.ddml
-  - nobs.ddml
-  - tidy.ddml
-  - glance.ddml
-  - tidy.ddml_diagnostics
-  - ensemble_weights
-  - coef.ddml_rep
-  - confint.ddml_rep
-  - vcov.ddml_rep
-  - tidy.ddml_rep
-  - glance.ddml_rep
-  - nobs.ddml_rep
-  - length.ddml_rep
-  - "`[[.ddml_rep`"
-  - reexports
-  - matches("predict")
+  - lincom
+  - lincom_weights_did
+
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -87,6 +65,7 @@ reference:
   - mdl_ranger
   - mdl_xgboost
   - mdl_bigGLM
+
 - title: Utilities
   contents:
   - crossval
@@ -94,9 +73,33 @@ reference:
   - shortstacking
   - ensemble
   - diagnostics
+
 - title: Dataset
   contents:
   - AE98
+
+- title: internal
+  contents:
+  - ddml-package
+  - ddml-intro
+  - ddml
+  - ddml_rep
+  - ral
+  - ral_rep
+  - matches("summary")
+  - matches("print")
+  - matches("sub-")
+  - matches("coef")
+  - matches("vcov")
+  - matches("confint")
+  - matches("hatvalues")
+  - matches("nobs")
+  - matches("plot")
+  - matches("tidy")
+  - matches("glance")
+  - matches("predict")
+  - ensemble_weights
+  - reexports
 
 articles:
 - title: Key Features
@@ -113,4 +116,3 @@ articles:
 - title: Case Studies
   contents:
   - starts_with("articles/example")
-
