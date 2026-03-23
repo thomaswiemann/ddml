@@ -7,12 +7,12 @@ test_that("ddml() constructs a valid ddml object", {
   coef <- matrix(theta, 1, 1, dimnames = list("mean", "custom"))
   scores <- array(y - theta, dim = c(n, 1, 1))
   J <- array(-1, dim = c(1, 1, 1))
-  psi_b <- list(matrix(y, ncol = 1))
-  psi_a <- list(array(-1, dim = c(n, 1, 1)))
+  inf_func <- array(y - theta, dim = c(n, 1, 1))
+  dinf_dtheta <- array(1, dim = c(n, 1, 1, 1))
 
   fit <- ddml(
     coefficients = coef, scores = scores, J = J,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     nobs = n, coef_names = "mean",
     estimator_name = "Sample Mean",
     sample_folds = 5,
@@ -38,19 +38,19 @@ test_that("ddml() with subclass", {
   coef <- matrix(1.5, 1, 1, dimnames = list("param", "ens"))
   scores <- array(rnorm(n), dim = c(n, 1, 1))
   J <- array(-1, dim = c(1, 1, 1))
-  psi_b <- list(matrix(rnorm(n), ncol = 1))
-  psi_a <- list(array(-1, dim = c(n, 1, 1)))
+  inf_func <- array(rnorm(n), dim = c(n, 1, 1))
+  dinf_dtheta <- array(1, dim = c(n, 1, 1, 1))
 
   fit <- ddml(
     coefficients = coef, scores = scores, J = J,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     nobs = n, coef_names = "param",
     estimator_name = "My Custom",
     subclass = "my_custom")
 
   expect_s3_class(fit, "my_custom")
   expect_s3_class(fit, "ddml")
-  expect_equal(class(fit), c("my_custom", "ddml"))
+  expect_equal(class(fit), c("my_custom", "ddml", "ral"))
 })
 
 test_that("ddml() passes extra args via ...", {
@@ -58,12 +58,12 @@ test_that("ddml() passes extra args via ...", {
   coef <- matrix(1, 1, 1, dimnames = list("x", "ens"))
   scores <- array(rnorm(n), dim = c(n, 1, 1))
   J <- array(-1, dim = c(1, 1, 1))
-  psi_b <- list(matrix(rnorm(n), ncol = 1))
-  psi_a <- list(array(-1, dim = c(n, 1, 1)))
+  inf_func <- array(rnorm(n), dim = c(n, 1, 1))
+  dinf_dtheta <- array(1, dim = c(n, 1, 1, 1))
 
   fit <- ddml(
     coefficients = coef, scores = scores, J = J,
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     nobs = n, coef_names = "x",
     estimator_name = "Test",
     my_extra = "hello",
@@ -80,7 +80,7 @@ test_that("ddml() rejects bad inputs", {
   expect_error(
     ddml(coefficients = 1:3, scores = array(1, c(n, 3, 1)),
          J = array(1, c(3, 3, 1)),
-         psi_a = list(1), psi_b = list(1),
+         inf_func = array(1, c(n, 3, 1)),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
     "matrix")
@@ -90,7 +90,7 @@ test_that("ddml() rejects bad inputs", {
     ddml(coefficients = matrix(1, 1, 1),
          scores = matrix(1, n, 1),
          J = array(1, c(1, 1, 1)),
-         psi_a = list(1), psi_b = list(1),
+         inf_func = array(1, c(n, 1, 1)),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
     "3D array")
@@ -100,27 +100,38 @@ test_that("ddml() rejects bad inputs", {
     ddml(coefficients = matrix(1, 1, 1),
          scores = array(1, c(n, 1, 1)),
          J = matrix(1, 1, 1),
-         psi_a = list(1), psi_b = list(1),
+         inf_func = array(1, c(n, 1, 1)),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
     "3D array")
 
-  # psi_a/psi_b not lists
+  # inf_func not 3D
   expect_error(
     ddml(coefficients = matrix(1, 1, 1),
          scores = array(1, c(n, 1, 1)),
          J = array(1, c(1, 1, 1)),
-         psi_a = 1, psi_b = list(1),
+         inf_func = matrix(1, n, 1),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
-    "lists")
+    "3D numeric array")
+
+  # dinf_dtheta not 4D array
+  expect_error(
+    ddml(coefficients = matrix(1, 1, 1),
+         scores = array(1, c(n, 1, 1)),
+         J = array(1, c(1, 1, 1)),
+         inf_func = array(1, c(n, 1, 1)),
+         dinf_dtheta = 123,
+         nobs = n, coef_names = "x",
+         estimator_name = "Bad"),
+    "dinf_dtheta.*4D array")
 
   # Dimension mismatch: scores wrong nobs
   expect_error(
     ddml(coefficients = matrix(1, 1, 1),
          scores = array(1, c(n + 5, 1, 1)),
          J = array(1, c(1, 1, 1)),
-         psi_a = list(1), psi_b = list(1),
+         inf_func = array(1, c(n, 1, 1)),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
     "nobs x p x nensb")
@@ -130,20 +141,31 @@ test_that("ddml() rejects bad inputs", {
     ddml(coefficients = matrix(1, 2, 1),
          scores = array(1, c(n, 2, 1)),
          J = array(1, c(1, 1, 1)),
-         psi_a = list(1), psi_b = list(1),
+         inf_func = array(1, c(n, 2, 1)),
          nobs = n, coef_names = c("a", "b"),
          estimator_name = "Bad"),
     "p x p x nensb")
 
-  # Length mismatch: psi_a wrong length
+  # Dimension mismatch: inf_func wrong wrong length/shape
   expect_error(
     ddml(coefficients = matrix(1, 1, 2),
          scores = array(1, c(n, 1, 2)),
          J = array(1, c(1, 1, 2)),
-         psi_a = list(1), psi_b = list(1, 1),
+         inf_func = array(1, c(n, 1, 1)),
          nobs = n, coef_names = "x",
          estimator_name = "Bad"),
-    "length nensb")
+    "nobs x p x nensb")
+  
+  # Dimension mismatch: dinf_dtheta wrong dims
+  expect_error(
+    ddml(coefficients = matrix(1, 1, 2),
+         scores = array(1, c(n, 1, 2)),
+         J = array(1, c(1, 1, 2)),
+         inf_func = array(1, c(n, 1, 2)),
+         dinf_dtheta = array(1, dim = c(n, 1, 1, 3)),
+         nobs = n, coef_names = "x",
+         estimator_name = "Bad"),
+    "'dinf_dtheta' dimensions must be")
 })
 
 test_that("standard S3 generic methods work correctly", {
@@ -168,12 +190,12 @@ test_that("standard S3 generic methods work correctly", {
   expect_length(cf, 2)
 
   # vcov
-  V <- vcov(fit, ensemble_idx = 2)
+  V <- vcov(fit, fit_idx = 2)
   expect_true(is.matrix(V))
   expect_equal(dim(V), c(1, 1))
 
   # confint
-  ci <- confint(fit, ensemble_idx = 1)
+  ci <- confint(fit, fit_idx = 1)
   expect_true(is.matrix(ci))
   expect_equal(dim(ci), c(1, 2))
   expect_identical(colnames(ci), c(" 2.5 %", "97.5 %"))
@@ -344,7 +366,7 @@ test_that("hatvalues works for multi-parameter estimator", {
   expect_true(all(is.finite(h)))
 })
 
-test_that("ensemble_idx out of range errors", {
+test_that("fit_idx out of range errors", {
   set.seed(42)
   nobs <- 500
   X <- matrix(rnorm(nobs * 3), nobs, 3)
@@ -355,8 +377,8 @@ test_that("ensemble_idx out of range errors", {
                   learners = list(what = ols),
                   sample_folds = 2, silent = TRUE)
 
-  expect_error(vcov(fit, ensemble_idx = 99))
-  expect_error(hatvalues(fit, ensemble_idx = 0))
+  expect_error(vcov(fit, fit_idx = 99))
+  expect_error(hatvalues(fit, fit_idx = 0))
 })
 
 test_that("tidy and glance broom formatters work correctly", {
@@ -459,3 +481,132 @@ test_that("tidy works with PLM (multi-covariate D)", {
   expect_equal(gl$nobs, nobs)
 })
 
+test_that("confint uniform produces wider bands", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- cbind(D1 = rnorm(nobs), D2 = rnorm(nobs))
+  y <- D[, 1] + D[, 2] + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                   learners = list(what = ols),
+                   sample_folds = 2,
+                   silent = TRUE)
+
+  ci_pw <- confint(fit)
+
+  set.seed(1)
+  ci_uf <- confint(fit, uniform = TRUE,
+                    bootstraps = 499)
+
+  # Uniform bands are wider (p > 1)
+  width_pw <- ci_pw[, 2] - ci_pw[, 1]
+  width_uf <- ci_uf[, 2] - ci_uf[, 1]
+  expect_true(all(width_uf >= width_pw))
+
+  # Critical value attribute
+  expect_false(is.null(attr(ci_uf, "crit_val")))
+  expect_true(attr(ci_uf, "crit_val") > qnorm(0.975))
+
+  # Pointwise has Gaussian quantile
+  expect_equal(attr(ci_pw, "crit_val"), qnorm(0.975), tolerance = 1e-6)
+})
+
+test_that("confint uniform with scalar estimator", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- X %*% c(1, 0.5, 0) + rnorm(nobs)
+  y <- 2 * D + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                   learners = list(what = ols),
+                   sample_folds = 2,
+                   silent = TRUE)
+
+  ci_pw <- confint(fit)
+  set.seed(1)
+  ci_uf <- confint(fit, uniform = TRUE,
+                    bootstraps = 499)
+
+  # For p=1, uniform ~ pointwise (within tolerance)
+  width_pw <- as.numeric(ci_pw[, 2] - ci_pw[, 1])
+  width_uf <- as.numeric(ci_uf[, 2] - ci_uf[, 1])
+  expect_true(all(abs(width_uf - width_pw) / width_pw
+    < 0.25))
+})
+
+test_that("tidy uniform produces wider conf.int", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- cbind(D1 = rnorm(nobs), D2 = rnorm(nobs))
+  y <- D[, 1] + D[, 2] + rnorm(nobs)
+
+  fit <- ddml_plm(y, D, X,
+                   learners = list(what = ols),
+                   sample_folds = 2,
+                   silent = TRUE)
+
+  td_pw <- tidy(fit, conf.int = TRUE)
+
+  set.seed(1)
+  td_uf <- tidy(fit, conf.int = TRUE,
+                 uniform = TRUE, bootstraps = 499)
+
+  # Uniform conf intervals are wider
+  width_pw <- td_pw$conf.high - td_pw$conf.low
+  width_uf <- td_uf$conf.high - td_uf$conf.low
+  expect_true(all(width_uf >= width_pw))
+})
+
+test_that("confint uniform produces wider bands for ddml_rep", {
+  set.seed(42)
+  nobs <- 300
+  X <- matrix(rnorm(nobs * 3), nobs, 3)
+  D <- cbind(D1 = rnorm(nobs), D2 = rnorm(nobs))
+  y <- D[, 1] + D[, 2] + rnorm(nobs)
+
+  reps <- ddml_replicate(ddml_plm, y = y, D = D, X = X,
+                          learners = list(what = ols),
+                          sample_folds = 2,
+                          resamples = 3, silent = TRUE)
+
+  ci_pw <- confint(reps)
+
+  set.seed(1)
+  ci_uf <- confint(reps, uniform = TRUE, bootstraps = 499)
+
+  # Uniform bands are wider (p > 1)
+  width_pw <- ci_pw[, 2] - ci_pw[, 1]
+  width_uf <- ci_uf[, 2] - ci_uf[, 1]
+  expect_true(all(width_uf >= width_pw))
+
+  # Critical value attribute
+  expect_false(is.null(attr(ci_uf, "crit_val")))
+  expect_true(attr(ci_uf, "crit_val") > qnorm(0.975))
+
+  # Pointwise has Gaussian quantile
+  expect_equal(attr(ci_pw, "crit_val"), qnorm(0.975), tolerance = 1e-6)
+})
+
+test_that("hatvalues warns and returns NA if dinf_dtheta is missing", {
+  fit <- ddml(
+    coefficients = matrix(0, 1, 1, dimnames = list("ATE", "nnls")),
+    scores = array(0, dim = c(10, 1, 1)),
+    J = array(1, dim = c(1, 1, 1)),
+    inf_func = array(runif(10), dim = c(10, 1, 1)),
+    dinf_dtheta = NULL,
+    nobs = 10,
+    coef_names = "ATE",
+    estimator_name = "test",
+    ensemble_type = "nnls",
+    cluster_variable = seq_len(10)
+  )
+
+  expect_warning(
+    expect_equal(hatvalues(fit), rep(NA_real_, 10)),
+    "dinf_dtheta not available",
+    ignore.case = TRUE
+  )
+})

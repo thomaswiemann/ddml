@@ -173,19 +173,19 @@ summary(late_fit)
 #> DDML estimation: Local Average Treatment Effect 
 #> Obs: 5000   Folds: 3  Stacking: short-stack
 #> 
-#> Ensemble type: nnls 
+#> Ensemble type: nnls
 #>      Estimate Std. Error z value Pr(>|z|)
 #> LATE   -0.231      0.189   -1.22     0.22
 #> 
-#> Ensemble type: singlebest 
+#> Ensemble type: singlebest
 #>      Estimate Std. Error z value Pr(>|z|)
 #> LATE   -0.227      0.188   -1.21     0.23
 #> 
-#> Ensemble type: ols 
+#> Ensemble type: ols
 #>      Estimate Std. Error z value Pr(>|z|)
 #> LATE   -0.231      0.189   -1.22     0.22
 #> 
-#> Ensemble type: average 
+#> Ensemble type: average
 #>      Estimate Std. Error z value Pr(>|z|)
 #> LATE   -0.228      0.189   -1.21     0.23
 ```

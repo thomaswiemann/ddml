@@ -12,9 +12,9 @@
 \arguments{
 \item{object}{An object of class \code{ddml}.}
 
-\item{type}{Character string specifying the
-variance-covariance estimator. One of \code{"HC1"}
-(default), \code{"HC0"}, or \code{"HC3"}.}
+\item{type}{Character. HC type (\code{"HC0"},
+\code{"HC1"}, or \code{"HC3"}). Default
+\code{"HC1"}.}
 
 \item{...}{Currently unused.}
 
@@ -40,7 +40,7 @@ Computes a coefficient table with estimates,
 standard errors, z-values, and p-values for all
 ensemble types. Standard errors are based on a
 heteroskedasticity-robust sandwich variance; see
-\code{\link{vcov.ddml}} for the HC0/HC1/HC3 formulas.
+\code{\link{vcov.ral}} for the HC0/HC1/HC3 formulas.
 }
 \examples{
 \donttest{
@@ -56,12 +56,9 @@ summary(plm_fit, type = "HC3")
 
 }
 \seealso{
-\code{\link{vcov.ddml}}
+\code{\link{vcov.ral}}
 
 Other ddml inference: 
-\code{\link{coef.ddml}()},
-\code{\link{confint.ddml}()},
-\code{\link{hatvalues.ddml}()},
-\code{\link{vcov.ddml}()}
+\code{\link{lincom}()}
 }
 \concept{ddml inference}

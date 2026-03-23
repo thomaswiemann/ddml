@@ -5,42 +5,33 @@
 #' @description Estimator for the local average treatment effect.
 #'
 #' @details
-#' \strong{Parameter of Interest:} \code{ddml_late} provides a Double/Debiased Machine Learning
-#'     estimator for the local average treatment effect in the interactive model
-#'     given by:
+#' \strong{Parameter of Interest:} \code{ddml_late} provides a
+#'     Double/Debiased Machine Learning estimator for the local average
+#'     treatment effect. Under the standard instrumental variable assumptions
+#'     (conditional independence, exclusion restriction, relevance, and 
+#'     monotonicity) with a binary instrument \eqn{Z} and a binary treatment 
+#'     \eqn{D}, the parameter is identified by the following reduced form 
+#'     parameter:
 #'
-#' \deqn{Y = g_0(D, X) + U,}
+#' \deqn{\theta_0^{\textrm{LATE}} = \frac{E[E[Y|Z=1, X] - E[Y|Z=0, X]]}{E[E[D|Z=1, X] - E[D|Z=0, X]]}}
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
-#'     \eqn{E[U\vert X, Z] = 0}, \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
-#'     \eqn{\Pr(Z=1\vert X) \in (0, 1)} with probability 1,
-#'     \eqn{p_0(1, X) \geq p_0(0, X)} with probability 1 where
-#'     \eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
-#'     \eqn{g_0} is an unknown nuisance function.
-#'
-#' In this model, the local average treatment effect (LATE) is defined as
-#'
-#' \deqn{\theta_0^{\textrm{LATE}} \equiv E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p_0(0, X)].}
+#' where \eqn{W \equiv (Y, D, X, Z)} is the observed random vector.
 #'
 #' \strong{Nuisance Parameters:} The nuisance parameters are
 #'     \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, p)} taking true values
 #'     \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]}, \eqn{r_{z,0}(X) = E[D|Z=z, X]},
-#'     and \eqn{p_0(X) = E[Z|X]}.
+#'     and \eqn{p_0(X) = \Pr(Z=1|X)}.
 #'
 #' \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 #'
 #' \deqn{m(W; \theta, \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
 #'
-#' \strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+#' \strong{Jacobian:}
 #'
-#' \deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+#' \deqn{J = -E[r_1(X) - r_0(X)]}
 #'
-#' where:
-#'
-#' \deqn{\psi_a(W; \eta) = -\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
-#'
-#' \deqn{\psi_b(W; \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X)}
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
 #'
 #' @inheritParams ddml-intro
 #' @inheritParams ddml_apo
@@ -128,7 +119,7 @@ ddml_late <- function(y, D, Z, X,
                       ...) {
   cl <- match.call()
 
-  # == Preliminaries ================================================
+  # Preliminaries --------------------------------------------------------------
 
   dots <- list(...)
   messages <- resolve_messages(dots, "ddml_late", list(
@@ -158,7 +149,7 @@ ddml_late <- function(y, D, Z, X,
   t0 <- proc.time()[3]
   announce_start(messages, parallel, silent)
 
-  # == Reduced-form estimation ======================================
+  # Reduced-form estimation ----------------------------------------------------
 
   # Map LATE splits/fitted to ATE's expected format.
   ate_splits <- if (!is.null(splits)) list(
@@ -212,25 +203,28 @@ ddml_late <- function(y, D, Z, X,
   ensemble_type <- ate_rf$ensemble_type
   nensb <- ncol(ate_rf$coefficients)
 
-  # == Score construction ===========================================
+  # Target parameter & influence function --------------------------------------
 
-  psi_b <- ate_rf$psi_b   # already a list (from ddml_ate)
-  psi_a <- lapply(seq_len(nensb), function(j) {
-    array(-as.vector(ate_fs$psi_b[[j]]),
-          dim = c(nobs, 1, 1))
-  })
-
-  # == Target parameter =============================================
-
-  late <- as.vector(ate_rf$coefficients) /
-    as.vector(ate_fs$coefficients)
+  late <- as.vector(ate_rf$coefficients) / as.vector(ate_fs$coefficients)
 
   scores <- array(NA_real_, dim = c(nobs, 1, nensb))
   J <- array(NA_real_, dim = c(1, 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
+  
   for (j in seq_len(nensb)) {
-    scores[, 1, j] <- psi_a[[j]][, 1, 1] * late[j] +
-      as.vector(psi_b[[j]])
-    J[1, 1, j] <- mean(psi_a[[j]])
+    theta_fs <- ate_fs$coefficients[, j]
+    phi_rf <- ate_rf$inf_func[, 1, j]
+    phi_fs <- ate_fs$inf_func[, 1, j]
+    
+    scores[, 1, j] <- phi_fs * late[j] - phi_rf
+    J[1, 1, j] <- -theta_fs
+    
+    J_inv <- csolve(matrix(J[, , j], 1, 1))
+    inf_func[, 1, j] <- matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    
+    psi_a_vec <- -(theta_fs - phi_fs)
+    dinf_dtheta[, 1, 1, j] <- psi_a_vec * J_inv[1, 1]
   }#FOR
 
   coef_names <- "LATE"
@@ -238,7 +232,7 @@ ddml_late <- function(y, D, Z, X,
   rownames(coef) <- coef_names
   colnames(coef) <- ensemble_type
 
-  # == Output =======================================================
+  # Output ---------------------------------------------------------------------
 
   announce_finish(t0, messages, silent)
 
@@ -262,7 +256,7 @@ ddml_late <- function(y, D, Z, X,
       D_X_Z0 = ate_fs$r2$y_X_D0,
       D_X_Z1 = ate_fs$r2$y_X_D1,
       Z_X = ate_rf$r2$D_X),
-    psi_a = psi_a, psi_b = psi_b,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
     scores = scores, J = J,
     coef_names = coef_names,
     estimator_name = "Local Average Treatment Effect",
@@ -286,6 +280,7 @@ ddml_late <- function(y, D, Z, X,
       Z_X = ate_rf$splits$D_X),
     call = cl,
     subclass = "ddml_late",
+    # ddml_late-specific fields
     learners = learners,
     learners_DXZ = learners_DXZ,
     learners_ZX = learners_ZX

@@ -18,12 +18,9 @@
 \item{object}{A \code{ddml_rep} object.}
 
 \item{aggregation}{Character string: \code{"median"}
-(default), \code{"mean"}, or \code{"spectral"}.
-See \code{\link{summary.ddml_rep}} for details.}
+(default), \code{"mean"}, or \code{"spectral"}.}
 
-\item{type}{Character string specifying the
-variance-covariance estimator. One of \code{"HC1"}
-(default), \code{"HC0"}, or \code{"HC3"}.}
+\item{type}{Character. HC type. Default \code{"HC1"}.}
 
 \item{...}{Currently unused.}
 
@@ -35,31 +32,13 @@ variance-covariance estimator. One of \code{"HC1"}
 An object of class \code{"summary.ddml_rep"}.
 }
 \description{
-Aggregates coefficient estimates and covariance matrices
-across \eqn{R} independent sample-splitting replications.
+DML-specific summary override. Adds ensemble type labels,
+folds, shortstack status to the base \code{ral_rep}
+summary.
 }
 \details{
-Let \eqn{\hat\theta_r} and \eqn{\hat\Sigma_r} denote
-the coefficient vector and sandwich covariance matrix
-from replication \eqn{r}.
-
-\strong{Coefficient aggregation.}
-For \code{"mean"}:
-\eqn{\tilde\theta = R^{-1} \sum_{r=1}^{R} \hat\theta_r}.
-For \code{"median"} and \code{"spectral"}:
-\eqn{\tilde\theta_j = \mathrm{median}_{r}(\hat\theta_{r,j})}.
-
-\strong{Covariance aggregation.}
-Define the inflated per-replication covariance as
-\deqn{V_r = \hat\Sigma_r + (\hat\theta_r - \tilde\theta)
-    (\hat\theta_r - \tilde\theta)^\top}.
-For \code{"mean"}:
-\eqn{\tilde\Sigma = R^{-1} \sum_{r=1}^{R} V_r}.
-For \code{"median"}:
-\eqn{\tilde\Sigma_{ij} = \mathrm{median}_{r}(V_{r,ij})}.
-For \code{"spectral"}:
-\eqn{\tilde\Sigma = \arg\min_{\Sigma \succeq 0} \sum_{r} \|\Sigma - V_r\|_2},
-solved via \pkg{CVXR}. Guarantees positive semi-definiteness of \eqn{\tilde\Sigma}.
+See \code{\link{summary.ral_rep}} for the aggregation
+formulas.
 }
 \examples{
 \donttest{

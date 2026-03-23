@@ -157,15 +157,15 @@ Additional pass-through fields: \code{learners},
 Estimator for the flexible partially linear IV coefficient.
 }
 \details{
-\strong{Parameter of Interest:} \code{ddml_fpliv} provides a Double/Debiased Machine Learning
-estimator for the target parameter \eqn{\theta_0} in the partially
-linear IV model given by:
+\strong{Parameter of Interest:} \code{ddml_fpliv} provides a Double/Debiased
+Machine Learning estimator for the flexible partially linear instrumental
+variable (IV) coefficient \eqn{\theta_0}, defined by the partially linear
+IV model:
 
-\deqn{Y = \theta_0 D + g_0(X) + U,}
+\deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[\varepsilon|X, Z] = 0,}
 
-where \eqn{(Y, D, X, Z, U)} is a random vector such that
-\eqn{E[U\vert X, Z] = 0} and \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
-and \eqn{g_0} is an unknown nuisance function.
+where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+\eqn{E[Var(E[D|X, Z]|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
 
 \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 
@@ -174,15 +174,12 @@ and \eqn{g_0} is an unknown nuisance function.
 where the nuisance parameters are \eqn{\eta = (\ell, r, v)} taking
 true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_0(X) = E[D|X]}, and \eqn{v_0(X, Z) = E[D|X, Z]}.
 
-\strong{Linear Decomposition:} The score decomposes linearly in \eqn{\theta}:
+\strong{Jacobian:}
 
-\deqn{m(W; \theta, \eta) = \psi_b(W; \eta) + \psi_a(W; \eta)\theta}
+\deqn{J = -E[(D - r(X))(v(X, Z) - r(X))^\top]}
 
-where:
-
-\deqn{\psi_a(W; \eta) = -(D - r(X))(v(X, Z) - r(X))^\top}
-
-\deqn{\psi_b(W; \eta) = (v(X, Z) - r(X))(Y - \ell(X))}
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -204,6 +201,7 @@ Other ddml estimators:
 \code{\link{ddml-intro}},
 \code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},
 \code{\link{ddml_plm}()}

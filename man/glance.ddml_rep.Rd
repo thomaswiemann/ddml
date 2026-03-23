@@ -12,14 +12,10 @@
 \item{...}{Currently unused.}
 }
 \value{
-A one-row \code{data.frame} with columns \code{nobs},
-\code{sample_folds}, \code{shortstack}, \code{ensemble_type},
-\code{model_type}, and \code{nresamples}.
+A one-row \code{data.frame}.
 }
 \description{
-Returns a one-row summary of model-level statistics,
-compatible with \pkg{modelsummary} and the \pkg{broom}
-ecosystem.
+DML-specific glance method. Includes DML fields.
 }
 \examples{
 \donttest{
