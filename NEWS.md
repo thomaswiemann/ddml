@@ -1,25 +1,19 @@
 # ddml 0.9.0
 
-* Adds `ddml_apo()` for average potential outcome estimation.
-* Adds `fitted` and `splits` parameters to all `ddml_*()` estimators for re-estimation with different ensemble types without re-fitting base learners.
-* Adds `diagnostics()` for per-equation MSPE, R-squared, stacking weights, and cross-validated comparison (CVC) tests.
-* Adds HC0 and HC3 variance estimators alongside default HC1 via `type` argument in `vcov()`, `confint()`, `summary()`, and `tidy()`.
-* Adds `hatvalues()` method for leverage diagnostics.
-* Adds `nobs()` method returning the number of observations.
-* Learner specifications now use `what` instead of `fun`. `fun` is accepted with a deprecation message.
-* Adds parallel computation via the `parallel` parameter and progress reporting via `pbapply`.
-* Adds stratified cross-fitting to `ddml_ate()`, `ddml_att()`, and `ddml_late()` via `stratify`. Enabled by default.
-* Adds `cluster_variable` for cluster-aware sample splitting.
-* Adds input validation across all estimators.
-* Exports `ensemble()` with documentation and examples.
-* Adds `broom` compatibility (`tidy`, `glance`).
-* Updates S3 methods (`coef`, `vcov`, `confint`, `summary`, `print`).
-* Adds `mdl_bigGLM` sparse-matrix unpenalized regression wrapper.
-* `mdl_xgboost()` auto-detects binary factor outcomes.
-* Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median or mean aggregation.
-* `predict.ensemble()` gains `type` argument (`"ensemble"` or `"bylearner"`).
+* Adds `ddml_attgt()` for staggered DiD and `ddml_apo()` for average potential outcomes.
+* Adds `ddml()` constructor for custom DML estimators with user-supplied scores.
+* Adds `lincom()` and `lincom_weights_did()` for inference on linear combinations.
+* Influence-function-based inference via the `ral` class; all estimators now inherit from `ral`.
+* Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median, mean, or spectral-norm aggregation.
+* Adds `diagnostics()` for MSPE, R-squared, stacking weights, and CVC tests.
+* Adds `fitted`/`splits` pass-through to all `ddml_*()` estimators.
+* New S3 methods: `plot()`, `as.list()`, `hatvalues()`, `nobs()`, multi-ensemble `tidy()`/`glance()`.
+* Adds HC0/HC3 variance estimators, parallel computation, stratified cross-fitting, cluster-aware splitting, and input validation.
+* Adds `broom` compatibility and `mdl_bigGlm` wrapper.
+* Rewrites DiD and `modelsummary` vignettes.
 * Fixes `ddml_fpliv()` with custom weights.
 * Breaking changes:
+    - Inference internals use `$inf_func` instead of `$scores`/`$J`/`$psi_a`/`$psi_b`.
     - Utility functions (`crosspred`, `crossval`, `ensemble`, `ensemble_weights`, `shortstacking`) no longer accept `Z`/`newZ`. Pre-concatenate instruments with covariates (e.g., `cbind(X, Z)`).
     - `crosspred()` and `shortstacking()` drop `compute_insample_predictions` and `insample_fitted` output.
     - `ddml_fpliv()` drops the `enforce_LIE` argument.

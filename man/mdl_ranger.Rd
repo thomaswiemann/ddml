@@ -35,7 +35,7 @@ Software 77(1), 1-17.
 \code{\link[ranger:ranger]{ranger::ranger()}}
 
 Other ml_wrapper: 
-\code{\link{mdl_bigGLM}()},
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glm}()},
 \code{\link{mdl_glmnet}()},
 \code{\link{mdl_xgboost}()},

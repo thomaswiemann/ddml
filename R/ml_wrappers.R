@@ -258,7 +258,7 @@ predict.mdl_glm <- function(object, newdata, ...) {
   stats::predict.glm(object, df, type = "response", ...)
 }#PREDICT.MDL_GLM
 
-# bigGLM =======================================================================
+# bigGlm =======================================================================
 
 #' Wrapper for glmnet::bigGlm()
 #'
@@ -273,29 +273,29 @@ predict.mdl_glm <- function(object, newdata, ...) {
 #' @param ... Additional arguments passed to \code{bigGlm}. See
 #'     [glmnet::bigGlm()] for a complete list of arguments.
 #'
-#' @return \code{mdl_bigGLM} returns an object of S3 class \code{mdl_bigGLM}.
+#' @return \code{mdl_bigGlm} returns an object of S3 class \code{mdl_bigGlm}.
 #' @export
 #'
 #' @examples
-#' bigglm_fit <- mdl_bigGLM(rnorm(100), matrix(rnorm(1000), 100, 10))
+#' bigglm_fit <- mdl_bigGlm(rnorm(100), matrix(rnorm(1000), 100, 10))
 #' class(bigglm_fit)
-mdl_bigGLM <- function(y, X, ...) {
+mdl_bigGlm <- function(y, X, ...) {
   mdl_fit <- glmnet::bigGlm(x = X, y = y, ...)
   mdl_fit <- list(fitted_coef = stats::coef(mdl_fit))
-  class(mdl_fit) <- c("mdl_bigGLM", class(mdl_fit))
+  class(mdl_fit) <- c("mdl_bigGlm", class(mdl_fit))
   return(mdl_fit)
 }#MDL_BIGGLM
 
-#' Predict Method for mdl_bigGLM Objects
+#' Predict Method for mdl_bigGlm Objects
 #'
-#' @param object A fitted \code{mdl_bigGLM} object.
+#' @param object A fitted \code{mdl_bigGlm} object.
 #' @param newdata A (sparse) feature matrix for prediction.
 #' @param ... Currently unused.
 #'
 #' @return A numeric vector of predicted values.
 #'
 #' @exportS3Method
-predict.mdl_bigGLM <- function(object, newdata = NULL, ...) {
+predict.mdl_bigGlm <- function(object, newdata = NULL, ...) {
   beta <- object$fitted_coef
   fitted <- newdata %*% beta[2:nrow(beta), , drop = FALSE] + beta[1, 1]
   fitted[, 1]

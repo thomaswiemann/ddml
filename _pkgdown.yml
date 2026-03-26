@@ -64,7 +64,7 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
-  - mdl_bigGLM
+  - mdl_bigGlm
 
 - title: Utilities
   contents:
@@ -98,6 +98,7 @@ reference:
   - matches("tidy")
   - matches("glance")
   - matches("predict")
+  - matches("as.list")
   - ensemble_weights
   - reexports
 

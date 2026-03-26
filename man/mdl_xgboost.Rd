@@ -44,7 +44,7 @@ Discovery and Data Mining, 785-794.
 \code{\link[xgboost:xgboost]{xgboost::xgboost()}}
 
 Other ml_wrapper: 
-\code{\link{mdl_bigGLM}()},
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glm}()},
 \code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},

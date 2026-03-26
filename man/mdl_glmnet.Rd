@@ -42,7 +42,7 @@ Statistical Software, 39(5), 1-13.
 \code{\link[glmnet:glmnet]{glmnet::glmnet()}},\code{\link[glmnet:cv.glmnet]{glmnet::cv.glmnet()}}
 
 Other ml_wrapper: 
-\code{\link{mdl_bigGLM}()},
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glm}()},
 \code{\link{mdl_ranger}()},
 \code{\link{mdl_xgboost}()},
