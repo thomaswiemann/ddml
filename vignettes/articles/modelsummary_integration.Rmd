@@ -138,23 +138,44 @@ if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinyta
 
 Notice how ``modelsummary`` automatically pulled the custom goodness-of-fit metrics from ``glance.ddml()`` (e.g., ``sample_folds``, ``shortstack``, ``ensemble_type``).
 
-If you wish to show the results for the *other* ensemble type (``singlebest``) in the table, ``modelsummary`` requires us to pass either a custom tidier or explicitly extract and rename the components. A simple robust trick is to manually tidy the ``ddml`` output first when dealing with secondary ensembles.
+## Comparing Ensemble Types with ``as.list()``
+
+When multiple ensemble types are computed simultaneously (as in our fit above), it is often useful to display each ensemble as its own column in a regression table. The ``as.list()`` method splits a ``ddml`` object into a named list of single-ensemble objects — one per ensemble type — that can be passed directly to ``modelsummary``.
 
 
 ```r
-# Retrieve tidied data.frames
-df_nnls       <- tidy(ddml_fit, ensemble_idx = 1)
-df_singlebest <- tidy(ddml_fit, ensemble_idx = 2)
+# Split by ensemble type
+ensemble_list <- as.list(ddml_fit)
+names(ensemble_list)
+#>  [1] "coefficients"     "ensemble_weights" "mspe"             "r2"              
+#>  [5] "inf_func"         "dinf_dtheta"      "scores"           "J"               
+#>  [9] "coef_names"       "estimator_name"   "ensemble_type"    "nobs"            
+#> [13] "nfit"             "fit_labels"       "sample_folds"     "cv_folds"        
+#> [17] "shortstack"       "cluster_variable" "fitted"           "splits"          
+#> [21] "call"             "learners"         "learners_DX"
 
+# Each element is a standalone ddml object with full S3 support
+tidy(ensemble_list[["nnls"]])
+#> # A tibble: 0 × 0
+tidy(ensemble_list[["singlebest"]])
+#> # A tibble: 0 × 0
+```
+
+This makes multi-column ensemble comparison tables straightforward:
+
+
+```r
 if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(
-    list("DDML (NNLS)" = df_nnls, "DDML (Single Best)" = df_singlebest),
-    title = "Comparison of Stacking Approaches",
-    shape = term ~ model + statistic,
-    gof_map = NA # We omit model statistics since we passed data.frames directly
+    c(list("OLS" = ols_fit), as.list(ddml_fit)),
+    stars = TRUE,
+    coef_rename = c("D" = "Treatment (D)"),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE"
   )
 }
 ```
+
+Note that each column retains its own ``glance()`` statistics, so ``modelsummary`` can display goodness-of-fit rows for every ensemble type automatically.
 
 # Tidy Support for Repeated Resampling
 
@@ -164,11 +185,16 @@ These aggregated ``ddml_rep`` classes have their own ``tidy`` and ``glance`` met
 
 
 ```r
-# Compute a replicated DDML object
+# Compute a replicated DDML object with multiple ensembles
 repl_fit <- ddml_replicate(
   ddml_plm,
   y = y, D = D, X = X,
-  learners = list(list(what = ols)),
+  learners = list(
+    list(what = ols),
+    list(what = mdl_glmnet)
+  ),
+  ensemble_type = c("nnls", "singlebest"),
+  shortstack = TRUE,
   resamples = 3,
   sample_folds = 5,
   silent = TRUE
@@ -176,9 +202,9 @@ repl_fit <- ddml_replicate(
 
 # Extract aggregated coefficients
 tidy(repl_fit)
-#>          term     estimate  std.error   statistic      p.value ensemble_type
-#> 1          D1 -0.185302213 0.03208110 -5.77605637 7.647176e-09          nnls
-#> 2 (Intercept) -0.000510678 0.01526034 -0.03346438 9.733043e-01          nnls
+#>          term   estimate  std.error statistic      p.value ensemble_type
+#> 1          D1 -0.1865294 0.03218377 -5.795760 6.801254e-09          nnls
+#> 2 (Intercept)  0.0035929 0.01525744  0.235485 8.138323e-01          nnls
 #>   aggregation
 #> 1      median
 #> 2      median
@@ -187,6 +213,15 @@ tidy(repl_fit)
 if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(list("Single Split" = ddml_fit, "Repeated 3x" = repl_fit),
            stars = TRUE)
+}
+```
+
+The ``as.list()`` method also works on ``ddml_rep`` objects. This is useful when a replicated fit was computed with multiple ensemble types and you want each ensemble as a separate column:
+
+
+```r
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(as.list(repl_fit), stars = TRUE)
 }
 ```
 

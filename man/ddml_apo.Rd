@@ -172,9 +172,8 @@ is identified by the following reduced form conditional expectation:
 
 \deqn{\theta_0^{\textrm{APO}} = E[\omega(X) E[Y|D=d, X]],}
 
-where \eqn{W \equiv (Y, D, X)} is the observed random vector.
-
-where \eqn{\omega(X)} is a known weighting function. If \eqn{\omega(X) = 1},
+where \eqn{W \equiv (Y, D, X)} is the observed random vector and
+\eqn{\omega(X)} is a known weighting function. If \eqn{\omega(X) = 1},
 this parameter corresponds to the average potential outcome
 at treatment level \eqn{d}.
 

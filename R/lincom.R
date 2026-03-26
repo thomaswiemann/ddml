@@ -68,8 +68,10 @@
 #' @param fit A \code{ddml} or \code{ddml_rep} object.
 #' @param R A \eqn{(p \times q)}{p x q} contrast matrix.
 #'     Each column defines one linear combination.
-#' @param fit_idx Integer index of the fit to use.
-#'     Default 1.
+#' @param fit_idx Integer index of the fit to use, or
+#'     \code{NULL} (default) for all ensemble types.
+#'     When \code{NULL}, the output carries all ensembles
+#'     from the parent fit.
 #' @param labels Optional character vector of length \eqn{q}
 #'     naming the linear combinations. Defaults to column
 #'     names of \code{R}, or \code{"lc1"}, \code{"lc2"}, etc.
@@ -140,7 +142,7 @@ lincom <- function(fit, R, ...) {
 #' @export
 #' @method lincom ddml
 lincom.ddml <- function(fit, R,
-                        fit_idx = 1,
+                        fit_idx = NULL,
                         labels = NULL,
                         inf_func_R = NULL,
                         dinf_dR = NULL,
@@ -151,56 +153,92 @@ lincom.ddml <- function(fit, R,
   n <- fit$nobs
   stopifnot(nrow(R) == p)
 
-  # Point estimate: R'theta
-  theta <- fit$coefficients[, fit_idx]
-  lincom_coef <- as.numeric(crossprod(R, theta))
+  # Resolve ensemble indices
+  nensb <- ncol(fit$coefficients)
+  if (is.null(fit_idx)) {
+    j_seq <- seq_len(nensb)
+  } else {
+    j_seq <- fit_idx
+  }#IFELSE
+  nfit <- length(j_seq)
 
-  # Unit-level IF for theta: phi_i
-  theta_if <- fit$inf_func[, , fit_idx, drop = FALSE]
-  dim(theta_if) <- dim(theta_if)[1:2]
-
-  # Combined IF for R'theta
-  # Term 1: R' phi_i^theta
-  lincom_if <- theta_if %*% R  # n x q
-  # Term 2: delta-method correction (when R estimated)
+  # Validate inf_func_R dimensions (ensemble-invariant)
   if (!is.null(inf_func_R)) {
-    stopifnot(length(dim(inf_func_R)) == 3, dim(inf_func_R)[1] == n,
-              dim(inf_func_R)[2] == p, dim(inf_func_R)[3] == q)
-    for (k in seq_len(q)) {
-      lincom_if[, k] <- lincom_if[, k] + inf_func_R[, , k] %*% theta
-    }#FOR
+    stopifnot(length(dim(inf_func_R)) == 3,
+              dim(inf_func_R)[1] == n,
+              dim(inf_func_R)[2] == p,
+              dim(inf_func_R)[3] == q)
   }#IF
 
-  # Map Structural Leverage
+  # Allocate output arrays
+  coef_mat <- matrix(NA_real_, q, nfit)
+  lincom_if <- array(0, dim = c(n, q, nfit))
   dinf_dtheta <- NULL
-  if (!is.null(fit$dinf_dtheta)) {
-    dinf_j <- fit$dinf_dtheta[, , , fit_idx, drop = FALSE]
-    dinf_lc <- array(NA_real_, dim = c(n, q, q, 1))
-    for (i in seq_len(n)) {
-      dinf_i <- matrix(dinf_j[i, , , 1], p, p)
-      # Structural Leverage: R^T * dinf_i * R
-      dinf_lc[i, , , 1] <- t(R) %*% dinf_i %*% R
-    }#FOR
-    dinf_dtheta <- dinf_lc
 
-    if (!is.null(dinf_dR)) {
-      stopifnot(dim(dinf_dR)[1:3] == c(n, q, q))
-      if (length(dim(dinf_dR)) == 3) dim(dinf_dR) <- c(n, q, q, 1)
-      dinf_dtheta <- dinf_dtheta + dinf_dR
+  for (jj in seq_along(j_seq)) {
+    j <- j_seq[jj]
+
+    # Point estimate: R'theta_j
+    theta <- fit$coefficients[, j]
+    coef_mat[, jj] <- as.numeric(crossprod(R, theta))
+
+    # Unit-level IF: R' phi_i^theta_j
+    theta_if <- fit$inf_func[, , j, drop = FALSE]
+    dim(theta_if) <- dim(theta_if)[1:2]
+    lincom_if[, , jj] <- theta_if %*% R
+
+    # Delta-method correction (when R estimated)
+    if (!is.null(inf_func_R)) {
+      for (k in seq_len(q)) {
+        lincom_if[, k, jj] <- lincom_if[, k, jj] + inf_func_R[, , k] %*% theta
+      }#FOR
     }#IF
-  }#IF
+
+    # Map Structural Leverage
+    if (!is.null(fit$dinf_dtheta)) {
+      if (is.null(dinf_dtheta)) {
+        dinf_dtheta <- array(NA_real_, dim = c(n, q, q, nfit))
+      }#IF
+      dinf_j <- fit$dinf_dtheta[, , , j, drop = FALSE]
+      for (i in seq_len(n)) {
+        dinf_i <- matrix(dinf_j[i, , , 1], p, p)
+        dinf_dtheta[i, , , jj] <- t(R) %*% dinf_i %*% R
+      }#FOR
+
+      # Add weighting leverage
+      if (!is.null(dinf_dR)) {
+        if (length(dim(dinf_dR)) == 3) {
+          # 3D dinf_dR: broadcast to current ensemble
+          dinf_dtheta[, , , jj] <- dinf_dtheta[, , , jj] +
+            dinf_dR
+        } else {
+          # 4D dinf_dR: per-ensemble slice
+          dinf_dtheta[, , , jj] <- dinf_dtheta[, , , jj] +
+            dinf_dR[, , , jj]
+        }#IFELSE
+      }#IF
+    }#IF
+  }#FOR
 
   # Labels
   if (is.null(labels)) labels <- colnames(R)
   if (is.null(labels)) labels <- paste0("lc", seq_len(q))
 
-  # Package as lincom > ral
-  coef_mat <- matrix(lincom_coef, nrow = q, ncol = 1)
+  # Fit labels (ensemble type names)
+  fit_labels <- colnames(fit$coefficients)[j_seq]
+  if (is.null(fit_labels)) {
+    fit_labels <- if (!is.null(fit$fit_labels)) {
+      fit$fit_labels[j_seq]
+    } else {
+      paste0("lincom", seq_len(nfit))
+    }#IFELSE
+  }#IF
+
   rownames(coef_mat) <- labels
-  colnames(coef_mat) <- "lincom"
+  colnames(coef_mat) <- fit_labels
 
   ral(coefficients = coef_mat,
-      inf_func = array(lincom_if, dim = c(n, q, 1)),
+      inf_func = lincom_if,
       dinf_dtheta = dinf_dtheta,
       nobs = n,
       coef_names = labels,
@@ -217,7 +255,7 @@ lincom.ddml <- function(fit, R,
 #' @method lincom ddml_rep
 lincom.ddml_rep <- function(fit, R, inf_func_R = NULL,
                             dinf_dR = NULL,
-                            fit_idx = 1,
+                            fit_idx = NULL,
                             labels = NULL, ...) {
   # Apply lincom.ddml to each rep
   lc_fits <- lapply(fit$fits, function(f) {
@@ -239,6 +277,8 @@ lincom.ddml_rep <- function(fit, R, inf_func_R = NULL,
 print.lincom <- function(x, ...) {
   cat("Linear Combination\n")
   cat("Obs:", x$nobs)
+  nfit <- ncol(x$coefficients)
+  if (nfit > 1) cat("  Ensembles:", nfit)
   if (!x$fixed_R) cat("  (delta-method)")
   cat("\n\n")
   cat("Use summary() for inference.\n")
@@ -252,6 +292,8 @@ print.lincom_rep <- function(x, ...) {
   cat("Linear Combination (replicated)\n")
   cat("Obs:", x$nobs,
       "  Resamples:", x$nresamples)
+  nfit <- x$nfit
+  if (!is.null(nfit) && nfit > 1) cat("  Ensembles:", nfit)
   if (!is.null(x$fixed_R) && !x$fixed_R) {
     cat("  (delta-method)")
   }#IF

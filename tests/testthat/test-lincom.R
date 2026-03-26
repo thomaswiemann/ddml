@@ -362,3 +362,98 @@ test_that("lincom_rep HC3 vcov works now", {
   expect_true(all(diag(V_hc3) > 0))
 })#TEST_THAT
 
+# Multi-ensemble lincom ======================================================
+
+test_that("lincom all ensembles with fit_idx = NULL", {
+  set.seed(42)
+  n <- 800; T_ <- 4
+  X <- matrix(rnorm(n * 2), n, 2)
+  G <- sample(c(3, 4, Inf), n, replace = TRUE,
+              prob = c(0.3, 0.3, 0.4))
+  y <- matrix(rnorm(n * T_), n, T_)
+  for (i in seq_len(n)) {
+    if (is.finite(G[i])) {
+      for (tt in seq_len(T_)) {
+        if (tt >= G[i]) y[i, tt] <- y[i, tt] + 1
+      }
+    }
+  }
+  fit <- ddml_attgt(y, X, t = 1:T_, G = G,
+                   learners = list(
+                     list(what = ols),
+                     list(what = ols,
+                          args = list(const = FALSE))),
+                   ensemble_type = c("nnls", "singlebest"),
+                   sample_folds = 2, cv_folds = 3,
+                   silent = TRUE)
+
+  p <- nrow(fit$coefficients)
+  nensb <- ncol(fit$coefficients)
+  R <- diag(p)
+
+  # Default fit_idx = NULL -> all ensembles
+  lc <- lincom(fit, R = R)
+  expect_equal(ncol(lc$coefficients), nensb)
+  expect_equal(dim(lc$inf_func)[3], nensb)
+
+  # Each ensemble matches single-ensemble lincom
+  for (j in seq_len(nensb)) {
+    lc_j <- lincom(fit, R = R, fit_idx = j)
+    expect_equal(lc$coefficients[, j],
+                 lc_j$coefficients[, 1],
+                 tolerance = 1e-10)
+  }
+
+  # summary works with multiple ensembles
+  s <- summary(lc)
+  expect_equal(dim(s$coefficients)[3], nensb)
+})#TEST_THAT
+
+test_that("lincom_weights_did multi-ensemble dinf_dR", {
+  fit <- make_attgt_fit()
+
+  # Single-ensemble fit: only 1 ensemble, dinf_dR is 3D
+  w <- lincom_weights_did(fit, type = "dynamic")
+  expect_equal(length(dim(w$dinf_dR)), 3L)
+  q <- ncol(w$R)
+  expect_equal(dim(w$dinf_dR), c(fit$nobs, q, q))
+
+  # Explicit fit_idx = 1: same shape
+  w1 <- lincom_weights_did(fit, type = "dynamic", fit_idx = 1)
+  expect_equal(dim(w1$dinf_dR), c(fit$nobs, q, q))
+  expect_equal(w$dinf_dR, w1$dinf_dR, tolerance = 1e-12)
+})#TEST_THAT
+
+test_that("as.list on lincom with multi-ensemble", {
+  set.seed(42)
+  n <- 800; T_ <- 4
+  X <- matrix(rnorm(n * 2), n, 2)
+  G <- sample(c(3, 4, Inf), n, replace = TRUE,
+              prob = c(0.3, 0.3, 0.4))
+  y <- matrix(rnorm(n * T_), n, T_)
+  for (i in seq_len(n)) {
+    if (is.finite(G[i])) {
+      for (tt in seq_len(T_)) {
+        if (tt >= G[i]) y[i, tt] <- y[i, tt] + 1
+      }
+    }
+  }
+  fit <- ddml_attgt(y, X, t = 1:T_, G = G,
+                   learners = list(
+                     list(what = ols),
+                     list(what = ols,
+                          args = list(const = FALSE))),
+                   ensemble_type = c("nnls", "singlebest"),
+                   sample_folds = 2, cv_folds = 3,
+                   silent = TRUE)
+
+  p <- nrow(fit$coefficients)
+  lc <- lincom(fit, R = diag(p))
+
+  L <- as.list(lc)
+  expect_length(L, 2)
+  for (j in 1:2) {
+    expect_s3_class(L[[j]], "lincom")
+    expect_equal(ncol(L[[j]]$coefficients), 1L)
+  }
+})#TEST_THAT

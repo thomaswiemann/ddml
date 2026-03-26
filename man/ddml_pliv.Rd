@@ -165,6 +165,7 @@ Machine Learning estimator for the partially linear instrumental variable
 
 where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
 \eqn{E[Cov(D, Z|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
+
 \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 
 \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r_D(X))](Z - r_Z(X))}

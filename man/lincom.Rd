@@ -13,7 +13,7 @@ lincom(fit, R, ...)
 \method{lincom}{ddml}(
   fit,
   R,
-  fit_idx = 1,
+  fit_idx = NULL,
   labels = NULL,
   inf_func_R = NULL,
   dinf_dR = NULL,
@@ -25,7 +25,7 @@ lincom(fit, R, ...)
   R,
   inf_func_R = NULL,
   dinf_dR = NULL,
-  fit_idx = 1,
+  fit_idx = NULL,
   labels = NULL,
   ...
 )
@@ -42,8 +42,10 @@ Each column defines one linear combination.}
 
 \item{...}{Currently unused.}
 
-\item{fit_idx}{Integer index of the fit to use.
-Default 1.}
+\item{fit_idx}{Integer index of the fit to use, or
+\code{NULL} (default) for all ensemble types.
+When \code{NULL}, the output carries all ensembles
+from the parent fit.}
 
 \item{labels}{Optional character vector of length \eqn{q}
 naming the linear combinations. Defaults to column

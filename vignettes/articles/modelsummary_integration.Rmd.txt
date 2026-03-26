@@ -116,22 +116,34 @@ if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinyta
 
 Notice how ``modelsummary`` automatically pulled the custom goodness-of-fit metrics from ``glance.ddml()`` (e.g., ``sample_folds``, ``shortstack``, ``ensemble_type``).
 
-If you wish to show the results for the *other* ensemble type (``singlebest``) in the table, ``modelsummary`` requires us to pass either a custom tidier or explicitly extract and rename the components. A simple robust trick is to manually tidy the ``ddml`` output first when dealing with secondary ensembles.
+## Comparing Ensemble Types with ``as.list()``
+
+When multiple ensemble types are computed simultaneously (as in our fit above), it is often useful to display each ensemble as its own column in a regression table. The ``as.list()`` method splits a ``ddml`` object into a named list of single-ensemble objects — one per ensemble type — that can be passed directly to ``modelsummary``.
 
 ```{r}
-# Retrieve tidied data.frames
-df_nnls       <- tidy(ddml_fit, ensemble_idx = 1)
-df_singlebest <- tidy(ddml_fit, ensemble_idx = 2)
+# Split by ensemble type
+ensemble_list <- as.list(ddml_fit)
+names(ensemble_list)
 
+# Each element is a standalone ddml object with full S3 support
+tidy(ensemble_list[["nnls"]])
+tidy(ensemble_list[["singlebest"]])
+```
+
+This makes multi-column ensemble comparison tables straightforward:
+
+```{r}
 if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(
-    list("DDML (NNLS)" = df_nnls, "DDML (Single Best)" = df_singlebest),
-    title = "Comparison of Stacking Approaches",
-    shape = term ~ model + statistic,
-    gof_map = NA # We omit model statistics since we passed data.frames directly
+    c(list("OLS" = ols_fit), as.list(ddml_fit)),
+    stars = TRUE,
+    coef_rename = c("D" = "Treatment (D)"),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE"
   )
 }
 ```
+
+Note that each column retains its own ``glance()`` statistics, so ``modelsummary`` can display goodness-of-fit rows for every ensemble type automatically.
 
 # Tidy Support for Repeated Resampling
 
@@ -140,11 +152,16 @@ Stata uses repeated cross-fitting by default (where the user averages coefficien
 These aggregated ``ddml_rep`` classes have their own ``tidy`` and ``glance`` methods mimicking their base equivalents.
 
 ```{r}
-# Compute a replicated DDML object
+# Compute a replicated DDML object with multiple ensembles
 repl_fit <- ddml_replicate(
   ddml_plm,
   y = y, D = D, X = X,
-  learners = list(list(what = ols)),
+  learners = list(
+    list(what = ols),
+    list(what = mdl_glmnet)
+  ),
+  ensemble_type = c("nnls", "singlebest"),
+  shortstack = TRUE,
   resamples = 3,
   sample_folds = 5,
   silent = TRUE
@@ -157,6 +174,14 @@ tidy(repl_fit)
 if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
   msummary(list("Single Split" = ddml_fit, "Repeated 3x" = repl_fit),
            stars = TRUE)
+}
+```
+
+The ``as.list()`` method also works on ``ddml_rep`` objects. This is useful when a replicated fit was computed with multiple ensemble types and you want each ensemble as a separate column:
+
+```{r}
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(as.list(repl_fit), stars = TRUE)
 }
 ```
 

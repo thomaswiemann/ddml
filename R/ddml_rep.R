@@ -365,3 +365,51 @@ glance.ddml_rep <- function(x, ...) {
     stringsAsFactors = FALSE
   )
 }#GLANCE.DDML_REP
+
+# List conversion =============================================================
+
+#' Split a ddml_rep Object by Ensemble Type
+#'
+#' Returns a named list of single-ensemble
+#'     \code{ddml_rep} objects.
+#'
+#' @param x A \code{ddml_rep} object.
+#' @param ... Currently unused.
+#'
+#' @return A named list of \code{ddml_rep} objects.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' reps = ddml_replicate(ddml_plm, y = y, D = D, X = X,
+#'                       learners = list(what = ols),
+#'                       resamples = 3,
+#'                       sample_folds = 2,
+#'                       silent = TRUE)
+#' as.list(reps)
+#' }
+#'
+#' @method as.list ddml_rep
+#' @export
+as.list.ddml_rep <- function(x, ...) {
+  nfit <- x$nfit
+  labels <- x$ensemble_type
+  if (is.null(labels)) labels <- x$fit_labels
+  if (is.null(labels)) labels <- paste0("fit", seq_len(nfit))
+
+  out <- vector("list", nfit)
+  names(out) <- labels
+  for (j in seq_len(nfit)) {
+    fits_j <- lapply(x$fits, function(f) as.list(f)[[j]])
+    obj <- ral_rep(fits_j, subclass = "ddml_rep")
+    obj$model_type <- x$model_type
+    obj$ensemble_type <- labels[j]
+    obj$fit_labels <- labels[j]
+    obj$sample_folds <- x$sample_folds
+    obj$shortstack <- x$shortstack
+    out[[j]] <- obj
+  }#FOR
+  out
+}#AS.LIST.DDML_REP

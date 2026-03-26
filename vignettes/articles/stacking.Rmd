@@ -82,11 +82,11 @@ Both stacking and short-stacking construct weighted averages of the considered b
 
 ```r
 cat("Time single learner:", time_singlelearner[1], "\n")
-#> Time single learner: 2.17
+#> Time single learner: 2.09
 cat("Time short-stacking:", time_shortstacking[1], "\n")
-#> Time short-stacking: 4.55
+#> Time short-stacking: 5.75
 cat("Time stacking:      ", time_stacking[1])
-#> Time stacking:       22.23
+#> Time stacking:       27.11
 ```
 
 # References

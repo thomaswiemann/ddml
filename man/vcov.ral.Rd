@@ -44,6 +44,19 @@ variance estimators are available:
 
 where \eqn{\hat{h}_{\theta,i}} is the leverage;
 see \code{\link{hatvalues.ral}}.
+
+\strong{Cluster-robust inference.} When
+\code{cluster_variable} is non-\code{NULL} and identifies
+fewer groups than observations, the observation-level
+influence functions are aggregated to cluster-level
+influence functions
+
+\deqn{\hat\Phi_g = \frac{G}{n} \sum_{i \in C_g} \hat\phi_i}
+
+and the variance is computed as
+
+\deqn{V_{\mathrm{HC0}} = \frac{1}{G^2} \sum_{g=1}^{G}
+  \hat\Phi_g\,\hat\Phi_g'.}
 }
 \seealso{
 \code{\link{hatvalues.ral}},

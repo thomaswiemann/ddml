@@ -157,7 +157,7 @@ and the influence function
 
 The variance of \eqn{\hat\theta} is then estimated by
 
-\deqn{\hat{V} = \frac{1}{n} \sum_i
+\deqn{\hat{V} = \frac{1}{n^2} \sum_i
   \phi_\theta(W_i; \hat\theta, \hat\eta_{-k(i)},
   \hat{J})\,\phi_\theta(W_i; \hat\theta,
   \hat\eta_{-k(i)}, \hat{J})'},

@@ -2,6 +2,10 @@
 
 S3method("[",summary.ddml)
 S3method("[[",ral_rep)
+S3method(as.list,ddml)
+S3method(as.list,ddml_rep)
+S3method(as.list,ral)
+S3method(as.list,ral_rep)
 S3method(coef,ral)
 S3method(coef,ral_rep)
 S3method(confint,ral)

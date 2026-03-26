@@ -582,3 +582,34 @@ plot.ral_rep <- function(x, parm = NULL, level = 0.95,
 
   invisible(list(coefficients = cf, ci = ci, labels = labels))
 }#PLOT.RAL_REP
+
+# List conversion =============================================================
+
+#' Split a RAL Rep Object by Fit
+#'
+#' Returns a named list of single-fit \code{ral_rep}
+#'     objects. Each element aggregates across resamples
+#'     for a single ensemble type.
+#'
+#' @param x An object inheriting from class \code{ral_rep}.
+#' @param ... Currently unused.
+#'
+#' @return A named list of \code{ral_rep} objects.
+#'
+#' @method as.list ral_rep
+#' @export
+as.list.ral_rep <- function(x, ...) {
+  nfit <- x$nfit
+  labels <- x$fit_labels
+  if (is.null(labels)) labels <- paste0("fit", seq_len(nfit))
+
+  sub <- setdiff(class(x), "ral_rep")[1]
+
+  out <- vector("list", nfit)
+  names(out) <- labels
+  for (j in seq_len(nfit)) {
+    fits_j <- lapply(x$fits, function(f) as.list(f)[[j]])
+    out[[j]] <- ral_rep(fits_j, subclass = sub)
+  }#FOR
+  out
+}#AS.LIST.RAL_REP

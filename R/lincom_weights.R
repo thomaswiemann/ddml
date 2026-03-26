@@ -57,7 +57,9 @@
 #'     Cells with event time outside \code{[min_e, max_e]}
 #'     are excluded.
 #' @param fit_idx Integer index of the fit (ensemble type)
-#'     to use for computing the weighting leverage. Default 1.
+#'     to use for computing the weighting leverage, or
+#'     \code{NULL} (default) for all ensemble types.
+#'     When \code{NULL}, \code{dinf_dR} is a 4D array.
 #'
 #' @return A list with elements:
 #' \describe{
@@ -109,7 +111,7 @@ lincom_weights_did <- function(fit,
                          type = c("dynamic", "group",
                                   "simple", "calendar"),
                          min_e = -Inf, max_e = Inf,
-                         fit_idx = 1) {
+                         fit_idx = NULL) {
   type <- match.arg(type)
   ref <- if (inherits(fit, "ddml_rep")) {
     fit[[1]]
@@ -189,23 +191,46 @@ lincom_weights_did <- function(fit,
 
   # Weighting leverage: dinf_dR = V'V (constant across i) ----
   # V_{g,k} = sum_{c in K_k, gc=g} (theta_c - gamma_k) / S_k
-  theta <- ref$coefficients[, fit_idx]
-  gamma <- as.numeric(crossprod(R, theta))  # q-vector
+  nensb <- ncol(ref$coefficients)
   nG <- length(glist)
-  V <- matrix(0, nG, q)
-  for (k in seq_len(q)) {
-    keepers <- agg[[k]]$keepers
-    if (length(keepers) == 0L) next
-    S_k <- sum(pg[keepers])
-    for (j in seq_len(nG)) {
-      cells_gk <- keepers[group[keepers] == glist[j]]
-      if (length(cells_gk) > 0L) {
-        V[j, k] <- sum(theta[cells_gk] - gamma[k]) / S_k
-      }#IF
+  if (is.null(fit_idx)) {
+    j_seq <- seq_len(nensb)
+  } else {
+    j_seq <- fit_idx
+  }#IFELSE
+
+  # Helper: compute VtV for a single ensemble column
+  compute_VtV <- function(jj) {
+    theta <- ref$coefficients[, jj]
+    gamma <- as.numeric(crossprod(R, theta))
+    V <- matrix(0, nG, q)
+    for (k in seq_len(q)) {
+      keepers <- agg[[k]]$keepers
+      if (length(keepers) == 0L) next
+      S_k <- sum(pg[keepers])
+      for (gg in seq_len(nG)) {
+        cells_gk <- keepers[group[keepers] == glist[gg]]
+        if (length(cells_gk) > 0L) {
+          V[gg, k] <- sum(theta[cells_gk] - gamma[k]) / S_k
+        }#IF
+      }#FOR
     }#FOR
-  }#FOR
-  VtV <- crossprod(V)  # q x q, constant
-  dinf_dR <- array(rep(VtV, each = n), dim = c(n, q, q))
+    crossprod(V)
+  }#COMPUTE_VTV
+
+  if (length(j_seq) == 1L) {
+    # Single ensemble -> 3D output (backward compatible)
+    VtV <- compute_VtV(j_seq)
+    dinf_dR <- array(rep(VtV, each = n), dim = c(n, q, q))
+  } else {
+    # Multi-ensemble -> 4D output
+    dinf_dR <- array(0, dim = c(n, q, q, length(j_seq)))
+    for (jj in seq_along(j_seq)) {
+      VtV <- compute_VtV(j_seq[jj])
+      dinf_dR[, , , jj] <- array(rep(VtV, each = n),
+                                  dim = c(n, q, q))
+    }#FOR
+  }#IFELSE
 
   colnames(R) <- labels
   list(R = R, inf_func_R = inf_func_R,

@@ -441,3 +441,34 @@ test_that("plot.ral with parm selects subset", {
   expect_equal(length(res$coefficients), 2)
   expect_equal(res$labels, c("b1", "b3"))
 })#TEST_THAT
+
+# as.list.ral ==================================================================
+
+test_that("as.list.ral splits by fit", {
+  n <- 100; p <- 2; nfit <- 3
+  coef <- matrix(rnorm(p * nfit), p, nfit,
+                 dimnames = list(c("a", "b"),
+                                 c("f1", "f2", "f3")))
+  inf <- array(rnorm(n * p * nfit), dim = c(n, p, nfit))
+  obj <- ral(coef, inf, nobs = n,
+             coef_names = c("a", "b"))
+
+  L <- as.list(obj)
+  expect_length(L, nfit)
+  expect_equal(names(L), c("f1", "f2", "f3"))
+  for (j in seq_len(nfit)) {
+    expect_s3_class(L[[j]], "ral")
+    expect_equal(ncol(L[[j]]$coefficients), 1L)
+    expect_equal(L[[j]]$coefficients[, 1], coef[, j])
+  }
+})#TEST_THAT
+
+test_that("as.list.ral single-fit returns length-1 list", {
+  n <- 50; p <- 1
+  obj <- ral(matrix(1, 1, 1, dimnames = list("x", "fit1")),
+             array(rnorm(n), dim = c(n, 1, 1)),
+             nobs = n, coef_names = "x")
+  L <- as.list(obj)
+  expect_length(L, 1)
+  expect_s3_class(L[[1]], "ral")
+})#TEST_THAT

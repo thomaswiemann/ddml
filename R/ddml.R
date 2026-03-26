@@ -50,7 +50,7 @@
 #'
 #' The variance of \eqn{\hat\theta} is then estimated by
 #'
-#' \deqn{\hat{V} = \frac{1}{n} \sum_i
+#' \deqn{\hat{V} = \frac{1}{n^2} \sum_i
 #'   \phi_\theta(W_i; \hat\theta, \hat\eta_{-k(i)},
 #'   \hat{J})\,\phi_\theta(W_i; \hat\theta,
 #'   \hat\eta_{-k(i)}, \hat{J})'},
@@ -614,3 +614,79 @@ glance.ddml <- function(x, ...) {
     stringsAsFactors = FALSE
   )
 }#GLANCE.DDML
+
+# List conversion =============================================================
+
+#' Split a DDML Object by Ensemble Type
+#'
+#' Returns a named list of single-ensemble \code{ddml}
+#'     objects. Each element retains all S3 methods
+#'     (\code{summary}, \code{tidy}, \code{glance},
+#'     \code{confint}, \code{vcov}).
+#'
+#' @param x An object inheriting from class \code{ddml}.
+#' @param ... Currently unused.
+#'
+#' @return A named list of length \code{nfit}.
+#'
+#' @examples
+#' \donttest{
+#' y = AE98[, "worked"]
+#' D = AE98[, "morekids"]
+#' X = AE98[, c("age","agefst","black","hisp","othrace")]
+#' fit = ddml_plm(y, D, X,
+#'                learners = list(
+#'                  list(what = ols),
+#'                  list(what = mdl_glmnet)),
+#'                ensemble_type = c("nnls", "singlebest"),
+#'                sample_folds = 2, silent = TRUE)
+#' as.list(fit)
+#' }
+#'
+#' @method as.list ddml
+#' @export
+as.list.ddml <- function(x, ...) {
+  nfit <- ncol(x$coefficients)
+  labels <- x$fit_labels
+  if (is.null(labels)) labels <- x$ensemble_type
+  if (is.null(labels)) labels <- paste0("fit", seq_len(nfit))
+
+  sub <- setdiff(class(x), c("ddml", "ral"))[1]
+
+  out <- vector("list", nfit)
+  names(out) <- labels
+  for (j in seq_len(nfit)) {
+    dinf_j <- if (!is.null(x$dinf_dtheta)) {
+      x$dinf_dtheta[, , , j, drop = FALSE]
+    }#IF
+    obj <- ddml(
+      coefficients = x$coefficients[, j, drop = FALSE],
+      scores = x$scores[, , j, drop = FALSE],
+      J = x$J[, , j, drop = FALSE],
+      inf_func = x$inf_func[, , j, drop = FALSE],
+      dinf_dtheta = dinf_j,
+      nobs = x$nobs,
+      coef_names = x$coef_names,
+      estimator_name = x$estimator_name,
+      ensemble_type = labels[j],
+      cluster_variable = x$cluster_variable,
+      sample_folds = x$sample_folds,
+      cv_folds = x$cv_folds,
+      shortstack = x$shortstack,
+      ensemble_weights = x$ensemble_weights,
+      mspe = x$mspe,
+      r2 = x$r2,
+      fitted = x$fitted,
+      splits = x$splits,
+      call = x$call,
+      subclass = sub)
+    # Carry through estimator-specific fields
+    for (nm in c("learners", "learners_DX", "learners_qX",
+                 "cell_info", "G", "control_group",
+                 "anticipation")) {
+      if (!is.null(x[[nm]])) obj[[nm]] <- x[[nm]]
+    }#FOR
+    out[[j]] <- obj
+  }#FOR
+  out
+}#AS.LIST.DDML

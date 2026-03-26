@@ -9,7 +9,7 @@ lincom_weights_did(
   type = c("dynamic", "group", "simple", "calendar"),
   min_e = -Inf,
   max_e = Inf,
-  fit_idx = 1
+  fit_idx = NULL
 )
 }
 \arguments{
@@ -24,7 +24,9 @@ Cells with event time outside \code{[min_e, max_e]}
 are excluded.}
 
 \item{fit_idx}{Integer index of the fit (ensemble type)
-to use for computing the weighting leverage. Default 1.}
+to use for computing the weighting leverage, or
+\code{NULL} (default) for all ensemble types.
+When \code{NULL}, \code{dinf_dR} is a 4D array.}
 }
 \value{
 A list with elements:

@@ -463,3 +463,34 @@ test_that("type argument threads through ddml_rep methods", {
   out <- capture_output(print(s3))
   expect_true(grepl("HC3", out))
 })
+
+# as.list.ddml_rep =============================================================
+
+test_that("as.list.ddml_rep splits by ensemble", {
+  set.seed(42)
+  y <- AE98[1:500, "worked"]
+  D <- AE98[1:500, "morekids"]
+  X <- AE98[1:500, c("age", "agefst", "black")]
+
+  reps <- ddml_replicate(ddml_plm, y = y, D = D, X = X,
+                         learners = list(
+                           list(what = ols),
+                           list(what = ols,
+                                args = list(const = FALSE))),
+                         ensemble_type = c("nnls", "singlebest"),
+                         sample_folds = 2,
+                         resamples = 3, silent = TRUE)
+
+  L <- as.list(reps)
+  expect_length(L, 2)
+  expect_equal(names(L), c("nnls", "singlebest"))
+  for (j in 1:2) {
+    expect_s3_class(L[[j]], "ddml_rep")
+    expect_equal(L[[j]]$nfit, 1L)
+    # summary, tidy, glance work
+    expect_true(is.data.frame(tidy(L[[j]])))
+    expect_true(is.data.frame(glance(L[[j]])))
+    s <- summary(L[[j]])
+    expect_true(inherits(s, "summary.ddml_rep"))
+  }
+})#TEST_THAT

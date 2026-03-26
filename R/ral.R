@@ -248,6 +248,19 @@ hatvalues.ral <- function(model, fit_idx = 1, ...) {
 #' where \eqn{\hat{h}_{\theta,i}} is the leverage;
 #' see \code{\link{hatvalues.ral}}.
 #'
+#' \strong{Cluster-robust inference.} When
+#' \code{cluster_variable} is non-\code{NULL} and identifies
+#' fewer groups than observations, the observation-level
+#' influence functions are aggregated to cluster-level
+#' influence functions
+#'
+#' \deqn{\hat\Phi_g = \frac{G}{n} \sum_{i \in C_g} \hat\phi_i} 
+#'
+#' and the variance is computed as
+#'
+#' \deqn{V_{\mathrm{HC0}} = \frac{1}{G^2} \sum_{g=1}^{G}
+#'   \hat\Phi_g\,\hat\Phi_g'.}
+#'
 #' @param object An object inheriting from class \code{ral}.
 #' @param fit_idx Integer index of the fit. Defaults to 1.
 #' @param type Character. One of \code{"HC1"} (default),
@@ -271,13 +284,17 @@ vcov.ral <- function(object, fit_idx = 1,
   if_j <- object$inf_func[, , fit_idx, drop = FALSE]
   dim(if_j) <- dim(if_j)[1:2]
   p <- ncol(if_j)
+  n <- nrow(if_j)
 
-  # Cluster aggregation
+  # Cluster aggregation: rescale to cluster-level influence functions
   clustered <- !is.null(object$cluster_variable) &&
-    length(unique(object$cluster_variable)) < nrow(if_j)
-  if (clustered) if_j <- rowsum(if_j, object$cluster_variable)
-
+    length(unique(object$cluster_variable)) < n
+  if (clustered) {
+    if_j <- rowsum(if_j, object$cluster_variable)
+    if_j <- if_j * (nrow(if_j) / n)
+  }
   n_eff <- nrow(if_j)
+  
   if (type == "HC3") {
     h <- stats::hatvalues(object, fit_idx = fit_idx)
     if (clustered) h <- as.vector(tapply(h, object$cluster_variable, sum))
@@ -360,8 +377,10 @@ confint.ral <- function(object, parm = NULL, level = 0.95,
     inf_func <- object$inf_func[, , fit_idx, drop = FALSE]
     dim(inf_func) <- dim(inf_func)[1:2]
     cl <- object$cluster_variable
-    if (!is.null(cl) && length(unique(cl)) < nrow(inf_func)) {
+    n <- nrow(inf_func)
+    if (!is.null(cl) && length(unique(cl)) < n) {
       inf_func <- rowsum(inf_func, cl)
+      inf_func <- inf_func * (nrow(inf_func) / n)
     }#IF
     n_eff <- nrow(inf_func)
     parm_idx <- match(parm, cf_names)
@@ -673,3 +692,60 @@ plot.ral <- function(x, parm = NULL, level = 0.95,
 
   invisible(list(coefficients = cf, ci = ci, labels = labels))
 }#PLOT.RAL
+
+# List conversion =============================================================
+
+#' Split a RAL Object by Fit
+#'
+#' Returns a named list of single-fit \code{ral} objects,
+#'     one per column of \code{coefficients}. This is the
+#'     primary mechanism for passing multi-ensemble results
+#'     to \pkg{modelsummary}.
+#'
+#' @param x An object inheriting from class \code{ral}.
+#' @param ... Currently unused.
+#'
+#' @return A named list of \code{ral} objects, each with
+#'     \code{nfit = 1}.
+#'
+#' @seealso \code{\link{ral}}, \code{\link{lincom}}
+#'
+#' @method as.list ral
+#' @export
+as.list.ral <- function(x, ...) {
+  nfit <- ncol(x$coefficients)
+  labels <- x$fit_labels
+  if (is.null(labels)) labels <- paste0("fit", seq_len(nfit))
+
+  # Known ral fields to slice or skip
+  slice_fields <- c("coefficients", "inf_func", "dinf_dtheta")
+  skip_fields <- c("nfit", "fit_labels")
+
+  out <- vector("list", nfit)
+  names(out) <- labels
+  for (j in seq_len(nfit)) {
+    dinf_j <- if (!is.null(x$dinf_dtheta)) {
+      x$dinf_dtheta[, , , j, drop = FALSE]
+    }#IF
+    obj <- ral(
+      coefficients = x$coefficients[, j, drop = FALSE],
+      inf_func = x$inf_func[, , j, drop = FALSE],
+      dinf_dtheta = dinf_j,
+      nobs = x$nobs,
+      coef_names = x$coef_names,
+      cluster_variable = x$cluster_variable,
+      estimator_name = x$estimator_name,
+      subclass = setdiff(class(x), "ral")[1])
+    # Carry through extra fields
+    extras <- setdiff(names(x),
+                      c(slice_fields, skip_fields,
+                        "nobs", "coef_names",
+                        "cluster_variable",
+                        "estimator_name"))
+    for (nm in extras) {
+      if (is.null(obj[[nm]])) obj[[nm]] <- x[[nm]]
+    }#FOR
+    out[[j]] <- obj
+  }#FOR
+  out
+}#AS.LIST.RAL

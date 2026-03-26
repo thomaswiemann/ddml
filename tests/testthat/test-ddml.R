@@ -610,3 +610,35 @@ test_that("hatvalues warns and returns NA if dinf_dtheta is missing", {
     ignore.case = TRUE
   )
 })
+
+# as.list.ddml ================================================================
+
+test_that("as.list.ddml splits by ensemble", {
+  set.seed(42)
+  y <- AE98[1:500, "worked"]
+  D <- AE98[1:500, "morekids"]
+  X <- AE98[1:500, c("age", "agefst", "black")]
+
+  fit <- ddml_plm(y, D, X,
+                  learners = list(
+                    list(what = ols),
+                    list(what = ols, args = list(const = FALSE))),
+                  ensemble_type = c("nnls", "singlebest"),
+                  sample_folds = 2, silent = TRUE)
+
+  L <- as.list(fit)
+  expect_length(L, 2)
+  expect_equal(names(L), c("nnls", "singlebest"))
+  for (j in 1:2) {
+    expect_s3_class(L[[j]], "ddml")
+    expect_equal(ncol(L[[j]]$coefficients), 1L)
+    # tidy and glance work
+    expect_true(is.data.frame(tidy(L[[j]])))
+    expect_true(is.data.frame(glance(L[[j]])))
+  }
+  # coef values match parent
+  expect_equal(L[[1]]$coefficients[, 1],
+               fit$coefficients[, 1], tolerance = 1e-10)
+  expect_equal(L[[2]]$coefficients[, 1],
+               fit$coefficients[, 2], tolerance = 1e-10)
+})#TEST_THAT

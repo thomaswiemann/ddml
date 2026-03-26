@@ -189,12 +189,11 @@ cvc_one_vs_many <- function(resid_base, resid_others, fid,
   # Sup-type test statistic
   Tx <- max(sqrt(n) * zeta_m / zeta_sd)
 
-  # Multiplier bootstrap
+  # Multiplier bootstrap (vectorized via matrix multiply)
   zeta_scaled <- sweep(zeta_til, 2, zeta_sd, FUN = "/")
-  Txb <- vapply(seq_len(bootnum), function(b) {
-    bw <- stats::rnorm(n)
-    max(colSums(zeta_scaled * bw) / sqrt(n))
-  }, numeric(1))
+  W <- matrix(stats::rnorm(n * bootnum), n, bootnum)
+  boot_stats <- crossprod(zeta_scaled, W) / sqrt(n)  # K × bootnum
+  Txb <- apply(boot_stats, 2, max)
 
   mean(Txb > Tx)
 }#CVC_ONE_VS_MANY
