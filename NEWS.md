@@ -8,9 +8,9 @@
 * Adds `diagnostics()` for MSPE, R-squared, stacking weights, and CVC tests.
 * Adds `fitted`/`splits` pass-through to all `ddml_*()` estimators.
 * New S3 methods: `plot()`, `as.list()`, `hatvalues()`, `nobs()`, multi-ensemble `tidy()`/`glance()`.
+* Adds uniform confidence bands via multiplier bootstrap (`confint(uniform = TRUE)`).
 * Adds HC0/HC3 variance estimators, parallel computation, stratified cross-fitting, cluster-aware splitting, and input validation.
-* Adds `broom` compatibility and `mdl_bigGlm` wrapper.
-* Rewrites DiD and `modelsummary` vignettes.
+* Adds `broom` compatibility.
 * Fixes `ddml_fpliv()` with custom weights.
 * Breaking changes:
     - Inference internals use `$inf_func` instead of `$scores`/`$J`/`$psi_a`/`$psi_b`.
