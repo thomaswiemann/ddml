@@ -1,8 +1,5 @@
 # Collection of small internal functions
 
-# Package-level environment for internal state
-.ddml_env <- new.env(parent = emptyenv())
-
 # Resolve estimator progress messages.
 #
 # Merges user-supplied message overrides (passed via dots by
@@ -111,11 +108,8 @@ normalize_learners <- function(learners) {
   resolve <- function(l) {
     if (!is.null(l$what)) return(l$what)
     if (!is.null(l$fun)) {
-      if (is.null(.ddml_env$fun_deprecated_warned)) {
-        message("Note: 'fun' in learner specifications ",
-                "is deprecated. Use 'what' instead.")
-        .ddml_env$fun_deprecated_warned <- TRUE
-      }#IF
+      message("Note: 'fun' in learner specifications ",
+              "is deprecated. Use 'what' instead.")
       return(l$fun)
     }#IF
     stop("Learner must have a 'what' element.",
@@ -290,11 +284,6 @@ build_fitted_flat <- function(res_list, save_crossval,
   }#FOR
   out
 }#BUILD_FITTED_FLAT
-
-get_cf_resid_bylearner_for_eq <- function(fitted, eq) {
-  entry <- fitted[[eq]]
-  if (!is.null(entry)) entry$cf_resid_bylearner else NULL
-}#GET_CF_RESID_BYLEARNER_FOR_EQ
 
 # Input validation checks for DDML estimators
 validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,

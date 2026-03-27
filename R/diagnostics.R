@@ -122,7 +122,8 @@ diagnostics <- function(object, cvc = FALSE,
 # @return Numeric vector of p-values (length = nlearners),
 #     or NA_real_ vector if residuals are unavailable.
 cvc_pvalues <- function(fitted, splits, eq, bootnum = 500) {
-  resid <- get_cf_resid_bylearner_for_eq(fitted, eq)
+  entry <- fitted[[eq]]
+  resid <- if (!is.null(entry)) entry$cf_resid_bylearner else NULL
   subs <- splits[[eq]]$subsamples
   if (is.null(resid) || is.null(subs) || ncol(resid) < 2) {
     nL <- if (!is.null(resid)) ncol(resid) else 1L
