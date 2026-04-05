@@ -38,14 +38,14 @@ test_that("diagnostics works with PLM multiple learners", {
 
   diag <- diagnostics(fit)
 
-  # Should have 2 learners per equation
+  # Should have 2 learners + ensemble per equation
   for (eq in names(diag$tables)) {
-    expect_equal(nrow(diag$tables[[eq]]), 2)
+    expect_true(nrow(diag$tables[[eq]]) >= 3)
   }
 
   # Weights should sum to ~1
   for (eq in names(diag$tables)) {
-    expect_equal(sum(diag$tables[[eq]]$weight), 1,
+    expect_equal(sum(diag$tables[[eq]]$weight, na.rm = TRUE), 1,
                  tolerance = 1e-4)
   }
 })

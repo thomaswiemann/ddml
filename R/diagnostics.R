@@ -54,12 +54,18 @@ diagnostics <- function(object, cvc = FALSE,
 
     # Build per-learner table
     nlearners <- if (single_learner) 1L else nrow(w)
-    learner_names <- if (single_learner) "single" else
-      paste0("learner_", seq_len(nlearners))
-
-    # Per-learner OOS mspe and r2
+    
+    # Per-learner (and per-ensemble) OOS mspe and r2
     m_vec <- if (is.null(m) || length(m) == 0) rep(NA_real_, nlearners) else as.numeric(m)
     r_vec <- if (is.null(r) || length(r) == 0) rep(NA_real_, nlearners) else as.numeric(r)
+    n_total <- length(m_vec)
+
+    # Use names assigned upstream, or fallback to default
+    if (!is.null(names(m))) {
+      learner_names <- names(m)
+    } else {
+      learner_names <- if (single_learner) "single" else paste0("learner_", seq_len(n_total))
+    }#IFELSE
 
     tbl <- data.frame(
       learner = learner_names,
@@ -85,13 +91,16 @@ diagnostics <- function(object, cvc = FALSE,
 
       for (j in seq_len(ncol(w_avg))) {
         col_name <- paste0("weight_", ens_names[j])
-        tbl[[col_name]] <- w_avg[, j]
+        # Pad with NA for ensemble rows
+        w_col <- c(w_avg[, j], rep(NA_real_, n_total - nlearners))
+        tbl[[col_name]] <- w_col
       }#FOR
     }#IFELSE
 
     # CVC p-values (opt-in)
     if (cvc && !single_learner) {
-      tbl$cvc_pval <- cvc_pvalues(object$fitted, object$splits, eq, bootnum)
+      cvc_pvals <- cvc_pvalues(object$fitted, object$splits, eq, bootnum)
+      tbl$cvc_pval <- c(cvc_pvals, rep(NA_real_, n_total - length(cvc_pvals)))
     }#IF
 
     tables[[eq]] <- tbl
@@ -233,10 +242,11 @@ print.ddml_diagnostics <- function(x, digits = 4, ...) {
     cat("\n")
   }#FOR
 
-  if (x$cvc && !is.null(x$shortstack) && x$shortstack) {
-    cat("Note: CVC compares individual base learners.",
-        "\nShortstacked ensemble CVC is not available",
-        "(weights use all data).\n")
+  if (!is.null(x$shortstack) && x$shortstack) {
+    if (x$cvc) cat("Note: CVC compares individual base learners.\n",
+                   "      Shortstacked ensemble CVC is not available.\n")
+    cat("Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights\n",
+        "      and represent in-sample fit over cross-fitted base predictions.\n")
   }#IF
 
   invisible(x)

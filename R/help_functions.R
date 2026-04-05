@@ -222,13 +222,28 @@ build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
 
   auxiliary_fitted <- extrapolate_auxiliary(
     auxiliary_fitted_bylearner, weights)
+
   oos_stats <- compute_mspe_r2(cf_resid_bylearner, y)
+  mspe <- oos_stats$mspe
+  r2 <- oos_stats$r2
+
+  nlearners <- ncol(cf)
+  if (nlearners > 1) {
+    # Ensemble OOS mspe and r-squared
+    cf_resid_ens <- drop(y) - cf_fitted
+    oos_stats_ens <- compute_mspe_r2(cf_resid_ens, y)
+    
+    mspe <- c(mspe, oos_stats_ens$mspe)
+    r2 <- c(r2, oos_stats_ens$r2)
+    names(mspe) <- names(r2) <- c(paste0("learner_", seq_len(nlearners)), 
+                                  ens_names)
+  }#IF
 
   list(cf_fitted = cf_fitted,
        weights = weights,
        ensemble_type = ens_names,
-       mspe = oos_stats$mspe,
-       r2 = oos_stats$r2,
+       mspe = mspe,
+       r2 = r2,
        auxiliary_fitted = auxiliary_fitted,
        cf_fitted_bylearner = cf,
        cf_resid_bylearner = cf_resid_bylearner,
