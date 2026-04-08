@@ -116,10 +116,13 @@ mdl_xgboost <- function(y, X,
                         ...){
   # Compute xgboost
   dots <- list(...)
-  if (is.null(dots$params$objective) && is.null(dots$objective) &&
-      is.factor(y) && length(levels(y)) == 2) {
-    dots$objective <- "binary:logistic"
+  
+  # Ensure binary/multi classification targets are factors (required by xgboost)
+  obj <- if (!is.null(dots$objective)) dots$objective else dots$params$objective
+  if (!is.null(obj) && grepl("^(binary|multi):", obj) && !is.factor(y)) {
+    y <- as.factor(y)
   }#IF
+  
   mdl_fit <- do.call(xgboost::xgboost,
                      c(list(x = X, y = y, nrounds = nrounds,
                             verbosity = verbosity), dots))

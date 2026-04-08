@@ -111,7 +111,8 @@ weight recomputation.}
 All \code{ddml_*} estimators (\code{\link{ddml_plm}},
 \code{\link{ddml_pliv}}, \code{\link{ddml_fpliv}},
 \code{\link{ddml_ate}}, \code{\link{ddml_att}},
-\code{\link{ddml_late}}, \code{\link{ddml_apo}}) return
+\code{\link{ddml_late}}, \code{\link{ddml_apo}},
+\code{\link{ddml_policy}}) return
 objects that inherit from S3 class \code{"ddml"}.
 
 Each object is a list containing the components described below.
@@ -276,6 +277,7 @@ Other ddml estimators:
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()}
+\code{\link{ddml_plm}()},
+\code{\link{ddml_policy}()}
 }
 \concept{ddml estimators}

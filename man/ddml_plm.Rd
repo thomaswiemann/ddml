@@ -227,6 +227,7 @@ Other ddml estimators:
 \code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
-\code{\link{ddml_pliv}()}
+\code{\link{ddml_pliv}()},
+\code{\link{ddml_policy}()}
 }
 \concept{ddml estimators}

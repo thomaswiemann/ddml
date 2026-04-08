@@ -5,7 +5,8 @@
 #' @description All \code{ddml_*} estimators (\code{\link{ddml_plm}},
 #' \code{\link{ddml_pliv}}, \code{\link{ddml_fpliv}},
 #' \code{\link{ddml_ate}}, \code{\link{ddml_att}},
-#' \code{\link{ddml_late}}, \code{\link{ddml_apo}}) return
+#' \code{\link{ddml_late}}, \code{\link{ddml_apo}},
+#' \code{\link{ddml_policy}}) return
 #' objects that inherit from S3 class \code{"ddml"}.
 #'
 #' Each object is a list containing the components described below.
@@ -617,6 +618,17 @@ glance.ddml <- function(x, ...) {
 
 # List conversion =============================================================
 
+# Fields explicitly assembled by the ddml() constructor.
+# Everything else on the object is estimator-specific (passed via ...).
+DDML_CORE_FIELDS <- c(
+  "coefficients", "ensemble_weights", "mspe", "r2",
+  "inf_func", "dinf_dtheta", "scores", "J",
+  "coef_names", "estimator_name", "ensemble_type",
+  "nobs", "nfit", "fit_labels",
+  "sample_folds", "cv_folds", "shortstack",
+  "cluster_variable", "fitted", "splits", "call"
+)
+
 #' Split a DDML Object by Ensemble Type
 #'
 #' Returns a named list of single-ensemble \code{ddml}
@@ -680,11 +692,9 @@ as.list.ddml <- function(x, ...) {
       splits = x$splits,
       call = x$call,
       subclass = sub)
-    # Carry through estimator-specific fields
-    for (nm in c("learners", "learners_DX", "learners_qX",
-                 "cell_info", "G", "control_group",
-                 "anticipation")) {
-      if (!is.null(x[[nm]])) obj[[nm]] <- x[[nm]]
+    # Carry through estimator-specific fields generically
+    for (nm in setdiff(names(x), DDML_CORE_FIELDS)) {
+      obj[[nm]] <- x[[nm]]
     }#FOR
     out[[j]] <- obj
   }#FOR

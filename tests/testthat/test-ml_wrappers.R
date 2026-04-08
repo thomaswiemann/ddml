@@ -86,3 +86,27 @@ test_that("ML wrappers predict probabilities for binary outcomes", {
   expect_true(max(fitted) <= 1)
   expect_true(min(fitted) >= 0)
 })#TEST_THAT
+
+test_that("ML wrappers correctly target P(Y=1) rather than P(Y=0)", {
+  set.seed(42)
+  # Simulate heavily skewed dataset where P(Y=1) ~ 0.9
+  nobs <- 200
+  X <- matrix(rnorm(nobs * 2), nobs, 2)
+  y <- rbinom(nobs, 1, 0.9)
+  
+  # Because of the updated wrapper, mdl_xgboost accepts numeric y directly for binary:logistic
+  glmnet_fit <- suppressWarnings(mdl_glmnet(y, X, family = binomial))
+  xgboost_fit <- suppressWarnings(mdl_xgboost(y, X, objective = "binary:logistic", nrounds = 5, verbosity = 0))
+  ranger_fit <- mdl_ranger(y, X, probability = TRUE)
+  
+  # Predict 
+  fitted_glmnet <- predict(glmnet_fit, newdata = X)
+  fitted_xgboost <- predict(xgboost_fit, newdata = X)
+  fitted_ranger <- predict(ranger_fit, newdata = X)
+  
+  # If P(Y=1) is correctly returned, the sample average of probabilities should be > 0.8
+  # (If they mistakenly outputted P(Y=0), the mean would be < 0.2)
+  expect_true(mean(fitted_glmnet) > 0.8)
+  expect_true(mean(fitted_xgboost) > 0.8)
+  expect_true(mean(fitted_ranger) > 0.8)
+})#TEST_THAT

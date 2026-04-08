@@ -251,3 +251,29 @@ test_that("ddml_apo fitted pass-through works", {
   )
 })
 
+test_that("ddml_apo classification w/ glmnet, ranger, xgboost works", {
+  set.seed(42)
+  nobs <- 1000
+  X <- matrix(rnorm(nobs * 5), nobs, 5)
+  D <- rbinom(nobs, 1, 0.5)
+  # Binary outcome
+  y <- rbinom(nobs, 1, plogis(0.5 * X[, 1] + 1.5 * D))
+  
+  learners_class <- list(
+    list(what = mdl_glmnet, args = list(family = "binomial")),
+    list(what = mdl_ranger, args = list(probability = TRUE)),
+    list(what = mdl_xgboost, args = list(objective = "binary:logistic", nrounds = 10, verbosity = 0))
+  )
+  
+  ddml_apo_fit <- ddml_apo(y, D, X,
+                             d = 1,
+                             learners = learners_class,
+                             ensemble_type = "nnls",
+                             cv_folds = 2,
+                             sample_folds = 2,
+                             silent = TRUE)
+  
+  # Basic expectations
+  expect_true(inherits(ddml_apo_fit, "ddml_apo"))
+  expect_equal(length(coef(ddml_apo_fit)), 1)
+})
