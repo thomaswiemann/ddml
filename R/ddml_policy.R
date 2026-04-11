@@ -81,6 +81,10 @@
 #'     Evaluation and Learning." Proceedings of the 28th
 #'     International Conference on Machine Learning, 1097-1104.
 #'
+#' Zhou Z, Athey S, Wager S (2023). "Offline Multi-Action Policy
+#'     Learning: Generalization and Optimization." Operations
+#'     Research, 71(2), 698-722.
+#'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
 #' y = AE98[, "worked"]
@@ -267,9 +271,9 @@ ddml_policy <- function(y, D, X,
   J <- array(NA_real_, dim = c(1, 1, nensb))
   dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
   for (j in seq_len(nensb)) {
-    scores[, 1, j] <- -inf_func[, 1, j]
+    scores[, 1, j] <- inf_func[, 1, j]
     J[1, 1, j] <- -1
-    dinf_dtheta[, 1, 1, j] <- 1
+    dinf_dtheta[, 1, 1, j] <- -1
   }#FOR
 
   coef_names <- "Policy value"

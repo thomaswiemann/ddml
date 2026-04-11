@@ -46,6 +46,7 @@ reference:
   - ddml_att
   - ddml_late
   - ddml_apo
+  - ddml_policy
   - ddml_attgt
 
 - title: Repeated Resampling
@@ -99,6 +100,7 @@ reference:
   - matches("glance")
   - matches("predict")
   - matches("as.list")
+  - matches("length")
   - ensemble_weights
   - reexports
 

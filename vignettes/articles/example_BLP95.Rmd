@@ -236,6 +236,7 @@ diagnostics(stacking_fit)
 #>  learner_4 1.3850 0.2744       0.0000
 #>  learner_5 1.1000 0.4237       0.3525
 #>  learner_6 1.0350 0.4578       0.6475
+#>      nnls1 1.0076 0.4721           NA
 #> 
 #>   D1_X:
 #>    learner    mspe     r2 weight_nnls1
@@ -245,6 +246,7 @@ diagnostics(stacking_fit)
 #>  learner_4 28.2471 0.6219       0.0000
 #>  learner_5 16.9611 0.7730       0.1252
 #>  learner_6 13.4904 0.8194       0.8195
+#>      nnls1 13.2407 0.8228           NA
 #> 
 #>   D1_XZ:
 #>    learner    mspe     r2 weight_nnls1
@@ -254,6 +256,10 @@ diagnostics(stacking_fit)
 #>  learner_4 23.9814 0.6790       0.0000
 #>  learner_5 10.2051 0.8634       0.3372
 #>  learner_6  8.9730 0.8799       0.6548
+#>      nnls1  8.4965 0.8863           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 # Elasticities
@@ -368,16 +374,22 @@ diagnostics(stacking_r_fit)
 #>    learner   mspe     r2 weight_nnls1
 #>  learner_1 1.4843 0.2224       0.2298
 #>  learner_2 1.1869 0.3782       0.7702
+#>      nnls1 1.1579 0.3934           NA
 #> 
 #>   D1_X:
 #>    learner    mspe     r2 weight_nnls1
 #>  learner_1 29.7015 0.6025       0.1121
 #>  learner_2 14.2630 0.8091       0.8879
+#>      nnls1 14.0130 0.8124           NA
 #> 
 #>   D1_XZ:
 #>    learner    mspe     r2 weight_nnls1
 #>  learner_1 28.2924 0.6213       0.0725
 #>  learner_2 10.4439 0.8602       0.9275
+#>      nnls1 10.3342 0.8617           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 The example thus highlights the importance of considering multiple machine learners for robustness and illustrates the usefulness of Double/Debiased Machine Learning with stacking as a practical solution.

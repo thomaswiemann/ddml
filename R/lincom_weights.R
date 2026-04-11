@@ -221,13 +221,13 @@ lincom_weights_did <- function(fit,
   if (length(j_seq) == 1L) {
     # Single ensemble -> 3D output (backward compatible)
     VtV <- compute_VtV(j_seq)
-    dinf_dR <- array(rep(VtV, each = n), dim = c(n, q, q))
+    dinf_dR <- array(rep(-VtV, each = n), dim = c(n, q, q))
   } else {
     # Multi-ensemble -> 4D output
     dinf_dR <- array(0, dim = c(n, q, q, length(j_seq)))
     for (jj in seq_along(j_seq)) {
       VtV <- compute_VtV(j_seq[jj])
-      dinf_dR[, , , jj] <- array(rep(VtV, each = n),
+      dinf_dR[, , , jj] <- array(rep(-VtV, each = n),
                                   dim = c(n, q, q))
     }#FOR
   }#IFELSE

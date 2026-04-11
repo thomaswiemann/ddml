@@ -86,7 +86,7 @@ learners_multiple <- list(list(what = ols),
 
 Short-stacking is a computationally convenient variant of stacking originally introduced by Wolpert (1992). Stacking constructs linear combinations of base learners to minimize the out-of-sample mean squared error of a particular reduced form (e.g., $E[Z|X]$). Short-stacking uses the out-of-sample predictions that naturally arise in computation of Double/Debiased Machine Learning estimates due to cross-fitting, which substantially reduces the computational burden (see ``vignette("stacking")``).
 
-In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the four base learners with linear coefficients that are constrained to be non-negative and sum to one.
+In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the three base learners with linear coefficients that are constrained to be non-negative and sum to one.
 
 ```{r}
 # Estimate the local average treatment effect using short-stacking with base

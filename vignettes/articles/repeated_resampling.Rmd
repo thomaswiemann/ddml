@@ -209,11 +209,16 @@ diagnostics(run_3)
 #>    learner   mspe     r2 weight_nnls
 #>  learner_1 0.2402 0.0394      0.0000
 #>  learner_2 0.2396 0.0415      0.9986
+#>       nnls 0.2396 0.0415          NA
 #> 
 #>   D1_X:
 #>    learner   mspe     r2 weight_nnls
 #>  learner_1 0.2205 0.0659      0.0000
 #>  learner_2 0.2202 0.0671      0.9926
+#>       nnls 0.2202 0.0672          NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 # Manual Construction and HPC Compatibility

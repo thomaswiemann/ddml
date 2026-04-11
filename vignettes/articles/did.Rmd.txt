@@ -198,6 +198,9 @@ summarize_weights <- function(diag, pattern) {
                  value = TRUE)[1]
   w_mat <- sapply(eqs, function(eq) diag$tables[[eq]][[w_col]])
   learner_names <- diag$tables[[eqs[1]]]$learner
+  keep <- !is.na(w_mat[, 1]) # exclude nnls1 from weights
+  w_mat <- w_mat[keep, , drop = FALSE]
+  learner_names <- learner_names[keep]
   data.frame(
     learner = learner_names,
     min  = round(apply(w_mat, 1, min), 4),

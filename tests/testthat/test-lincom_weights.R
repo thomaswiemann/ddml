@@ -218,7 +218,7 @@ test_that("dinf_dR matches manual V'V computation", {
   }
   VtV_manual <- crossprod(V_manual)
 
-  expect_equal(w$dinf_dR[1, , ], VtV_manual, tolerance = 1e-10)
+  expect_equal(w$dinf_dR[1, , ], -VtV_manual, tolerance = 1e-10)
 })#TEST_THAT
 
 test_that("HC3 with dinf_dR differs from HC3 without", {

@@ -198,12 +198,12 @@ ddml_plm <- function(y, D, X,
 
     # Influence function
     J_inv <- csolve(matrix(J[, , j], nD + 1, nD + 1))
-    inf_func[, , j] <- matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
+    inf_func[, , j] <- -matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
     
     # Derivative of the influence function with respect to theta
     U <- X_full %*% t(J_inv)
     dinf_dtheta[, , , j] <- sapply(seq_len(nD + 1), function(k) {
-      -X_full[, k] * U
+      X_full[, k] * U
     }, simplify = "array")
   }#FOR
 

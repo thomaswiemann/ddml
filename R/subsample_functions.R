@@ -422,6 +422,11 @@ get_cf_indices_simple <- function(cluster_variable, sample_folds,
 
 # Simple function to generate subsamples.
 generate_subsamples <- function(nobs, sample_folds) {
+  if (nobs < sample_folds) {
+    stop("Number of observations (", nobs,
+         ") is less than the number of folds (",
+         sample_folds, ").", call. = FALSE)
+  }#IF
   sampleframe <- rep(seq_len(sample_folds),
                      ceiling(nobs / sample_folds))
   sample_groups <- sample(sampleframe, size = nobs, replace = FALSE)

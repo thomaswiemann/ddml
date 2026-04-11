@@ -184,6 +184,10 @@ diagnostics(stacking_fit)
 #>  learner_2 10.2699 0.0461       0.0000
 #>  learner_3 10.1852 0.0540       0.4126
 #>  learner_4 10.2673 0.0464       0.0000
+#>      nnls1 10.1850 0.0540           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 # References

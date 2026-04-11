@@ -217,14 +217,13 @@ ddml_late <- function(y, D, Z, X,
     phi_rf <- ate_rf$inf_func[, 1, j]
     phi_fs <- ate_fs$inf_func[, 1, j]
     
-    scores[, 1, j] <- phi_fs * late[j] - phi_rf
+    scores[, 1, j] <- phi_rf - phi_fs * late[j]
     J[1, 1, j] <- -theta_fs
     
     J_inv <- csolve(matrix(J[, , j], 1, 1))
-    inf_func[, 1, j] <- matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    inf_func[, 1, j] <- -matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
     
-    psi_a_vec <- -(theta_fs - phi_fs)
-    dinf_dtheta[, 1, 1, j] <- psi_a_vec * J_inv[1, 1]
+    dinf_dtheta[, 1, 1, j] <- phi_fs * J_inv[1, 1]
   }#FOR
 
   coef_names <- "LATE"

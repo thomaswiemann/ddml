@@ -12,6 +12,7 @@
 # @param subsamples List of sample fold indices.
 # @param cv_subsamples List of cross-validation fold indices.
 # @param parallel Optional list with parallel config.
+#' @noRd
 get_CEF <- function(y, X,
                     learners,
                     ensemble_type,
@@ -150,13 +151,14 @@ get_CEF <- function(y, X,
 #   elements \code{$fit} (containing \code{$cf_fitted} and
 #   \code{$auxiliary_fitted}) and \code{$d} (the treatment level).
 # @param aux_indx Auxiliary sample indices for extrapolation.
+#' @noRd
 extrapolate_CEF <- function(D, CEF_res_byD, aux_indx) {
   # Data parameters
   nCEF <- length(CEF_res_byD)
   nobs <- length(D)
   D_levels <- lapply(CEF_res_byD, function(x) x$d)
   is_D <- rep(list(NULL), nCEF)
-  for (d in seq_len(nCEF)) is_D[[d]] <- which(D == D_levels[d])
+  for (d in seq_len(nCEF)) is_D[[d]] <- which(D == D_levels[[d]])
   nensb <- ncol(as.matrix(
     CEF_res_byD[[1]]$fit$cf_fitted))
   sample_folds <- length(

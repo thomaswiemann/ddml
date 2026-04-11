@@ -201,7 +201,7 @@ test_that("vcov.ral HC3 uses leverage correction", {
   n <- 100
   coefficients <- matrix(1, 1, 1)
   inf_func <- array(rnorm(n), dim = c(n, 1, 1))
-  dinf_dtheta <- array(1, dim = c(n, 1, 1, 1))
+  dinf_dtheta <- array(-1, dim = c(n, 1, 1, 1))
   obj <- ral(coefficients = coefficients,
              inf_func = inf_func,
              dinf_dtheta = dinf_dtheta,

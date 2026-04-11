@@ -77,6 +77,7 @@ print(diag)
 #>  learner_2 0.2407 0.0319        0.901
 #>  learner_3 0.2446 0.0165        0.000
 #>  learner_4 0.2470 0.0067        0.099
+#>      nnls1 0.2407 0.0322           NA
 #> 
 #>   y_X_Z1:
 #>    learner   mspe     r2 weight_nnls1
@@ -84,6 +85,7 @@ print(diag)
 #>  learner_2 0.2419 0.0314       0.8775
 #>  learner_3 0.2459 0.0155       0.0874
 #>  learner_4 0.2485 0.0049       0.0351
+#>      nnls1 0.2419 0.0316           NA
 #> 
 #>   D_X_Z0:
 #>    learner   mspe     r2 weight_nnls1
@@ -91,6 +93,7 @@ print(diag)
 #>  learner_2 0.2095 0.0776       0.0000
 #>  learner_3 0.2150 0.0533       0.0693
 #>  learner_4 0.2130 0.0621       0.2439
+#>      nnls1 0.2090 0.0799           NA
 #> 
 #>   D_X_Z1:
 #>    learner   mspe     r2 weight_nnls1
@@ -98,6 +101,7 @@ print(diag)
 #>  learner_2 0.2239 0.0797       0.0000
 #>  learner_3 0.2297 0.0560       0.1049
 #>  learner_4 0.2288 0.0594       0.1739
+#>      nnls1 0.2235 0.0813           NA
 #> 
 #>   Z_X:
 #>    learner   mspe      r2 weight_nnls1
@@ -105,6 +109,10 @@ print(diag)
 #>  learner_2 0.2498  0.0002            1
 #>  learner_3 0.2501 -0.0010            0
 #>  learner_4 0.2551 -0.0209            0
+#>      nnls1 0.2498  0.0002           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 For each reduced form equation (e.g., $E[Y|Z=0, X]$), the diagnostics table reports:
@@ -123,8 +131,8 @@ head(tidy(diag))
 #> 2   y_X_Z0 learner_2 0.2407379 0.031911480 9.010382e-01
 #> 3   y_X_Z0 learner_3 0.2445764 0.016475863 0.000000e+00
 #> 4   y_X_Z0 learner_4 0.2470071 0.006701109 9.896183e-02
-#> 5   y_X_Z1 learner_1 0.2420426 0.030906416 0.000000e+00
-#> 6   y_X_Z1 learner_2 0.2419307 0.031354272 8.774719e-01
+#> 5   y_X_Z0     nnls1 0.2406614 0.032219302           NA
+#> 6   y_X_Z1 learner_1 0.2420426 0.030906416 0.000000e+00
 ```
 
 # Inference on Base Learners (Cross-Validation Criteria)
@@ -147,6 +155,7 @@ print(diag_cvc)
 #>  learner_2 0.2407 0.0319        0.901    0.996
 #>  learner_3 0.2446 0.0165        0.000    0.000
 #>  learner_4 0.2470 0.0067        0.099    0.001
+#>      nnls1 0.2407 0.0322           NA       NA
 #> 
 #>   y_X_Z1:
 #>    learner   mspe     r2 weight_nnls1 cvc_pval
@@ -154,6 +163,7 @@ print(diag_cvc)
 #>  learner_2 0.2419 0.0314       0.8775    1.000
 #>  learner_3 0.2459 0.0155       0.0874    0.004
 #>  learner_4 0.2485 0.0049       0.0351    0.000
+#>      nnls1 0.2419 0.0316           NA       NA
 #> 
 #>   D_X_Z0:
 #>    learner   mspe     r2 weight_nnls1 cvc_pval
@@ -161,6 +171,7 @@ print(diag_cvc)
 #>  learner_2 0.2095 0.0776       0.0000    0.875
 #>  learner_3 0.2150 0.0533       0.0693    0.000
 #>  learner_4 0.2130 0.0621       0.2439    0.018
+#>      nnls1 0.2090 0.0799           NA       NA
 #> 
 #>   D_X_Z1:
 #>    learner   mspe     r2 weight_nnls1 cvc_pval
@@ -168,6 +179,7 @@ print(diag_cvc)
 #>  learner_2 0.2239 0.0797       0.0000    0.809
 #>  learner_3 0.2297 0.0560       0.1049    0.000
 #>  learner_4 0.2288 0.0594       0.1739    0.006
+#>      nnls1 0.2235 0.0813           NA       NA
 #> 
 #>   Z_X:
 #>    learner   mspe      r2 weight_nnls1 cvc_pval
@@ -175,9 +187,12 @@ print(diag_cvc)
 #>  learner_2 0.2498  0.0002            1    0.994
 #>  learner_3 0.2501 -0.0010            0    0.253
 #>  learner_4 0.2551 -0.0209            0    0.000
+#>      nnls1 0.2498  0.0002           NA       NA
 #> 
-#> Note: CVC compares individual base learners. 
-#> Shortstacked ensemble CVC is not available (weights use all data).
+#> Note: CVC compares individual base learners.
+#>        Shortstacked ensemble CVC is not available.
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 A new column is added to the table:

@@ -181,10 +181,9 @@ ddml_apo <- function(y, D, X,
       d = 1)),
     aux_indx = indxs$aux_indx[2])[, , 1]
   m_X <- D_X_res$cf_fitted
-  is_internal <- is.null(messages$start) ||
-    messages$start == ""
+  is_internal <- is.null(messages$start) || messages$start == "" # prevents duplicate warnings
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type,
-                                   silent = is_internal)
+                                   silent = silent || is_internal)
 
   weights_mat <- matrix(weights, nobs, nensb)
   D_ind_mat <- matrix(D_ind, nobs, nensb)
@@ -205,8 +204,8 @@ ddml_apo <- function(y, D, X,
     J[1, 1, j] <- -1
     
     J_inv <- csolve(matrix(J[, , j], 1, 1))
-    inf_func[, 1, j] <- matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
-    dinf_dtheta[, 1, 1, j] <- -J_inv[1, 1]
+    inf_func[, 1, j] <- -matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    dinf_dtheta[, 1, 1, j] <- J_inv[1, 1]
   }#FOR
 
   coef_names <- "APO"

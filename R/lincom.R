@@ -85,7 +85,7 @@
 #'     and only the first term contributes.
 #' @param dinf_dR An optional \eqn{(n \times q \times q)}{n x q x q}
 #'     array of observation-level derivatives
-#'     \eqn{-n^{-1} \partial \phi_{R,i} / \partial R},
+#'     \eqn{\partial \phi_{R,i} / \partial R},
 #'     representing the Weighting Leverage. When supplied,
 #'     it is added to the Structural Leverage to form the
 #'     total leverage used by HC3.

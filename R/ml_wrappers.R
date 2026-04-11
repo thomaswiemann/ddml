@@ -35,7 +35,7 @@
 mdl_glmnet <- function(y, X,
                        cv = TRUE,
                        ...){
-  # Either copute glmnet with given lambda or determine lambda with cv.
+  # Either compute glmnet with given lambda or determine lambda with cv.
   if (cv) {
     mdl_fit <- glmnet::cv.glmnet(x = X, y = y, ...)
   } else {
@@ -63,14 +63,14 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   class(object) <- class(object)[-1]
   # Compute predictions
   if (cv) {
-    # Determine mse-minimizing lambda
+    # CV mode: select MSE-minimizing lambda from the CV path
     which_lambda <- which.min(object$cvm)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object$glmnet.fit, newx = newdata,
                              s = object$lambda[which_lambda],
                              type = "response", ...)
   } else {
-    # Determine least regularizing lambda
+    # Non-CV mode: select the least-regularizing (last) lambda
     which_lambda <- length(object$lambda)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object, newx = newdata,
@@ -206,6 +206,7 @@ predict.mdl_ranger <- function(object, newdata = NULL, ...){
   class(object) <- class(object)[-1]
   # Predict using randomForest prediction method
   if (object$treetype == "Probability estimation") {
+    # Column 2 = positive class probability (ranger orders factor levels)
     stats::predict(object, data = newdata, ...)$predictions[, 2]
   } else if (object$treetype == "Regression") {
     stats::predict(object, data = newdata, ...)$predictions

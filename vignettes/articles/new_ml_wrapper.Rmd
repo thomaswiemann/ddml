@@ -78,7 +78,9 @@ gbm_fit <- mdl_gbm(y, X,
 fitted_values <- predict(gbm_fit, X)
 # Check class
 class(gbm_fit)
+#> [1] "mdl_gbm" "gbm"
 class(fitted_values)
+#> [1] "numeric"
 ```
 
 The classes are what we expected. The wrapper should now be compatible with the ``ddml`` machinery. As a final test, we estimate the local average treatment effect. (Computation can take a while, feel free to set ``n.trees`` or ``interaction.depth`` to a smaller value for this test.)
@@ -97,6 +99,11 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 10
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.237      0.190   -1.25     0.21
 ```
 
 All works well!
@@ -177,15 +184,12 @@ mdl_keras <- function(y, X,
                        steps_per_epoch = steps_per_epoch,
                        verbose = verbose)
 
-  # Add standardization to object
-  nnet$std_y <- std_y
-  nnet$std_X <- std_X
-
-  # Append class
-  class(nnet) <- c("mdl_keras", class(nnet))
+  # Wrap in an R list to avoid reticulate attribute issues
+  result <- list(model = nnet, std_y = std_y, std_X = std_X)
+  class(result) <- "mdl_keras"
 
   # Return fitted object
-  return(nnet)
+  return(result)
 }#MDL_KERAS
 ```
 
@@ -193,16 +197,15 @@ The prediction method for our fitted object ensures the predictions are returned
 
 
 ```r
-predict.mdl_keras <- function(object, newdata){
+predict.mdl_keras <- function(object, newdata, ...){
   # Standardize newdata
   nobs <- nrow(newdata)
   newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = FALSE]),
     nrow = nobs, byrow = TRUE)
   newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = FALSE]),
     nrow = nobs, byrow = TRUE)
-  # Predict data and output as matrix
-  class(object) <- class(object)[-1] # Not a pretty solution...
-  fitted <- as.numeric(predict(object, newdata))
+  # Predict and convert to numeric vector
+  fitted <- as.numeric(predict(object$model, newdata, verbose = 0))
   # Re-standardize to output and return
   object$std_y[2] * fitted + object$std_y[1]
 }#PREDICT.MDL_KERAS
@@ -236,6 +239,11 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 10
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.208      0.194   -1.07     0.29
 ```
 
 All works well!

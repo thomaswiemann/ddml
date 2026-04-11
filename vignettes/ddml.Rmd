@@ -87,7 +87,7 @@ learners_multiple <- list(list(what = ols),
 
 Short-stacking is a computationally convenient variant of stacking originally introduced by Wolpert (1992). Stacking constructs linear combinations of base learners to minimize the out-of-sample mean squared error of a particular reduced form (e.g., $E[Z|X]$). Short-stacking uses the out-of-sample predictions that naturally arise in computation of Double/Debiased Machine Learning estimates due to cross-fitting, which substantially reduces the computational burden (see ``vignette("stacking")``).
 
-In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the four base learners with linear coefficients that are constrained to be non-negative and sum to one.
+In finite samples, regularizing the linear combination of base learners as constructed via (short-)stacking can improve statistical properties. This can be specified via the ``ensemble_type`` argument. Below, ``ddml_late`` estimates the nuisance parameters via linear combinations of the three base learners with linear coefficients that are constrained to be non-negative and sum to one.
 
 
 ```r
@@ -121,30 +121,38 @@ diagnostics(late_fit)
 #>  learner_1 0.2415 0.0289       0.7891
 #>  learner_2 0.2416 0.0283       0.0000
 #>  learner_3 0.2442 0.0179       0.2109
+#>      nnls1 0.2413 0.0297           NA
 #> 
 #>   y_X_Z1:
 #>    learner   mspe     r2 weight_nnls1
 #>  learner_1 0.2421 0.0305       0.8593
 #>  learner_2 0.2421 0.0305       0.0000
 #>  learner_3 0.2462 0.0143       0.1407
+#>      nnls1 0.2420 0.0310           NA
 #> 
 #>   D_X_Z0:
 #>    learner   mspe     r2 weight_nnls1
 #>  learner_1 0.2085 0.0820       0.8911
 #>  learner_2 0.2085 0.0820       0.0000
 #>  learner_3 0.2141 0.0573       0.1089
+#>      nnls1 0.2084 0.0824           NA
 #> 
 #>   D_X_Z1:
 #>    learner   mspe     r2 weight_nnls1
 #>  learner_1 0.2231 0.0828        0.909
 #>  learner_2 0.2231 0.0828        0.000
 #>  learner_3 0.2297 0.0556        0.091
+#>      nnls1 0.2231 0.0830           NA
 #> 
 #>   Z_X:
 #>    learner   mspe      r2 weight_nnls1
 #>  learner_1 0.2502 -0.0011            0
 #>  learner_2 0.2499  0.0001            1
 #>  learner_3 0.2503 -0.0015            0
+#>      nnls1 0.2499  0.0001           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 For formal statistical tests of whether learner performance differences are significant, see ``vignette("stacking_diagnostics")``.

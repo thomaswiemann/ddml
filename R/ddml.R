@@ -410,17 +410,6 @@ ddml <- function(coefficients, scores, J, inf_func,
 # Inference methods (coef, nobs, vcov, confint, hatvalues, tidy, glance)
 # are inherited from the "ral" superclass in ral.R.
 
-#' Subscript a summary.ddml object (deprecated).
-#' @param x An object of class \code{summary.ddml}.
-#' @param ... Indices passed to \code{[}.
-#' @keywords internal
-#' @export
-`[.summary.ddml` <- function(x, ...) {
-  message("Note: subscripting a summary.ddml object with ",
-          "'[' is deprecated. Use x$coefficients[...] instead.")
-  x$coefficients[...]
-}#`[.SUMMARY.DDML`
-
 #' Summary for DDML Estimators
 #'
 #' @description Computes a coefficient table with estimates,

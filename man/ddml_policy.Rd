@@ -236,6 +236,10 @@ summary(policy_fit)
 Dudik M, Langford J, Li L (2011). "Doubly Robust Policy
 Evaluation and Learning." Proceedings of the 28th
 International Conference on Machine Learning, 1097-1104.
+
+Zhou Z, Athey S, Wager S (2023). "Offline Multi-Action Policy
+Learning: Generalization and Optimization." Operations
+Research, 71(2), 698-722.
 }
 \seealso{
 Other ddml estimators: 

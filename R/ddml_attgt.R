@@ -420,7 +420,7 @@ ddml_attgt <- function(y, X = NULL, t, G,
 
   # J and dinf_dtheta are ensemble-independent, they only depend on constants...
   J_diag_idx <- cbind(seq_len(C), seq_len(C))
-  dinf_dtheta_common <- t(t(psi_a_arr) * J_inv_vec)
+  dinf_dtheta_common <- -t(t(psi_a_arr) * J_inv_vec)
   for (j in seq_len(nensb)) {
     J[, , j][J_diag_idx] <- mean_psi_a
     dinf_dtheta[, , , j] <- dinf_dtheta_common
@@ -430,7 +430,7 @@ ddml_attgt <- function(y, X = NULL, t, G,
     coef[, j] <- -colMeans(psi_b_arr[, , j]) / mean_psi_a
 
     scores[, , j] <- t(t(psi_a_arr) * coef[, j]) + psi_b_arr[, , j]
-    inf_func[, , j] <- t(t(scores[, , j]) * J_inv_vec)
+    inf_func[, , j] <- -t(t(scores[, , j]) * J_inv_vec)
   }#FOR
 
   coef_names <- paste0("ATT(", cell_info$group, ",", cell_info$time, ")")

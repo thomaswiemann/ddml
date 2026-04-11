@@ -273,6 +273,7 @@ compute_w <- function(type, nlearners, cv_results, y) {
     singlebest = compute_w_singlebest(nlearners, cv_results))
 }#COMPUTE_W
 
+#' @noRd
 compute_w_nnls1 <- function(nlearners, cv_results) {
   # QP solver requires a positive-definite matrix. Empirical
   # cross-products of CV residuals can be PSD (not PD) when
@@ -283,7 +284,8 @@ compute_w_nnls1 <- function(nlearners, cv_results) {
     quadprog::solve.QP(Dmat = Matrix::nearPD(sq_resid)$mat,
                        dvec = matrix(0, nlearners, 1),
                        Amat = A,
-                       bvec = c(1, rep(0, nlearners))),
+                       bvec = c(1, rep(0, nlearners)),
+                       meq = 1),
     error = function(e) {
       warning("nnls1 weight optimization failed: ",
               conditionMessage(e),
@@ -297,16 +299,19 @@ compute_w_nnls1 <- function(nlearners, cv_results) {
 
 # Unconstrained non-negative least squares (Wolpert-style).
 # Unlike nnls1, weights are NOT normalized to sum to 1.
+#' @noRd
 compute_w_nnls <- function(cv_results, y) {
   cv_fitted <- as.numeric(y) - cv_results$cv_resid
   nnls::nnls(cv_fitted, y)$x
 }#COMPUTE_W_NNLS
 
+#' @noRd
 compute_w_ols <- function(cv_results, y) {
   cv_fitted <- as.numeric(y) - cv_results$cv_resid
   ols(y, cv_fitted, const = FALSE)$coef
 }#COMPUTE_W_OLS
 
+#' @noRd
 compute_w_singlebest <- function(nlearners, cv_results) {
   mdl_min <- which.min(Matrix::colMeans(cv_results$cv_resid^2))
   mdl_min <- (seq_len(nlearners))[mdl_min]

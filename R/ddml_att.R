@@ -145,8 +145,8 @@ ddml_att <- function(y, D, X,
     J[1, 1, j] <- mean(psi_a_vec)
     
     J_inv <- csolve(matrix(J[, , j], 1, 1))
-    inf_func[, 1, j] <- matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
-    dinf_dtheta[, 1, 1, j] <- psi_a_vec * J_inv[1, 1]
+    inf_func[, 1, j] <- -matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    dinf_dtheta[, 1, 1, j] <- -psi_a_vec * J_inv[1, 1]
   }#FOR
 
   coef_names <- "ATT"

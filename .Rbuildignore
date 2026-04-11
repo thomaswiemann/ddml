@@ -22,6 +22,7 @@
 ^debugging$
 ^debugger$
 ^\.cursor$
+^\.claude$
 ^\.discussion$
 ^\.discussions$
 ^GEMINI\.md$

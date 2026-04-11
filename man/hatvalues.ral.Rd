@@ -27,7 +27,7 @@ The leverage for observation \eqn{i}
 is
 
 \deqn{h_i(\theta)
-  = \mathrm{tr}\!\left(
+  = -\mathrm{tr}\!\left(
   \frac{1}{n}
   \frac{\partial \phi_i(\theta)}
   {\partial \theta}

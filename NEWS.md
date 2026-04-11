@@ -1,8 +1,9 @@
 # ddml 0.9.0
 
 * Adds `ddml_attgt()` for staggered DiD and `ddml_apo()` for average potential outcomes.
+* Adds `ddml_policy()` for multi-action policy value estimation.
 * Adds `ddml()` constructor for custom DML estimators with user-supplied scores.
-* Adds `lincom()` and `lincom_weights_did()` for inference on linear combinations.
+* Adds `lincom()` for inference on linear combinations. Supports computation of dynamic average treatment effects via `lincom_weights_did()`.
 * Influence-function-based inference via the `ral` class; all estimators now inherit from `ral`.
 * Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median, mean, or spectral-norm aggregation.
 * Adds `diagnostics()` for MSPE, R-squared, stacking weights, and CVC tests.

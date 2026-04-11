@@ -206,9 +206,9 @@ ddml_ate <- function(y, D, X,
   dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
   for (j in seq_len(nensb)) {
     inf_func[, 1, j] <- apo_1$inf_func[, 1, j] - apo_0$inf_func[, 1, j]
-    scores[, 1, j] <- -inf_func[, 1, j]
+    scores[, 1, j] <- inf_func[, 1, j]
     J[1, 1, j] <- -1
-    dinf_dtheta[, 1, 1, j] <- 1
+    dinf_dtheta[, 1, 1, j] <- -1
   }#FOR
   coef_names <- "ATE"
   coef <- matrix(ate, nrow = 1, ncol = nensb)

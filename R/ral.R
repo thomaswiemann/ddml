@@ -31,7 +31,7 @@
 #' in the \code{inf_func} slot.
 #'
 #' When an observation-level derivative
-#' \eqn{-n^{-1}\,\partial \hat\phi_i / \partial \theta}
+#' \eqn{\partial \hat\phi_i / \partial \theta}
 #' is available (stored in \code{dinf_dtheta}), the estimator
 #' supports HC3 inference via leverage; see
 #' \code{\link{hatvalues.ral}}.
@@ -179,7 +179,7 @@ nobs.ral <- function(object, ...) {
 #'     is
 #'
 #' \deqn{h_i(\theta)
-#'   = \mathrm{tr}\!\left(
+#'   = -\mathrm{tr}\!\left(
 #'   \frac{1}{n}
 #'   \frac{\partial \phi_i(\theta)}
 #'   {\partial \theta}
@@ -218,7 +218,7 @@ hatvalues.ral <- function(model, fit_idx = 1, ...) {
 
   h <- rep(0, n)
   for (k in seq_len(p)) h <- h + dinf_j[, k, k, 1]
-  h <- h / n
+  h <- -h / n
 
   as.vector(h)
 }#HATVALUES.RAL
@@ -735,7 +735,10 @@ as.list.ral <- function(x, ...) {
       coef_names = x$coef_names,
       cluster_variable = x$cluster_variable,
       estimator_name = x$estimator_name,
-      subclass = setdiff(class(x), "ral")[1])
+      subclass = {
+        sub <- setdiff(class(x), "ral")
+        if (length(sub) > 0) sub[1] else NULL
+      })
     # Carry through extra fields
     extras <- setdiff(names(x),
                       c(slice_fields, skip_fields,

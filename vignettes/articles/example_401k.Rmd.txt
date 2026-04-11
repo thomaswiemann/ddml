@@ -166,7 +166,7 @@ To assess whether the additional effort in expanding the control variables had a
 diagnostics(stacking_fit)
 ```
 
-# Estimation with Continious and Binary Outcome and Treatment Variables
+# Estimation with Continuous and Binary Outcome and Treatment Variables
 
 Thus far, we have considered the same set of base learners for the reduced form of the outcome on controls and the reduced form of the endogenous variable on the controls. In contrast to net financial assets which is (approximately) continuous, participating in a 401k is a binary indicator. It may thus sensible to consider reduced form estimators with support on the unit-interval for the latter reduced form. For example, we could consider logistic regression instead of linear regression.
 

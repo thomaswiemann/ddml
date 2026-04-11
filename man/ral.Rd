@@ -66,7 +66,7 @@ function \eqn{\hat\phi_i \equiv \phi(W_i; \hat\theta)}
 in the \code{inf_func} slot.
 
 When an observation-level derivative
-\eqn{-n^{-1}\,\partial \hat\phi_i / \partial \theta}
+\eqn{\partial \hat\phi_i / \partial \theta}
 is available (stored in \code{dinf_dtheta}), the estimator
 supports HC3 inference via leverage; see
 \code{\link{hatvalues.ral}}.
