@@ -105,6 +105,9 @@ reference:
   - reexports
 
 articles:
+- title: Background
+  contents:
+  - articles/neyman_orthogonality
 - title: Key Features
   navbar: ~
   contents:

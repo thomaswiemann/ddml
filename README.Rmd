@@ -87,6 +87,7 @@ summary(late_fit_short)
 
 Check out our articles to learn more:
 
+- ``vignette("neyman_orthogonality")`` introduces Neyman orthogonality in simple linear regression
 - ``vignette("ddml")`` is a more detailed introduction to ``ddml``
 - ``vignette("stacking")`` discusses computational benefits of short-stacking
 - ``vignette("stacking_diagnostics")`` shows how to evaluate base learners and perform inference on learner performance
