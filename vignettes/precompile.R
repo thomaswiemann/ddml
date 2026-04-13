@@ -51,7 +51,11 @@ VIGNETTES <- list(
   list(name = "repeated_resampling",
        src  = "vignettes/articles/repeated_resampling.Rmd.txt",
        out  = "vignettes/articles/repeated_resampling.Rmd",
-       deps = "ddml")
+       deps = "ddml"),
+  list(name = "neyman_orthogonality",
+       src  = "vignettes/articles/neyman_orthogonality.Rmd.txt",
+       out  = "vignettes/articles/neyman_orthogonality.Rmd",
+       deps = c("ddml", "sandwich", "lmtest"))
 )
 
 args <- commandArgs(trailingOnly = TRUE)
