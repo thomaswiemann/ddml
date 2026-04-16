@@ -1,4 +1,4 @@
-# Wrapper for [`ranger::ranger()`](http://imbs-hl.github.io/ranger/reference/ranger.md).
+# Wrapper for ranger::ranger()
 
 Simple wrapper for
 [`ranger::ranger()`](http://imbs-hl.github.io/ranger/reference/ranger.md).
@@ -44,6 +44,7 @@ Software 77(1), 1-17.
 [`ranger::ranger()`](http://imbs-hl.github.io/ranger/reference/ranger.md)
 
 Other ml_wrapper:
+[`mdl_bigGlm()`](https://www.thomaswiemann.com/ddml/reference/mdl_bigGLM.md),
 [`mdl_glm()`](https://www.thomaswiemann.com/ddml/reference/mdl_glm.md),
 [`mdl_glmnet()`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md),
 [`mdl_xgboost()`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md),

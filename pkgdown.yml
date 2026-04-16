@@ -6,10 +6,14 @@ articles:
   articles/did: did.html
   articles/example_401k: example_401k.html
   articles/example_BLP95: example_BLP95.html
+  articles/modelsummary_integration: modelsummary_integration.html
   articles/new_ml_wrapper: new_ml_wrapper.html
+  articles/neyman_orthogonality: neyman_orthogonality.html
+  articles/repeated_resampling: repeated_resampling.html
   articles/sparse: sparse.html
+  articles/stacking_diagnostics: stacking_diagnostics.html
   articles/stacking: stacking.html
-last_built: 2025-12-13T07:57Z
+last_built: 2026-04-16T20:50Z
 urls:
   reference: https://www.thomaswiemann.com/ddml/reference
   article: https://www.thomaswiemann.com/ddml/articles

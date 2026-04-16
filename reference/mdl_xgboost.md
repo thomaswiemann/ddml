@@ -1,4 +1,4 @@
-# Wrapper for [`xgboost::xgboost()`](https://rdrr.io/pkg/xgboost/man/xgboost.html).
+# Wrapper for xgboost::xgboost()
 
 Simple wrapper for
 [`xgboost::xgboost()`](https://rdrr.io/pkg/xgboost/man/xgboost.html)
@@ -49,13 +49,14 @@ mask to the return object of
 
 Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
 Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
-Discovery and Data Mining, 785–794.
+Discovery and Data Mining, 785-794.
 
 ## See also
 
 [`xgboost::xgboost()`](https://rdrr.io/pkg/xgboost/man/xgboost.html)
 
 Other ml_wrapper:
+[`mdl_bigGlm()`](https://www.thomaswiemann.com/ddml/reference/mdl_bigGLM.md),
 [`mdl_glm()`](https://www.thomaswiemann.com/ddml/reference/mdl_glm.md),
 [`mdl_glmnet()`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md),
 [`mdl_ranger()`](https://www.thomaswiemann.com/ddml/reference/mdl_ranger.md),

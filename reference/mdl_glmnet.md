@@ -1,4 +1,4 @@
-# Wrapper for [`glmnet::glmnet()`](https://glmnet.stanford.edu/reference/glmnet.html).
+# Wrapper for glmnet::glmnet()
 
 Simple wrapper for
 [`glmnet::glmnet()`](https://glmnet.stanford.edu/reference/glmnet.html)
@@ -45,17 +45,18 @@ or
 
 Friedman J, Hastie T, Tibshirani R (2010). "Regularization Paths for
 Generalized Linear Models via Coordinate Descent." Journal of
-Statistical Software, 33(1), 1–22.
+Statistical Software, 33(1), 1-22.
 
 Simon N, Friedman J, Hastie T, Tibshirani R (2011). "Regularization
 Paths for Cox's Proportional Hazards Model via Coordinate Descent."
-Journal of Statistical Software, 39(5), 1–13.
+Journal of Statistical Software, 39(5), 1-13.
 
 ## See also
 
 [`glmnet::glmnet()`](https://glmnet.stanford.edu/reference/glmnet.html),[`glmnet::cv.glmnet()`](https://glmnet.stanford.edu/reference/cv.glmnet.html)
 
 Other ml_wrapper:
+[`mdl_bigGlm()`](https://www.thomaswiemann.com/ddml/reference/mdl_bigGLM.md),
 [`mdl_glm()`](https://www.thomaswiemann.com/ddml/reference/mdl_glm.md),
 [`mdl_ranger()`](https://www.thomaswiemann.com/ddml/reference/mdl_ranger.md),
 [`mdl_xgboost()`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md),

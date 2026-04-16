@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,9 +44,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -74,7 +77,7 @@
       <h1>Example on the Effect of 401k Participation</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/vignettes/articles/example_401k.Rmd" class="external-link"><code>vignettes/articles/example_401k.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/vignettes/articles/example_401k.Rmd" class="external-link"><code>vignettes/articles/example_401k.Rmd</code></a></small>
       <div class="d-none name"><code>example_401k.Rmd</code></div>
     </div>
 
@@ -101,7 +104,7 @@ feature in turn.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2410072</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="data-construction">Data construction<a class="anchor" aria-label="anchor" href="#data-construction"></a>
+<h2 id="data-construction">Data Construction<a class="anchor" aria-label="anchor" href="#data-construction"></a>
 </h2>
 <p>The 401K data considered here is from the Survey of Income and
 Program Participation (SIPP) from the year 1991. We use the data taken
@@ -123,7 +126,7 @@ characteristics (e.g., age and income).</p>
 <div class="section level2">
 <h2 id="estimation-using-a-single-machine-learner">Estimation using a Single Machine Learner<a class="anchor" aria-label="anchor" href="#estimation-using-a-single-machine-learner"></a>
 </h2>
-<p>The simplest double/debiased machine learning estimator for the
+<p>The simplest Double/Debiased Machine Learning estimator for the
 causal effect of 401k participation on financial assets considers a
 single machine learner to (nonparametrically) control for individual
 characteristics. We consider gradient boosting in the code snippet below
@@ -137,23 +140,49 @@ present in the data.</p>
 <code class="sourceCode R"><span><span class="co"># PLM with gradient boosting</span></span>
 <span><span class="va">xgboost_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_plm.html">ddml_plm</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
 <span>                        learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                                        args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>                                        args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">xgboost_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , single base learner</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept)     -224        626  -0.357 7.21e-01</span></span>
-<span><span class="co">#&gt; D_r            13916       1604   8.678 4.03e-18</span></span>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1             13916       1544    9.01   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)     -541        636   -0.85      0.4    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
 <span></span>
 <span><span class="co"># Comparison to multiple linear regression</span></span>
 <span><span class="va">lm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">D</span> <span class="op">+</span> <span class="va">X</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     Estimate   Std. Error      t value     Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt; 1.160089e+04 1.345117e+03 8.624444e+00 7.428141e-18</span></span></code></pre></div>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Call:</span></span>
+<span><span class="co">#&gt; lm(formula = y ~ D + X)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Residuals:</span></span>
+<span><span class="co">#&gt;     Min      1Q  Median      3Q     Max </span></span>
+<span><span class="co">#&gt; -507235  -17014   -2134   10406 1430000 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Coefficients:</span></span>
+<span><span class="co">#&gt;               Estimate Std. Error t value Pr(&gt;|t|)    </span></span>
+<span><span class="co">#&gt; (Intercept) -3.343e+04  4.265e+03  -7.837  5.1e-15 ***</span></span>
+<span><span class="co">#&gt; D            1.160e+04  1.345e+03   8.624  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; Xage         6.351e+02  5.938e+01  10.696  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; Xinc         9.143e-01  3.015e-02  30.330  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; Xeduc       -6.190e+02  2.278e+02  -2.717 0.006597 ** </span></span>
+<span><span class="co">#&gt; Xfsize      -1.007e+03  4.487e+02  -2.245 0.024776 *  </span></span>
+<span><span class="co">#&gt; Xmarr        9.172e+02  1.791e+03   0.512 0.608532    </span></span>
+<span><span class="co">#&gt; Xtwoearn    -1.936e+04  1.572e+03 -12.312  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; Xdb         -4.915e+03  1.335e+03  -3.683 0.000232 ***</span></span>
+<span><span class="co">#&gt; Xpira        2.892e+04  1.464e+03  19.748  &lt; 2e-16 ***</span></span>
+<span><span class="co">#&gt; Xhown        8.830e+02  1.320e+03   0.669 0.503420    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Residual standard error: 55580 on 9904 degrees of freedom</span></span>
+<span><span class="co">#&gt; Multiple R-squared:  0.2352, Adjusted R-squared:  0.2344 </span></span>
+<span><span class="co">#&gt; F-statistic: 304.6 on 10 and 9904 DF,  p-value: &lt; 2.2e-16</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimation-using-multiple-machine-learners">Estimation using Multiple Machine Learners<a class="anchor" aria-label="anchor" href="#estimation-using-multiple-machine-learners"></a>
@@ -171,50 +200,67 @@ short-stacking (see also <code>vignette("stacking")</code>).</p>
 boosting.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify set of learners</span></span>
-<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
+<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                                  max.depth <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>                                  max.depth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                  max.depth <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">150</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># PLM with short-stacking</span></span>
 <span><span class="va">stacking_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_plm.html">ddml_plm</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
 <span>                         learners <span class="op">=</span> <span class="va">learners</span>,</span>
 <span>                         ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
-<span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>                         sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                         shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                         silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept)    -1627        538   -3.03 2.48e-03</span></span>
-<span><span class="co">#&gt; D_r            13636       1526    8.94 4.04e-19</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1             13769       1516    9.08   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)    -1194        537   -2.22    0.026 *  </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>To better understand which machine learners contribute to the final
-estimate, we can take a look at the assigned stacking weights. Each row
-corresponds to a base-learner (in chronological order) while the columns
-indicate the corresponding reduced form. The weights show that the two
-random forest estimators contribute the most in both reduced forms,
-followed by the lasso estimator. Neither gradient boosting nor linear
-regression are assigned substantial weight.</p>
+estimate, we can inspect the stacking diagnostics. The weights show that
+the two random forest estimators contribute the most in both reduced
+forms, followed by the lasso estimator. Neither gradient boosting nor
+linear regression are assigned substantial weight.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         y_X   D1_X</span></span>
-<span><span class="co">#&gt; [1,] 0.0048 0.0197</span></span>
-<span><span class="co">#&gt; [2,] 0.2113 0.2817</span></span>
-<span><span class="co">#&gt; [3,] 0.2973 0.3400</span></span>
-<span><span class="co">#&gt; [4,] 0.5770 0.3504</span></span>
-<span><span class="co">#&gt; [5,] 0.0000 0.0000</span></span>
-<span><span class="co">#&gt; [6,] 0.0000 0.0238</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner       mspe     r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 3125114171 0.2255      0.1926</span></span>
+<span><span class="co">#&gt;  learner_2 3126016675 0.2253      0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 3045999690 0.2451      0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 2910378985 0.2787      0.7992</span></span>
+<span><span class="co">#&gt;  learner_5 3435902221 0.1485      0.0824</span></span>
+<span><span class="co">#&gt;  learner_6 3716930203 0.0789      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 2890726991 0.2836          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 0.1725  0.1072      0.2333</span></span>
+<span><span class="co">#&gt;  learner_2 0.1725  0.1071      0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 0.1717  0.1112      0.1916</span></span>
+<span><span class="co">#&gt;  learner_4 0.1711  0.1144      0.5891</span></span>
+<span><span class="co">#&gt;  learner_5 0.1860  0.0371      0.0000</span></span>
+<span><span class="co">#&gt;  learner_6 0.2045 -0.0588      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 0.1707  0.1163          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimation-with-different-sets-of-control-variables">Estimation with Different Sets of Control Variables<a class="anchor" aria-label="anchor" href="#estimation-with-different-sets-of-control-variables"></a>
@@ -248,62 +294,82 @@ argument, which includes the column-indices corresponding to the desired
 variables of the control matrix.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify base learners with different sets of controls</span></span>
-<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>,</span>
+<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_extended</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_extended</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                                  max.depth <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>                                  max.depth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                  max.depth <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># PLM with short-stacking</span></span>
 <span><span class="va">stacking_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_plm.html">ddml_plm</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">X_c</span>,</span>
 <span>                         learners <span class="op">=</span> <span class="va">learners</span>,</span>
 <span>                         ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
-<span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>                         sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                         shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                         silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept)     -512        533  -0.961 3.37e-01</span></span>
-<span><span class="co">#&gt; D_r            14363       1500   9.575 1.02e-21</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1             14120       1500    9.42   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)     -960        532   -1.80    0.071 .  </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>To assess whether the additional effort in expanding the control
 variables had an effect on the composition of the reduced form
-estimates, we can again inspect the stacking weights. Indeed, the new
-base learner that combines lasso with the polynomial expansion of the
-controls is assigned the largest weight, followed by the random forest
-estimators.</p>
+estimates, we can again inspect the stacking diagnostics. Indeed, the
+new base learner that combines lasso with the polynomial expansion of
+the controls is assigned the largest weight, followed by the random
+forest estimators.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         y_X   D1_X</span></span>
-<span><span class="co">#&gt; [1,] 0.0176 0.0000</span></span>
-<span><span class="co">#&gt; [2,] 0.0000 0.1219</span></span>
-<span><span class="co">#&gt; [3,] 0.7368 0.4056</span></span>
-<span><span class="co">#&gt; [4,] 0.0000 0.1693</span></span>
-<span><span class="co">#&gt; [5,] 0.2702 0.2613</span></span>
-<span><span class="co">#&gt; [6,] 0.0022 0.0522</span></span>
-<span><span class="co">#&gt; [7,] 0.0000 0.0048</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner       mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 3125864729  0.2253      0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 2877766026  0.2868      0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 2858270329  0.2916      0.7204</span></span>
+<span><span class="co">#&gt;  learner_4 3021160887  0.2513      0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 2926909974  0.2746      0.3365</span></span>
+<span><span class="co">#&gt;  learner_6 4121257708 -0.0213      0.0000</span></span>
+<span><span class="co">#&gt;  learner_7 4614176089 -0.1435      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 2838742034  0.2965          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 0.1727  0.1062      0.0123</span></span>
+<span><span class="co">#&gt;  learner_2 0.1719  0.1104      0.0370</span></span>
+<span><span class="co">#&gt;  learner_3 0.1714  0.1130      0.3921</span></span>
+<span><span class="co">#&gt;  learner_4 0.1718  0.1106      0.0773</span></span>
+<span><span class="co">#&gt;  learner_5 0.1710  0.1147      0.3848</span></span>
+<span><span class="co">#&gt;  learner_6 0.1825  0.0554      0.1035</span></span>
+<span><span class="co">#&gt;  learner_7 0.2001 -0.0360      0.0038</span></span>
+<span><span class="co">#&gt;       nnls 0.1705  0.1176          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="estimation-with-continious-and-binary-outcome-and-treatment-variables">Estimation with Continious and Binary Outcome and Treatment
-Variables<a class="anchor" aria-label="anchor" href="#estimation-with-continious-and-binary-outcome-and-treatment-variables"></a>
+<h2 id="estimation-with-continuous-and-binary-outcome-and-treatment-variables">Estimation with Continuous and Binary Outcome and Treatment
+Variables<a class="anchor" aria-label="anchor" href="#estimation-with-continuous-and-binary-outcome-and-treatment-variables"></a>
 </h2>
 <p>Thus far, we have considered the same set of base learners for the
 reduced form of the outcome on controls and the reduced form of the
@@ -317,33 +383,33 @@ generalized linear models (see also <code><a href="../reference/mdl_glm.html">?m
 specify a second set of base-learners for the reduced form of the binary
 endogenous variable of interest on the controls. As in the previous
 section, we consider different sets of control variables as well. When
-estimating the double/debiased machine learning estimator, we pass the
+estimating the Double/Debiased Machine Learning estimator, we pass the
 second set of base learners via the <code>learners_DX</code>
 argument.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Specify an additional set of learners for the reduced form E[D|X]</span></span>
-<span><span class="va">learners_DX</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glm</span>,</span>
+<span><span class="va">learners_DX</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glm</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>family <span class="op">=</span> <span class="st">"binomial"</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glm</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glm</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>family <span class="op">=</span> <span class="st">"binomial"</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_extended</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>family <span class="op">=</span> <span class="st">"binomial"</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_extended</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                                  max.depth <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">250</span>,</span>
-<span>                                  max.depth <span class="op">=</span> <span class="fl">12</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                                  max.depth <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">X_baseline</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># PLM with short-stacking and different sets of learners</span></span>
@@ -351,29 +417,86 @@ argument.</p>
 <span>                         learners <span class="op">=</span> <span class="va">learners</span>,</span>
 <span>                         learners_DX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
 <span>                         ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
-<span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>                         sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                         shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                         silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLM estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept)     -487        535   -0.91 3.63e-01</span></span>
-<span><span class="co">#&gt; D_r            14097       1484    9.50 2.07e-21</span></span></code></pre></div>
-<p>The weights associated with the new base learners are now slightly
-larger:</p>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1             14025       1490    9.41   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)     -387        534   -0.72     0.47    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>The diagnostics associated with the new base learners show slightly
+larger weights:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         y_X   D1_X</span></span>
-<span><span class="co">#&gt; [1,] 0.0132 0.0627</span></span>
-<span><span class="co">#&gt; [2,] 0.0000 0.2663</span></span>
-<span><span class="co">#&gt; [3,] 0.7411 0.0086</span></span>
-<span><span class="co">#&gt; [4,] 0.0000 0.4221</span></span>
-<span><span class="co">#&gt; [5,] 0.2690 0.2552</span></span>
-<span><span class="co">#&gt; [6,] 0.0000 0.0000</span></span>
-<span><span class="co">#&gt; [7,] 0.0000 0.0302</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner       mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 3118730135  0.2271      0.0652</span></span>
+<span><span class="co">#&gt;  learner_2 2902039913  0.2808      0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 2871909268  0.2883      0.8547</span></span>
+<span><span class="co">#&gt;  learner_4 3089111001  0.2344      0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 3026275768  0.2500      0.0347</span></span>
+<span><span class="co">#&gt;  learner_6 3906568364  0.0319      0.0656</span></span>
+<span><span class="co">#&gt;  learner_7 4253407158 -0.0541      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 2863776446  0.2903          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 0.1735  0.1020      0.0673</span></span>
+<span><span class="co">#&gt;  learner_2 0.1717  0.1114      0.3660</span></span>
+<span><span class="co">#&gt;  learner_3 0.1715  0.1125      0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 0.1718  0.1106      0.1588</span></span>
+<span><span class="co">#&gt;  learner_5 0.1714  0.1127      0.3949</span></span>
+<span><span class="co">#&gt;  learner_6 0.1856  0.0394      0.0203</span></span>
+<span><span class="co">#&gt;  learner_7 0.2037 -0.0544      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 0.1707  0.1162          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="advanced-rapid-refits-with-the-passthrough-api">Advanced: Rapid Refits with the Passthrough API<a class="anchor" aria-label="anchor" href="#advanced-rapid-refits-with-the-passthrough-api"></a>
+</h2>
+<p>Estimating multiple machine learners via cross-fitting can be
+computationally expensive. Suppose that, after inspecting
+<code>stacking_fit</code> above, you decide you additionally want to see
+the results if you had used the <code>singlebest</code> ensemble type
+instead of <code>nnls</code>.</p>
+<p>Rather than waiting for all base learners to be refit from scratch,
+<code>ddml</code> allows you to extract the out-of-sample predictions
+from the initial fit and pass them directly into a new
+<code>ddml_plm</code> call via the <code>fitted</code> argument.</p>
+<p>Because <code>stacking_fit</code> already contains the cross-fitted
+predictions and sample splits in its <code>fitted</code> component, we
+can bypass the estimation step entirely.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Recompute the structural parameter instantly using 'singlebest'</span></span>
+<span><span class="va">stacking_refit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_plm.html">ddml_plm</a></span><span class="op">(</span></span>
+<span>  y <span class="op">=</span> <span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">X_c</span>,</span>
+<span>  learners <span class="op">=</span> <span class="va">learners</span>,</span>
+<span>  learners_DX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
+<span>  ensemble_type <span class="op">=</span> <span class="st">"singlebest"</span>,</span>
+<span>  sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  fitted <span class="op">=</span> <span class="va">stacking_fit</span><span class="op">$</span><span class="va">fitted</span>, <span class="co"># Pass the predictions directly</span></span>
+<span>  splits <span class="op">=</span> <span class="va">stacking_fit</span><span class="op">$</span><span class="va">splits</span>, <span class="co"># Pass the splits used directly</span></span>
+<span>  silent <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_refit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1          13963.03    1492.40    9.36   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)    -5.36     535.14   -0.01     0.99    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="bonus-instrumental-variable-estimation">Bonus: Instrumental Variable Estimation<a class="anchor" aria-label="anchor" href="#bonus-instrumental-variable-estimation"></a>
@@ -385,7 +508,7 @@ instrument for participation in a 401k is 401k <em>eligibility</em>.</p>
 the two sets of machine learners introduced in previous sections.
 Because the instrument is binary, we use the generalized linear models
 to estimate the reduced form of 401k eligibility on the controls.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 401k eligibility as the instrument</span></span>
 <span><span class="va">Z</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">SIPP91</span><span class="op">$</span><span class="va">e401</span><span class="op">)</span></span>
 <span></span>
@@ -395,28 +518,59 @@ to estimate the reduced form of 401k eligibility on the controls.</p>
 <span>                         learners_DX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
 <span>                         learners_ZX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
 <span>                         ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
-<span>                         sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                         shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                         silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
+<span>                         sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                         shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                         silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; PLIV estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 9915   Folds: 5  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept)     -776        531   -1.46 1.44e-01</span></span>
-<span><span class="co">#&gt; D_r            12987       1872    6.94 3.97e-12</span></span>
-<span></span>
-<span><span class="co"># Stacking weights associated with each base learner</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         y_X   D1_X   Z1_X</span></span>
-<span><span class="co">#&gt; [1,] 0.0000 0.0647 0.0000</span></span>
-<span><span class="co">#&gt; [2,] 0.0000 0.2271 0.2414</span></span>
-<span><span class="co">#&gt; [3,] 0.7474 0.0080 0.0157</span></span>
-<span><span class="co">#&gt; [4,] 0.0000 0.4030 0.5337</span></span>
-<span><span class="co">#&gt; [5,] 0.2953 0.3036 0.2501</span></span>
-<span><span class="co">#&gt; [6,] 0.0000 0.0351 0.0000</span></span>
-<span><span class="co">#&gt; [7,] 0.0000 0.0000 0.0000</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1             13151       1888    6.96  3.3e-12 ***</span></span>
+<span><span class="co">#&gt; (Intercept)     -966        530   -1.83    0.068 .  </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>The stacking diagnostics for the IV model:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_IV_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 9915 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner       mspe     r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 3120947021 0.2266      0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 2864489352 0.2901      0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 2836320542 0.2971      0.7226</span></span>
+<span><span class="co">#&gt;  learner_4 3061626328 0.2413      0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 2914205541 0.2778      0.2624</span></span>
+<span><span class="co">#&gt;  learner_6 3518126794 0.1281      0.0626</span></span>
+<span><span class="co">#&gt;  learner_7 3808805316 0.0561      0.0099</span></span>
+<span><span class="co">#&gt;       nnls 2812746541 0.3029          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe      r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 0.1736  0.1013      0.0370</span></span>
+<span><span class="co">#&gt;  learner_2 0.1718  0.1110      0.2420</span></span>
+<span><span class="co">#&gt;  learner_3 0.1714  0.1126      0.1068</span></span>
+<span><span class="co">#&gt;  learner_4 0.1719  0.1102      0.0433</span></span>
+<span><span class="co">#&gt;  learner_5 0.1709  0.1152      0.5302</span></span>
+<span><span class="co">#&gt;  learner_6 0.1840  0.0478      0.0469</span></span>
+<span><span class="co">#&gt;  learner_7 0.2024 -0.0475      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 0.1705  0.1174          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Z1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls</span></span>
+<span><span class="co">#&gt;  learner_1 0.2014 0.1375      0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 0.1973 0.1550      0.3248</span></span>
+<span><span class="co">#&gt;  learner_3 0.1972 0.1555      0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 0.1977 0.1533      0.0235</span></span>
+<span><span class="co">#&gt;  learner_5 0.1959 0.1608      0.6553</span></span>
+<span><span class="co">#&gt;  learner_6 0.2121 0.0916      0.0000</span></span>
+<span><span class="co">#&gt;  learner_7 0.2313 0.0092      0.0000</span></span>
+<span><span class="co">#&gt;       nnls 0.1955 0.1627          NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

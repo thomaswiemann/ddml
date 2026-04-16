@@ -1,4 +1,4 @@
-# Ordinary least squares.
+# Ordinary Least Squares
 
 Simple implementation of ordinary least squares that computes with
 sparse feature matrices.
@@ -43,6 +43,7 @@ list containing the following components:
 ## See also
 
 Other ml_wrapper:
+[`mdl_bigGlm()`](https://www.thomaswiemann.com/ddml/reference/mdl_bigGLM.md),
 [`mdl_glm()`](https://www.thomaswiemann.com/ddml/reference/mdl_glm.md),
 [`mdl_glmnet()`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md),
 [`mdl_ranger()`](https://www.thomaswiemann.com/ddml/reference/mdl_ranger.md),
@@ -54,7 +55,7 @@ Other ml_wrapper:
 ols_fit <- ols(rnorm(100), cbind(rnorm(100), rnorm(100)), const = TRUE)
 ols_fit$coef
 #>             [,1]
-#> [1,] -0.06553227
-#> [2,] -0.02382648
-#> [3,] -0.11071182
+#> [1,] -0.11934785
+#> [2,]  0.01768354
+#> [3,] -0.04226317
 ```

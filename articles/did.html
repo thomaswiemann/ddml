@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Diff-in-Diff with Double/Debiased Machine Learning • ddml</title>
+<title>Diff-in-Diff Estimation and Aggregation • ddml</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Diff-in-Diff with Double/Debiased Machine Learning">
-<meta name="description" content="Tutorial on difference-in-difference estimation with double/debiased machine learning.">
-<meta property="og:description" content="Tutorial on difference-in-difference estimation with double/debiased machine learning.">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Diff-in-Diff Estimation and Aggregation">
+<meta name="description" content="Tutorial on DiD estimation with ddml_attgt, lincom aggregation, and uniform inference.">
+<meta property="og:description" content="Tutorial on DiD estimation with ddml_attgt, lincom aggregation, and uniform inference.">
 <!-- Copyright (c) 2000-2023 etracker GmbH. All rights reserved. --><!-- This material may not be reproduced, displayed, modified or distributed --><!-- without the express prior written permission of the copyright holder. --><!-- etracker tracklet 5.0 --><script type="text/javascript">
 // var et_pagename = "";
 // var et_areas = "";
@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,9 +46,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -73,10 +76,10 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Diff-in-Diff with Double/Debiased Machine Learning</h1>
+      <h1>Diff-in-Diff Estimation and Aggregation</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/vignettes/articles/did.Rmd" class="external-link"><code>vignettes/articles/did.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/vignettes/articles/did.Rmd" class="external-link"><code>vignettes/articles/did.Rmd</code></a></small>
       <div class="d-none name"><code>did.Rmd</code></div>
     </div>
 
@@ -85,103 +88,84 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This article illustrates how <code>ddml</code> can complement the
-highly popular <a href="https://bcallaway11.github.io/did/index.html" class="external-link"><code>did</code></a>
-package to compute group-time average treatment effects under a
-<em>conditional</em> parallel trends assumption. The result is a
-doubly-robust difference-in-difference estimator for staggered treatment
-adoption designs that leverages machine learning and (short-)stacking to
-flexibly control for covariates – or: difference-in-difference with
-machine learning.</p>
-<p>For an excellent introduction to differences-in-differences with
-multiple time periods, see also <a href="https://bcallaway11.github.io/did/articles/multi-period-did.html" class="external-link">this
-article</a>. For a detailed discussion of the relevant asymptotic theory
-for double/debiased machine learning difference-in-difference estimators
-see Chang (2020).</p>
+<p>This article illustrates how <code>ddml</code> provides a fully
+self-contained pipeline for difference-in-differences estimation in
+staggered adoption designs. The workflow consists of four steps:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Estimation</strong> of group-time average treatment effects
+(GT-ATTs) via <code>ddml_attgt</code>.</li>
+<li>
+<strong>Aggregation</strong> into dynamic event-study parameters via
+<code>lincom_weights_did</code> and <code>lincom</code>.</li>
+<li>
+<strong>Diagnostics</strong> to inspect stacking weights and learner
+performance.</li>
+<li>
+<strong>Inference</strong> including uniform confidence bands via
+the multiplier bootstrap, and event-study plots via
+<code>plot</code>.</li>
+</ol>
+<p>This pipeline does not require the <code>did</code> package for
+inference or plotting. However, we begin by computing baseline estimates
+with <code>did::att_gt</code> for comparison.</p>
 </div>
 <div class="section level2">
-<h2 id="estimation-using-dids-default-estimator">Estimation using <code>did</code>’s Default Estimator<a class="anchor" aria-label="anchor" href="#estimation-using-dids-default-estimator"></a>
+<h2 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
 </h2>
-<p>For illustration, consider the data of Callaway and Sant’Anna (2020)
-on county-level teen employment rates from 2003-2007 for additional
-details. We are interested in the effect of treatment on the
-log-employment rate <code>lemp</code> and assume that parallel trends
-holds conditional on county population (<code>lpop</code> is the log of
-county population).</p>
+<p>We use the dataset of Callaway and Sant’Anna (2021) on county-level
+teen employment rates from 2003–2007. The outcome is log-employment
+(<code>lemp</code>) and we assume parallel trends hold conditional on
+log county population (<code>lpop</code>).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load the did package</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://bcallaway11.github.io/did/" class="external-link">did</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">588239</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Print the data</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">mpdta</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mpdta</span><span class="op">)</span></span>
-<span><span class="co">#&gt;     year countyreal     lpop     lemp first.treat treat</span></span>
-<span><span class="co">#&gt; 866 2003       8001 5.896761 8.461469        2007     1</span></span>
-<span><span class="co">#&gt; 841 2004       8001 5.896761 8.336870        2007     1</span></span>
-<span><span class="co">#&gt; 842 2005       8001 5.896761 8.340217        2007     1</span></span>
-<span><span class="co">#&gt; 819 2006       8001 5.896761 8.378161        2007     1</span></span>
-<span><span class="co">#&gt; 827 2007       8001 5.896761 8.487352        2007     1</span></span>
-<span><span class="co">#&gt; 937 2003       8019 2.232377 4.997212        2007     1</span></span></code></pre></div>
-<p>By default, the group-time average treatment effect estimator of the
-<code>did</code> package controls <em>linearly</em> for additional
-covariates. (In particular, the propensity score is estimated using <a href="https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L96" class="external-link">logistic
-regression</a> and the outcome reduced form is estimated via <a href="https://github.com/pedrohcgs/DRDID/blob/master/R/drdid_panel.R#L107" class="external-link">linear
-regression</a>). The below code snippet runs the default linear
-specification (similar to <a href="https://bcallaway11.github.io/did/articles/did-basics.html#an-example-with-real-data" class="external-link">this
-article</a>).</p>
+<span><span class="co"># Load data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">mpdta</span><span class="op">)</span></span></code></pre></div>
+<p><code>ddml_attgt</code> takes data in wide format: an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>T</mi></mrow><annotation encoding="application/x-tex">n \times T</annotation></semantics></math>
+outcome matrix, a time-invariant covariate matrix, and a group
+vector:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Estimate group-time average treatment effects with covariates</span></span>
-<span><span class="va">attgt_lm</span> <span class="op">&lt;-</span> <span class="fu">att_gt</span><span class="op">(</span>yname <span class="op">=</span> <span class="st">"lemp"</span>,</span>
+<code class="sourceCode R"><span><span class="co"># Reshape to wide format</span></span>
+<span><span class="va">ids</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">mpdta</span><span class="op">$</span><span class="va">countyreal</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">mpdta</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ids</span><span class="op">)</span></span>
+<span><span class="va">T_</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Build outcome matrix (n x T_)</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="cn">NA_real_</span>, <span class="va">n</span>, <span class="va">T_</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">times</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sub</span> <span class="op">&lt;-</span> <span class="va">mpdta</span><span class="op">[</span><span class="va">mpdta</span><span class="op">$</span><span class="va">year</span> <span class="op">==</span> <span class="va">times</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="op">]</span></span>
+<span>  <span class="va">y</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">sub</span><span class="op">$</span><span class="va">countyreal</span>, <span class="va">ids</span><span class="op">)</span>, <span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">sub</span><span class="op">$</span><span class="va">lemp</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Extract time-invariant covariates and group membership</span></span>
+<span><span class="va">first_obs</span> <span class="op">&lt;-</span> <span class="va">mpdta</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">ids</span>, <span class="va">mpdta</span><span class="op">$</span><span class="va">countyreal</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="va">G</span> <span class="op">&lt;-</span> <span class="va">first_obs</span><span class="op">$</span><span class="va">first.treat</span></span>
+<span><span class="va">G</span><span class="op">[</span><span class="va">G</span> <span class="op">==</span> <span class="fl">0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">Inf</span>  <span class="co"># ddml convention for never-treated</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">first_obs</span><span class="op">[</span>, <span class="st">"lpop"</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Units:"</span>, <span class="va">n</span>, <span class="st">" Periods:"</span>, <span class="va">T_</span>, <span class="st">" Groups:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">G</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Units: 500  Periods: 5  Groups: 4</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="baseline-did-package">Baseline: <code>did</code> Package<a class="anchor" aria-label="anchor" href="#baseline-did-package"></a>
+</h2>
+<p>For comparison, we first estimate the GT-ATTs using the
+<code>did</code> package with linear controls. We set
+<code>base_period = "universal"</code> to match the base period
+convention used by <code>ddml_attgt</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">attgt_lm</span> <span class="op">&lt;-</span> <span class="fu">att_gt</span><span class="op">(</span>yname <span class="op">=</span> <span class="st">"lemp"</span>,</span>
 <span>                   gname <span class="op">=</span> <span class="st">"first.treat"</span>,</span>
 <span>                   idname <span class="op">=</span> <span class="st">"countyreal"</span>,</span>
 <span>                   tname <span class="op">=</span> <span class="st">"year"</span>,</span>
 <span>                   xformla <span class="op">=</span> <span class="op">~</span><span class="va">lpop</span>,</span>
+<span>                   base_period <span class="op">=</span> <span class="st">"universal"</span>,</span>
 <span>                   data <span class="op">=</span> <span class="va">mpdta</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># summarize the results</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">attgt_lm</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; att_gt(yname = "lemp", tname = "year", idname = "countyreal", </span></span>
-<span><span class="co">#&gt;     gname = "first.treat", xformla = ~lpop, data = mpdta)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Group-Time Average Treatment Effects:</span></span>
-<span><span class="co">#&gt;  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band]  </span></span>
-<span><span class="co">#&gt;   2004 2004  -0.0145     0.0231       -0.0757      0.0467  </span></span>
-<span><span class="co">#&gt;   2004 2005  -0.0764     0.0295       -0.1544      0.0016  </span></span>
-<span><span class="co">#&gt;   2004 2006  -0.1404     0.0382       -0.2417     -0.0392 *</span></span>
-<span><span class="co">#&gt;   2004 2007  -0.1069     0.0338       -0.1963     -0.0175 *</span></span>
-<span><span class="co">#&gt;   2006 2004  -0.0005     0.0226       -0.0603      0.0593  </span></span>
-<span><span class="co">#&gt;   2006 2005  -0.0062     0.0190       -0.0565      0.0441  </span></span>
-<span><span class="co">#&gt;   2006 2006   0.0010     0.0199       -0.0518      0.0537  </span></span>
-<span><span class="co">#&gt;   2006 2007  -0.0413     0.0207       -0.0962      0.0136  </span></span>
-<span><span class="co">#&gt;   2007 2004   0.0267     0.0145       -0.0116      0.0651  </span></span>
-<span><span class="co">#&gt;   2007 2005  -0.0046     0.0151       -0.0444      0.0353  </span></span>
-<span><span class="co">#&gt;   2007 2006  -0.0284     0.0177       -0.0752      0.0183  </span></span>
-<span><span class="co">#&gt;   2007 2007  -0.0288     0.0154       -0.0696      0.0121  </span></span>
-<span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; P-value for pre-test of parallel trends assumption:  0.23267</span></span>
-<span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
-<span><span class="co">#&gt; Estimation Method:  Doubly Robust</span></span></code></pre></div>
-<p>The <code>did</code> package offers visualization methods using
-<code>gglpot2</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_lm</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-4-1.png" alt="Diff-in-Diff Estimates." width="90%"><p class="caption">
-Diff-in-Diff Estimates.
-</p>
-</div>
-<p>Further, the group-time average treatment effects can easily be
-aggregated, for example, to estimate dynamic average treatment
-effects:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># aggregate the group-time average treatment effects</span></span>
 <span><span class="va">dyn_lm</span> <span class="op">&lt;-</span> <span class="fu">aggte</span><span class="op">(</span><span class="va">attgt_lm</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">dyn_lm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -193,388 +177,326 @@ effects:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Overall summary of ATT's based on event-study/dynamic aggregation:  </span></span>
 <span><span class="co">#&gt;      ATT    Std. Error     [ 95%  Conf. Int.]  </span></span>
-<span><span class="co">#&gt;  -0.0804        0.0195    -0.1187      -0.042 *</span></span>
+<span><span class="co">#&gt;  -0.0804        0.0209    -0.1213     -0.0394 *</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Dynamic Effects:</span></span>
 <span><span class="co">#&gt;  Event time Estimate Std. Error [95% Simult.  Conf. Band]  </span></span>
-<span><span class="co">#&gt;          -3   0.0267     0.0135       -0.0085      0.0619  </span></span>
-<span><span class="co">#&gt;          -2  -0.0036     0.0130       -0.0373      0.0301  </span></span>
-<span><span class="co">#&gt;          -1  -0.0232     0.0151       -0.0624      0.0160  </span></span>
-<span><span class="co">#&gt;           0  -0.0211     0.0120       -0.0523      0.0102  </span></span>
-<span><span class="co">#&gt;           1  -0.0530     0.0166       -0.0961     -0.0099 *</span></span>
-<span><span class="co">#&gt;           2  -0.1404     0.0371       -0.2368     -0.0441 *</span></span>
-<span><span class="co">#&gt;           3  -0.1069     0.0352       -0.1982     -0.0156 *</span></span>
+<span><span class="co">#&gt;          -4   0.0063     0.0234       -0.0517      0.0643  </span></span>
+<span><span class="co">#&gt;          -3   0.0269     0.0183       -0.0186      0.0724  </span></span>
+<span><span class="co">#&gt;          -2   0.0232     0.0150       -0.0140      0.0605  </span></span>
+<span><span class="co">#&gt;          -1   0.0000         NA            NA          NA  </span></span>
+<span><span class="co">#&gt;           0  -0.0211     0.0124       -0.0518      0.0096  </span></span>
+<span><span class="co">#&gt;           1  -0.0530     0.0163       -0.0935     -0.0125 *</span></span>
+<span><span class="co">#&gt;           2  -0.1404     0.0393       -0.2379     -0.0430 *</span></span>
+<span><span class="co">#&gt;           3  -0.1069     0.0355       -0.1950     -0.0188 *</span></span>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
-<span><span class="co">#&gt; Estimation Method:  Doubly Robust</span></span>
-<span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_lm</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-5-1.png" alt="Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
-Dynamic Treatment Effect Estimates.
-</p>
-</div>
+<span><span class="co">#&gt; Estimation Method:  Doubly Robust</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="contructing-a-xgboost-based-diff-in-diff-estimator">Contructing a <code>xgboost</code>-based Diff-in-Diff Estimator<a class="anchor" aria-label="anchor" href="#contructing-a-xgboost-based-diff-in-diff-estimator"></a>
+<h2 id="gt-att-estimation-with-ddml_attgt">GT-ATT Estimation with <code>ddml_attgt</code><a class="anchor" aria-label="anchor" href="#gt-att-estimation-with-ddml_attgt"></a>
 </h2>
-<p>Without additional <em>parametric</em> functional form assumptions on
-the reduced form equations, it is <em>not</em> guaranteed that the
-default <code>att_gt</code> estimator returns a convex combination of
-causal effects. This is because linear predictors do not necessarily
-correspond to the conditional expectation functions arising in the
-doubly-robust score of the group-time average treatment effect. The
-resulting misspecification error can then lead to negative weights in
-the aggregation of individual-level treatment effects.</p>
-<p>Fortunately, a convex combination of causal effects can be guaranteed
-(without parametric functional form assumptions) when using machine
-learning (nonparametric) reduced form estimators.</p>
-<p><code>ddml</code> facilitates the use of a large set of machine
-learning reduced form estimators, including simultaneous considerations
-of multiple estimators via (short-)stacking.</p>
-<p>To use <code>ddml</code> estimators with the <code>did</code>
-package, we can make use of the <code>est_method</code> argument of the
-<code>att_gt</code> function (see also <code>?did::att_gt</code>). It is
-useful to construct this method in two steps:</p>
-<ol style="list-style-type: decimal">
-<li>A simple wrapper for <code>ddml_att</code> that returns the objects
-needed by <code>att_gt</code>
-</li>
-<li>A second wrapper that hard-codes arguments passed to
-<code>ddml_att</code>
-</li>
-</ol>
-<p>This two-step approach allows for cleaner code when considering
-multiple ddml-based estimators (as we do in this article).</p>
-<p>The below code-snippet constructs a simple estimation method
-following step 1:</p>
+<p>We estimate GT-ATTs using <code>ddml_attgt</code>. To validate
+against the <code>did</code> baseline, we start with OLS:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_ols</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_attgt.html">ddml_attgt</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, t <span class="op">=</span> <span class="va">times</span>, G <span class="op">=</span> <span class="va">G</span>,</span>
+<span>                      learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                      learners_qX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glm</span><span class="op">)</span>,</span>
+<span>                      sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fit_ols</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Group-Time Average Treatment Effects on the Treated </span></span>
+<span><span class="co">#&gt; Obs: 500   Folds: 10</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;                Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; ATT(2004,2004) -0.02329    0.02200   -1.06   0.2899    </span></span>
+<span><span class="co">#&gt; ATT(2004,2005) -0.08196    0.02871   -2.85   0.0043 ** </span></span>
+<span><span class="co">#&gt; ATT(2004,2006) -0.14114    0.03434   -4.11    4e-05 ***</span></span>
+<span><span class="co">#&gt; ATT(2004,2007) -0.10817    0.03346   -3.23   0.0012 ** </span></span>
+<span><span class="co">#&gt; ATT(2006,2003)  0.01463    0.03026    0.48   0.6286    </span></span>
+<span><span class="co">#&gt; ATT(2006,2004)  0.00572    0.01818    0.31   0.7531    </span></span>
+<span><span class="co">#&gt; ATT(2006,2006)  0.00913    0.01716    0.53   0.5949    </span></span>
+<span><span class="co">#&gt; ATT(2006,2007) -0.04021    0.01993   -2.02   0.0436 *  </span></span>
+<span><span class="co">#&gt; ATT(2007,2003)  0.00527    0.02499    0.21   0.8331    </span></span>
+<span><span class="co">#&gt; ATT(2007,2004)  0.03271    0.02152    1.52   0.1284    </span></span>
+<span><span class="co">#&gt; ATT(2007,2005)  0.02758    0.01855    1.49   0.1370    </span></span>
+<span><span class="co">#&gt; ATT(2007,2007) -0.02853    0.01647   -1.73   0.0831 .  </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="dynamic-aggregation-via-lincom">Dynamic Aggregation via <code>lincom</code><a class="anchor" aria-label="anchor" href="#dynamic-aggregation-via-lincom"></a>
+</h2>
+<p>The <code>lincom_weights_did</code> function constructs the contrast
+matrix
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>
+and the influence function for the estimated weights. The output is
+passed directly to <code>lincom</code> for inference. For the dynamic
+type, both pre-treatment (placebo) and post-treatment event times are
+included:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load the ddml package</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/thomaswiemann/ddml" class="external-link">ddml</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># write a general wrapper for ddml_att</span></span>
-<span><span class="va">ddml_did_method</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y1</span>, <span class="va">y0</span>, <span class="va">D</span>, <span class="va">covariates</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Compute difference in outcomes</span></span>
-<span>  <span class="va">delta_y</span> <span class="op">&lt;-</span> <span class="va">y1</span> <span class="op">-</span> <span class="va">y0</span></span>
-<span>  <span class="co"># Compute the ATT</span></span>
-<span>  <span class="va">att_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_ate.html">ddml_att</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">delta_y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">covariates</span>, <span class="va">...</span><span class="op">)</span></span>
-<span>  <span class="co"># Return results</span></span>
-<span>  <span class="va">inf.func</span> <span class="op">&lt;-</span> <span class="va">att_fit</span><span class="op">$</span><span class="va">psi_b</span> <span class="op">+</span> <span class="va">att_fit</span><span class="op">$</span><span class="va">att</span> <span class="op">*</span> <span class="va">att_fit</span><span class="op">$</span><span class="va">psi_a</span></span>
-<span>  <span class="va">output</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ATT <span class="op">=</span> <span class="va">att_fit</span><span class="op">$</span><span class="va">att</span>, att.inf.func <span class="op">=</span> <span class="va">inf.func</span><span class="op">)</span></span>
-<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="co">#DDML_DID_METHOD</span></span></code></pre></div>
-<p>A potentially suitable machine learning reduced form estimator is
-gradient tree boosting (see also <code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code>). The below
-code snippet completes the second wrapper by hard-coding both the
-learner and its arguments. Here, we consider 10-fold cross-fitting with
-a gradient tree boosting estimator (<code>eta</code> is the learning
-rate, see also <code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code>).</p>
+<code class="sourceCode R"><span><span class="va">w_dyn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom_weights_did.html">lincom_weights_did</a></span><span class="op">(</span><span class="va">fit_ols</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
+<span><span class="va">lc_dyn</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom.html">lincom</a></span><span class="op">(</span><span class="va">fit_ols</span>, R <span class="op">=</span> <span class="va">w_dyn</span><span class="op">$</span><span class="va">R</span>,</span>
+<span>                 inf_func_R <span class="op">=</span> <span class="va">w_dyn</span><span class="op">$</span><span class="va">inf_func_R</span>,</span>
+<span>                 labels <span class="op">=</span> <span class="va">w_dyn</span><span class="op">$</span><span class="va">labels</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lc_dyn</span><span class="op">)</span></span>
+<span><span class="co">#&gt; RAL estimation: Linear Combination </span></span>
+<span><span class="co">#&gt; Obs: 500</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; e=-4  0.00527    0.02487    0.21   0.8323    </span></span>
+<span><span class="co">#&gt; e=-3  0.02848    0.01783    1.60   0.1102    </span></span>
+<span><span class="co">#&gt; e=-2  0.02247    0.01479    1.52   0.1287    </span></span>
+<span><span class="co">#&gt; e=0  -0.02010    0.01172   -1.71   0.0864 .  </span></span>
+<span><span class="co">#&gt; e=1  -0.05413    0.01652   -3.28   0.0011 ** </span></span>
+<span><span class="co">#&gt; e=2  -0.14114    0.03417   -4.13  3.6e-05 ***</span></span>
+<span><span class="co">#&gt; e=3  -0.10817    0.03329   -3.25   0.0012 ** </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>Pre-treatment event times (e &lt; 0) serve as placebo tests: under
+the parallel trends assumption, these should be close to zero.</p>
+<p>The <code>plot</code> method produces an event-study style
+coefficient plot:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_did_xgboost</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y1</span>, <span class="va">y0</span>, <span class="va">D</span>, <span class="va">covariates</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Hard-code learners</span></span>
-<span>  <span class="va">learners</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                  args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nround <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                              params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.05</span>, max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                              early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">learners_DX</span> <span class="op">=</span> <span class="va">learners</span></span>
-<span></span>
-<span>  <span class="co"># Call the general ddml_did method w/ additional hard-coded arguments</span></span>
-<span>  <span class="fu">ddml_did_method</span><span class="op">(</span><span class="va">y1</span>, <span class="va">y0</span>, <span class="va">D</span>, <span class="va">covariates</span>,</span>
-<span>                  learners <span class="op">=</span> <span class="va">learners</span>,</span>
-<span>                  learners_DX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
-<span>                  sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="co">#MY_DID_XGBOOST</span></span></code></pre></div>
-<p>We can now use the reduced form estimator <code>my_did_xgboost</code>
-and pass it via the <code>est_method</code> argument:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># estimate group-time average treatment effects with ddml</span></span>
-<span><span class="va">attgt_xgboost</span> <span class="op">&lt;-</span> <span class="fu">att_gt</span><span class="op">(</span>yname <span class="op">=</span> <span class="st">"lemp"</span>,</span>
-<span>                        gname <span class="op">=</span> <span class="st">"first.treat"</span>,</span>
-<span>                        idname <span class="op">=</span> <span class="st">"countyreal"</span>,</span>
-<span>                        tname <span class="op">=</span> <span class="st">"year"</span>,</span>
-<span>                        xformla <span class="op">=</span> <span class="op">~</span><span class="va">lpop</span>,</span>
-<span>                        data <span class="op">=</span> <span class="va">mpdta</span>,</span>
-<span>                        est_method <span class="op">=</span> <span class="va">my_did_xgboost</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 207 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 220 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 208 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 202 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 48 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 44 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 49 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): : 48 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span></span>
-<span><span class="co"># summarize the results</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">attgt_xgboost</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; att_gt(yname = "lemp", tname = "year", idname = "countyreal", </span></span>
-<span><span class="co">#&gt;     gname = "first.treat", xformla = ~lpop, data = mpdta, est_method = my_did_xgboost)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Group-Time Average Treatment Effects:</span></span>
-<span><span class="co">#&gt;  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band] </span></span>
-<span><span class="co">#&gt;   2004 2004   0.1412     0.1138       -0.1427      0.4251 </span></span>
-<span><span class="co">#&gt;   2004 2005   0.1658     0.2354       -0.4213      0.7529 </span></span>
-<span><span class="co">#&gt;   2004 2006  -0.1373     0.3049       -0.8979      0.6232 </span></span>
-<span><span class="co">#&gt;   2004 2007  -0.1872     0.2251       -0.7486      0.3743 </span></span>
-<span><span class="co">#&gt;   2006 2004   0.0018     0.0519       -0.1276      0.1312 </span></span>
-<span><span class="co">#&gt;   2006 2005  -0.0162     0.0463       -0.1316      0.0993 </span></span>
-<span><span class="co">#&gt;   2006 2006  -0.0031     0.0431       -0.1105      0.1043 </span></span>
-<span><span class="co">#&gt;   2006 2007   0.0132     0.0661       -0.1517      0.1781 </span></span>
-<span><span class="co">#&gt;   2007 2004  -0.0648     0.1000       -0.3142      0.1847 </span></span>
-<span><span class="co">#&gt;   2007 2005   0.0458     0.0763       -0.1445      0.2362 </span></span>
-<span><span class="co">#&gt;   2007 2006   0.0381     0.1430       -0.3184      0.3947 </span></span>
-<span><span class="co">#&gt;   2007 2007  -0.0970     0.1165       -0.3876      0.1936 </span></span>
-<span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; P-value for pre-test of parallel trends assumption:  0.97672</span></span>
-<span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
-<span></span>
-<span><span class="co"># plot the coefficients</span></span>
-<span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_xgboost</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lc_dyn</span>, uniform <span class="op">=</span> <span class="cn">TRUE</span>, ylab <span class="op">=</span> <span class="st">"ATT"</span>, main <span class="op">=</span> <span class="st">"Dynamic ATT (OLS)"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-8-1.png" alt="xgboost-based Diff-in-Diff Estimates." width="90%"><p class="caption">
-xgboost-based Diff-in-Diff Estimates.
+<img src="figures/did-unnamed-chunk-7-1.png" alt="Dynamic Treatment Effect Estimates (OLS)." width="90%"><p class="caption">
+Dynamic Treatment Effect Estimates (OLS).
 </p>
 </div>
-<p>Of course, use of the <code>ddml</code>-based reduced form estimator
-still allows us to leverage the various other methods of the
-<code>did</code> package, including the construction (and visualization
-of) dynamic average treatment effects:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># aggregate the group-time average treatment effects</span></span>
-<span><span class="va">dyn_xgboost</span> <span class="op">&lt;-</span> <span class="fu">aggte</span><span class="op">(</span><span class="va">attgt_xgboost</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">dyn_xgboost</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; aggte(MP = attgt_xgboost, type = "dynamic")</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Overall summary of ATT's based on event-study/dynamic aggregation:  </span></span>
-<span><span class="co">#&gt;      ATT    Std. Error     [ 95%  Conf. Int.] </span></span>
-<span><span class="co">#&gt;  -0.0782        0.1306    -0.3343      0.1779 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Dynamic Effects:</span></span>
-<span><span class="co">#&gt;  Event time Estimate Std. Error [95% Simult.  Conf. Band] </span></span>
-<span><span class="co">#&gt;          -3  -0.0648     0.1032       -0.2931      0.1635 </span></span>
-<span><span class="co">#&gt;          -2   0.0355     0.0620       -0.1016      0.1727 </span></span>
-<span><span class="co">#&gt;          -1   0.0254     0.1065       -0.2101      0.2610 </span></span>
-<span><span class="co">#&gt;           0  -0.0524     0.0841       -0.2384      0.1336 </span></span>
-<span><span class="co">#&gt;           1   0.0641     0.0854       -0.1247      0.2528 </span></span>
-<span><span class="co">#&gt;           2  -0.1373     0.3137       -0.8310      0.5564 </span></span>
-<span><span class="co">#&gt;           3  -0.1872     0.2189       -0.6711      0.2968 </span></span>
-<span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
-<span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_xgboost</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-9-1.png" alt="xgboost-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
-xgboost-based Dynamic Treatment Effect Estimates.
-</p>
-</div>
-<p>The gradient tree boosting-based ATT estimate is only slightly
-different from the ATT estimate using the linear estimator of the
-<code>did</code> package, however, it is statistically
-insignificant.</p>
-<p>Given these two coefficients, is there a good reason to choose one
-over the other?</p>
-<p>It is ex-ante difficult to trade-off the potential bias from
-misspecification that the linear estimator suffers from with the
-potential bias from estimation error that the gradient tree boosting
-estimator may suffer from. <code>ddml</code> allows to resolve this
-conflict in a data-driven manner by simultaneous consideration of
-multiple machine learners via (short-)stacking. We turn to this in the
-next section.</p>
 </div>
 <div class="section level2">
-<h2 id="contructing-a-shortstacking-based-diff-in-diff-estimator">Contructing a Shortstacking-based Diff-in-Diff Estimator<a class="anchor" aria-label="anchor" href="#contructing-a-shortstacking-based-diff-in-diff-estimator"></a>
+<h2 id="stacking-based-estimation">Stacking-based Estimation<a class="anchor" aria-label="anchor" href="#stacking-based-estimation"></a>
 </h2>
-<p>Instead of considering just a single machine learner – that may or
-may not be suitable for the given application – we can leverage
-(short-)stacking and simultaneously consider multiple machine learners.
-As in other settings, this substantially increases robustness to the
-underlying structure of the data.</p>
-<p>We construct a new wrapper for our <code>ddml_did_method</code> that
-hard-codes different reduced form estimators:</p>
-<ul>
-<li>linear or logistic regression</li>
-<li>gradient tree boosting with more and less regularization</li>
-<li>random forests with more and less regularization</li>
-</ul>
-<p>The reduced form estimators are then optimally combined via
-non-negative least squares. Note that this specification also includes
-the linear control specifications considered by the default
-<code>did</code> learner, ensuring that machine learners are not
-spuriously selected. We leverage shortstacking to reduce computational
-time (see also <code>vignette("stacking")</code>).</p>
+<p>We next leverage (short-)stacking to combine multiple base learners.
+Including OLS and logit ensures that the simpler specifications are
+never spuriously discarded:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Outcome learners</span></span>
+<span><span class="va">learners_y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.1</span>, max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.1</span>, max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>, max.depth <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>, max.depth <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Propensity score learners</span></span>
+<span><span class="va">learners_ps</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glm</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.1</span>, max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.1</span>, max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>, max.depth <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
+<span>       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>, max.depth <span class="op">=</span> <span class="fl">10</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Estimate with short-stacking</span></span>
+<span><span class="va">fit_stack</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_attgt.html">ddml_attgt</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">X</span>, t <span class="op">=</span> <span class="va">times</span>, G <span class="op">=</span> <span class="va">G</span>,</span>
+<span>                        learners <span class="op">=</span> <span class="va">learners_y</span>,</span>
+<span>                        learners_qX <span class="op">=</span> <span class="va">learners_ps</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                        ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
+<span>                        shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">w_dyn_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom_weights_did.html">lincom_weights_did</a></span><span class="op">(</span><span class="va">fit_stack</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
+<span><span class="va">lc_dyn_s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom.html">lincom</a></span><span class="op">(</span><span class="va">fit_stack</span>, R <span class="op">=</span> <span class="va">w_dyn_s</span><span class="op">$</span><span class="va">R</span>,</span>
+<span>                   inf_func_R <span class="op">=</span> <span class="va">w_dyn_s</span><span class="op">$</span><span class="va">inf_func_R</span>,</span>
+<span>                   labels <span class="op">=</span> <span class="va">w_dyn_s</span><span class="op">$</span><span class="va">labels</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lc_dyn_s</span><span class="op">)</span></span>
+<span><span class="co">#&gt; RAL estimation: Linear Combination </span></span>
+<span><span class="co">#&gt; Obs: 500</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; e=-4  0.00588    0.02457    0.24  0.81096    </span></span>
+<span><span class="co">#&gt; e=-3  0.02752    0.01776    1.55  0.12113    </span></span>
+<span><span class="co">#&gt; e=-2  0.02371    0.01457    1.63  0.10356    </span></span>
+<span><span class="co">#&gt; e=0  -0.02131    0.01177   -1.81  0.07027 .  </span></span>
+<span><span class="co">#&gt; e=1  -0.05714    0.01628   -3.51  0.00045 ***</span></span>
+<span><span class="co">#&gt; e=2  -0.14076    0.03499   -4.02  5.7e-05 ***</span></span>
+<span><span class="co">#&gt; e=3  -0.10395    0.03332   -3.12  0.00181 ** </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">my_did_stacking</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">y1</span>, <span class="va">y0</span>, <span class="va">D</span>, <span class="va">covariates</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Hard-code learners for outcome reduced-form</span></span>
-<span>  <span class="va">learners</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nround <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.05</span>, max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nround <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.05</span>, max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                                   max.depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                                   max.depth <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="co"># Hard-code learners for treatment reduced-form</span></span>
-<span>  <span class="va">learners_DX</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glm</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nround <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.05</span>, max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>                                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nround <span class="op">=</span> <span class="fl">500</span>,</span>
-<span>                                   params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>eta <span class="op">=</span> <span class="fl">0.05</span>, max_depth <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
-<span>                                   early_stopping_rounds <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                                   max.depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>,</span>
-<span>                       args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>                                   max.depth <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="co"># Call the general ddml_did method w/ additional hard-coded arguments</span></span>
-<span>  <span class="fu">ddml_did_method</span><span class="op">(</span><span class="va">y1</span>, <span class="va">y0</span>, <span class="va">D</span>, <span class="va">covariates</span>,</span>
-<span>                  learners <span class="op">=</span> <span class="va">learners</span>,</span>
-<span>                  learners_DX <span class="op">=</span> <span class="va">learners_DX</span>,</span>
-<span>                  sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                  ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
-<span>                  shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                  silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="co">#MY_DID_STACKING</span></span></code></pre></div>
-<p>Finally, we recompute the group-time average treatment effects using
-our shortstacking estimator:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lc_dyn_s</span>, uniform <span class="op">=</span> <span class="cn">TRUE</span>, ylab <span class="op">=</span> <span class="st">"ATT"</span>, main <span class="op">=</span> <span class="st">"Dynamic ATT (Stacking)"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure" style="text-align: center">
+<img src="figures/did-unnamed-chunk-10-1.png" alt="Dynamic Treatment Effect Estimates (Stacking)." width="90%"><p class="caption">
+Dynamic Treatment Effect Estimates (Stacking).
+</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="learner-diagnostics">Learner Diagnostics<a class="anchor" aria-label="anchor" href="#learner-diagnostics"></a>
+</h2>
+<p>The stacking weights reveal which learners contribute to the final
+estimates. We summarize the NNLS weights across all group-time cells for
+both the outcome and propensity score reduced forms:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># estimate group-time average treatment effects with ddml</span></span>
-<span><span class="va">attgt_stacking</span> <span class="op">&lt;-</span> <span class="fu">att_gt</span><span class="op">(</span>yname <span class="op">=</span> <span class="st">"lemp"</span>,</span>
-<span>                         gname <span class="op">=</span> <span class="st">"first.treat"</span>,</span>
-<span>                         idname <span class="op">=</span> <span class="st">"countyreal"</span>,</span>
-<span>                         tname <span class="op">=</span> <span class="st">"year"</span>,</span>
-<span>                         xformla <span class="op">=</span> <span class="op">~</span><span class="va">lpop</span> ,</span>
-<span>                         data <span class="op">=</span> <span class="va">mpdta</span>,</span>
-<span>                         est_method <span class="op">=</span> <span class="va">my_did_stacking</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): 2 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): 1 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): 2 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
-<span><span class="co">#&gt; Warning in trim_propensity_scores(m_X, trim, ensemble_type): 2 propensity</span></span>
-<span><span class="co">#&gt; scores were trimmed.</span></span>
+<code class="sourceCode R"><span><span class="co"># Extract diagnostics</span></span>
+<span><span class="va">diag_stack</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">fit_stack</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># summarize the results</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">attgt_stacking</span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; att_gt(yname = "lemp", tname = "year", idname = "countyreal", </span></span>
-<span><span class="co">#&gt;     gname = "first.treat", xformla = ~lpop, data = mpdta, est_method = my_did_stacking)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Group-Time Average Treatment Effects:</span></span>
-<span><span class="co">#&gt;  Group Time ATT(g,t) Std. Error [95% Simult.  Conf. Band]  </span></span>
-<span><span class="co">#&gt;   2004 2004  -0.0143     0.0224       -0.0748      0.0461  </span></span>
-<span><span class="co">#&gt;   2004 2005  -0.0761     0.0296       -0.1558      0.0036  </span></span>
-<span><span class="co">#&gt;   2004 2006  -0.1372     0.0371       -0.2370     -0.0374 *</span></span>
-<span><span class="co">#&gt;   2004 2007  -0.1062     0.0318       -0.1918     -0.0205 *</span></span>
-<span><span class="co">#&gt;   2006 2004  -0.0020     0.0214       -0.0595      0.0554  </span></span>
-<span><span class="co">#&gt;   2006 2005  -0.0061     0.0199       -0.0596      0.0475  </span></span>
-<span><span class="co">#&gt;   2006 2006   0.0016     0.0184       -0.0478      0.0510  </span></span>
-<span><span class="co">#&gt;   2006 2007  -0.0432     0.0203       -0.0978      0.0113  </span></span>
-<span><span class="co">#&gt;   2007 2004   0.0263     0.0145       -0.0127      0.0653  </span></span>
-<span><span class="co">#&gt;   2007 2005  -0.0036     0.0162       -0.0474      0.0401  </span></span>
-<span><span class="co">#&gt;   2007 2006  -0.0276     0.0193       -0.0794      0.0243  </span></span>
-<span><span class="co">#&gt;   2007 2007  -0.0275     0.0173       -0.0740      0.0189  </span></span>
-<span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; P-value for pre-test of parallel trends assumption:  0.24863</span></span>
-<span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
+<span><span class="co"># Helper: summarize stacking weights across (g,t) cells</span></span>
+<span><span class="va">summarize_weights</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">diag</span>, <span class="va">pattern</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">eqs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="va">pattern</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">diag</span><span class="op">$</span><span class="va">tables</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="va">w_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^weight_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">diag</span><span class="op">$</span><span class="va">tables</span><span class="op">[[</span><span class="va">eqs</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>                 value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span>  <span class="va">w_mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">eqs</span>, <span class="kw">function</span><span class="op">(</span><span class="va">eq</span><span class="op">)</span> <span class="va">diag</span><span class="op">$</span><span class="va">tables</span><span class="op">[[</span><span class="va">eq</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="va">w_col</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="va">learner_names</span> <span class="op">&lt;-</span> <span class="va">diag</span><span class="op">$</span><span class="va">tables</span><span class="op">[[</span><span class="va">eqs</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">learner</span></span>
+<span>  <span class="va">keep</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">w_mat</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span><span class="op">)</span> <span class="co"># exclude nnls1 from weights</span></span>
+<span>  <span class="va">w_mat</span> <span class="op">&lt;-</span> <span class="va">w_mat</span><span class="op">[</span><span class="va">keep</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span>  <span class="va">learner_names</span> <span class="op">&lt;-</span> <span class="va">learner_names</span><span class="op">[</span><span class="va">keep</span><span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    learner <span class="op">=</span> <span class="va">learner_names</span>,</span>
+<span>    min  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">w_mat</span>, <span class="fl">1</span>, <span class="va">min</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    mean <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">w_mat</span>, <span class="fl">1</span>, <span class="va">mean</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    max  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">w_mat</span>, <span class="fl">1</span>, <span class="va">max</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>    row.names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span></span>
-<span><span class="co"># plot the coefficients</span></span>
-<span><span class="fu">ggdid</span><span class="op">(</span><span class="va">attgt_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-11-1.png" alt="Stacking-based Diff-in-Diff Estimates." width="90%"><p class="caption">
-Stacking-based Diff-in-Diff Estimates.
-</p>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Outcome reduced form---stacking weights:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Outcome reduced form---stacking weights:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">summarize_weights</span><span class="op">(</span><span class="va">diag_stack</span>, <span class="st">":y_X_D0$"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    learner    min   mean    max</span></span>
+<span><span class="co">#&gt;  learner_1 0.1962 0.6213 0.9516</span></span>
+<span><span class="co">#&gt;  learner_2 0.0000 0.0330 0.1629</span></span>
+<span><span class="co">#&gt;  learner_3 0.0000 0.0000 0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 0.0000 0.0036 0.0434</span></span>
+<span><span class="co">#&gt;  learner_5 0.0000 0.0118 0.1030</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nPropensity score---stacking weights:\n"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Propensity score---stacking weights:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">summarize_weights</span><span class="op">(</span><span class="va">diag_stack</span>, <span class="st">":D_X$"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    learner    min   mean    max</span></span>
+<span><span class="co">#&gt;  learner_1 0.8434 0.9128 0.9516</span></span>
+<span><span class="co">#&gt;  learner_2 0.0000 0.0475 0.1071</span></span>
+<span><span class="co">#&gt;  learner_3 0.0000 0.0000 0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 0.0000 0.0004 0.0045</span></span>
+<span><span class="co">#&gt;  learner_5 0.0000 0.0046 0.0551</span></span></code></pre></div>
+<p>In this application with a single covariate, the parametric learners
+(OLS/logit) receive the vast majority of the stacking weight—reassuring
+us that the default linear estimator is adequate here.</p>
 </div>
-<p>The results are largely similar to those of the default linear
-estimator of the <code>did</code> package, suggesting that the linear
-approximation of the reduced forms is sufficiently accurate. (Of course
-we didn’t know that before – now, at least, we can sleep easy!)</p>
-<p>Other settings, in particular settings with multiple control
-variables, may show starker difference in the final estimates.</p>
+<div class="section level2">
+<h2 id="comparing-results">Comparing Results<a class="anchor" aria-label="anchor" href="#comparing-results"></a>
+</h2>
+<p>We compare the dynamic treatment effects from the OLS, stacking, and
+<code>did</code> baseline estimators:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># aggregate the group-time average treatment effects</span></span>
-<span><span class="va">dyn_stacking</span> <span class="op">&lt;-</span> <span class="fu">aggte</span><span class="op">(</span><span class="va">attgt_stacking</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">dyn_stacking</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Build comparison with all event times; base period e=-1 is 0 by definition</span></span>
+<span><span class="va">ols_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">dyn_lm</span><span class="op">$</span><span class="va">egt</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"e="</span>, <span class="va">dyn_lm</span><span class="op">$</span><span class="va">egt</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ols_full</span><span class="op">[</span><span class="va">w_dyn</span><span class="op">$</span><span class="va">labels</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lc_dyn</span><span class="op">)</span></span>
+<span><span class="va">stack_full</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">dyn_lm</span><span class="op">$</span><span class="va">egt</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"e="</span>, <span class="va">dyn_lm</span><span class="op">$</span><span class="va">egt</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">stack_full</span><span class="op">[</span><span class="va">w_dyn_s</span><span class="op">$</span><span class="va">labels</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lc_dyn_s</span><span class="op">)</span></span>
+<span><span class="va">comparison</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  event_time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"e="</span>, <span class="va">dyn_lm</span><span class="op">$</span><span class="va">egt</span><span class="op">)</span>,</span>
+<span>  did <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">dyn_lm</span><span class="op">$</span><span class="va">att.egt</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  ols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">ols_full</span>, <span class="fl">4</span><span class="op">)</span>,</span>
+<span>  stacking <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">stack_full</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">comparison</span><span class="op">$</span><span class="va">did</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">comparison</span><span class="op">$</span><span class="va">did</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">comparison</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  event_time     did     ols stacking</span></span>
+<span><span class="co">#&gt;        e=-4  0.0063  0.0053   0.0059</span></span>
+<span><span class="co">#&gt;        e=-3  0.0269  0.0285   0.0275</span></span>
+<span><span class="co">#&gt;        e=-2  0.0232  0.0225   0.0237</span></span>
+<span><span class="co">#&gt;        e=-1  0.0000  0.0000   0.0000</span></span>
+<span><span class="co">#&gt;         e=0 -0.0211 -0.0201  -0.0213</span></span>
+<span><span class="co">#&gt;         e=1 -0.0530 -0.0541  -0.0571</span></span>
+<span><span class="co">#&gt;         e=2 -0.1404 -0.1411  -0.1408</span></span>
+<span><span class="co">#&gt;         e=3 -0.1069 -0.1082  -0.1040</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="repeated-resampling-with-uniform-inference">Repeated Resampling with Uniform Inference<a class="anchor" aria-label="anchor" href="#repeated-resampling-with-uniform-inference"></a>
+</h2>
+<p>To account for sample-splitting variability, we can repeat
+cross-fitting several times and aggregate results. The
+<code>ddml_replicate</code> function provides this functionality.
+Combined with <code>lincom</code>, we obtain aggregated dynamic
+treatment effects with uniform confidence bands:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_rep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_replicate.html">ddml_replicate</a></span><span class="op">(</span></span>
+<span>  <span class="va">ddml_attgt</span>,</span>
+<span>  y <span class="op">=</span> <span class="va">y</span>, X <span class="op">=</span> <span class="va">X</span>, t <span class="op">=</span> <span class="va">times</span>, G <span class="op">=</span> <span class="va">G</span>,</span>
+<span>  learners <span class="op">=</span> <span class="va">learners_y</span>,</span>
+<span>  learners_qX <span class="op">=</span> <span class="va">learners_ps</span>,</span>
+<span>  sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  ensemble_type <span class="op">=</span> <span class="st">"nnls"</span>,</span>
+<span>  shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  resamples <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  silent <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># lincom on replicated fits</span></span>
+<span><span class="va">w_dyn_r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom_weights_did.html">lincom_weights_did</a></span><span class="op">(</span><span class="va">fit_rep</span>, type <span class="op">=</span> <span class="st">"dynamic"</span><span class="op">)</span></span>
+<span><span class="va">lc_dyn_r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/lincom.html">lincom</a></span><span class="op">(</span><span class="va">fit_rep</span>, R <span class="op">=</span> <span class="va">w_dyn_r</span><span class="op">$</span><span class="va">R</span>,</span>
+<span>                   inf_func_R <span class="op">=</span> <span class="va">w_dyn_r</span><span class="op">$</span><span class="va">inf_func_R</span>,</span>
+<span>                   labels <span class="op">=</span> <span class="va">w_dyn_r</span><span class="op">$</span><span class="va">labels</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lc_dyn_r</span><span class="op">)</span></span>
+<span><span class="co">#&gt; RAL estimation: Linear Combination </span></span>
+<span><span class="co">#&gt; Obs: 500   Resamples: 5   Aggregation: median</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; aggte(MP = attgt_stacking, type = "dynamic")</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference: Callaway, Brantly and Pedro H.C. Sant'Anna.  "Difference-in-Differences with Multiple Time Periods." Journal of Econometrics, Vol. 225, No. 2, pp. 200-230, 2021. &lt;https://doi.org/10.1016/j.jeconom.2020.12.001&gt;, &lt;https://arxiv.org/abs/1803.09015&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Overall summary of ATT's based on event-study/dynamic aggregation:  </span></span>
-<span><span class="co">#&gt;      ATT    Std. Error     [ 95%  Conf. Int.]  </span></span>
-<span><span class="co">#&gt;  -0.0794        0.0202    -0.1189     -0.0399 *</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Dynamic Effects:</span></span>
-<span><span class="co">#&gt;  Event time Estimate Std. Error [95% Simult.  Conf. Band]  </span></span>
-<span><span class="co">#&gt;          -3   0.0263     0.0144       -0.0111      0.0638  </span></span>
-<span><span class="co">#&gt;          -2  -0.0033     0.0132       -0.0375      0.0310  </span></span>
-<span><span class="co">#&gt;          -1  -0.0225     0.0148       -0.0611      0.0160  </span></span>
-<span><span class="co">#&gt;           0  -0.0200     0.0110       -0.0487      0.0086  </span></span>
-<span><span class="co">#&gt;           1  -0.0542     0.0164       -0.0969     -0.0114 *</span></span>
-<span><span class="co">#&gt;           2  -0.1372     0.0402       -0.2419     -0.0325 *</span></span>
-<span><span class="co">#&gt;           3  -0.1062     0.0341       -0.1949     -0.0175 *</span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; e=-4  0.00713    0.02429    0.29  0.76917    </span></span>
+<span><span class="co">#&gt; e=-3  0.02957    0.01759    1.68  0.09282 .  </span></span>
+<span><span class="co">#&gt; e=-2  0.02405    0.01446    1.66  0.09629 .  </span></span>
+<span><span class="co">#&gt; e=0  -0.01985    0.01164   -1.71  0.08811 .  </span></span>
+<span><span class="co">#&gt; e=1  -0.05498    0.01655   -3.32  0.00089 ***</span></span>
+<span><span class="co">#&gt; e=2  -0.14143    0.03446   -4.10  4.1e-05 ***</span></span>
+<span><span class="co">#&gt; e=3  -0.10858    0.03288   -3.30  0.00096 ***</span></span>
 <span><span class="co">#&gt; ---</span></span>
-<span><span class="co">#&gt; Signif. codes: `*' confidence band does not cover 0</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Control Group:  Never Treated,  Anticipation Periods:  0</span></span>
-<span><span class="fu">ggdid</span><span class="op">(</span><span class="va">dyn_stacking</span>, ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.4</span>, <span class="fl">.4</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>The plot method for replicated objects displays median-aggregated
+estimates with confidence bands. We can request uniform bands via
+<code>uniform = TRUE</code>:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lc_dyn_r</span>, uniform <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>     ylab <span class="op">=</span> <span class="st">"ATT"</span>, main <span class="op">=</span> <span class="st">"Dynamic ATT (Median, Uniform CI)"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="figures/unnamed-chunk-12-1.png" alt="Stacking-based Dynamic Treatment Effect Estimates." width="90%"><p class="caption">
-Stacking-based Dynamic Treatment Effect Estimates.
+<img src="figures/did-unnamed-chunk-15-1.png" alt="Dynamic ATT with Uniform Confidence Bands." width="90%"><p class="caption">
+Dynamic ATT with Uniform Confidence Bands.
 </p>
 </div>
+<p>The uniform bands are wider than pointwise intervals, providing
+simultaneous coverage over all event times. Pointwise intervals are
+available for reference via <code>uniform = FALSE</code> (the
+default).</p>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann
+T (2026). “An Introduction to Double/Debiased Machine Learning.” Journal
+of Economic Literature, forthcoming.</p>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model
+Averaging and Double Machine Learning.” Journal of Applied Econometrics,
+40(3): 249-269.</p>
 <p>Callaway B, Sant’Anna P (2021). “Difference-in-differences with
-multiple time periods.” Journal of Econometrics, 200-230.</p>
-<p>Callaway B, Sant’Anna P (2021). “did: Difference in Differences.” R
-package version 2.1.2, <a href="https://bcallaway11.github.io/did/" class="external-link uri">https://bcallaway11.github.io/did/</a>.</p>
-<p>Chang NC (2020). “Double/debiased machine learning for
-difference-in-difference models.” The Econometrics Journal, 177-191.</p>
+multiple time periods.” Journal of Econometrics, 225(2), 200-230.</p>
+<p>Chang N-C (2020). “Double/debiased machine learning for
+difference-in-difference models.” The Econometrics Journal, 23(2),
+177-191.</p>
+<p>Chernozhukov V, Chetverikov D, Kato K (2013). “Gaussian
+approximations and multiplier bootstrap for maxima of sums of
+high-dimensional random vectors.” Annals of Statistics, 41(6),
+2786-2819.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

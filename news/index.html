@@ -14,7 +14,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,9 +27,12 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -46,15 +49,36 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.1" id="ddml-031">ddml 0.3.1<a class="anchor" aria-label="anchor" href="#ddml-031"></a></h2><p class="text-muted">CRAN release: 2025-12-11</p>
-<ul><li>Updates internals of <code><a href="../reference/mdl_xgboost.html">ddml::mdl_xgboost()</a></code> with new <code>xgboost</code> syntax.</li>
-<li>Fixes <code><a href="../reference/ddml_fpliv.html">ddml::ddml_fpliv()</a></code> with custom weights.</li>
-<li>Allows for stacking with no positive stacking weights.</li>
-<li>Fixes <code><a href="../reference/mdl_glmnet.html">ddml::mdl_glmnet</a></code> predictions for binomial regression.</li>
+<h2 class="pkg-version" data-toc-text="0.9.0" id="ddml-090">ddml 0.9.0<a class="anchor" aria-label="anchor" href="#ddml-090"></a></h2>
+<ul><li>Adds <code><a href="../reference/ddml_attgt.html">ddml_attgt()</a></code> for staggered DiD and <code><a href="../reference/ddml_apo.html">ddml_apo()</a></code> for average potential outcomes.</li>
+<li>Adds <code><a href="../reference/ddml_policy.html">ddml_policy()</a></code> for multi-action policy value estimation.</li>
+<li>Adds <code><a href="../reference/ddml.html">ddml()</a></code> constructor for custom DML estimators with user-supplied scores.</li>
+<li>Adds <code><a href="../reference/lincom.html">lincom()</a></code> for inference on linear combinations. Supports computation of dynamic average treatment effects via <code><a href="../reference/lincom_weights_did.html">lincom_weights_did()</a></code>.</li>
+<li>Influence-function-based inference via the <code>ral</code> class; all estimators now inherit from <code>ral</code>.</li>
+<li>Adds <code><a href="../reference/ddml_rep.html">ddml_rep()</a></code> and <code><a href="../reference/ddml_replicate.html">ddml_replicate()</a></code> for repeated cross-fitting with median, mean, or spectral-norm aggregation.</li>
+<li>Adds <code><a href="../reference/diagnostics.html">diagnostics()</a></code> for MSPE, R-squared, stacking weights, and CVC tests.</li>
+<li>Adds <code>fitted</code>/<code>splits</code> pass-through to all <code>ddml_*()</code> estimators.</li>
+<li>New S3 methods: <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>, <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code>, <code><a href="https://rdrr.io/r/stats/influence.measures.html" class="external-link">hatvalues()</a></code>, <code><a href="https://rdrr.io/r/stats/nobs.html" class="external-link">nobs()</a></code>, multi-ensemble <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>/<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>.</li>
+<li>Adds uniform confidence bands via multiplier bootstrap (<code>confint(uniform = TRUE)</code>).</li>
+<li>Adds HC0/HC3 variance estimators, parallel computation, stratified cross-fitting, cluster-aware splitting, and input validation.</li>
+<li>Adds <code>broom</code> compatibility.</li>
+<li>Fixes <code><a href="../reference/ddml_fpliv.html">ddml_fpliv()</a></code> with custom weights.</li>
+<li>Breaking changes:
+<ul><li>Inference internals use <code>$inf_func</code> instead of <code>$scores</code>/<code>$J</code>/<code>$psi_a</code>/<code>$psi_b</code>.</li>
+<li>Utility functions (<code>crosspred</code>, <code>crossval</code>, <code>ensemble</code>, <code>ensemble_weights</code>, <code>shortstacking</code>) no longer accept <code>Z</code>/<code>newZ</code>. Pre-concatenate instruments with covariates (e.g., <code>cbind(X, Z)</code>).</li>
+<li>
+<code><a href="../reference/crosspred.html">crosspred()</a></code> and <code><a href="../reference/shortstacking.html">shortstacking()</a></code> drop <code>compute_insample_predictions</code> and <code>insample_fitted</code> output.</li>
+<li>
+<code><a href="../reference/ddml_fpliv.html">ddml_fpliv()</a></code> drops the <code>enforce_LIE</code> argument.</li>
+<li>
+<code><a href="../reference/shortstacking.html">shortstacking()</a></code> drops <code>shortstack_y</code>.</li>
+<li>
+<code>ddml_*()</code> estimators drop <code>subsamples</code>, <code>cv_subsamples</code>, <code>subsamples_byD</code>, <code>cv_subsamples_byD</code>. Use the new <code>splits</code> parameter instead.</li>
+</ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="ddml-030">ddml 0.3.0<a class="anchor" aria-label="anchor" href="#ddml-030"></a></h2><p class="text-muted">CRAN release: 2024-10-02</p>
@@ -68,7 +92,7 @@
 <li>Adds probability forest compatibility to <code><a href="../reference/mdl_ranger.html">ddml::mdl_ranger()</a></code>.</li>
 <li>Adds propensity score trimming option to <code><a href="../reference/ddml_ate.html">ddml::ddml_ate()</a></code>, <code><a href="../reference/ddml_ate.html">ddml::ddml_att()</a></code>, and <code><a href="../reference/ddml_late.html">ddml::ddml_late()</a></code>.</li>
 <li>Fixes ATE and LATE scores.</li>
-<li>Fixes output of <code><a href="../reference/print.summary.ddml_plm.html">ddml::print.summary.ddml_plm</a></code> and <code><a href="../reference/print.summary.ddml_ate.html">ddml::print.summary.ddml_ate</a></code> (<a href="https://github.com/thomaswiemann/ddml/issues/57" class="external-link">#57</a>).</li>
+<li>Fixes output of <code>ddml::print.summary.ddml_plm</code> and <code>ddml::print.summary.ddml_ate</code> (<a href="https://github.com/thomaswiemann/ddml/issues/57" class="external-link">#57</a>).</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.1" id="ddml-021">ddml 0.2.1<a class="anchor" aria-label="anchor" href="#ddml-021"></a></h2><p class="text-muted">CRAN release: 2024-05-26</p>

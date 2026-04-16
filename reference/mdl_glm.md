@@ -1,4 +1,4 @@
-# Wrapper for [`stats::glm()`](https://rdrr.io/r/stats/glm.html).
+# Wrapper for stats::glm()
 
 Simple wrapper for [`stats::glm()`](https://rdrr.io/r/stats/glm.html).
 
@@ -34,6 +34,7 @@ the return object of [`stats::glm()`](https://rdrr.io/r/stats/glm.html).
 [`stats::glm()`](https://rdrr.io/r/stats/glm.html)
 
 Other ml_wrapper:
+[`mdl_bigGlm()`](https://www.thomaswiemann.com/ddml/reference/mdl_bigGLM.md),
 [`mdl_glmnet()`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md),
 [`mdl_ranger()`](https://www.thomaswiemann.com/ddml/reference/mdl_ranger.md),
 [`mdl_xgboost()`](https://www.thomaswiemann.com/ddml/reference/mdl_xgboost.md),

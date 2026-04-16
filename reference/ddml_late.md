@@ -1,6 +1,6 @@
-# Estimator of the Local Average Treatment Effect.
+# Estimator for the Local Average Treatment Effect
 
-Estimator of the local average treatment effect.
+Estimator for the local average treatment effect.
 
 ## Usage
 
@@ -21,10 +21,14 @@ ddml_late(
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_ZX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples_byZ = NULL,
-  cv_subsamples_byZ = NULL,
+  stratify = TRUE,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 ```
 
@@ -36,7 +40,7 @@ ddml_late(
 
 - D:
 
-  The binary endogenous variable of interest.
+  A matrix of endogenous variables.
 
 - Z:
 
@@ -59,27 +63,25 @@ ddml_late(
   - `args` Optional arguments to be passed to `what`.
 
   If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
+  lists, each containing three named elements:
 
-  - `fun` The base learner function. The function must be such that it
+  - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
-  - `args` Optional arguments to be passed to `fun`.
+  - `args` Optional arguments to be passed to `what`.
 
   - `assign_X` An optional vector of column indices corresponding to
     control variables in `X` that are passed to the base learner.
 
-  - `assign_Z` An optional vector of column indices corresponding to
-    instruments in `Z` that are passed to the base learner.
-
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` (and/or `assign_Z`) results in
-  inclusion of all variables in `X` (and/or `Z`).
+  in `what`. Omission of `assign_X` results in inclusion of all
+  variables in `X`.
 
 - learners_DXZ, learners_ZX:
 
-  Optional arguments to allow for different estimators of \\E\[D \vert
-  X, Z\]\\, \\E\[Z \vert X\]\\. Setup is identical to `learners`.
+  Optional arguments to allow for different base learners for estimation
+  of \\E\[D \vert X, Z\]\\, \\E\[Z \vert X\]\\. Setup is identical to
+  `learners`.
 
 - sample_folds:
 
@@ -131,17 +133,10 @@ ddml_late(
 
   A vector of cluster indices.
 
-- subsamples_byZ:
+- stratify:
 
-  List of two lists corresponding to the two instrument levels. Each
-  list contains vectors with sample indices for cross-fitting.
-
-- cv_subsamples_byZ:
-
-  List of two lists, each corresponding to one of the two instrument
-  levels. Each of the two lists contains lists, each corresponding to a
-  subsample and contains vectors with subsample indices for
-  cross-validation.
+  Boolean for stratified cross-fitting: if `TRUE`, subsamples are
+  constructed to be balanced across treatment levels.
 
 - trim:
 
@@ -152,86 +147,111 @@ ddml_late(
 
   Boolean to silence estimation updates.
 
+- parallel:
+
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
+
+- fitted:
+
+  An optional named list of per-equation cross-fitted predictions,
+  typically obtained from a previous fit via `fit$fitted`. When supplied
+  (together with `splits`), base learners are not re-fitted; only
+  ensemble weights are recomputed. This allows fast re-estimation with a
+  different `ensemble_type`. See
+  [`ddml_plm`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+  for an example.
+
+- splits:
+
+  An optional list of sample split objects. For `ddml_late`, recommended
+  keys are `subsamples`, `subsamples_byZ`, `cv_subsamples`, and
+  `cv_subsamples_byZ`.
+
+- save_crossval:
+
+  Logical indicating whether to store the inner cross-validation
+  residuals used for ensemble weight computation. Default `TRUE`. When
+  `TRUE`, subsequent pass-through calls with data-driven ensembles
+  (e.g., `"nnls"`) reproduce per-fold weights exactly. Set to `FALSE` to
+  reduce object size at the cost of approximate weight recomputation.
+
+- ...:
+
+  Additional arguments passed to internal methods.
+
 ## Value
 
-`ddml_late` returns an object of S3 class `ddml_late`. An object of
-class `ddml_late` is a list containing the following components:
-
-- `late`:
-
-  A vector with the average treatment effect estimates.
-
-- `weights`:
-
-  A list of matrices, providing the weight assigned to each base learner
-  (in chronological order) by the ensemble procedure.
-
-- `mspe`:
-
-  A list of matrices, providing the MSPE of each base learner (in
-  chronological order) computed by the cross-validation step in the
-  ensemble construction.
-
-- `psi_a`, `psi_b`:
-
-  Matrices needed for the computation of scores. Used in
-  [`summary.ddml_late()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md).
-
-- `oos_pred`:
-
-  List of matrices, providing the reduced form predicted values.
-
-- `learners`,`learners_DXZ`,`learners_ZX`,
-  `cluster_variable`,`subsamples_Z0`,
-  `subsamples_Z1`,`cv_subsamples_list_Z0`,
-  `cv_subsamples_list_Z1`,`ensemble_type`:
-
-  Pass-through of selected user-provided arguments. See above.
+`ddml_late` returns an object of S3 class `ddml_late` and `ddml`. See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for the common output structure. Additional pass-through fields:
+`learners`, `learners_DXZ`, `learners_ZX`.
 
 ## Details
 
-`ddml_late` provides a double/debiased machine learning estimator for
-the local average treatment effect in the interactive model given by
+**Parameter of Interest:** `ddml_late` provides a Double/Debiased
+Machine Learning estimator for the local average treatment effect. Under
+the standard instrumental variable assumptions (conditional
+independence, exclusion restriction, relevance, and monotonicity) with a
+binary instrument \\Z\\ and a binary treatment \\D\\, the parameter is
+identified by the following reduced form parameter:
 
-\\Y = g_0(D, X) + U,\\
+\$\$\theta_0^{\textrm{LATE}} = \frac{E\[E\[Y\|Z=1, X\] - E\[Y\|Z=0,
+X\]\]}{E\[E\[D\|Z=1, X\] - E\[D\|Z=0, X\]\]}\$\$
 
-where \\(Y, D, X, Z, U)\\ is a random vector such that
-\\\operatorname{supp} D = \operatorname{supp} Z = \\0,1\\\\, \\E\[U\vert
-X, Z\] = 0\\, \\E\[Var(E\[D\vert X, Z\]\vert X)\] \neq 0\\,
-\\\Pr(Z=1\vert X) \in (0, 1)\\ with probability 1, \\p_0(1, X) \geq
-p_0(0, X)\\ with probability 1 where \\p_0(Z, X) \equiv \Pr(D=1\vert Z,
-X)\\, and \\g_0\\ is an unknown nuisance function.
+where \\W \equiv (Y, D, X, Z)\\ is the observed random vector.
 
-In this model, the local average treatment effect is defined as
+**Nuisance Parameters:** The nuisance parameters are \\\eta = (\ell_0,
+\ell_1, r_0, r_1, p)\\ taking true values \\\ell\_{z,0}(X) = E\[Y\|Z=z,
+X\]\\, \\r\_{z,0}(X) = E\[D\|Z=z, X\]\\, and \\p_0(X) = \Pr(Z=1\|X)\\.
 
-\\\theta_0^{\textrm{LATE}} \equiv E\[g_0(1, X) - g_0(0, X)\vert p_0(1,
-X) \> p(0, X)\]\\.
+**Neyman Orthogonal Score / Moment Equation:** The Neyman orthogonal
+score is:
+
+\$\$m(W; \theta, \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} -
+\frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) -
+\theta\left(\frac{Z(D - r_1(X))}{p(X)} -
+\frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)\$\$
+
+**Jacobian:**
+
+\$\$J = -E\[r_1(X) - r_0(X)\]\$\$
+
+See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for how the influence function and inference are derived from these
+components.
 
 ## References
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging
-and Double Machine Learning." Journal of Applied Econometrics, 40(3):
-249-269.
-
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
-Imbens G, Angrist J (1004). "Identification and Estimation of Local
+Imbens G, Angrist J (1994). "Identification and Estimation of Local
 Average Treatment Effects." Econometrica, 62(2), 467-475.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
-241-259.
 
 ## See also
 
-[`summary.ddml_late()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md)
-
-Other ddml:
+Other ddml estimators:
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md),
+[`ddml_apo()`](https://www.thomaswiemann.com/ddml/reference/ddml_apo.md),
 [`ddml_ate()`](https://www.thomaswiemann.com/ddml/reference/ddml_ate.md),
+[`ddml_attgt()`](https://www.thomaswiemann.com/ddml/reference/ddml_attgt.md),
 [`ddml_fpliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_fpliv.md),
 [`ddml_pliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_pliv.md),
-[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md),
+[`ddml_policy()`](https://www.thomaswiemann.com/ddml/reference/ddml_policy.md)
 
 ## Examples
 
@@ -250,20 +270,22 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 2,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>   Estimate Std. Error t value Pr(>|t|)
-#>     -0.223      0.185    -1.2    0.229
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 2
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.231      0.190   -1.22     0.22
 
+# \donttest{
 # Estimate the local average treatment effect using short-stacking with base
 #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
-#     to estimate the ATE using every individual base learner.
+#     to estimate the LATE using every individual base learner.
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 late_fit <- ddml_late(y, D, Z, X,
-                      learners = list(list(fun = ols),
-                                      list(fun = mdl_glmnet),
-                                      list(fun = mdl_glmnet,
+                      learners = list(list(what = ols),
+                                      list(what = mdl_glmnet),
+                                      list(what = mdl_glmnet,
                                            args = list(alpha = 0))),
                       ensemble_type = 'nnls',
                       custom_ensemble_weights = weights_everylearner,
@@ -271,11 +293,23 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 2,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>           Estimate Std. Error t value Pr(>|t|)
-#> nnls        -0.207      0.182   -1.14    0.255
-#> mdl:ols     -0.183      0.178   -1.03    0.305
-#> mdl:lasso   -0.187      0.179   -1.05    0.296
-#> mdl:ridge   -0.200      0.181   -1.10    0.270
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 2  Stacking: short-stack
+#> 
+#> Ensemble type: nnls
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.232      0.184   -1.26     0.21
+#> 
+#> Ensemble type: mdl:ols
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.241      0.184   -1.31     0.19
+#> 
+#> Ensemble type: mdl:lasso
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.233      0.184   -1.27     0.21
+#> 
+#> Ensemble type: mdl:ridge
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.234      0.185   -1.27     0.21
+# }
 ```

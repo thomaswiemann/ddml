@@ -4,7 +4,7 @@
 
 This article illustrates the computational advantages of short-stacking
 over conventional stacking for estimation of structural parameters using
-double/debiased machine learning. See also Ahrens et
+Double/Debiased Machine Learning. See also Ahrens et
 al. ([2024a](https://arxiv.org/abs/2301.09397),
 [2024b](https://arxiv.org/abs/2401.01645)) for further discussion of
 short-stacking.
@@ -49,34 +49,34 @@ time_singlelearner <- system.time({
                         learners = list(what = mdl_xgboost,
                                         args = list(nrounds = 100,
                                                     max_depth = 1)),
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 
 time_shortstacking <- system.time({
   late_fit <- ddml_late(y, D, Z, X,
-                        learners = list(list(fun = ols),
-                                        list(fun = mdl_glmnet),
-                                        list(fun = mdl_xgboost,
+                        learners = list(list(what = ols),
+                                        list(what = mdl_glmnet),
+                                        list(what = mdl_xgboost,
                                              args = list(nrounds = 100,
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',
                         shortstack = TRUE,
-                        sample_folds = 10,
+                        sample_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 
 time_stacking <- system.time({
   late_fit <- ddml_late(y, D, Z, X,
-                        learners = list(list(fun = ols),
-                                        list(fun = mdl_glmnet),
-                                        list(fun = mdl_xgboost,
+                        learners = list(list(what = ols),
+                                        list(what = mdl_glmnet),
+                                        list(what = mdl_xgboost,
                                              args = list(nrounds = 100,
                                                          max_depth = 1))),
                         ensemble_type = 'nnls1',
                         shortstack = FALSE,
-                        sample_folds = 10,
-                        cv_folds = 10,
+                        sample_folds = 5,
+                        cv_folds = 5,
                         silent = TRUE)
   })#SYSTEM.TIME
 ```
@@ -87,16 +87,16 @@ prediction error (MSPE). The difference between the two approaches lies
 in the construction of the MSPE: While stacking runs cross-validation in
 each cross-fitting sample fold, short-stacking directly uses the
 out-of-sample predictions arising in the cross-fitting step of
-double/debiased machine learning estimators. As the run-times below
+Double/Debiased Machine Learning estimators. As the run-times below
 show, this results in a substantially reduced computational burden:
 
 ``` r
 cat("Time single learner:", time_singlelearner[1], "\n")
-#> Time single learner: 10.39
+#> Time single learner: 1.81
 cat("Time short-stacking:", time_shortstacking[1], "\n")
-#> Time short-stacking: 12.83
+#> Time short-stacking: 3.37
 cat("Time stacking:      ", time_stacking[1])
-#> Time stacking:       117.98
+#> Time stacking:       18.2
 ```
 
 ## References

@@ -1,6 +1,6 @@
-# Estimator for the Flexible Partially Linear IV Model.
+# Estimator for the Flexible Partially Linear IV Coefficient
 
-Estimator for the flexible partially linear IV model.
+Estimator for the flexible partially linear IV coefficient.
 
 ## Usage
 
@@ -17,14 +17,16 @@ ddml_fpliv(
   ensemble_type = "nnls",
   shortstack = FALSE,
   cv_folds = 10,
-  enforce_LIE = TRUE,
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DXZ = custom_ensemble_weights,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples = NULL,
-  cv_subsamples_list = NULL,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 ```
 
@@ -59,27 +61,25 @@ ddml_fpliv(
   - `args` Optional arguments to be passed to `what`.
 
   If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
+  lists, each containing three named elements:
 
-  - `fun` The base learner function. The function must be such that it
+  - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
-  - `args` Optional arguments to be passed to `fun`.
+  - `args` Optional arguments to be passed to `what`.
 
   - `assign_X` An optional vector of column indices corresponding to
     control variables in `X` that are passed to the base learner.
 
-  - `assign_Z` An optional vector of column indices corresponding to
-    instruments in `Z` that are passed to the base learner.
-
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` (and/or `assign_Z`) results in
-  inclusion of all variables in `X` (and/or `Z`).
+  in `what`. Omission of `assign_X` results in inclusion of all
+  variables in `X`.
 
 - learners_DXZ, learners_DX:
 
-  Optional arguments to allow for different estimators of \\E\[D \vert
-  X, Z\]\\, \\E\[D \vert X\]\\. Setup is identical to `learners`.
+  Optional arguments to allow for different base learners for estimation
+  of \\E\[D \vert X, Z\]\\, \\E\[D \vert X\]\\. Setup is identical to
+  `learners`.
 
 - sample_folds:
 
@@ -111,11 +111,6 @@ ddml_fpliv(
 
   Number of folds used for cross-validation in ensemble construction.
 
-- enforce_LIE:
-
-  Indicator equal to 1 if the law of iterated expectations is enforced
-  in the first stage.
-
 - custom_ensemble_weights:
 
   A numerical matrix with user-specified ensemble weights. Each column
@@ -136,85 +131,108 @@ ddml_fpliv(
 
   A vector of cluster indices.
 
-- subsamples:
-
-  List of vectors with sample indices for cross-fitting.
-
-- cv_subsamples_list:
-
-  List of lists, each corresponding to a subsample containing vectors
-  with subsample indices for cross-validation.
-
 - silent:
 
   Boolean to silence estimation updates.
 
+- parallel:
+
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
+
+- fitted:
+
+  An optional named list of per-equation cross-fitted predictions,
+  typically obtained from a previous fit via `fit$fitted`. When supplied
+  (together with `splits`), base learners are not re-fitted; only
+  ensemble weights are recomputed. This allows fast re-estimation with a
+  different `ensemble_type`. See
+  [`ddml_plm`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+  for an example.
+
+- splits:
+
+  An optional list of sample split objects, typically obtained from a
+  previous fit via `fit$splits`. Must be supplied when `fitted` is
+  provided. Can also be used standalone to provide pre-computed sample
+  folds.
+
+- save_crossval:
+
+  Logical indicating whether to store the inner cross-validation
+  residuals used for ensemble weight computation. Default `TRUE`. When
+  `TRUE`, subsequent pass-through calls with data-driven ensembles
+  (e.g., `"nnls"`) reproduce per-fold weights exactly. Set to `FALSE` to
+  reduce object size at the cost of approximate weight recomputation.
+
+- ...:
+
+  Additional arguments passed to internal methods.
+
 ## Value
 
-`ddml_fpliv` returns an object of S3 class `ddml_fpliv`. An object of
-class `ddml_fpliv` is a list containing the following components:
-
-- `coef`:
-
-  A vector with the \\\theta_0\\ estimates.
-
-- `weights`:
-
-  A list of matrices, providing the weight assigned to each base learner
-  (in chronological order) by the ensemble procedure.
-
-- `mspe`:
-
-  A list of matrices, providing the MSPE of each base learner (in
-  chronological order) computed by the cross-validation step in the
-  ensemble construction.
-
-- `iv_fit`:
-
-  Object of class `ivreg` from the IV regression of \\Y -
-  \hat{E}\[Y\vert X\]\\ on \\D - \hat{E}\[D\vert X\]\\ using
-  \\\hat{E}\[D\vert X,Z\] - \hat{E}\[D\vert X\]\\ as the instrument.
-
-- `learners`,`learners_DX`,`learners_DXZ`,
-  `cluster_variable`,`subsamples`, `cv_subsamples_list`,`ensemble_type`:
-
-  Pass-through of selected user-provided arguments. See above.
+`ddml_fpliv` returns an object of S3 class `ddml_fpliv` and `ddml`. See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for the common output structure. Additional pass-through fields:
+`learners`, `learners_DXZ`, `learners_DX`.
 
 ## Details
 
-`ddml_fpliv` provides a double/debiased machine learning estimator for
-the parameter of interest \\\theta_0\\ in the partially linear IV model
-given by
+**Parameter of Interest:** `ddml_fpliv` provides a Double/Debiased
+Machine Learning estimator for the flexible partially linear
+instrumental variable (IV) coefficient \\\theta_0\\, defined by the
+partially linear IV model:
 
-\\Y = \theta_0D + g_0(X) + U,\\
+\$\$Y = \theta_0 D + g_0(X) + \varepsilon, \quad E\[\varepsilon\|X, Z\]
+= 0,\$\$
 
-where \\(Y, D, X, Z, U)\\ is a random vector such that \\E\[U\vert X,
-Z\] = 0\\ and \\E\[Var(E\[D\vert X, Z\]\vert X)\] \neq 0\\, and \\g_0\\
-is an unknown nuisance function.
+where \\W \equiv (Y, D, X, Z, \varepsilon)\\ is a random vector such
+that \\E\[Var(E\[D\|X, Z\]\|X)\] \neq 0\\, and \\g_0(X)\\ is an unknown
+nuisance function.
 
-## References
+**Neyman Orthogonal Score:** The Neyman orthogonal score is:
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging
-and Double Machine Learning." Journal of Applied Econometrics, 40(3):
-249-269.
+\$\$m(W; \theta, \eta) = \[(Y - \ell(X)) - \theta(D - r(X))\](v(X, Z) -
+r(X))\$\$
 
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
+where the nuisance parameters are \\\eta = (\ell, r, v)\\ taking true
+values \\\ell_0(X) = E\[Y\|X\]\\, \\r_0(X) = E\[D\|X\]\\, and \\v_0(X,
+Z) = E\[D\|X, Z\]\\.
 
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
-241-259.
+**Jacobian:**
+
+\$\$J = -E\[(D - r(X))(v(X, Z) - r(X))^\top\]\$\$
+
+See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for how the influence function and inference are derived from these
+components.
 
 ## See also
 
-[`summary.ddml_fpliv()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_plm.md),
-[`AER::ivreg()`](https://rdrr.io/pkg/AER/man/ivreg.html)
-
-Other ddml:
+Other ddml estimators:
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md),
+[`ddml_apo()`](https://www.thomaswiemann.com/ddml/reference/ddml_apo.md),
 [`ddml_ate()`](https://www.thomaswiemann.com/ddml/reference/ddml_ate.md),
+[`ddml_attgt()`](https://www.thomaswiemann.com/ddml/reference/ddml_attgt.md),
 [`ddml_late()`](https://www.thomaswiemann.com/ddml/reference/ddml_late.md),
 [`ddml_pliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_pliv.md),
-[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md),
+[`ddml_policy()`](https://www.thomaswiemann.com/ddml/reference/ddml_policy.md)
 
 ## Examples
 
@@ -225,19 +243,17 @@ D = AE98[, "morekids"]
 Z = AE98[, "samesex", drop = FALSE]
 X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
 
-# Estimate the partially linear IV model using a single base learner: Ridge.
+# Estimate the partially linear IV model using a single base learner, ridge.
 fpliv_fit <- ddml_fpliv(y, D, Z, X,
                         learners = list(what = mdl_glmnet,
                                         args = list(alpha = 0)),
                         sample_folds = 2,
                         silent = TRUE)
 summary(fpliv_fit)
-#> FPLIV estimation results: 
-#>  
-#> , , single base learner
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 5000   Folds: 2
 #> 
-#>              Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)  0.000466    0.00691  0.0675    0.946
-#> D_r         -0.179025    0.17248 -1.0380    0.299
-#> 
+#>              Estimate Std. Error z value Pr(>|z|)
+#> D1          -2.56e-01   1.88e-01   -1.36     0.17
+#> (Intercept) -8.48e-05   6.92e-03   -0.01     0.99
 ```

@@ -11,8 +11,8 @@
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Get Started">
-<meta name="description" content="A brief introduction to double/debiased machine learning using (short-)stacking in R.">
-<meta property="og:description" content="A brief introduction to double/debiased machine learning using (short-)stacking in R.">
+<meta name="description" content="A brief introduction to Double/Debiased Machine Learning using (short-)stacking in R.">
+<meta property="og:description" content="A brief introduction to Double/Debiased Machine Learning using (short-)stacking in R.">
 <!-- Copyright (c) 2000-2023 etracker GmbH. All rights reserved. --><!-- This material may not be reproduced, displayed, modified or distributed --><!-- without the express prior written permission of the copyright holder. --><!-- etracker tracklet 5.0 --><script type="text/javascript">
 // var et_pagename = "";
 // var et_areas = "";
@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,9 +46,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -76,7 +79,7 @@
       <h1>Get Started</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/vignettes/ddml.Rmd" class="external-link"><code>vignettes/ddml.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/vignettes/ddml.Rmd" class="external-link"><code>vignettes/ddml.Rmd</code></a></small>
       <div class="d-none name"><code>ddml.Rmd</code></div>
     </div>
 
@@ -85,15 +88,16 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This article is an introduction to double/debiased machine learning
+<p>This article is an introduction to Double/Debiased Machine Learning
 using short-stacking in R. Topics discussed below include:</p>
 <ol style="list-style-type: decimal">
 <li>Estimation with a single machine learner</li>
 <li>Estimation with multiple machine learners &amp; short-stacking</li>
+<li>Inspecting learner performance</li>
 <li>Estimation using different types of short-stacking</li>
+<li>Generalizing to other causal models</li>
+<li>Robust inference via repeated resampling</li>
 </ol>
-<p>See <a href="index.html">Articles</a> for discussions of more
-advanced topics.</p>
 </div>
 <div class="section level2">
 <h2 id="estimation-with-a-single-machine-learner">Estimation with a Single Machine Learner<a class="anchor" aria-label="anchor" href="#estimation-with-a-single-machine-learner"></a>
@@ -114,7 +118,7 @@ details.</p>
 <span><span class="va">Z</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="st">"samesex"</span><span class="op">]</span></span>
 <span><span class="va">X</span> <span class="op">=</span> <span class="va">AE98</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>,<span class="st">"agefst"</span>,<span class="st">"black"</span>,<span class="st">"hisp"</span>,<span class="st">"othrace"</span>,<span class="st">"educ"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <p><code>ddml_late</code> estimates the local average treatment effect
-(LATE) using double/debiased machine learning (see
+(LATE) using Double/Debiased Machine Learning (see
 <code><a href="../reference/ddml_late.html">?ddml_late</a></code>). The high-dimensional nuisance parameters
 arising in the estimate of the LATE are conditional expectation
 functions of the control variables
@@ -138,7 +142,7 @@ wrapper for a different machine learner yourself.</p>
 <span><span class="va">learners_single</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
 <span>                        args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                                    max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Double/debiased machine learning relies on cross-fitting to avoid
+<p>Double/Debiased Machine Learning relies on cross-fitting to avoid
 large bias from overfitting when estimating the nuisance parameters. The
 argument <code>sample_folds = 3</code> implies that 2/3 of the
 observations – about 3,333 observations – are used to train the machine
@@ -150,10 +154,11 @@ learner in each cross-fitting sample fold.</p>
 <span>                      sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; LATE estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;   Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt;     -0.244      0.196   -1.25    0.213</span></span></code></pre></div>
+<span><span class="co">#&gt; DDML estimation: Local Average Treatment Effect </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 3</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.244      0.196   -1.25     0.21</span></span></code></pre></div>
 <p>(Note that estimation here is based on a random subsample of 5,000
 observations. The results can thus not readily be compared to those in
 Angrist &amp; Evans (1998).)</p>
@@ -172,9 +177,9 @@ based on three <em>base</em> learners:</p>
 <li>gradient boosting (see <code><a href="../reference/mdl_xgboost.html">?mdl_xgboost</a></code>)</li>
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">learners_multiple</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                          <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
-<span>                          <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<code class="sourceCode R"><span><span class="va">learners_multiple</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                          <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                          <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
 <span>                               args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                                           max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Short-stacking is a computationally convenient variant of stacking
@@ -183,15 +188,16 @@ combinations of base learners to minimize the out-of-sample mean squared
 error of a particular reduced form (e.g.,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Z</mi><mo stretchy="false" form="prefix">|</mo><mi>X</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">E[Z|X]</annotation></semantics></math>).
 Short-stacking uses the out-of-sample predictions that naturally arise
-in computation of double/debiased machine learning estimates due to
+in computation of Double/Debiased Machine Learning estimates due to
 cross-fitting, which substantially reduces the computational burden (see
 <code>vignette("stacking")</code>).</p>
 <p>In finite samples, regularizing the linear combination of base
 learners as constructed via (short-)stacking can improve statistical
 properties. This can be specified via the <code>ensemble_type</code>
 argument. Below, <code>ddml_late</code> estimates the nuisance
-parameters via linear combinations of the four base learners with linear
-coefficients that are constrained to be non-negative and sum to one.</p>
+parameters via linear combinations of the three base learners with
+linear coefficients that are constrained to be non-negative and sum to
+one.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span>
 <span><span class="co">#     learners ols, lasso, and xgboost.</span></span>
@@ -202,28 +208,66 @@ coefficients that are constrained to be non-negative and sum to one.</p>
 <span>                      sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; LATE estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;       Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls1   -0.212      0.188   -1.12    0.261</span></span></code></pre></div>
+<span><span class="co">#&gt; DDML estimation: Local Average Treatment Effect </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 3  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.235      0.189   -1.24     0.21</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="inspecting-learner-performance">Inspecting Learner Performance<a class="anchor" aria-label="anchor" href="#inspecting-learner-performance"></a>
+</h2>
 <p>It is often insightful to see which base learners contribute the most
-to the final reduced form estimates. The below snippet shows the weights
-for the reduced forms
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>Z</mi><mo>=</mo><mn>0</mn><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">E[Y|Z=0,X]</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mrow><mo stretchy="true" form="prefix">[</mo><mi>Y</mi><mo stretchy="false" form="prefix">|</mo><mi>Z</mi><mo>=</mo><mn>1</mn><mo>,</mo><mi>X</mi><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">E[Y|Z=1,X]</annotation></semantics></math>:</p>
+to the final reduced form estimates. The <code><a href="../reference/diagnostics.html">diagnostics()</a></code>
+function provides a compact summary of each learner’s out-of-sample mean
+squared prediction error (MSPE),
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>R</mi><mn>2</mn></msup><annotation encoding="application/x-tex">R^2</annotation></semantics></math>,
+and the stacking weight assigned by the chosen ensemble type:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Stacking weights for E[Y|Z=0, X]: \n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Stacking weights for E[Y|Z=0, X]:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">$</span><span class="va">weights</span><span class="op">$</span><span class="va">y_X_Z0</span><span class="op">)</span></span>
-<span><span class="co">#&gt;           [,1]      [,2]      [,3]</span></span>
-<span><span class="co">#&gt; nnls1 0.228205 0.5782117 0.1935833</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Stacking weights for E[Y|Z=1, X]: \n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Stacking weights for E[Y|Z=1, X]:</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">$</span><span class="va">weights</span><span class="op">$</span><span class="va">y_X_Z1</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            [,1]      [,2]      [,3]</span></span>
-<span><span class="co">#&gt; nnls1 0.2389935 0.6920264 0.0689801</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Local Average Treatment Effect </span></span>
+<span><span class="co">#&gt; Obs: 5000 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X_Z0:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.2415 0.0289       0.7891</span></span>
+<span><span class="co">#&gt;  learner_2 0.2416 0.0283       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 0.2442 0.0179       0.2109</span></span>
+<span><span class="co">#&gt;      nnls1 0.2413 0.0297           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X_Z1:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.2421 0.0305       0.8593</span></span>
+<span><span class="co">#&gt;  learner_2 0.2421 0.0305       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 0.2462 0.0143       0.1407</span></span>
+<span><span class="co">#&gt;      nnls1 0.2420 0.0310           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D_X_Z0:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.2085 0.0820       0.8911</span></span>
+<span><span class="co">#&gt;  learner_2 0.2085 0.0820       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 0.2141 0.0573       0.1089</span></span>
+<span><span class="co">#&gt;      nnls1 0.2084 0.0824           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D_X_Z1:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.2231 0.0828        0.909</span></span>
+<span><span class="co">#&gt;  learner_2 0.2231 0.0828        0.000</span></span>
+<span><span class="co">#&gt;  learner_3 0.2297 0.0556        0.091</span></span>
+<span><span class="co">#&gt;      nnls1 0.2231 0.0830           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   Z_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe      r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.2502 -0.0011            0</span></span>
+<span><span class="co">#&gt;  learner_2 0.2499  0.0001            1</span></span>
+<span><span class="co">#&gt;  learner_3 0.2503 -0.0015            0</span></span>
+<span><span class="co">#&gt;      nnls1 0.2499  0.0001           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
+<p>For formal statistical tests of whether learner performance
+differences are significant, see
+<code>vignette("stacking_diagnostics")</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="estimation-using-different-types-of-short-stacking">Estimation using Different Types of Short-Stacking<a class="anchor" aria-label="anchor" href="#estimation-using-different-types-of-short-stacking"></a>
@@ -241,7 +285,7 @@ to be non-negative</li>
 <code>'singlebest'</code> selects the single MSPE-minimizing base
 learner</li>
 <li>
-<code>'ols</code> constructs unconstrained linear combinations of
+<code>'ols'</code> constructs unconstrained linear combinations of
 base learners</li>
 <li>
 <code>'average'</code> computes an unweighted average of base
@@ -258,17 +302,144 @@ learners</li>
 <span>                      sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                      silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; LATE estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;            Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls         -0.232      0.190   -1.22    0.222</span></span>
-<span><span class="co">#&gt; singlebest   -0.232      0.190   -1.22    0.223</span></span>
-<span><span class="co">#&gt; ols          -0.237      0.190   -1.24    0.214</span></span>
-<span><span class="co">#&gt; average      -0.223      0.188   -1.18    0.237</span></span></code></pre></div>
+<span><span class="co">#&gt; DDML estimation: Local Average Treatment Effect </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 3  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Ensemble type: nnls</span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.231      0.189   -1.22     0.22</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Ensemble type: singlebest</span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.227      0.188   -1.21     0.23</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Ensemble type: ols</span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.231      0.189   -1.22     0.22</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Ensemble type: average</span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.228      0.189   -1.21     0.23</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="other-causal-models">Other Causal Models<a class="anchor" aria-label="anchor" href="#other-causal-models"></a>
+</h2>
+<p>The learner interface and stacking workflow are identical across all
+<code>ddml</code> estimators. For example, the partially linear model
+(PLM) estimates the effect of <code>D</code> on <code>y</code> while
+nonparametrically controlling for <code>X</code> – without requiring an
+instrument. The same set of base learners can be reused directly:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_plm.html">ddml_plm</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">X</span>,</span>
+<span>                     learners <span class="op">=</span> <span class="va">learners_multiple</span>,</span>
+<span>                     ensemble_type <span class="op">=</span> <span class="st">'nnls1'</span>,</span>
+<span>                     shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                     sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                     silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">plm_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 3  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1          -1.46e-01   1.47e-02   -9.94   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  7.46e-05   6.89e-03    0.01     0.99    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>Beyond <code>ddml_late</code> and <code>ddml_plm</code>, the package
+supports several other causal models:</p>
+<ul>
+<li>
+<code>ddml_ate</code> – average treatment effect (see
+<code><a href="../reference/ddml_ate.html">?ddml_ate</a></code>)</li>
+<li>
+<code>ddml_att</code> – average treatment effect on the treated (see
+<code><a href="../reference/ddml_ate.html">?ddml_att</a></code>)</li>
+<li>
+<code>ddml_pliv</code> – partially linear IV model (see
+<code><a href="../reference/ddml_pliv.html">?ddml_pliv</a></code>)</li>
+<li>
+<code>ddml_fpliv</code> – flexible partially linear IV model (see
+<code><a href="../reference/ddml_fpliv.html">?ddml_fpliv</a></code>)</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="robust-inference-via-repeated-resampling">Robust Inference via Repeated Resampling<a class="anchor" aria-label="anchor" href="#robust-inference-via-repeated-resampling"></a>
+</h2>
+<p>Because Double/Debiased Machine Learning relies on random sample
+splits, point estimates contain <em>splitting variance</em>. To
+stabilize results, <code><a href="../reference/ddml_replicate.html">ddml_replicate()</a></code> repeats the
+cross-fitting procedure multiple times and aggregates the estimates (see
+Ahrens et al., 2024):</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plm_rep</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_replicate.html">ddml_replicate</a></span><span class="op">(</span><span class="va">ddml_plm</span>,</span>
+<span>                           y <span class="op">=</span> <span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
+<span>                           learners <span class="op">=</span> <span class="va">learners_multiple</span>,</span>
+<span>                           ensemble_type <span class="op">=</span> <span class="st">'nnls1'</span>,</span>
+<span>                           shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                           sample_folds <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>                           resamples <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                           silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">plm_rep</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Partially Linear Model </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 3   Resamples: 5   Aggregation: median  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1          -1.48e-01   1.47e-02   -10.1   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  7.04e-06   6.88e-03     0.0        1    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
+<p>For a detailed discussion of aggregation methods and the
+<code>ddml_rep</code> class, see
+<code>vignette("repeated_resampling")</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="where-to-go-next">Where to Go Next<a class="anchor" aria-label="anchor" href="#where-to-go-next"></a>
+</h2>
+<p>Check out the following articles to learn more:</p>
+<ul>
+<li>
+<code>vignette("stacking")</code> discusses computational benefits
+of short-stacking</li>
+<li>
+<code>vignette("stacking_diagnostics")</code> shows how to evaluate
+base learners and test for equal predictive ability</li>
+<li>
+<code>vignette("repeated_resampling")</code> demonstrates robust
+inference via repeated cross-fitting</li>
+<li>
+<code>vignette("modelsummary_integration")</code> illustrates
+integration with <code>broom</code> and <code>modelsummary</code>
+</li>
+<li>
+<code>vignette("new_ml_wrapper")</code> shows how to write
+user-provided base learners</li>
+<li>
+<code>vignette("sparse")</code> illustrates support of sparse
+matrices (see <code>?Matrix</code>)</li>
+<li>
+<code>vignette("did")</code> discusses integration with the
+diff-in-diff package <a href="https://bcallaway11.github.io/did/" class="external-link"><code>did</code></a>
+</li>
+</ul>
+<p>For additional applied examples, see:</p>
+<ul>
+<li>
+<code>vignette("example_401k")</code> on the effect of 401k
+participation on retirement savings</li>
+<li>
+<code>vignette("example_BLP95")</code> on flexible demand estimation
+with endogenous prices</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann
+T (2026). “An Introduction to Double/Debiased Machine Learning.” Journal
+of Economic Literature, forthcoming.</p>
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model
+Averaging and Double Machine Learning.” Journal of Applied Econometrics,
+40(3): 249-269.</p>
 <p>Angrist J, Evans W (1998). “Children and Their Parents’ Labor Supply:
 Evidence from Exogenous Variation in Family Size.” American Economic
 Review, 88(3), 450-477.</p>

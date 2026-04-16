@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,9 +46,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -76,7 +79,7 @@
       <h1>Estimation with Sparse Matrices</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/vignettes/articles/sparse.Rmd" class="external-link"><code>vignettes/articles/sparse.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/vignettes/articles/sparse.Rmd" class="external-link"><code>vignettes/articles/sparse.Rmd</code></a></small>
       <div class="d-none name"><code>sparse.Rmd</code></div>
     </div>
 
@@ -87,7 +90,7 @@
 </h2>
 <p><code>ddml</code> supports sparse matrices from the
 <code>Matrix</code> package by default. This article illustrates
-double/debiased machine learning estimation with sparse matrices using
+Double/Debiased Machine Learning estimation with sparse matrices using
 the prominent study of Angrist and Krueger (1991) (AK91, hereafter) on
 returns to education.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -147,8 +150,6 @@ load into memory.</p>
 <span></span>
 <span><span class="co"># Memory needed for the dense control matrix</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/object.size.html" class="external-link">object.size</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span><span class="op">)</span>, units <span class="op">=</span> <span class="st">"Mb"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in asMethod(object): sparse-&gt;dense coercion: allocating vector of size</span></span>
-<span><span class="co">#&gt; 1.3 GiB</span></span>
 <span><span class="co">#&gt; [1] "1302.3 Mb"</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -167,56 +168,56 @@ the first and second stage reduced forms (see <code><a href="../reference/ddml_f
 and by setting the <code>penalty.factor</code> of the control variables
 to zero (see <code><a href="../reference/mdl_glmnet.html">?mdl_glmnet</a></code>).</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<code class="sourceCode R"><span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cv <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                                     penalty.factor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">510</span><span class="op">)</span>,</span>
 <span>                                                        <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">180</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">stacking_180IV_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">LWKLYWGE</span>, D <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">EDUC</span>,</span>
 <span>                                 Z <span class="op">=</span> <span class="va">Z_IV180</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
-<span>                                 learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                                 learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                                 learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                                 learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                                 learners_DXZ <span class="op">=</span> <span class="va">learners_XZ</span>,</span>
 <span>                                 ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
-<span>                                 shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>                                 shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                                 sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                                 silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_180IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls1</span></span>
+<span>                                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_180IV_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 329509   Folds: 2  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;              Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept) -6.14e-05    0.00113 -0.0542 9.57e-01</span></span>
-<span><span class="co">#&gt; D_r          1.12e-01    0.02145  5.2258 1.73e-07</span></span></code></pre></div>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1           1.12e-01   2.15e-02    5.23  1.7e-07 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -6.14e-05   1.13e-03   -0.05     0.96    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>The exercise can be repeated with the larger set of 1530 instruments
 as well. Without support for sparse matrices, this estimation step would
 not be possible without very large memory.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<code class="sourceCode R"><span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cv <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                                     penalty.factor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">510</span><span class="op">)</span>,</span>
 <span>                                                        <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1530</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">stacking_1530IV_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">LWKLYWGE</span>, D <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">EDUC</span>,</span>
 <span>                                 Z <span class="op">=</span> <span class="va">Z_IV1530</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
-<span>                                 learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                                 learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                                 learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                                 learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                                 learners_DXZ <span class="op">=</span> <span class="va">learners_XZ</span>,</span>
 <span>                                 ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
-<span>                                 shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>                                 shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                                 sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                                 silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_1530IV_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls1</span></span>
+<span>                                 silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_1530IV_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 329509   Folds: 2  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept) 4.98e-05    0.00111   0.045   0.9641</span></span>
-<span><span class="co">#&gt; D_r         6.30e-02    0.03574   1.764   0.0778</span></span></code></pre></div>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; D1          0.046151   0.051943    0.89     0.37</span></span>
+<span><span class="co">#&gt; (Intercept) 0.000064   0.001112    0.06     0.95</span></span></code></pre></div>
 <p>The coefficients corresponding to the two sets of instruments are
 quite different. Leveraging the <code>ddml</code> functionality that
 allows for specification of different sets of input variables, we
@@ -227,49 +228,66 @@ regressions simultaneously.</p>
 <span><span class="va">Z_c</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">Z_IV180</span>, <span class="va">Z_IV1530</span><span class="op">)</span>; <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="op">(</span><span class="fl">180</span> <span class="op">+</span> <span class="fl">1530</span><span class="op">)</span></span>
 <span><span class="va">set_IV180</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">180</span>; <span class="va">set_IV1530</span> <span class="op">&lt;-</span> <span class="fl">181</span><span class="op">:</span><span class="op">(</span><span class="fl">180</span> <span class="op">+</span> <span class="fl">1530</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>,</span>
+<span><span class="va">learners_XZ</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>,</span>
 <span>                         assign_Z <span class="op">=</span> <span class="va">set_IV180</span><span class="op">)</span>,</span>
-<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>,</span>
 <span>                          assign_Z <span class="op">=</span> <span class="va">set_IV1530</span><span class="op">)</span>,</span>
-<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cv <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                                     penalty.factor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">510</span><span class="op">)</span>,</span>
 <span>                                                        <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">180</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                          assign_Z <span class="op">=</span> <span class="va">set_IV180</span><span class="op">)</span>,</span>
-<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>,</span>
 <span>                         args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>cv <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                                     penalty.factor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">510</span><span class="op">)</span>,</span>
 <span>                                                        <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1530</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                         assign_Z <span class="op">=</span> <span class="va">set_IV1530</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">stacking_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">LWKLYWGE</span>, D <span class="op">=</span> <span class="va">AK91</span><span class="op">$</span><span class="va">EDUC</span>,</span>
 <span>                           Z <span class="op">=</span> <span class="va">Z_c</span>, X <span class="op">=</span> <span class="va">X</span>,</span>
-<span>                           learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                           learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                           learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                           learners_DX <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                           learners_DXZ <span class="op">=</span> <span class="va">learners_XZ</span>,</span>
 <span>                           ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
-<span>                           shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>                           shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                           sample_folds <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span>, type <span class="op">=</span> <span class="st">'HC1'</span><span class="op">)</span></span>
-<span><span class="co">#&gt; FPLIV estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt; , , nnls1</span></span>
+<span>                           silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 329509   Folds: 2  Stacking: short-stack</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;             Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; (Intercept) 0.000143    0.00115   0.124 9.01e-01</span></span>
-<span><span class="co">#&gt; D_r         0.124080    0.02012   6.167 6.97e-10</span></span></code></pre></div>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; D1           0.105040   0.015673    6.70  2.1e-11 ***</span></span>
+<span><span class="co">#&gt; (Intercept) -0.000196   0.001125   -0.17     0.86    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>The resulting coefficient is close to the coefficient based on 180
-instruments. The stacking weights confirm that the first stage
+instruments. The stacking diagnostics confirm that the first stage
 estimators with 180 instruments contribute almost exclusively to the
-final estimate, suggesting that the expansion to 1530 instrument has
+final estimate, suggesting that the expansion to 1530 instruments has
 little benefit for the ols or lasso-based first stage fits.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span><span class="op">$</span><span class="va">D1_XZ</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       nnls1</span></span>
-<span><span class="co">#&gt; [1,] 0.7000</span></span>
-<span><span class="co">#&gt; [2,] 0.0000</span></span>
-<span><span class="co">#&gt; [3,] 0.2925</span></span>
-<span><span class="co">#&gt; [4,] 0.0075</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 329509 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 0.4489 0.0258            1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 10.187 0.0538            1</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_XZ:</span></span>
+<span><span class="co">#&gt;    learner    mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 10.1851 0.0540       0.5874</span></span>
+<span><span class="co">#&gt;  learner_2 10.2699 0.0461       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 10.1852 0.0540       0.4126</span></span>
+<span><span class="co">#&gt;  learner_4 10.2673 0.0464       0.0000</span></span>
+<span><span class="co">#&gt;      nnls1 10.1850 0.0540           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

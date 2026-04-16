@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,9 +44,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -74,7 +77,7 @@
       <h1>Example based on Berry, Levinson, &amp; Pakes (1995)</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/v0.3.1/vignettes/articles/example_BLP95.Rmd" class="external-link"><code>vignettes/articles/example_BLP95.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/thomaswiemann/ddml/blob/master/vignettes/articles/example_BLP95.Rmd" class="external-link"><code>vignettes/articles/example_BLP95.Rmd</code></a></small>
       <div class="d-none name"><code>example_BLP95.Rmd</code></div>
     </div>
 
@@ -87,7 +90,7 @@
 and Spindler (2015) (CHS2015, hereafter), which extends the instruments
 of Berry, Levinsohn, and Pakes (1995) (BLP1995, hereafter) and applies
 an instrument selection procedure based on the lasso. We consider the
-same instrument extension and apply double/debiased machine learning
+same instrument extension and apply Double/Debiased Machine Learning
 with short-stacking that combines conventional linear estimators with
 computational alternatives including lasso-based approaches, random
 forests, and gradient boosting.</p>
@@ -198,8 +201,8 @@ and instruments.</p>
 <p>Given the large set of controls and instruments in the expanded set
 relative to the moderate sample size, it is reasonable to consider
 regularized estimators. A frequent choice with many variables are
-lasso-based estimators. Below, we combine double/debiased machine
-learning with lasso selection of instruments and controls. (See
+lasso-based estimators. Below, we combine Double/Debiased Machine
+Learning with lasso selection of instruments and controls. (See
 <code><a href="../reference/mdl_glmnet.html">?mdl_glmnet</a></code> and <code><a href="../reference/ddml_fpliv.html">?ddml_fpliv</a></code> for details.)</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Base learner</span></span>
@@ -209,11 +212,17 @@ learning with lasso selection of instruments and controls. (See
 <span><span class="va">lasso_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
 <span>                        Z <span class="op">=</span> <span class="va">ZL</span>, X <span class="op">=</span> <span class="va">XL</span>,</span>
 <span>                        learners <span class="op">=</span> <span class="va">learner</span>,</span>
-<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt;    -0.1473     0.0090   -16.3142     0.0000</span></span></code></pre></div>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 2217   Folds: 5</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;              Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; price       -0.144870   0.008810  -16.44   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  0.000712   0.022806    0.03     0.98    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="estimating-the-flexible-partially-linear-iv-model-with-multiple-learners">Estimating the Flexible Partially Linear IV Model with Multiple
@@ -238,27 +247,27 @@ corresponding to the initial and extended sets.</p>
 <span><span class="va">set_Z</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z</span><span class="op">)</span>; <span class="va">set_ZL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sets.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">Z_c</span><span class="op">)</span><span class="op">)</span>, <span class="va">set_Z</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Base learners</span></span>
-<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the baseline set</span></span>
+<span><span class="va">learners</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the baseline set</span></span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the extended set</span></span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span>, <span class="co"># ols with the extended set</span></span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># lasso with the extended set</span></span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># lasso with the extended set</span></span>
 <span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># ridge with the extended set</span></span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span>, <span class="co"># ridge with the extended set</span></span>
 <span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_XL</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_ZL</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_ranger</span>, <span class="co"># random forests with the baseline set</span></span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_ranger</span>, <span class="co"># random forests with the baseline set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>num.trees <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                                  min.node.size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span>,</span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>, <span class="co"># boosted trees with the baseline set</span></span>
-<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
+<span>                 <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>, <span class="co"># boosted trees with the baseline set</span></span>
+<span>                      args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span>
 <span>                      assign_X <span class="op">=</span> <span class="va">set_X</span>,</span>
 <span>                      assign_Z <span class="op">=</span> <span class="va">set_Z</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -267,31 +276,64 @@ corresponding to the initial and extended sets.</p>
 <span>                           Z <span class="op">=</span> <span class="va">Z_c</span>, X <span class="op">=</span> <span class="va">X_c</span>,</span>
 <span>                           learners <span class="op">=</span> <span class="va">learners</span>,</span>
 <span>                           ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
-<span>                           shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                           sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                           silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/t.html" class="external-link">t</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span>, <span class="fl">4</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      Estimate Std. Error  t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; [1,]  -0.0982     0.0092 -10.7008        0</span></span></code></pre></div>
+<span>                           shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                           sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                           silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 2217   Folds: 5  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; price       -0.09812    0.00967  -10.15   &lt;2e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  0.00223    0.02035    0.11     0.91    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>Interestingly, the coefficient is closer to the OLS estimates than to
 the TSLS estimates (with or without lasso)!</p>
 <p>To better understand the composition of the final estimator, it is
-often useful to inspect the stacking weights. These may readily be
-retrieved from the fitted object. Here, we see that the boosted trees
-and the random forest learners have been assigned the most weight in the
-cross validation informed ensemble procedures. The linear methods – ols,
-lasso, and ridge – do not contribute substantially to the final
-estimates, suggesting that the user-defined expansions of the controls
-and instruments does little to improve bias and precision.</p>
+often useful to inspect the stacking diagnostics. Here, we see that the
+boosted trees and the random forest learners have been assigned the most
+weight. The linear methods – ols, lasso, and ridge – do not contribute
+substantially to the final estimates, suggesting that the user-defined
+expansions of the controls and instruments does little to improve bias
+and precision.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         y_X D1_X  D1_XZ</span></span>
-<span><span class="co">#&gt; [1,] 0.0000 0.00 0.0000</span></span>
-<span><span class="co">#&gt; [2,] 0.0000 0.00 0.0000</span></span>
-<span><span class="co">#&gt; [3,] 0.0000 0.00 0.0000</span></span>
-<span><span class="co">#&gt; [4,] 0.0000 0.00 0.0000</span></span>
-<span><span class="co">#&gt; [5,] 0.4394 0.45 0.3804</span></span>
-<span><span class="co">#&gt; [6,] 0.5606 0.55 0.6196</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 2217 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 1.4341 0.2488       0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 1.3458 0.2950       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 1.3543 0.2905       0.0000</span></span>
+<span><span class="co">#&gt;  learner_4 1.3850 0.2744       0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 1.1000 0.4237       0.3525</span></span>
+<span><span class="co">#&gt;  learner_6 1.0350 0.4578       0.6475</span></span>
+<span><span class="co">#&gt;      nnls1 1.0076 0.4721           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner    mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 32.8790 0.5599       0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 25.9267 0.6530       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 25.9418 0.6528       0.0553</span></span>
+<span><span class="co">#&gt;  learner_4 28.2471 0.6219       0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 16.9611 0.7730       0.1252</span></span>
+<span><span class="co">#&gt;  learner_6 13.4904 0.8194       0.8195</span></span>
+<span><span class="co">#&gt;      nnls1 13.2407 0.8228           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_XZ:</span></span>
+<span><span class="co">#&gt;    learner    mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 28.1808 0.6228       0.0000</span></span>
+<span><span class="co">#&gt;  learner_2 20.3428 0.7277       0.0000</span></span>
+<span><span class="co">#&gt;  learner_3 18.3504 0.7544       0.0080</span></span>
+<span><span class="co">#&gt;  learner_4 23.9814 0.6790       0.0000</span></span>
+<span><span class="co">#&gt;  learner_5 10.2051 0.8634       0.3372</span></span>
+<span><span class="co">#&gt;  learner_6  8.9730 0.8799       0.6548</span></span>
+<span><span class="co">#&gt;      nnls1  8.4965 0.8863           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="elasticities">Elasticities<a class="anchor" aria-label="anchor" href="#elasticities"></a>
@@ -317,18 +359,18 @@ simple OLS estimates.</p>
 <span><span class="co">#&gt; [1] 746</span></span>
 <span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">tsls_L_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 896</span></span></code></pre></div>
-<p>Double/debiased machine learning estimates using only a single lasso
+<p>Double/Debiased Machine Learning estimates using only a single lasso
 base learner suggest the smallest number of inelastic products. In stark
 contrast, the estimates based on multiple machine learners suggest a
-number closer to the intial OLS estimates.</p>
+number closer to the initial OLS estimates.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># ddml-lasso implied number of products with inelastic demand</span></span>
-<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 596</span></span>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lasso_fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1416</span></span>
 <span></span>
 <span><span class="co"># ddml-stacking implied number of products with inelastic demand</span></span>
-<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">$</span><span class="va">coef</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1417</span></span></code></pre></div>
+<span><span class="fu">compute_inelastic_demand</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">stacking_fit</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1829</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="bonus-post-lasso-estimates-without-sample-splitting">Bonus: Post-Lasso Estimates without Sample-Splitting<a class="anchor" aria-label="anchor" href="#bonus-post-lasso-estimates-without-sample-splitting"></a>
@@ -350,7 +392,7 @@ plug-in penalty parameters and without sample-splitting.</p>
 <span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>The coefficient is drastically different from previous estimates,
-including the double/debaised machine learning estimates that included
+including the Double/Debiased Machine Learning estimates that included
 lasso-based approaches.</p>
 <p>To gain some insight into potential causes for these differences, we
 check which instruments and controls were selected by the lasso
@@ -363,8 +405,8 @@ very few instruments and controls.</p>
 <span><span class="va">Xr_</span> <span class="op">&lt;-</span> <span class="va">XL</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">$</span><span class="va">selected</span><span class="op">[</span><span class="fl">49</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">rlassoIV_fit</span><span class="op">$</span><span class="va">selected</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">Xr_</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] 6</span></span></code></pre></div>
-<p>From the stacking weights above, we know that the double/debaised
-machine learning estimator assigns most weight to boosted trees. In
+<p>From the stacking weights above, we know that the Double/Debiased
+Machine Learning estimator assigns most weight to boosted trees. In
 contrast to lasso-based estimates, boosted trees adaptively create
 interactions from their input variables, allowing for rich
 non-linearities in the final predictions. It thus makes sense to check
@@ -376,34 +418,60 @@ stacking learner with the pre-selected set of controls and
 instruments.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Base learner</span></span>
-<span><span class="va">learner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
-<span>                     args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">300</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">learner</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                     args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Compute short-stacked IV estimate</span></span>
 <span><span class="va">stacking_r_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ddml_fpliv.html">ddml_fpliv</a></span><span class="op">(</span><span class="va">y</span>, D <span class="op">=</span> <span class="va">D</span>,</span>
 <span>                        Z <span class="op">=</span> <span class="va">Zr_</span>, X <span class="op">=</span> <span class="va">Xr_</span>,</span>
 <span>                        learners <span class="op">=</span> <span class="va">learner</span>,</span>
 <span>                        ensemble_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nnls1"</span><span class="op">)</span>,</span>
-<span>                        shortstack <span class="op">=</span> <span class="cn">T</span>,</span>
-<span>                        sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
-<span>                        silent <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span>, , <span class="fl">1</span><span class="op">]</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Estimate Std. Error    t value   Pr(&gt;|t|) </span></span>
-<span><span class="co">#&gt;    -0.1044     0.0128    -8.1682     0.0000</span></span></code></pre></div>
+<span>                        shortstack <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                        sample_folds <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>                        silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; DDML estimation: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 2217   Folds: 5  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;             Estimate Std. Error z value Pr(&gt;|z|)    </span></span>
+<span><span class="co">#&gt; price       -0.10628    0.01316   -8.08  6.5e-16 ***</span></span>
+<span><span class="co">#&gt; (Intercept)  0.00425    0.02189    0.19     0.85    </span></span>
+<span><span class="co">#&gt; ---</span></span>
+<span><span class="co">#&gt; Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></span></code></pre></div>
 <p>The similarity of the coefficient estimates to the initial stacking
-estimates suggest seems that adaptively created interactions are indeed
-the key driver between the coefficient differences. This is further
-confirmed by the stacking weights, which again place substantial weight
-on the boosted trees.</p>
+estimates suggests that adaptively created interactions are indeed the
+key driver between the coefficient differences. This is further
+confirmed by the stacking diagnostics, which again place substantial
+weight on the boosted trees.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">$</span><span class="va">weights</span>, <span class="va">round</span>, <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       y_X   D1_X  D1_XZ</span></span>
-<span><span class="co">#&gt; [1,] 0.08 0.1287 0.0439</span></span>
-<span><span class="co">#&gt; [2,] 0.92 0.8713 0.9561</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/diagnostics.html">diagnostics</a></span><span class="op">(</span><span class="va">stacking_r_fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Stacking diagnostics: Flexible Partially Linear IV Model </span></span>
+<span><span class="co">#&gt; Obs: 2217 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   y_X:</span></span>
+<span><span class="co">#&gt;    learner   mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 1.4843 0.2224       0.2298</span></span>
+<span><span class="co">#&gt;  learner_2 1.1869 0.3782       0.7702</span></span>
+<span><span class="co">#&gt;      nnls1 1.1579 0.3934           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_X:</span></span>
+<span><span class="co">#&gt;    learner    mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 29.7015 0.6025       0.1121</span></span>
+<span><span class="co">#&gt;  learner_2 14.2630 0.8091       0.8879</span></span>
+<span><span class="co">#&gt;      nnls1 14.0130 0.8124           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   D1_XZ:</span></span>
+<span><span class="co">#&gt;    learner    mspe     r2 weight_nnls1</span></span>
+<span><span class="co">#&gt;  learner_1 28.2924 0.6213       0.0725</span></span>
+<span><span class="co">#&gt;  learner_2 10.4439 0.8602       0.9275</span></span>
+<span><span class="co">#&gt;      nnls1 10.3342 0.8617           NA</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights</span></span>
+<span><span class="co">#&gt;        and represent in-sample fit over cross-fitted base predictions.</span></span></code></pre></div>
 <p>The example thus highlights the importance of considering multiple
 machine learners for robustness and illustrates the usefulness of
-double/debiased machine learning with stacking as a practical
+Double/Debiased Machine Learning with stacking as a practical
 solution.</p>
 </div>
 <div class="section level2">

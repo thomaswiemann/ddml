@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,9 +46,12 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="articles/index.html">More articles...</a></li>
   </ul>
@@ -109,11 +112,11 @@
 </ul>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Estimate the local average treatment effect using short-stacking with base</span></span>
-<span><span class="co">#     learners ols, rlasso, and xgboost.</span></span>
+<span><span class="co">#     learners ols, lasso, and xgboost.</span></span>
 <span><span class="va">late_fit_short</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/ddml_late.html">ddml_late</a></span><span class="op">(</span><span class="va">y</span>, <span class="va">D</span>, <span class="va">Z</span>, <span class="va">X</span>,</span>
-<span>                            learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
-<span>                                            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
-<span>                                            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>fun <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
+<span>                            learners <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">ols</span><span class="op">)</span>,</span>
+<span>                                            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_glmnet</span><span class="op">)</span>,</span>
+<span>                                            <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>what <span class="op">=</span> <span class="va">mdl_xgboost</span>,</span>
 <span>                                                 args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>nrounds <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                                                             max_depth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                            ensemble_type <span class="op">=</span> <span class="st">'nnls1'</span>,</span>
@@ -121,10 +124,11 @@
 <span>                            sample_folds <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>                            silent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">late_fit_short</span><span class="op">)</span></span>
-<span><span class="co">#&gt; LATE estimation results: </span></span>
-<span><span class="co">#&gt;  </span></span>
-<span><span class="co">#&gt;       Estimate Std. Error t value Pr(&gt;|t|)</span></span>
-<span><span class="co">#&gt; nnls1   -0.221      0.187   -1.18    0.236</span></span></code></pre></div>
+<span><span class="co">#&gt; DDML estimation: Local Average Treatment Effect </span></span>
+<span><span class="co">#&gt; Obs: 5000   Folds: 10  Stacking: short-stack</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;      Estimate Std. Error z value Pr(&gt;|z|)</span></span>
+<span><span class="co">#&gt; LATE   -0.220      0.187   -1.18     0.24</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="learn-more-about-ddml">Learn More about <code>ddml</code>
@@ -133,17 +137,25 @@
 <p>Check out our articles to learn more:</p>
 <ul>
 <li>
+<code>vignette("neyman_orthogonality")</code> introduces Neyman orthogonality in simple linear regression</li>
+<li>
 <code><a href="articles/ddml.html">vignette("ddml")</a></code> is a more detailed introduction to <code>ddml</code>
 </li>
 <li>
 <code>vignette("stacking")</code> discusses computational benefits of short-stacking</li>
 <li>
+<code>vignette("stacking_diagnostics")</code> shows how to evaluate base learners and perform inference on learner performance</li>
+<li>
+<code>vignette("repeated_resampling")</code> demonstrates robust inference via repeated cross-fitting</li>
+<li>
+<code>vignette("modelsummary_integration")</code> illustrates integration with <code>broom</code> and <code>modelsummary</code>
+</li>
+<li>
 <code>vignette("new_ml_wrapper")</code> shows how to write user-provided base learners</li>
 <li>
 <code>vignette("sparse")</code> illustrates support of sparse matrices (see <code>?Matrix</code>)</li>
 <li>
-<code>vignette("did")</code> discusses integration with the diff-in-diff package <a href="https://bcallaway11.github.io/did/" class="external-link"><code>did</code></a>
-</li>
+<code>vignette("did")</code> covers DiD estimation, aggregation, and inference in staggered adoption designs</li>
 </ul>
 <p>For additional applied examples, see our case studies:</p>
 <ul>
@@ -159,8 +171,14 @@
 <p><code>ddml</code> is built to easily (and quickly) estimate common causal parameters with multiple machine learners. With its support for short-stacking, sparse matrices, and easy-to-learn syntax, we hope <code>ddml</code> is a useful complement to <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a>, the expansive R and Python package. <a href="https://docs.doubleml.org/stable/index.html" class="external-link"><code>DoubleML</code></a> supports many advanced features such as <a href="https://docs.doubleml.org/stable/examples/R_double_ml_multiway_cluster.html" class="external-link">multiway clustering</a> and <a href="https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html" class="external-link">stacking</a>.</p>
 </div>
 <div class="section level2">
+<h2 id="ai-disclosure">AI Disclosure<a class="anchor" aria-label="anchor" href="#ai-disclosure"></a>
+</h2>
+<p>Portions of this package’s code, documentation, and tests were developed with the assistance of AI tools. We reviewed, tested, and edited all AI-generated content. All errors are our own.</p>
+</div>
+<div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
+<p>Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T (2026). “An Introduction to Double/Debiased Machine Learning.” Journal of Economic Literature, forthcoming.</p>
 <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml: Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.</p>
 <p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging and double machine learning.” Journal of Applied Econometrics, 40(3): 249-269.</p>
 <p>Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply: Evidence from Exogenous Variation in Family Size.” American Economic Review, 88(3), 450-477.</p>

@@ -1,6 +1,6 @@
-# Cross-Predictions using Stacking.
+# Cross-Fitted Predictions Using Stacking
 
-Cross-predictions using stacking.
+Cross-fitted predictions using stacking.
 
 ## Usage
 
@@ -8,19 +8,18 @@ Cross-predictions using stacking.
 crosspred(
   y,
   X,
-  Z = NULL,
   learners,
-  sample_folds = 2,
+  sample_folds = 10,
   ensemble_type = "average",
-  cv_folds = 5,
+  cv_folds = 10,
   custom_ensemble_weights = NULL,
-  compute_insample_predictions = FALSE,
-  compute_predictions_bylearner = FALSE,
+  cluster_variable = seq_along(y),
   subsamples = NULL,
+  cv_subsamples = NULL,
   cv_subsamples_list = NULL,
   silent = FALSE,
-  progress = NULL,
-  auxiliary_X = NULL
+  auxiliary_X = NULL,
+  parallel = NULL
 )
 ```
 
@@ -34,39 +33,21 @@ crosspred(
 
   A (sparse) matrix of predictive variables.
 
-- Z:
-
-  Optional additional (sparse) matrix of predictive variables.
-
 - learners:
 
-  May take one of two forms, depending on whether a single learner or
-  stacking with multiple learners is used for estimation of the
-  predictor. If a single learner is used, `learners` is a list with two
-  named elements:
+  `learners` is a list of lists, each containing three named elements:
 
   - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
   - `args` Optional arguments to be passed to `what`.
 
-  If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
-
-  - `fun` The base learner function. The function must be such that it
-    predicts a named input `y` using a named input `X`.
-
-  - `args` Optional arguments to be passed to `fun`.
-
   - `assign_X` An optional vector of column indices corresponding to
-    predictive variables in `X` that are passed to the base learner.
-
-  - `assign_Z` An optional vector of column indices corresponding to
-    predictive in `Z` that are passed to the base learner.
+    variables in `X` that are passed to the base learner.
 
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` (and/or `assign_Z`) results in
-  inclusion of all variables in `X` (and/or `Z`).
+  in `what`. Omission of `assign_X` results in inclusion of all
+  predictive variables in `X`.
 
 - sample_folds:
 
@@ -92,7 +73,7 @@ crosspred(
 
 - cv_folds:
 
-  Number of folds used for cross-validation in ensemble construction.
+  Number of folds used for cross-validation.
 
 - custom_ensemble_weights:
 
@@ -102,42 +83,56 @@ crosspred(
   column names are used to name the estimation results corresponding the
   custom ensemble specification.
 
-- compute_insample_predictions:
+- cluster_variable:
 
-  Indicator equal to 1 if in-sample predictions should also be computed.
-
-- compute_predictions_bylearner:
-
-  Indicator equal to 1 if in-sample predictions should also be computed
-  for each learner (rather than the entire ensemble).
+  A vector of cluster indices.
 
 - subsamples:
 
   List of vectors with sample indices for cross-fitting.
 
-- cv_subsamples_list:
+- cv_subsamples:
 
   List of lists, each corresponding to a subsample containing vectors
   with subsample indices for cross-validation.
 
+- cv_subsamples_list:
+
+  Deprecated; use `cv_subsamples` instead.
+
 - silent:
 
   Boolean to silence estimation updates.
-
-- progress:
-
-  String to print before learner and cv fold progress.
 
 - auxiliary_X:
 
   An optional list of matrices of length `sample_folds`, each containing
   additional observations to calculate predictions for.
 
+- parallel:
+
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
+
 ## Value
 
 `crosspred` returns a list containing the following components:
 
-- `oos_fitted`:
+- `cf_fitted`:
 
   A matrix of out-of-sample predictions, each column corresponding to an
   ensemble type (in chronological order).
@@ -147,33 +142,79 @@ crosspred(
   An array, providing the weight assigned to each base learner (in
   chronological order) by the ensemble procedures.
 
-- `is_fitted`:
+- `mspe`:
 
-  When `compute_insample_predictions = T`. a list of matrices with
-  in-sample predictions by sample fold.
+  A numeric vector of per-learner out-of-sample MSPEs, computed from
+  cross-fitted residuals.
+
+- `r2`:
+
+  A numeric vector of per-learner out-of-sample R-squared values.
+
+- `cv_resid_byfold`:
+
+  A list (length `sample_folds`) of inner cross-validation residual
+  matrices used for ensemble weight estimation. `NULL` when a single
+  learner is used.
 
 - `auxiliary_fitted`:
 
   When `auxiliary_X` is not `NULL`, a list of matrices with additional
   predictions.
 
-- `oos_fitted_bylearner`:
+- `cf_fitted_bylearner`:
 
-  When `compute_predictions_bylearner = T`, a matrix of out-of-sample
-  predictions, each column corresponding to a base learner (in
-  chronological order).
+  A matrix of out-of-sample predictions, each column corresponding to a
+  base learner (in chronological order).
 
-- `is_fitted_bylearner`:
+- `cf_resid_bylearner`:
 
-  When `compute_insample_predictions = T` and
-  `compute_predictions_bylearner = T`, a list of matrices with in-sample
-  predictions by sample fold.
+  A matrix of out-of-sample residuals (`y - cf_fitted_bylearner`), each
+  column corresponding to a base learner.
 
 - `auxiliary_fitted_bylearner`:
 
-  When `auxiliary_X` is not `NULL` and
-  `compute_predictions_bylearner = T`, a list of matrices with
-  additional predictions for each learner.
+  When `auxiliary_X` is not `NULL`, a list of matrices with additional
+  predictions for each learner.
+
+## Details
+
+`crosspred` implements the cross-fitting step of the Double/Debiased
+Machine Learning procedure combined with stacking. It produces the
+cross-fitted nuisance estimates \\\hat{\eta}(X_i)\\ used in the Neyman
+orthogonal scores of all `ddml_*` estimators.
+
+Let \\\\I_1, \ldots, I_S\\\\ be an \\S\\-fold partition of \\\\1,
+\ldots, n\\\\, and denote the training set for fold \\s\\ by
+\\\mathcal{T}\_s = \\1, \ldots, n\\ \setminus I_s\\. Given \\J\\ base
+learners, the procedure operates on each cross-fitting fold \\s\\ in
+three steps:
+
+**Step 1 (Stacking weights).** Run \\K\\-fold cross-validation on
+\\\mathcal{T}\_s\\ (via
+[`crossval`](https://www.thomaswiemann.com/ddml/reference/crossval.md))
+to estimate the MSPE of each base learner, and solve for fold-specific
+stacking weights \\\hat{w}\_s = (\hat{w}\_{1,s}, \ldots,
+\hat{w}\_{J,s})'\\.
+
+**Step 2 (Fit).** Fit each base learner \\j\\ on the full training set
+\\\mathcal{T}\_s\\, yielding \\\hat{f}\_{j,s}(\cdot)\\.
+
+**Step 3 (Predict).** For each \\i \in I_s\\, compute the ensemble
+cross-fitted prediction
+
+\\\hat{\eta}(X_i) = \sum\_{j=1}^{J} \hat{w}\_{j,s}
+\hat{f}\_{j,s}(X_i).\\
+
+Since every observation belongs to exactly one fold, the result is a
+complete \\n\\-vector of out-of-sample predictions. Crucially, both the
+stacking weights \\\hat{w}\_s\\ and the base learner fits
+\\\hat{f}\_{j,s}\\ depend only on \\\mathcal{T}\_s\\, which does not
+contain observation \\i\\.
+
+When a single learner is used (\\J = 1\\), no stacking or inner
+cross-validation is performed: the learner is simply fitted on
+\\\mathcal{T}\_s\\ and predictions are made for \\I_s\\.
 
 ## References
 
@@ -188,6 +229,10 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
 
 Other utilities:
 [`crossval()`](https://www.thomaswiemann.com/ddml/reference/crossval.md),
+[`ddml()`](https://www.thomaswiemann.com/ddml/reference/ddml.md),
+[`diagnostics()`](https://www.thomaswiemann.com/ddml/reference/diagnostics.md),
+[`ensemble()`](https://www.thomaswiemann.com/ddml/reference/ensemble.md),
+[`ensemble_weights()`](https://www.thomaswiemann.com/ddml/reference/ensemble_weights.md),
 [`shortstacking()`](https://www.thomaswiemann.com/ddml/reference/shortstacking.md)
 
 ## Examples
@@ -203,17 +248,16 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #     learner are also calculated.
 crosspred_res <- crosspred(y, X,
-                           learners = list(list(fun = ols),
-                                           list(fun = mdl_glmnet)),
+                           learners = list(list(what = ols),
+                                           list(what = mdl_glmnet)),
                            ensemble_type = c("average",
                                              "nnls1",
                                              "singlebest"),
-                           compute_predictions_bylearner = TRUE,
                            sample_folds = 2,
                            cv_folds = 2,
                            silent = TRUE)
-dim(crosspred_res$oos_fitted) # = length(y) by length(ensemble_type)
+dim(crosspred_res$cf_fitted) # = length(y) by length(ensemble_type)
 #> [1] 5000    3
-dim(crosspred_res$oos_fitted_bylearner) # = length(y) by length(learners)
+dim(crosspred_res$cf_fitted_bylearner) # = length(y) by length(learners)
 #> [1] 5000    2
 ```

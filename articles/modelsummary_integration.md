@@ -1,0 +1,329 @@
+# Integration with modelsummary and broom
+
+## Introduction
+
+When estimating structural parameters with `ddml`, you will eventually
+want to extract the results programmatically or present them in a
+publication-ready format. `ddml` provides full integration with the
+`broom` package ecosystem via
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+[`glance()`](https://generics.r-lib.org/reference/glance.html) methods,
+and by extension, creates seamless compatibility with powerful
+table-generating packages like `modelsummary`.
+
+This article demonstrates how to extract model statistics easily and
+create professional tables comparing traditional and
+machine-learning-based estimators.
+
+``` r
+library(ddml)
+# Also load modelsummary if it is installed
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  library(modelsummary)
+}
+set.seed(351789)
+```
+
+## Setup: Estimating a Basic Model
+
+We will construct a simple setup using a subsample of the `AE98` data,
+comparing a traditional Ordinary Least Squares (OLS) model with a
+Partially Linear Model (`ddml_plm`) solved via `ddml`.
+
+``` r
+# Use a subset of data for this example
+sub_idx = sample(1:nrow(AE98), 1000)
+y = AE98[sub_idx, "worked"]
+D = AE98[sub_idx, "morekids"]
+X = AE98[sub_idx, c("age", "agefst", "black", "hisp", "othrace", "educ")]
+
+# Standard Linear Regression
+ols_fit <- lm(y ~ D + X)
+
+# DDML Partially Linear Model
+ddml_fit <- ddml_plm(
+  y = y, D = D, X = X,
+  learners = list(
+    list(what = ols),
+    list(what = mdl_glmnet)
+  ),
+  ensemble_type = c("nnls", "singlebest"),
+  shortstack = TRUE,
+  sample_folds = 5,
+  silent = TRUE
+)
+```
+
+## Using `broom`: `tidy` and `glance`
+
+The `broom` package provides a standardized way to extract information
+from models. `ddml` objects fully support these generics without
+requiring the user to manually parse the object list structure.
+
+### `tidy()` for Coefficients
+
+The `tidy` method extracts coefficient estimates, standard errors, test
+statistics, and p-values into a standard `data.frame`.
+
+``` r
+library(broom)
+
+# Tidy the OLS model
+tidy(ols_fit)
+#> # A tibble: 8 × 5
+#>   term        estimate std.error statistic       p.value
+#>   <chr>          <dbl>     <dbl>     <dbl>         <dbl>
+#> 1 (Intercept)   0.108    0.150       0.719 0.472        
+#> 2 D            -0.189    0.0326     -5.79  0.00000000965
+#> 3 Xage          0.0280   0.00493     5.67  0.0000000186 
+#> 4 Xagefst      -0.0285   0.00642    -4.44  0.0000101    
+#> 5 Xblack        0.256    0.0629      4.08  0.0000495    
+#> 6 Xhisp         0.0679   0.0992      0.684 0.494        
+#> 7 Xothrace      0.127    0.0910      1.40  0.162        
+#> 8 Xeduc         0.0187   0.00685     2.73  0.00651
+
+# Tidy the DDML model
+# By default, it extracts the results for the first ensemble type.
+tidy(ddml_fit)
+#>          term     estimate  std.error  statistic      p.value ensemble_type
+#> 1          D1 -0.185140138 0.03225458 -5.7399638 9.469678e-09          nnls
+#> 2 (Intercept)  0.003821463 0.01530043  0.2497617 8.027716e-01          nnls
+```
+
+If you computed multiple ensembles simultaneously, you can specify
+`ensemble_idx` to retrieve the results for another aggregate ensemble.
+You can also request confidence intervals.
+
+``` r
+# Extract the second ensemble type (e.g., 'singlebest') with confidence intervals
+tidy(ddml_fit, ensemble_idx = 2, conf.int = TRUE)
+#>          term      estimate  std.error   statistic      p.value ensemble_type
+#> 1          D1 -0.1846309958 0.03225331 -5.72440526 1.037967e-08    singlebest
+#> 2 (Intercept) -0.0008189899 0.01530667 -0.05350544 9.573292e-01    singlebest
+#>      conf.low   conf.high
+#> 1 -0.24784631 -0.12141568
+#> 2 -0.03081951  0.02918153
+```
+
+### `glance()` for Model Statistics
+
+To grab a single-row summary of the estimator statistics (number of
+observations, sample folds, cross-validation settings, ensemble
+methods), use
+[`glance()`](https://generics.r-lib.org/reference/glance.html).
+
+``` r
+glance(ddml_fit)
+#>   nobs sample_folds shortstack    ensemble_type model_type
+#> 1 1000            5       TRUE nnls, singlebest   ddml_plm
+#>           estimator_name
+#> 1 Partially Linear Model
+```
+
+## Producing Tables with `modelsummary`
+
+Because `ddml` objects support `tidy` and `glance`, they can be passed
+directly into `modelsummary` alongside other models (like `lm`, `glm`,
+[`AER::ivreg`](https://rdrr.io/pkg/AER/man/ivreg.html), etc.).
+
+``` r
+# Create a list of models to compare
+model_list <- list(
+  "OLS" = ols_fit,
+  "DDML (NNLS)" = ddml_fit
+)
+
+# Render a simple comparison table if modelsummary is available
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(model_list, 
+           stars = TRUE,
+           coef_rename = c("D" = "Treatment (D)"),
+           gof_omit = "AIC|BIC|Log.Lik.|F|RMSE")
+}
+```
+
+[TABLE]
+
+Notice how `modelsummary` automatically pulled the custom
+goodness-of-fit metrics from
+[`glance.ddml()`](https://www.thomaswiemann.com/ddml/reference/glance.ddml.md)
+(e.g., `sample_folds`, `shortstack`, `ensemble_type`).
+
+### Comparing Ensemble Types with `as.list()`
+
+When multiple ensemble types are computed simultaneously (as in our fit
+above), it is often useful to display each ensemble as its own column in
+a regression table. The [`as.list()`](https://rdrr.io/r/base/list.html)
+method splits a `ddml` object into a named list of single-ensemble
+objects — one per ensemble type — that can be passed directly to
+`modelsummary`.
+
+``` r
+# Split by ensemble type
+ensemble_list <- as.list(ddml_fit)
+names(ensemble_list)
+#> [1] "nnls"       "singlebest"
+
+# Each element is a standalone ddml object with full S3 support
+tidy(ensemble_list[["nnls"]])
+#>          term     estimate  std.error  statistic      p.value ensemble_type
+#> 1          D1 -0.185140138 0.03225458 -5.7399638 9.469678e-09          nnls
+#> 2 (Intercept)  0.003821463 0.01530043  0.2497617 8.027716e-01          nnls
+tidy(ensemble_list[["singlebest"]])
+#>          term      estimate  std.error   statistic      p.value ensemble_type
+#> 1          D1 -0.1846309958 0.03225331 -5.72440526 1.037967e-08    singlebest
+#> 2 (Intercept) -0.0008189899 0.01530667 -0.05350544 9.573292e-01    singlebest
+```
+
+This makes multi-column ensemble comparison tables straightforward:
+
+``` r
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(
+    c(list("OLS" = ols_fit), as.list(ddml_fit)),
+    stars = TRUE,
+    coef_rename = c("D" = "Treatment (D)"),
+    gof_omit = "AIC|BIC|Log.Lik.|F|RMSE"
+  )
+}
+```
+
+[TABLE]
+
+Note that each column retains its own
+[`glance()`](https://generics.r-lib.org/reference/glance.html)
+statistics, so `modelsummary` can display goodness-of-fit rows for every
+ensemble type automatically.
+
+## Tidy Support for Repeated Resampling
+
+Stata uses repeated cross-fitting by default (where the user averages
+coefficients over multiple splits to reduce variance dependent on sample
+splits). In R, you can do this by running
+[`ddml_replicate()`](https://www.thomaswiemann.com/ddml/reference/ddml_replicate.md)
+or putting a list of `ddml` objects into
+[`ddml_rep()`](https://www.thomaswiemann.com/ddml/reference/ddml_rep.md).
+
+These aggregated `ddml_rep` classes have their own `tidy` and `glance`
+methods mimicking their base equivalents.
+
+``` r
+# Compute a replicated DDML object with multiple ensembles
+repl_fit <- ddml_replicate(
+  ddml_plm,
+  y = y, D = D, X = X,
+  learners = list(
+    list(what = ols),
+    list(what = mdl_glmnet)
+  ),
+  ensemble_type = c("nnls", "singlebest"),
+  shortstack = TRUE,
+  resamples = 3,
+  sample_folds = 5,
+  silent = TRUE
+)
+
+# Extract aggregated coefficients
+tidy(repl_fit)
+#>          term     estimate  std.error  statistic      p.value ensemble_type
+#> 1          D1 -0.187603585 0.03223104 -5.8205878 5.864103e-09          nnls
+#> 2 (Intercept)  0.003429672 0.01526534  0.2246706 8.222355e-01          nnls
+#>   aggregation
+#> 1      median
+#> 2      median
+
+# Combine standard fit and averaged fit in a table
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(list("Single Split" = ddml_fit, "Repeated 3x" = repl_fit),
+           stars = TRUE)
+}
+```
+
+[TABLE]
+
+The [`as.list()`](https://rdrr.io/r/base/list.html) method also works on
+`ddml_rep` objects. This is useful when a replicated fit was computed
+with multiple ensemble types and you want each ensemble as a separate
+column:
+
+``` r
+if (requireNamespace("modelsummary", quietly = TRUE) && requireNamespace("tinytable", quietly = TRUE)) {
+  msummary(as.list(repl_fit), stars = TRUE)
+}
+```
+
+[TABLE]
+
+## Diagnostics Integration
+
+For tracking model performance beneath the structural estimate hood, the
+Stacking Diagnostics object (returned by
+[`diagnostics()`](https://www.thomaswiemann.com/ddml/reference/diagnostics.md))
+also has `print` and `tidy` functions matching this same design
+language.
+
+``` r
+# Extract stacking diagnostics for the structural DDML fit
+# This details out-of-sample MSPE, R², and weights for the base learners
+diag_fit <- diagnostics(ddml_fit)
+
+# Tidy output generates a data.frame 
+head(tidy(diag_fit), 5)
+#>   equation    learner      mspe         r2 weight_nnls weight_singlebest
+#> 1      y_X  learner_1 0.2413624 0.02728268   0.5657648                 1
+#> 2      y_X  learner_2 0.2413952 0.02715058   0.4264064                 0
+#> 3      y_X       nnls 0.2412659 0.02767155          NA                NA
+#> 4      y_X singlebest 0.2413624 0.02728268          NA                NA
+#> 5     D1_X  learner_1 0.2206689 0.05321582   0.8069033                 1
+```
+
+Because `tidy(diagnostics(fit))` evaluates exactly to a standard
+`data.frame`, we can append it directly to any output artifact, knit it
+nicely with
+[`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html), or
+integrate it directly into supplementary appendix tables in an academic
+paper.
+
+## LaTeX Output
+
+All `modelsummary` tables can be rendered as LaTeX by setting
+`output = "latex"`. This produces a complete `tabular` environment ready
+for inclusion in a paper:
+
+``` r
+# Render a LaTeX table comparing OLS and DDML
+msummary(list("OLS" = ols_fit, "DDML (NNLS)" = ddml_fit),
+         output = "latex",
+         stars = TRUE,
+         title = "Treatment Effect Estimates",
+         gof_omit = "AIC|BIC|Log.Lik.|F|RMSE")
+```
+
+To write the table directly to a `.tex` file, replace `output = "latex"`
+with a file path:
+
+``` r
+msummary(list("OLS" = ols_fit, "DDML" = ddml_fit),
+         output = "tables/estimates.tex",
+         stars = TRUE)
+```
+
+For diagnostics tables, pipe `tidy(diagnostics())` through `kableExtra`:
+
+``` r
+library(kableExtra)
+tidy(diagnostics(ddml_fit)) |>
+  kbl(format = "latex", booktabs = TRUE, digits = 4,
+      caption = "Base Learner Performance") |>
+  kable_styling(latex_options = "hold_position") |>
+  save_kable("tables/diagnostics.tex")
+```
+
+## References
+
+Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). “Model Averaging
+and Double Machine Learning.” Journal of Applied Econometrics, 40(3):
+249-269.
+
+Arel-Bundock V (2022). “modelsummary: Data and Model Summaries in R.”
+Journal of Statistical Software, 103(1), 1-23.

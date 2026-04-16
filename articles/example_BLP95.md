@@ -6,7 +6,7 @@ This article revisits the empirical example of Chernozhukov, Hansen, and
 Spindler (2015) (CHS2015, hereafter), which extends the instruments of
 Berry, Levinsohn, and Pakes (1995) (BLP1995, hereafter) and applies an
 instrument selection procedure based on the lasso. We consider the same
-instrument extension and apply double/debiased machine learning with
+instrument extension and apply Double/Debiased Machine Learning with
 short-stacking that combines conventional linear estimators with
 computational alternatives including lasso-based approaches, random
 forests, and gradient boosting.
@@ -129,8 +129,8 @@ round(summary(tsls_L_fit)$coefficients[2, ], 4)
 Given the large set of controls and instruments in the expanded set
 relative to the moderate sample size, it is reasonable to consider
 regularized estimators. A frequent choice with many variables are
-lasso-based estimators. Below, we combine double/debiased machine
-learning with lasso selection of instruments and controls. (See
+lasso-based estimators. Below, we combine Double/Debiased Machine
+Learning with lasso selection of instruments and controls. (See
 [`?mdl_glmnet`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md)
 and
 [`?ddml_fpliv`](https://www.thomaswiemann.com/ddml/reference/ddml_fpliv.md)
@@ -144,11 +144,17 @@ learner <- list(what = mdl_glmnet)
 lasso_fit <- ddml_fpliv(y, D = D,
                         Z = ZL, X = XL,
                         learners = learner,
-                        sample_folds = 10,
-                        silent = T)
-round(summary(lasso_fit)[2, , 1], 4)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>    -0.1473     0.0090   -16.3142     0.0000
+                        sample_folds = 5,
+                        silent = TRUE)
+summary(lasso_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 5
+#> 
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> price       -0.144870   0.008810  -16.44   <2e-16 ***
+#> (Intercept)  0.000712   0.022806    0.03     0.98    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 ## Estimating the Flexible Partially Linear IV Model with Multiple Learners
@@ -176,27 +182,27 @@ set_X <- 1:ncol(X); set_XL <- setdiff(c(1:ncol(X_c)), set_X)
 set_Z <- 1:ncol(Z); set_ZL <- setdiff(c(1:ncol(Z_c)), set_Z)
 
 # Base learners
-learners <- list(list(fun = ols, # ols with the baseline set
+learners <- list(list(what = ols, # ols with the baseline set
                       assign_X = set_X,
                       assign_Z = set_Z),
-                 list(fun = ols, # ols with the extended set
+                 list(what = ols, # ols with the extended set
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_glmnet, # lasso with the extended set
+                 list(what = mdl_glmnet, # lasso with the extended set
                       args = list(alpha = 1),
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_glmnet, # ridge with the extended set
+                 list(what = mdl_glmnet, # ridge with the extended set
                       args = list(alpha = 0),
                       assign_X = set_XL,
                       assign_Z = set_ZL),
-                 list(fun = mdl_ranger, # random forests with the baseline set
-                      args = list(num.trees = 1000,
+                 list(what = mdl_ranger, # random forests with the baseline set
+                      args = list(num.trees = 100,
                                   min.node.size = 10),
                       assign_X = set_X,
                       assign_Z = set_Z),
-                 list(fun = mdl_xgboost, # boosted trees with the baseline set
-                      args = list(nrounds = 300),
+                 list(what = mdl_xgboost, # boosted trees with the baseline set
+                      args = list(nrounds = 50),
                       assign_X = set_X,
                       assign_Z = set_Z))
 
@@ -205,35 +211,68 @@ stacking_fit <- ddml_fpliv(y, D = D,
                            Z = Z_c, X = X_c,
                            learners = learners,
                            ensemble_type = c("nnls1"),
-                           shortstack = T,
-                           sample_folds = 10,
-                           silent = T)
-t(round(summary(stacking_fit), 4)[2, , ])
-#>      Estimate Std. Error  t value Pr(>|t|)
-#> [1,]  -0.0982     0.0092 -10.7008        0
+                           shortstack = TRUE,
+                           sample_folds = 5,
+                           silent = TRUE)
+summary(stacking_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 5  Stacking: short-stack
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> price       -0.09812    0.00967  -10.15   <2e-16 ***
+#> (Intercept)  0.00223    0.02035    0.11     0.91    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 Interestingly, the coefficient is closer to the OLS estimates than to
 the TSLS estimates (with or without lasso)!
 
 To better understand the composition of the final estimator, it is often
-useful to inspect the stacking weights. These may readily be retrieved
-from the fitted object. Here, we see that the boosted trees and the
-random forest learners have been assigned the most weight in the cross
-validation informed ensemble procedures. The linear methods – ols,
-lasso, and ridge – do not contribute substantially to the final
-estimates, suggesting that the user-defined expansions of the controls
-and instruments does little to improve bias and precision.
+useful to inspect the stacking diagnostics. Here, we see that the
+boosted trees and the random forest learners have been assigned the most
+weight. The linear methods – ols, lasso, and ridge – do not contribute
+substantially to the final estimates, suggesting that the user-defined
+expansions of the controls and instruments does little to improve bias
+and precision.
 
 ``` r
-sapply(stacking_fit$weights, round, 4)
-#>         y_X D1_X  D1_XZ
-#> [1,] 0.0000 0.00 0.0000
-#> [2,] 0.0000 0.00 0.0000
-#> [3,] 0.0000 0.00 0.0000
-#> [4,] 0.0000 0.00 0.0000
-#> [5,] 0.4394 0.45 0.3804
-#> [6,] 0.5606 0.55 0.6196
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Flexible Partially Linear IV Model 
+#> Obs: 2217 
+#> 
+#>   y_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 1.4341 0.2488       0.0000
+#>  learner_2 1.3458 0.2950       0.0000
+#>  learner_3 1.3543 0.2905       0.0000
+#>  learner_4 1.3850 0.2744       0.0000
+#>  learner_5 1.1000 0.4237       0.3525
+#>  learner_6 1.0350 0.4578       0.6475
+#>      nnls1 1.0076 0.4721           NA
+#> 
+#>   D1_X:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 32.8790 0.5599       0.0000
+#>  learner_2 25.9267 0.6530       0.0000
+#>  learner_3 25.9418 0.6528       0.0553
+#>  learner_4 28.2471 0.6219       0.0000
+#>  learner_5 16.9611 0.7730       0.1252
+#>  learner_6 13.4904 0.8194       0.8195
+#>      nnls1 13.2407 0.8228           NA
+#> 
+#>   D1_XZ:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 28.1808 0.6228       0.0000
+#>  learner_2 20.3428 0.7277       0.0000
+#>  learner_3 18.3504 0.7544       0.0080
+#>  learner_4 23.9814 0.6790       0.0000
+#>  learner_5 10.2051 0.8634       0.3372
+#>  learner_6  8.9730 0.8799       0.6548
+#>      nnls1  8.4965 0.8863           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 ## Elasticities
@@ -265,19 +304,19 @@ compute_inelastic_demand(tsls_L_fit$coef[2])
 #> [1] 896
 ```
 
-Double/debiased machine learning estimates using only a single lasso
+Double/Debiased Machine Learning estimates using only a single lasso
 base learner suggest the smallest number of inelastic products. In stark
 contrast, the estimates based on multiple machine learners suggest a
-number closer to the intial OLS estimates.
+number closer to the initial OLS estimates.
 
 ``` r
 # ddml-lasso implied number of products with inelastic demand
-compute_inelastic_demand(lasso_fit$coef)
-#> [1] 596
+compute_inelastic_demand(coef(lasso_fit))
+#> [1] 1416
 
 # ddml-stacking implied number of products with inelastic demand
-compute_inelastic_demand(stacking_fit$coef)
-#> [1] 1417
+compute_inelastic_demand(coef(stacking_fit))
+#> [1] 1829
 ```
 
 ## Bonus: Post-Lasso Estimates without Sample-Splitting
@@ -302,7 +341,7 @@ summary(rlassoIV_fit)
 ```
 
 The coefficient is drastically different from previous estimates,
-including the double/debaised machine learning estimates that included
+including the Double/Debiased Machine Learning estimates that included
 lasso-based approaches.
 
 To gain some insight into potential causes for these differences, we
@@ -319,8 +358,8 @@ dim(Xr_)[2]
 #> [1] 6
 ```
 
-From the stacking weights above, we know that the double/debaised
-machine learning estimator assigns most weight to boosted trees. In
+From the stacking weights above, we know that the Double/Debiased
+Machine Learning estimator assigns most weight to boosted trees. In
 contrast to lasso-based estimates, boosted trees adaptively create
 interactions from their input variables, allowing for rich
 non-linearities in the final predictions. It thus makes sense to check
@@ -332,39 +371,65 @@ stacking learner with the pre-selected set of controls and instruments.
 
 ``` r
 # Base learner
-learner <- list(list(fun = ols),
-                list(fun = mdl_xgboost,
-                     args = list(nrounds = 300)))
+learner <- list(list(what = ols),
+                list(what = mdl_xgboost,
+                     args = list(nrounds = 50)))
 
 # Compute short-stacked IV estimate
 stacking_r_fit <- ddml_fpliv(y, D = D,
                         Z = Zr_, X = Xr_,
                         learners = learner,
                         ensemble_type = c("nnls1"),
-                        shortstack = T,
-                        sample_folds = 10,
-                        silent = T)
-round(summary(stacking_r_fit)[2, , 1], 4)
-#>   Estimate Std. Error    t value   Pr(>|t|) 
-#>    -0.1044     0.0128    -8.1682     0.0000
+                        shortstack = TRUE,
+                        sample_folds = 5,
+                        silent = TRUE)
+summary(stacking_r_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 2217   Folds: 5  Stacking: short-stack
+#> 
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> price       -0.10628    0.01316   -8.08  6.5e-16 ***
+#> (Intercept)  0.00425    0.02189    0.19     0.85    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The similarity of the coefficient estimates to the initial stacking
-estimates suggest seems that adaptively created interactions are indeed
-the key driver between the coefficient differences. This is further
-confirmed by the stacking weights, which again place substantial weight
-on the boosted trees.
+estimates suggests that adaptively created interactions are indeed the
+key driver between the coefficient differences. This is further
+confirmed by the stacking diagnostics, which again place substantial
+weight on the boosted trees.
 
 ``` r
-sapply(stacking_r_fit$weights, round, 4)
-#>       y_X   D1_X  D1_XZ
-#> [1,] 0.08 0.1287 0.0439
-#> [2,] 0.92 0.8713 0.9561
+diagnostics(stacking_r_fit)
+#> Stacking diagnostics: Flexible Partially Linear IV Model 
+#> Obs: 2217 
+#> 
+#>   y_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 1.4843 0.2224       0.2298
+#>  learner_2 1.1869 0.3782       0.7702
+#>      nnls1 1.1579 0.3934           NA
+#> 
+#>   D1_X:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 29.7015 0.6025       0.1121
+#>  learner_2 14.2630 0.8091       0.8879
+#>      nnls1 14.0130 0.8124           NA
+#> 
+#>   D1_XZ:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 28.2924 0.6213       0.0725
+#>  learner_2 10.4439 0.8602       0.9275
+#>      nnls1 10.3342 0.8617           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 The example thus highlights the importance of considering multiple
 machine learners for robustness and illustrates the usefulness of
-double/debiased machine learning with stacking as a practical solution.
+Double/Debiased Machine Learning with stacking as a practical solution.
 
 ## References
 

@@ -14,7 +14,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ddml</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,9 +27,12 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/stacking.html">Computational Benefits of Short-Stacking</a></li>
+    <li><a class="dropdown-item" href="../articles/stacking_diagnostics.html">Stacking Diagnostics and Cross-Validation Criteria</a></li>
+    <li><a class="dropdown-item" href="../articles/repeated_resampling.html">Robust Inference and Repeated Resampling</a></li>
+    <li><a class="dropdown-item" href="../articles/modelsummary_integration.html">Integration with modelsummary and broom</a></li>
     <li><a class="dropdown-item" href="../articles/new_ml_wrapper.html">Constructing a User-Provided Base Learner</a></li>
     <li><a class="dropdown-item" href="../articles/sparse.html">Estimation with Sparse Matrices</a></li>
-    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff with Double/Debiased Machine Learning</a></li>
+    <li><a class="dropdown-item" href="../articles/did.html">Diff-in-Diff Estimation and Aggregation</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -49,7 +52,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="supported-models">Supported Models<a class="anchor" aria-label="anchor" href="#supported-models"></a></h2>
+      <h2 id="supported-ddml-estimators">Supported DDML Estimators<a class="anchor" aria-label="anchor" href="#supported-ddml-estimators"></a></h2>
 
 
 
@@ -63,35 +66,95 @@
           <code><a href="ddml_plm.html">ddml_plm()</a></code>
 
         </dt>
-        <dd>Estimator for the Partially Linear Model.</dd>
-
-        <dt>
-
-          <code><a href="ddml_ate.html">ddml_ate()</a></code> <code><a href="ddml_ate.html">ddml_att()</a></code>
-
-        </dt>
-        <dd>Estimators of Average Treatment Effects.</dd>
+        <dd>Estimator for the Partially Linear Regression Coefficient</dd>
 
         <dt>
 
           <code><a href="ddml_pliv.html">ddml_pliv()</a></code>
 
         </dt>
-        <dd>Estimator for the Partially Linear IV Model.</dd>
+        <dd>Estimator for the Partially Linear IV Coefficient</dd>
 
         <dt>
 
           <code><a href="ddml_fpliv.html">ddml_fpliv()</a></code>
 
         </dt>
-        <dd>Estimator for the Flexible Partially Linear IV Model.</dd>
+        <dd>Estimator for the Flexible Partially Linear IV Coefficient</dd>
+
+        <dt>
+
+          <code><a href="ddml_ate.html">ddml_ate()</a></code> <code><a href="ddml_ate.html">ddml_att()</a></code>
+
+        </dt>
+        <dd>Estimator for the Average Treatment Effect</dd>
 
         <dt>
 
           <code><a href="ddml_late.html">ddml_late()</a></code>
 
         </dt>
-        <dd>Estimator of the Local Average Treatment Effect.</dd>
+        <dd>Estimator for the Local Average Treatment Effect</dd>
+
+        <dt>
+
+          <code><a href="ddml_apo.html">ddml_apo()</a></code>
+
+        </dt>
+        <dd>Estimator for the Average Potential Outcome</dd>
+
+        <dt>
+
+          <code><a href="ddml_policy.html">ddml_policy()</a></code>
+
+        </dt>
+        <dd>Estimator for the Multi-Action Policy Value</dd>
+
+        <dt>
+
+          <code><a href="ddml_attgt.html">ddml_attgt()</a></code>
+
+        </dt>
+        <dd>Estimator for Group-Time Average Treatment Effects</dd>
+      </dl></div><div class="section level2">
+      <h2 id="repeated-resampling">Repeated Resampling<a class="anchor" aria-label="anchor" href="#repeated-resampling"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddml_replicate.html">ddml_replicate()</a></code>
+
+        </dt>
+        <dd>Replicate a DDML Estimator Across Multiple Resamples</dd>
+      </dl></div><div class="section level2">
+      <h2 id="linear-combinations-and-aggregation">Linear Combinations and Aggregation<a class="anchor" aria-label="anchor" href="#linear-combinations-and-aggregation"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="lincom.html">lincom()</a></code> <code><a href="lincom.html">print(<i>&lt;lincom&gt;</i>)</a></code> <code><a href="lincom.html">print(<i>&lt;lincom_rep&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Linear Combinations of DDML Coefficients</dd>
+
+        <dt>
+
+          <code><a href="lincom_weights_did.html">lincom_weights_did()</a></code>
+
+        </dt>
+        <dd>Difference-in-Differences Aggregation Weights for lincom</dd>
       </dl></div><div class="section level2">
       <h2 id="wrappers-for-common-machine-learners">Wrappers for Common (Machine) Learners<a class="anchor" aria-label="anchor" href="#wrappers-for-common-machine-learners"></a></h2>
 
@@ -107,35 +170,42 @@
           <code><a href="ols.html">ols()</a></code>
 
         </dt>
-        <dd>Ordinary least squares.</dd>
+        <dd>Ordinary Least Squares</dd>
 
         <dt>
 
           <code><a href="mdl_glm.html">mdl_glm()</a></code>
 
         </dt>
-        <dd>Wrapper for <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code>.</dd>
+        <dd>Wrapper for stats::glm()</dd>
 
         <dt>
 
           <code><a href="mdl_glmnet.html">mdl_glmnet()</a></code>
 
         </dt>
-        <dd>Wrapper for <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet::glmnet()</a></code>.</dd>
+        <dd>Wrapper for glmnet::glmnet()</dd>
 
         <dt>
 
           <code><a href="mdl_ranger.html">mdl_ranger()</a></code>
 
         </dt>
-        <dd>Wrapper for <code><a href="http://imbs-hl.github.io/ranger/reference/ranger.html" class="external-link">ranger::ranger()</a></code>.</dd>
+        <dd>Wrapper for ranger::ranger()</dd>
 
         <dt>
 
           <code><a href="mdl_xgboost.html">mdl_xgboost()</a></code>
 
         </dt>
-        <dd>Wrapper for <code><a href="https://rdrr.io/pkg/xgboost/man/xgboost.html" class="external-link">xgboost::xgboost()</a></code>.</dd>
+        <dd>Wrapper for xgboost::xgboost()</dd>
+
+        <dt>
+
+          <code><a href="mdl_bigGLM.html">mdl_bigGlm()</a></code>
+
+        </dt>
+        <dd>Wrapper for glmnet::bigGlm()</dd>
       </dl></div><div class="section level2">
       <h2 id="utilities">Utilities<a class="anchor" aria-label="anchor" href="#utilities"></a></h2>
 
@@ -151,21 +221,35 @@
           <code><a href="crossval.html">crossval()</a></code>
 
         </dt>
-        <dd>Estimator of the Mean Squared Prediction Error using Cross-Validation.</dd>
+        <dd>Estimator of the Mean Squared Prediction Error Using Cross-Validation</dd>
 
         <dt>
 
           <code><a href="crosspred.html">crosspred()</a></code>
 
         </dt>
-        <dd>Cross-Predictions using Stacking.</dd>
+        <dd>Cross-Fitted Predictions Using Stacking</dd>
 
         <dt>
 
           <code><a href="shortstacking.html">shortstacking()</a></code>
 
         </dt>
-        <dd>Predictions using Short-Stacking.</dd>
+        <dd>Predictions using Short-Stacking</dd>
+
+        <dt>
+
+          <code><a href="ensemble.html">ensemble()</a></code>
+
+        </dt>
+        <dd>Stacking Estimator Using Combinations of Base Learners</dd>
+
+        <dt>
+
+          <code><a href="diagnostics.html">diagnostics()</a></code>
+
+        </dt>
+        <dd>Stacking Diagnostics for DDML Estimators</dd>
       </dl></div><div class="section level2">
       <h2 id="dataset">Dataset<a class="anchor" aria-label="anchor" href="#dataset"></a></h2>
 
@@ -181,7 +265,7 @@
           <code><a href="AE98.html">AE98</a></code>
 
         </dt>
-        <dd>Random subsample from the data of Angrist &amp; Evans (1991).</dd>
+        <dd>Random Subsample from the Data of Angrist &amp; Evans (1998)</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

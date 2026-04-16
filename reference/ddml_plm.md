@@ -1,6 +1,6 @@
-# Estimator for the Partially Linear Model.
+# Estimator for the Partially Linear Regression Coefficient
 
-Estimator for the partially linear model.
+Estimator for the partially linear regression coefficient.
 
 ## Usage
 
@@ -18,9 +18,12 @@ ddml_plm(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples = NULL,
-  cv_subsamples_list = NULL,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 ```
 
@@ -51,19 +54,19 @@ ddml_plm(
   - `args` Optional arguments to be passed to `what`.
 
   If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
+  lists, each containing three named elements:
 
-  - `fun` The base learner function. The function must be such that it
+  - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
-  - `args` Optional arguments to be passed to `fun`.
+  - `args` Optional arguments to be passed to `what`.
 
   - `assign_X` An optional vector of column indices corresponding to
     control variables in `X` that are passed to the base learner.
 
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` results in inclusion of all variables
-  in `X`.
+  in `what`. Omission of `assign_X` results in inclusion of all
+  variables in `X`.
 
 - learners_DX:
 
@@ -119,83 +122,104 @@ ddml_plm(
 
   A vector of cluster indices.
 
-- subsamples:
-
-  List of vectors with sample indices for cross-fitting.
-
-- cv_subsamples_list:
-
-  List of lists, each corresponding to a subsample containing vectors
-  with subsample indices for cross-validation.
-
 - silent:
 
   Boolean to silence estimation updates.
 
+- parallel:
+
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
+
+- fitted:
+
+  An optional named list of per-equation cross-fitted predictions,
+  typically obtained from a previous fit via `fit$fitted`. When supplied
+  (together with `splits`), base learners are not re-fitted; only
+  ensemble weights are recomputed. This allows fast re-estimation with a
+  different `ensemble_type`. See `ddml_plm` for an example.
+
+- splits:
+
+  An optional list of sample split objects, typically obtained from a
+  previous fit via `fit$splits`. Must be supplied when `fitted` is
+  provided. Can also be used standalone to provide pre-computed sample
+  folds.
+
+- save_crossval:
+
+  Logical indicating whether to store the inner cross-validation
+  residuals used for ensemble weight computation. Default `TRUE`. When
+  `TRUE`, subsequent pass-through calls with data-driven ensembles
+  (e.g., `"nnls"`) reproduce per-fold weights exactly. Set to `FALSE` to
+  reduce object size at the cost of approximate weight recomputation.
+
+- ...:
+
+  Additional arguments passed to internal methods.
+
 ## Value
 
-`ddml_plm` returns an object of S3 class `ddml_plm`. An object of class
-`ddml_plm` is a list containing the following components:
-
-- `coef`:
-
-  A vector with the \\\theta_0\\ estimates.
-
-- `weights`:
-
-  A list of matrices, providing the weight assigned to each base learner
-  (in chronological order) by the ensemble procedure.
-
-- `mspe`:
-
-  A list of matrices, providing the MSPE of each base learner (in
-  chronological order) computed by the cross-validation step in the
-  ensemble construction.
-
-- `ols_fit`:
-
-  Object of class `lm` from the second stage regression of \\Y -
-  \hat{E}\[Y\|X\]\\ on \\D - \hat{E}\[D\|X\]\\.
-
-- `learners`,`learners_DX`,`cluster_variable`, `subsamples`,
-  `cv_subsamples_list`, `ensemble_type`:
-
-  Pass-through of selected user-provided arguments. See above.
+`ddml_plm` returns an object of S3 class `ddml_plm` and `ddml`. See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for the common output structure. Additional pass-through fields:
+`learners`, `learners_DX`.
 
 ## Details
 
-`ddml_plm` provides a double/debiased machine learning estimator for the
-parameter of interest \\\theta_0\\ in the partially linear model given
-by
+**Parameter of Interest:** `ddml_plm` provides a Double/Debiased Machine
+Learning estimator for the partially linear regression coefficient
+\\\theta_0\\, defined by the partially linear regression model:
 
-\\Y = \theta_0D + g_0(X) + U,\\
+\$\$Y = \theta_0 D + g_0(X) + \varepsilon, \quad E\[D\varepsilon\] = 0,
+\quad E\[\varepsilon\|X\] = 0,\$\$
 
-where \\(Y, D, X, U)\\ is a random vector such that \\E\[Cov(U, D\vert
-X)\] = 0\\ and \\E\[Var(D\vert X)\] \neq 0\\, and \\g_0\\ is an unknown
-nuisance function.
+where \\W\equiv(Y, D, X, \varepsilon)\\ is a random vector such that
+\\E\[Var(D\|X)\] \neq 0\\, and \\g_0(X)\\ is an unknown nuisance
+function.
 
-## References
+**Neyman Orthogonal Score:** The Neyman orthogonal score is:
 
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging
-and Double Machine Learning." Journal of Applied Econometrics, 40(3):
-249-269.
+\$\$m(W; \theta, \eta) = \[(Y - \ell(X)) - \theta(D - r(X))\](D -
+r(X))\$\$
 
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
+where the nuisance parameters are \\\eta = (\ell, r)\\ taking true
+values \\\ell_0(X) = E\[Y\|X\]\\ and \\r_0(X) = E\[D\|X\]\\.
 
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
-241-259.
+**Jacobian:**
+
+\$\$J = -E\[(D - r_0(X))(D - r_0(X))^\top\]\$\$
+
+See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for how the influence function and inference are derived from these
+components.
 
 ## See also
 
-[`summary.ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_plm.md)
-
-Other ddml:
+Other ddml estimators:
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md),
+[`ddml_apo()`](https://www.thomaswiemann.com/ddml/reference/ddml_apo.md),
 [`ddml_ate()`](https://www.thomaswiemann.com/ddml/reference/ddml_ate.md),
+[`ddml_attgt()`](https://www.thomaswiemann.com/ddml/reference/ddml_attgt.md),
 [`ddml_fpliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_fpliv.md),
 [`ddml_late()`](https://www.thomaswiemann.com/ddml/reference/ddml_late.md),
-[`ddml_pliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_pliv.md)
+[`ddml_pliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_pliv.md),
+[`ddml_policy()`](https://www.thomaswiemann.com/ddml/reference/ddml_policy.md)
 
 ## Examples
 
@@ -212,14 +236,14 @@ plm_fit <- ddml_plm(y, D, X,
                     sample_folds = 2,
                     silent = TRUE)
 summary(plm_fit)
-#> PLM estimation results: 
-#>  
-#> , , single base learner
+#> DDML estimation: Partially Linear Model 
+#> Obs: 5000   Folds: 2
 #> 
-#>              Estimate Std. Error t value Pr(>|t|)
-#> (Intercept) -0.000825    0.00689   -0.12 9.05e-01
-#> D_r         -0.148560    0.01475  -10.08 7.11e-24
-#> 
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.146551   0.014646  -10.01   <2e-16 ***
+#> (Intercept)  0.000292   0.006872    0.04     0.97    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 # Estimate the partially linear model using short-stacking with base learners
 #     ols, lasso, and ridge. We can also use custom_ensemble_weights
@@ -227,9 +251,9 @@ summary(plm_fit)
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 plm_fit <- ddml_plm(y, D, X,
-                    learners = list(list(fun = ols),
-                                    list(fun = mdl_glmnet),
-                                    list(fun = mdl_glmnet,
+                    learners = list(list(what = ols),
+                                    list(what = mdl_glmnet),
+                                    list(what = mdl_glmnet,
                                          args = list(alpha = 0))),
                     ensemble_type = 'nnls',
                     custom_ensemble_weights = weights_everylearner,
@@ -237,30 +261,59 @@ plm_fit <- ddml_plm(y, D, X,
                     sample_folds = 2,
                     silent = TRUE)
 summary(plm_fit)
-#> PLM estimation results: 
-#>  
-#> , , nnls
+#> DDML estimation: Partially Linear Model 
+#> Obs: 5000   Folds: 2  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept)  0.00133    0.00688   0.193 8.47e-01
-#> D_r         -0.14952    0.01473 -10.149 3.36e-24
+#> Ensemble type: nnls
+#>             Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.14851    0.01468  -10.12   <2e-16 ***
+#> (Intercept)  0.00166    0.00688    0.24     0.81    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 #> 
-#> , , mdl:ols
+#> Ensemble type: mdl:ols
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.148462   0.014677  -10.12   <2e-16 ***
+#> (Intercept) -0.000578   0.006882   -0.08     0.93    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 #> 
-#>              Estimate Std. Error  t value Pr(>|t|)
-#> (Intercept) -0.000266    0.00688  -0.0386 9.69e-01
-#> D_r         -0.149559    0.01474 -10.1495 3.33e-24
+#> Ensemble type: mdl:lasso
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.148749   0.014680   -10.1   <2e-16 ***
+#> (Intercept) -0.000689   0.006884    -0.1     0.92    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 #> 
-#> , , mdl:lasso
+#> Ensemble type: mdl:ridge
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.148367   0.014675  -10.11   <2e-16 ***
+#> (Intercept) -0.000737   0.006884   -0.11     0.91    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# \donttest{
+# Re-estimate with a different ensemble type using pass-through
+#     (skips cross-fitting, only recomputes ensemble weights).
+plm_fit2 <- ddml_plm(y, D, X,
+                     learners = list(list(what = ols),
+                                     list(what = mdl_glmnet),
+                                     list(what = mdl_glmnet,
+                                          args = list(alpha = 0))),
+                     ensemble_type = 'average',
+                     shortstack = TRUE,
+                     sample_folds = 2,
+                     silent = TRUE,
+                     fitted = plm_fit$fitted,
+                     splits = plm_fit$splits)
+summary(plm_fit2)
+#> DDML estimation: Partially Linear Model 
+#> Obs: 5000   Folds: 2  Stacking: short-stack
 #> 
-#>              Estimate Std. Error  t value Pr(>|t|)
-#> (Intercept) -0.000295    0.00688  -0.0429 9.66e-01
-#> D_r         -0.149588    0.01473 -10.1538 3.19e-24
-#> 
-#> , , mdl:ridge
-#> 
-#>              Estimate Std. Error  t value Pr(>|t|)
-#> (Intercept) -0.000247    0.00688  -0.0359 9.71e-01
-#> D_r         -0.149493    0.01473 -10.1464 3.44e-24
-#> 
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1          -0.148554   0.014677   -10.1   <2e-16 ***
+#> (Intercept) -0.000668   0.006883    -0.1     0.92    
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+# }
 ```

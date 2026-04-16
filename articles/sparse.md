@@ -3,7 +3,7 @@
 ## Introduction
 
 `ddml` supports sparse matrices from the `Matrix` package by default.
-This article illustrates double/debiased machine learning estimation
+This article illustrates Double/Debiased Machine Learning estimation
 with sparse matrices using the prominent study of Angrist and Krueger
 (1991) (AK91, hereafter) on returns to education.
 
@@ -66,8 +66,6 @@ format(object.size(X), units = "Mb")
 
 # Memory needed for the dense control matrix
 format(object.size(as.matrix(X)), units = "Mb")
-#> Warning in asMethod(object): sparse->dense coercion: allocating vector of size
-#> 1.3 GiB
 #> [1] "1302.3 Mb"
 ```
 
@@ -89,29 +87,30 @@ and by setting the `penalty.factor` of the control variables to zero
 [`?mdl_glmnet`](https://www.thomaswiemann.com/ddml/reference/mdl_glmnet.md)).
 
 ``` r
-learners_XZ <- list(list(fun = ols),
-                    list(fun = mdl_glmnet,
+learners_XZ <- list(list(what = ols),
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 180)))))
 
 stacking_180IV_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                                  Z = Z_IV180, X = X,
-                                 learners = list(list(fun = ols)),
-                                 learners_DX = list(list(fun = ols)),
+                                 learners = list(list(what = ols)),
+                                 learners_DX = list(list(what = ols)),
                                  learners_DXZ = learners_XZ,
                                  ensemble_type = c("nnls1"),
-                                 shortstack = T,
+                                 shortstack = TRUE,
                                  sample_folds = 2,
-                                 silent = T)
-summary(stacking_180IV_fit, type = 'HC1')
-#> FPLIV estimation results: 
-#>  
-#> , , nnls1
+                                 silent = TRUE)
+summary(stacking_180IV_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>              Estimate Std. Error t value Pr(>|t|)
-#> (Intercept) -6.14e-05    0.00113 -0.0542 9.57e-01
-#> D_r          1.12e-01    0.02145  5.2258 1.73e-07
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1           1.12e-01   2.15e-02    5.23  1.7e-07 ***
+#> (Intercept) -6.14e-05   1.13e-03   -0.05     0.96    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The exercise can be repeated with the larger set of 1530 instruments as
@@ -119,29 +118,28 @@ well. Without support for sparse matrices, this estimation step would
 not be possible without very large memory.
 
 ``` r
-learners_XZ <- list(list(fun = ols),
-                    list(fun = mdl_glmnet,
+learners_XZ <- list(list(what = ols),
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 1530)))))
 
 stacking_1530IV_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                                  Z = Z_IV1530, X = X,
-                                 learners = list(list(fun = ols)),
-                                 learners_DX = list(list(fun = ols)),
+                                 learners = list(list(what = ols)),
+                                 learners_DX = list(list(what = ols)),
                                  learners_DXZ = learners_XZ,
                                  ensemble_type = c("nnls1"),
-                                 shortstack = T,
+                                 shortstack = TRUE,
                                  sample_folds = 2,
-                                 silent = T)
-summary(stacking_1530IV_fit, type = 'HC1')
-#> FPLIV estimation results: 
-#>  
-#> , , nnls1
+                                 silent = TRUE)
+summary(stacking_1530IV_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept) 4.98e-05    0.00111   0.045   0.9641
-#> D_r         6.30e-02    0.03574   1.764   0.0778
+#>             Estimate Std. Error z value Pr(>|z|)
+#> D1          0.046151   0.051943    0.89     0.37
+#> (Intercept) 0.000064   0.001112    0.06     0.95
 ```
 
 The coefficients corresponding to the two sets of instruments are quite
@@ -155,52 +153,69 @@ simultaneously.
 Z_c <- cbind(Z_IV180, Z_IV1530); colnames(Z_c) <- 1:(180 + 1530)
 set_IV180 <- 1:180; set_IV1530 <- 181:(180 + 1530)
 
-learners_XZ <- list(list(fun = ols,
+learners_XZ <- list(list(what = ols,
                          assign_Z = set_IV180),
-                    list(fun = ols,
+                    list(what = ols,
                           assign_Z = set_IV1530),
-                    list(fun = mdl_glmnet,
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 180))),
                           assign_Z = set_IV180),
-                    list(fun = mdl_glmnet,
+                    list(what = mdl_glmnet,
                          args = list(cv = FALSE,
                                      penalty.factor = c(rep(0, 510),
                                                         rep(1, 1530))),
                          assign_Z = set_IV1530))
 stacking_fit <- ddml_fpliv(y = AK91$LWKLYWGE, D = AK91$EDUC,
                            Z = Z_c, X = X,
-                           learners = list(list(fun = ols)),
-                           learners_DX = list(list(fun = ols)),
+                           learners = list(list(what = ols)),
+                           learners_DX = list(list(what = ols)),
                            learners_DXZ = learners_XZ,
                            ensemble_type = c("nnls1"),
-                           shortstack = T,
+                           shortstack = TRUE,
                            sample_folds = 2,
-                           silent = T)
-summary(stacking_fit, type = 'HC1')
-#> FPLIV estimation results: 
-#>  
-#> , , nnls1
+                           silent = TRUE)
+summary(stacking_fit)
+#> DDML estimation: Flexible Partially Linear IV Model 
+#> Obs: 329509   Folds: 2  Stacking: short-stack
 #> 
-#>             Estimate Std. Error t value Pr(>|t|)
-#> (Intercept) 0.000143    0.00115   0.124 9.01e-01
-#> D_r         0.124080    0.02012   6.167 6.97e-10
+#>              Estimate Std. Error z value Pr(>|z|)    
+#> D1           0.105040   0.015673    6.70  2.1e-11 ***
+#> (Intercept) -0.000196   0.001125   -0.17     0.86    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ```
 
 The resulting coefficient is close to the coefficient based on 180
-instruments. The stacking weights confirm that the first stage
+instruments. The stacking diagnostics confirm that the first stage
 estimators with 180 instruments contribute almost exclusively to the
-final estimate, suggesting that the expansion to 1530 instrument has
+final estimate, suggesting that the expansion to 1530 instruments has
 little benefit for the ols or lasso-based first stage fits.
 
 ``` r
-round(stacking_fit$weights$D1_XZ, 4)
-#>       nnls1
-#> [1,] 0.7000
-#> [2,] 0.0000
-#> [3,] 0.2925
-#> [4,] 0.0075
+diagnostics(stacking_fit)
+#> Stacking diagnostics: Flexible Partially Linear IV Model 
+#> Obs: 329509 
+#> 
+#>   y_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 0.4489 0.0258            1
+#> 
+#>   D1_X:
+#>    learner   mspe     r2 weight_nnls1
+#>  learner_1 10.187 0.0538            1
+#> 
+#>   D1_XZ:
+#>    learner    mspe     r2 weight_nnls1
+#>  learner_1 10.1851 0.0540       0.5874
+#>  learner_2 10.2699 0.0461       0.0000
+#>  learner_3 10.1852 0.0540       0.4126
+#>  learner_4 10.2673 0.0464       0.0000
+#>      nnls1 10.1850 0.0540           NA
+#> 
+#> Note: Ensemble MSPE and R2 for short-stacking rely on full-sample weights
+#>        and represent in-sample fit over cross-fitted base predictions.
 ```
 
 ## References

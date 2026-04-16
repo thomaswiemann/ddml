@@ -1,4 +1,4 @@
-# Predictions using Short-Stacking.
+# Predictions using Short-Stacking
 
 Predictions using short-stacking.
 
@@ -8,17 +8,15 @@ Predictions using short-stacking.
 shortstacking(
   y,
   X,
-  Z = NULL,
   learners,
   sample_folds = 2,
   ensemble_type = "average",
   custom_ensemble_weights = NULL,
-  compute_insample_predictions = FALSE,
+  cluster_variable = seq_along(y),
   subsamples = NULL,
   silent = FALSE,
-  progress = NULL,
   auxiliary_X = NULL,
-  shortstack_y = y
+  parallel = NULL
 )
 ```
 
@@ -32,39 +30,21 @@ shortstacking(
 
   A (sparse) matrix of predictive variables.
 
-- Z:
-
-  Optional additional (sparse) matrix of predictive variables.
-
 - learners:
 
-  May take one of two forms, depending on whether a single learner or
-  stacking with multiple learners is used for estimation of the
-  predictor. If a single learner is used, `learners` is a list with two
-  named elements:
+  `learners` is a list of lists, each containing three named elements:
 
   - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
   - `args` Optional arguments to be passed to `what`.
 
-  If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
-
-  - `fun` The base learner function. The function must be such that it
-    predicts a named input `y` using a named input `X`.
-
-  - `args` Optional arguments to be passed to `fun`.
-
   - `assign_X` An optional vector of column indices corresponding to
-    predictive variables in `X` that are passed to the base learner.
-
-  - `assign_Z` An optional vector of column indices corresponding to
-    predictive in `Z` that are passed to the base learner.
+    variables in `X` that are passed to the base learner.
 
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` (and/or `assign_Z`) results in
-  inclusion of all variables in `X` (and/or `Z`).
+  in `what`. Omission of `assign_X` results in inclusion of all
+  predictive variables in `X`.
 
 - sample_folds:
 
@@ -96,9 +76,9 @@ shortstacking(
   column names are used to name the estimation results corresponding the
   custom ensemble specification.
 
-- compute_insample_predictions:
+- cluster_variable:
 
-  Indicator equal to 1 if in-sample predictions should also be computed.
+  A vector of cluster indices.
 
 - subsamples:
 
@@ -108,25 +88,35 @@ shortstacking(
 
   Boolean to silence estimation updates.
 
-- progress:
-
-  String to print before learner and cv fold progress.
-
 - auxiliary_X:
 
   An optional list of matrices of length `sample_folds`, each containing
   additional observations to calculate predictions for.
 
-- shortstack_y:
+- parallel:
 
-  Optional vector of the outcome variable to form short-stacking
-  predictions for. Base learners are always trained on `y`.
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
 
 ## Value
 
 `shortstack` returns a list containing the following components:
 
-- `oos_fitted`:
+- `cf_fitted`:
 
   A matrix of out-of-sample predictions, each column corresponding to an
   ensemble type (in chronological order).
@@ -136,25 +126,29 @@ shortstacking(
   An array, providing the weight assigned to each base learner (in
   chronological order) by the ensemble procedures.
 
-- `is_fitted`:
+- `mspe`:
 
-  When `compute_insample_predictions = T`. a list of matrices with
-  in-sample predictions by sample fold.
+  A numeric vector of per-learner out-of-sample MSPEs, computed from
+  cross-fitted residuals.
+
+- `r2`:
+
+  A numeric vector of per-learner out-of-sample R-squared values.
 
 - `auxiliary_fitted`:
 
   When `auxiliary_X` is not `NULL`, a list of matrices with additional
   predictions.
 
-- `oos_fitted_bylearner`:
+- `cf_fitted_bylearner`:
 
   A matrix of out-of-sample predictions, each column corresponding to a
   base learner (in chronological order).
 
-- `is_fitted_bylearner`:
+- `cf_resid_bylearner`:
 
-  When `compute_insample_predictions = T`, a list of matrices with
-  in-sample predictions by sample fold.
+  A matrix of per-learner out-of-sample residuals used for weight
+  estimation.
 
 - `auxiliary_fitted_bylearner`:
 
@@ -177,7 +171,11 @@ Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
 
 Other utilities:
 [`crosspred()`](https://www.thomaswiemann.com/ddml/reference/crosspred.md),
-[`crossval()`](https://www.thomaswiemann.com/ddml/reference/crossval.md)
+[`crossval()`](https://www.thomaswiemann.com/ddml/reference/crossval.md),
+[`ddml()`](https://www.thomaswiemann.com/ddml/reference/ddml.md),
+[`diagnostics()`](https://www.thomaswiemann.com/ddml/reference/diagnostics.md),
+[`ensemble()`](https://www.thomaswiemann.com/ddml/reference/ensemble.md),
+[`ensemble_weights()`](https://www.thomaswiemann.com/ddml/reference/ensemble_weights.md)
 
 ## Examples
 
@@ -192,15 +190,15 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #     learner are also calculated.
 shortstack_res <- shortstacking(y, X,
-                                learners = list(list(fun = ols),
-                                                list(fun = mdl_glmnet)),
+                                learners = list(list(what = ols),
+                                                list(what = mdl_glmnet)),
                                 ensemble_type = c("average",
                                                   "nnls1",
                                                   "singlebest"),
                                 sample_folds = 2,
                                 silent = TRUE)
-dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
+dim(shortstack_res$cf_fitted) # = length(y) by length(ensemble_type)
 #> [1] 5000    3
-dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
+dim(shortstack_res$cf_fitted_bylearner) # = length(y) by length(learners)
 #> [1] 5000    2
 ```

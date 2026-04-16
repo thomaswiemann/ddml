@@ -1,6 +1,6 @@
-# Estimators of Average Treatment Effects.
+# Estimator for the Average Treatment Effect
 
-Estimators of the average treatment effect and the average treatment
+Estimator for the average treatment effect and the average treatment
 effect on the treated.
 
 ## Usage
@@ -19,10 +19,14 @@ ddml_ate(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples_byD = NULL,
-  cv_subsamples_byD = NULL,
+  stratify = TRUE,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 
 ddml_att(
@@ -38,10 +42,14 @@ ddml_att(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples_byD = NULL,
-  cv_subsamples_byD = NULL,
+  stratify = TRUE,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 ```
 
@@ -72,19 +80,19 @@ ddml_att(
   - `args` Optional arguments to be passed to `what`.
 
   If stacking with multiple learners is used, `learners` is a list of
-  lists, each containing four named elements:
+  lists, each containing three named elements:
 
-  - `fun` The base learner function. The function must be such that it
+  - `what` The base learner function. The function must be such that it
     predicts a named input `y` using a named input `X`.
 
-  - `args` Optional arguments to be passed to `fun`.
+  - `args` Optional arguments to be passed to `what`.
 
   - `assign_X` An optional vector of column indices corresponding to
     control variables in `X` that are passed to the base learner.
 
   Omission of the `args` element results in default arguments being used
-  in `fun`. Omission of `assign_X` results in inclusion of all variables
-  in `X`.
+  in `what`. Omission of `assign_X` results in inclusion of all
+  variables in `X`.
 
 - learners_DX:
 
@@ -140,17 +148,10 @@ ddml_att(
 
   A vector of cluster indices.
 
-- subsamples_byD:
+- stratify:
 
-  List of two lists corresponding to the two treatment levels. Each list
-  contains vectors with sample indices for cross-fitting.
-
-- cv_subsamples_byD:
-
-  List of two lists, each corresponding to one of the two treatment
-  levels. Each of the two lists contains lists, each corresponding to a
-  subsample and contains vectors with subsample indices for
-  cross-validation.
+  Boolean for stratified cross-fitting: if `TRUE`, subsamples are
+  constructed to be balanced across treatment levels.
 
 - trim:
 
@@ -161,86 +162,112 @@ ddml_att(
 
   Boolean to silence estimation updates.
 
+- parallel:
+
+  An optional named list with parallel processing options. When `NULL`
+  (the default), computation is sequential. Supported fields:
+
+  `cores`
+
+  :   Number of cores to use.
+
+  `export`
+
+  :   Character vector of object names to export to parallel workers
+      (for custom learners that reference global objects).
+
+  `packages`
+
+  :   Character vector of additional package names to load on workers
+      (for custom learners that use packages not imported by `ddml`).
+
+- fitted:
+
+  An optional named list of per-equation cross-fitted predictions,
+  typically obtained from a previous fit via `fit$fitted`. When supplied
+  (together with `splits`), base learners are not re-fitted; only
+  ensemble weights are recomputed. This allows fast re-estimation with a
+  different `ensemble_type`. See
+  [`ddml_plm`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+  for an example.
+
+- splits:
+
+  An optional list of sample split objects. For `ddml_ate`/`ddml_att`,
+  recommended keys are `subsamples`, `subsamples_byD`, `cv_subsamples`,
+  and `cv_subsamples_byD`.
+
+- save_crossval:
+
+  Logical indicating whether to store the inner cross-validation
+  residuals used for ensemble weight computation. Default `TRUE`. When
+  `TRUE`, subsequent pass-through calls with data-driven ensembles
+  (e.g., `"nnls"`) reproduce per-fold weights exactly. Set to `FALSE` to
+  reduce object size at the cost of approximate weight recomputation.
+
+- ...:
+
+  Additional arguments passed to internal methods.
+
 ## Value
 
-`ddml_ate` and `ddml_att` return an object of S3 class `ddml_ate` and
-`ddml_att`, respectively. An object of class `ddml_ate` or `ddml_att` is
-a list containing the following components:
-
-- `ate` / `att`:
-
-  A vector with the average treatment effect / average treatment effect
-  on the treated estimates.
-
-- `weights`:
-
-  A list of matrices, providing the weight assigned to each base learner
-  (in chronological order) by the ensemble procedure.
-
-- `mspe`:
-
-  A list of matrices, providing the MSPE of each base learner (in
-  chronological order) computed by the cross-validation step in the
-  ensemble construction.
-
-- `psi_a`, `psi_b`:
-
-  Matrices needed for the computation of scores. Used in
-  [`summary.ddml_ate()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md)
-  or
-  [`summary.ddml_att()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md).
-
-- `oos_pred`:
-
-  List of matrices, providing the reduced form predicted values.
-
-- `learners`,`learners_DX`,`cluster_variable`,
-  `subsamples_D0`,`subsamples_D1`,
-  `cv_subsamples_list_D0`,`cv_subsamples_list_D1`, `ensemble_type`:
-
-  Pass-through of selected user-provided arguments. See above.
+`ddml_ate` and `ddml_att` return objects of S3 class
+`ddml_ate`/`ddml_att` and `ddml`. See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for the common output structure. Additional pass-through fields:
+`learners`, `learners_DX`.
 
 ## Details
 
-`ddml_ate` and `ddml_att` provide double/debiased machine learning
-estimators for the average treatment effect and the average treatment
-effect on the treated, respectively, in the interactive model given by
+**Parameter of Interest:** `ddml_ate` and `ddml_att` provide
+Double/Debiased Machine Learning estimators for the average treatment
+effect and the average treatment effect on the treated, respectively.
+Under conditional unconfoundedness and overlap, the parameters are
+identified by the following reduced form parameters:
 
-\\Y = g_0(D, X) + U,\\
+\$\$\theta_0^{\textrm{ATE}} = E\[E\[Y\|D=1, X\] - E\[Y\|D=0, X\]\]\$\$
 
-where \\(Y, D, X, U)\\ is a random vector such that
-\\\operatorname{supp} D = \\0,1\\\\, \\E\[U\vert D, X\] = 0\\, and
-\\\Pr(D=1\vert X) \in (0, 1)\\ with probability 1, and \\g_0\\ is an
-unknown nuisance function.
+and the average treatment effect on the treated (ATT) is defined as
 
-In this model, the average treatment effect is defined as
+\$\$\theta_0^{\textrm{ATT}} = E\[Y\|D=1\] - E\[E\[Y\|D=0, X\]\|D =
+1\].\$\$
 
-\\\theta_0^{\textrm{ATE}} \equiv E\[g_0(1, X) - g_0(0, X)\]\\.
+where \\W \equiv (Y, D, X)\\ is the observed random vector.
 
-and the average treatment effect on the treated is defined as
+**Neyman Orthogonal Score:** The Neyman orthogonal scores are:
 
-\\\theta_0^{\textrm{ATT}} \equiv E\[g_0(1, X) - g_0(0, X)\vert D =
-1\]\\.
+\$\$m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{r(X)} -
+\frac{(1-D)(Y-\ell_0(X))}{1-r(X)} + \ell_1(X) - \ell_0(X) - \theta\$\$
 
-## References
+\$\$m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} -
+\frac{r(X)(1-D)(Y-\ell_0(X))}{\pi(1-r(X))} - \frac{D}{\pi}\theta\$\$
 
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
+where the nuisance parameters are \\\eta = (\ell_0, \ell_1, r, \pi)\\
+taking true values \\\ell\_{d,0}(X) = E\[Y\|D=d, X\]\\, \\r_0(X) =
+\Pr(D=1\|X)\\, and \\\pi_0 = \Pr(D=1)\\.
 
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2),
-241-259.
+**Jacobian:**
+
+\$\$J^{\textrm{ATE}} = -1\$\$
+
+\$\$J^{\textrm{ATT}} = -1\$\$
+
+See
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md)
+for how the influence function and inference are derived from these
+components.
 
 ## See also
 
-[`summary.ddml_ate()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md),
-[`summary.ddml_att()`](https://www.thomaswiemann.com/ddml/reference/summary.ddml_ate.md)
-
-Other ddml:
+Other ddml estimators:
+[`ddml-intro`](https://www.thomaswiemann.com/ddml/reference/ddml-intro.md),
+[`ddml_apo()`](https://www.thomaswiemann.com/ddml/reference/ddml_apo.md),
+[`ddml_attgt()`](https://www.thomaswiemann.com/ddml/reference/ddml_attgt.md),
 [`ddml_fpliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_fpliv.md),
 [`ddml_late()`](https://www.thomaswiemann.com/ddml/reference/ddml_late.md),
 [`ddml_pliv()`](https://www.thomaswiemann.com/ddml/reference/ddml_pliv.md),
-[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md)
+[`ddml_plm()`](https://www.thomaswiemann.com/ddml/reference/ddml_plm.md),
+[`ddml_policy()`](https://www.thomaswiemann.com/ddml/reference/ddml_policy.md)
 
 ## Examples
 
@@ -256,12 +283,14 @@ ate_fit <- ddml_ate(y, D, X,
                                     args = list(alpha = 0)),
                     sample_folds = 2,
                     silent = TRUE)
-#> Warning: : 1 propensity scores were trimmed.
 summary(ate_fit)
-#> ATE estimation results: 
-#>  
-#>   Estimate Std. Error t value Pr(>|t|)
-#>     -0.141     0.0152   -9.28 1.65e-20
+#> DDML estimation: Average Treatment Effect 
+#> Obs: 5000   Folds: 2
+#> 
+#>     Estimate Std. Error z value Pr(>|z|)    
+#> ATE  -0.1422     0.0152   -9.35   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 # Estimate the average treatment effect using short-stacking with base
 #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
@@ -269,22 +298,40 @@ summary(ate_fit)
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 ate_fit <- ddml_ate(y, D, X,
-                    learners = list(list(fun = ols),
-                                    list(fun = mdl_glmnet),
-                                    list(fun = mdl_glmnet,
+                    learners = list(list(what = ols),
+                                    list(what = mdl_glmnet),
+                                    list(what = mdl_glmnet,
                                          args = list(alpha = 0))),
                     ensemble_type = 'nnls',
                     custom_ensemble_weights = weights_everylearner,
                     shortstack = TRUE,
                     sample_folds = 2,
                     silent = TRUE)
-#> Warning: nnls: 1 propensity scores were trimmed.
 summary(ate_fit)
-#> ATE estimation results: 
-#>  
-#>           Estimate Std. Error t value Pr(>|t|)
-#> nnls        -0.143     0.0153   -9.36 7.96e-21
-#> mdl:ols     -0.143     0.0155   -9.22 2.92e-20
-#> mdl:lasso   -0.143     0.0153   -9.34 1.01e-20
-#> mdl:ridge   -0.143     0.0153   -9.39 6.16e-21
+#> DDML estimation: Average Treatment Effect 
+#> Obs: 5000   Folds: 2  Stacking: short-stack
+#> 
+#> Ensemble type: nnls
+#>     Estimate Std. Error z value Pr(>|z|)    
+#> ATE  -0.1431     0.0152   -9.39   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+#> Ensemble type: mdl:ols
+#>     Estimate Std. Error z value Pr(>|z|)    
+#> ATE  -0.1427     0.0153   -9.31   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+#> Ensemble type: mdl:lasso
+#>     Estimate Std. Error z value Pr(>|z|)    
+#> ATE  -0.1429     0.0153   -9.37   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+#> Ensemble type: mdl:ridge
+#>     Estimate Std. Error z value Pr(>|z|)    
+#> ATE  -0.1433     0.0152   -9.46   <2e-16 ***
+#> ---
+#> Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
