@@ -3,7 +3,7 @@ title: "Neyman Orthogonality in Linear Regression"
 description: "From Frisch-Waugh-Lovell to DML: understanding why score choice determines valid inference."
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Why Neyman Orthogonality Matters}
+  %\VignetteIndexEntry{Neyman Orthogonality in Linear Regression}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -32,7 +32,7 @@ The article covers:
 1. Setting up the two procedures and comparing their output to full OLS
 2. Deriving how first-step estimation error propagates---or
    doesn't---into inference about $\theta_0$
-4. Introducing Neyman orthogonality and its implications
+3. Introducing Neyman orthogonality and its implications
 5. Discussing the bridge from OLS to nonparametric/ML first steps and ``ddml_plm``
 
 
@@ -170,16 +170,15 @@ is the sample Jacobian. Both procedures share the same Jacobian
 $\hat{J} \approx -E[\tilde{D}^2]$, so the SE difference traces
 entirely to the squared scores in the numerator. At $\theta_0$,
 Procedure A's score residual $Y_i - \tilde{D}_i\theta_0$ still
-contains the confounders $X_i\beta_0$, inflating the numerator.
+contains terms involving $X_i$, inflating the numerator.
 Procedure B's score residual
 $\tilde{Y}_i - \tilde{D}_i\theta_0 = U_i$ contains only the
 structural error---hence its smaller SE.
 
-Whether this plug-in standard error is *valid* depends on whether
-ignoring nuisance estimation is asymptotically justified. A
-standard Taylor expansion of the sample moment around the true
-parameters $(\theta_0, \eta_0)$ reveals when it is (see, e.g.,
-Ahrens et al., 2026):
+Whether the asymptotic distribution of $\hat\theta$ depends on
+$\hat\eta$ can be assessed via a standard Taylor expansion of the
+sample moment around the true parameters $(\theta_0, \eta_0)$
+(see, e.g., Ahrens et al., 2026):
 
 $$\sqrt{n}(\hat\theta - \theta_0)
   = -J_\theta^{-1}\biggl[
@@ -190,9 +189,9 @@ $$\sqrt{n}(\hat\theta - \theta_0)
   \biggr]$$
 
 plus higher order terms. The term $(\star)$ captures the first-order
-impact of estimating the nuisance parameter $\eta_0$. Whether
-$(\star)$ vanishes determines whether treating $\hat\eta$ as known
-is justified.
+impact of estimating the nuisance parameter $\eta_0$. If $(\star)$
+vanishes, inference about $\theta_0$ can proceed as if $\eta_0$
+were known.
 
 ## Procedure A: $(\star)$ Does Not Vanish
 
@@ -280,13 +279,16 @@ computed by treating $\hat\eta_D$ as known is incorrect.
 
 An important practical implication is that estimators based on Neyman
 orthogonal scores yield inference about $\theta_0$ that does not
-depend on the statistical properties of the nuisance estimator
-$\hat\eta$. This is useful even in
-classical low-dimensional settings, where it avoids cumbersome variance
-adjustments to account for first-step estimation. It becomes
-particularly important when modern flexible methods---including machine
-learning---are used for nuisance estimation, as the statistical
-properties of these methods are still under active development.
+depend on the detailed statistical properties of the nuisance
+estimator $\hat\eta$. This is useful even in
+classical low-dimensional settings, where it avoids cumbersome
+variance adjustments to account for first-step estimation. It
+becomes particularly important when modern flexible
+methods---including machine learning---are used for nuisance
+estimation, as only coarse convergence rates are currently available
+for many promising ML methods. By alleviating the first-order impact
+of nuisance estimation, Neyman orthogonality makes it possible to
+combine such methods with standard asymptotic approximations.
 
 
 # From OLS to Machine Learning
@@ -313,7 +315,7 @@ $$m_{PLM}(W;\, \theta, \eta) =
   [(Y - \ell(X)) - \theta(D - r(X))](D - r(X)),$$
 
 which is the flexible analog of Procedure B's partialling-out
-score. As in our linear example, a naive score that adjusts only $Y$
+score. As in our linear example, a naive score that adjusts only $D$
 (analogous to Procedure A) is not Neyman orthogonal and leads to
 invalid inference.
 
@@ -345,12 +347,6 @@ Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B,
 Newey W, Robins J (2018). "Double/debiased machine learning for
 treatment and structural parameters." The Econometrics Journal,
 21(1), C1-C68.
-
-Robinson P M (1988). "Root-N-Consistent Semiparametric Regression."
-Econometrica, 56(4), 931-954.
-
-Frisch R, Waugh F V (1933). "Partial Time Regressions as Compared
-with Individual Trends." Econometrica, 1(4), 387-401.
 
 Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E,
 Wiemann T (2025). "An Introduction to Double/Debiased Machine
