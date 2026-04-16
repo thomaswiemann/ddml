@@ -2,17 +2,17 @@
 % Please edit documentation in R/crossval.R
 \name{crossval}
 \alias{crossval}
-\title{Estimator of the Mean Squared Prediction Error using Cross-Validation.}
+\title{Estimator of the Mean Squared Prediction Error Using Cross-Validation}
 \usage{
 crossval(
   y,
   X,
-  Z = NULL,
   learners,
-  cv_folds = 5,
+  cv_folds = 10,
+  cluster_variable = seq_along(y),
   cv_subsamples = NULL,
   silent = FALSE,
-  progress = NULL
+  parallel = NULL
 )
 }
 \arguments{
@@ -20,51 +20,91 @@ crossval(
 
 \item{X}{A (sparse) matrix of predictive variables.}
 
-\item{Z}{Optional additional (sparse) matrix of predictive variables.}
-
-\item{learners}{\code{learners} is a list of lists, each containing four
+\item{learners}{\code{learners} is a list of lists, each containing three
 named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
+\item{\code{what} The base learner function. The function must be
 such that it predicts a named input \code{y} using a named input
 \code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{args} Optional arguments to be passed to \code{what}.}
 \item{\code{assign_X} An optional vector of column indices
 corresponding to variables in \code{X} that are passed to
 the base learner.}
-\item{\code{assign_Z} An optional vector of column indices
-corresponding to variables in \code{Z} that are passed to the
-base learner.}
 }
 Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
-results in inclusion of all predictive variables in \code{X} (and/or
-\code{Z}).}
+used in \code{what}. Omission of \code{assign_X}
+results in inclusion of all predictive variables in \code{X}.}
 
 \item{cv_folds}{Number of folds used for cross-validation.}
+
+\item{cluster_variable}{A vector of cluster indices.}
 
 \item{cv_subsamples}{List of vectors with sample indices for
 cross-validation.}
 
 \item{silent}{Boolean to silence estimation updates.}
 
-\item{progress}{String to print before learner and cv fold progress.}
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
 }
 \value{
 \code{crossval} returns a list containing the following components:
 \describe{
 \item{\code{mspe}}{A vector of MSPE estimates,
-each corresponding to a base learners (in chronological order).}
-\item{\code{oos_resid}}{A matrix of out-of-sample prediction errors,
-each column corresponding to a base learners (in chronological
+each corresponding to a base learner (in chronological
 order).}
-\item{\code{cv_subsamples}}{Pass-through of \code{cv_subsamples}.
-See above.}
+\item{\code{r2}}{A vector of cross-validated \eqn{R^2}
+values, each corresponding to a base learner (in
+chronological order).}
+\item{\code{cv_resid}}{A matrix of out-of-sample residuals,
+each column corresponding to a base learner (in
+chronological order).}
+\item{\code{cv_subsamples}}{Pass-through of
+\code{cv_subsamples}. See above.}
 }
 }
 \description{
 Estimator of the mean squared prediction error of
 different learners using cross-validation.
+}
+\details{
+\code{crossval} estimates the mean squared prediction error
+(MSPE) of \eqn{J} base learners via \eqn{K}-fold
+cross-validation. It is the inner workhorse of the stacking
+machinery used by \code{\link{ensemble_weights}} to determine
+ensemble weights.
+
+Given a generic conditional expectation function \eqn{f_0(\cdot)}
+(e.g., \eqn{E[Y\vert X]}, \eqn{E[D\vert X]}), let
+\eqn{\{I_1, \ldots, I_K\}} be a \eqn{K}-fold partition of
+\eqn{\{1, \ldots, n\}} and let \eqn{\hat{f}_j^{(-k)}} denote
+learner \eqn{j} trained on all observations outside fold
+\eqn{I_k}. The out-of-sample residual for observation
+\eqn{i \in I_k} is
+
+\eqn{\hat{e}_{i,j} = y_i - \hat{f}_j^{(-k)}(X_i).}
+
+Since every observation belongs to exactly one fold, this yields a
+complete \eqn{n \times J} residual matrix. The cross-validated
+MSPE for learner \eqn{j} is
+
+\eqn{\widehat{\textrm{MSPE}}_j = n^{-1} \sum_{i=1}^{n} \hat{e}_{i,j}^2,}
+
+and the cross-validated \eqn{R^2} is
+
+\eqn{\hat{R}^2_j = 1 - \widehat{\textrm{MSPE}}_j \,/\, \hat{\sigma}^2_y,}
+
+where \eqn{\hat{\sigma}^2_y} is the sample variance of \eqn{y}.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -73,9 +113,9 @@ X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
 
 # Compare ols, lasso, and ridge using 4-fold cross-validation
 cv_res <- crossval(y, X,
-                   learners = list(list(fun = ols),
-                                   list(fun = mdl_glmnet),
-                                   list(fun = mdl_glmnet,
+                   learners = list(list(what = ols),
+                                   list(what = mdl_glmnet),
+                                   list(what = mdl_glmnet,
                                         args = list(alpha = 0))),
                    cv_folds = 4,
                    silent = TRUE)
@@ -84,6 +124,10 @@ cv_res$mspe
 \seealso{
 Other utilities: 
 \code{\link{crosspred}()},
+\code{\link{ddml}()},
+\code{\link{diagnostics}()},
+\code{\link{ensemble}()},
+\code{\link{ensemble_weights}()},
 \code{\link{shortstacking}()}
 }
 \concept{utilities}

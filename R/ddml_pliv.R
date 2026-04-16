@@ -1,51 +1,35 @@
-#' Estimator for the Partially Linear IV Model.
+#' Estimator for the Partially Linear IV Coefficient
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml_pliv()], [AER::ivreg()]
+#' @description Estimator for the partially linear IV coefficient.
 #'
-#' @description Estimator for the partially linear IV model.
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased 
+#'     Machine Learning estimator for the partially linear instrumental variable 
+#'     (IV) coefficient \eqn{\theta_0}, defined by the partially linear IV model:
 #'
-#' @details \code{ddml_pliv} provides a double/debiased machine learning
-#'     estimator for the parameter of interest \eqn{\theta_0} in the partially
-#'     linear IV model given by
+#' \deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[Z\varepsilon] = 0, \quad E[\varepsilon|X] = 0,}
 #'
-#' \eqn{Y = \theta_0D + g_0(X) + U,}
+#' where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+#'     \eqn{E[Cov(D, Z|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
-#'     \eqn{g_0} is an unknown nuisance function.
+#' \strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
 #'
-#' @inheritParams ddml_plm
+#' \deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r_D(X))](Z - r_Z(X))}
+#'
+#' where the nuisance parameters are \eqn{\eta = (\ell, r_D, r_Z)} taking
+#'     true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and \eqn{r_{Z,0}(X) = E[Z|X]}.
+#'
+#' \strong{Jacobian:}
+#'
+#' \deqn{J = -E[(D - r_D(X))(Z - r_Z(X))^\top]}
+#'
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
+#'
+#' @inheritParams ddml-intro
 #' @param Z A matrix of instruments.
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation functions.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing four named elements:
-#'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to control variables in \code{X} that are passed to
-#'             the base learner.}
-#'         \item{\code{assign_Z} An optional vector of column indices
-#'             corresponding to instruments in \code{Z} that are passed to the
-#'             base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
-#'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
 #' @param learners_DX,learners_ZX Optional arguments to allow for different
 #'     base learners for estimation of \eqn{E[D|X]}, \eqn{E[Z|X]}. Setup is
 #'     identical to \code{learners}.
@@ -58,39 +42,11 @@
 #'     have the same number of columns.
 #'
 #' @return \code{ddml_pliv} returns an object of S3 class
-#'     \code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
-#'         \item{\code{weights}}{A list of matrices, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner (in chronological order) computed by the
-#'             cross-validation step in the ensemble construction.}
-#'         \item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
-#'             regression of \eqn{Y - \hat{E}[Y\vert X]} on
-#'             \eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as
-#'             the instrument. See also [AER::ivreg()] for details.}
-#'         \item{\code{learners},\code{learners_DX},\code{learners_ZX},
-#'             \code{cluster_variable}, \code{subsamples},
-#'             \code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
-#'             selected user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_pliv} and \code{ddml}. See \code{\link{ddml-intro}}
+#'     for the common output structure. Additional pass-through
+#'     fields: \code{learners}, \code{learners_DX},
+#'     \code{learners_ZX}.
 #' @export
-#'
-#' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-#'
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
-#' Kleiber C, Zeileis A (2008). Applied Econometrics with R. Springer-Verlag,
-#'     New York.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -118,170 +74,203 @@ ddml_pliv <- function(y, D, Z, X,
                       custom_ensemble_weights_DX = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
-                      subsamples = NULL,
-                      cv_subsamples_list = NULL,
-                      silent = FALSE) {
-  # Data parameters
-  nobs <- length(y)
-  nlearners <- length(learners)
-  ncustom <- ncol(custom_ensemble_weights)
-  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
+                      silent = FALSE,
+                      parallel = NULL,
+                      fitted = NULL,
+                      splits = NULL,
+                      save_crossval = TRUE,
+                      ...) {
+  cl <- match.call()
 
-  # Check for multivariate endogenous variables
+  # Preliminaries --------------------------------------------------------------
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_pliv", list(
+    y_X = "E[Y|X]"))
+
+  validate_inputs(y = y, D = D, X = X, Z = Z,
+                  learners = learners,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
+                  ensemble_type = ensemble_type,
+                  cluster_variable = cluster_variable)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DX,
+                          learners_DX)
+  validate_custom_weights(custom_ensemble_weights_ZX,
+                          learners_ZX)
+
+  nobs <- length(y)
   D <- as.matrix(D)
   nD <- ncol(D)
-
-  # Check for multivariate instruments
   Z <- as.matrix(Z)
   nZ <- ncol(Z)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples = subsamples,
-                                   cv_subsamples_list = cv_subsamples_list)
+  validate_fitted_splits_pair(fitted, splits)
 
-  # Compute estimates of E[y|X]
+  indxs <- get_sample_splits(
+    cluster_variable = cluster_variable,
+    sample_folds = sample_folds,
+    cv_folds = cv_folds,
+    subsamples = splits[[1]]$subsamples,
+    cv_subsamples = splits[[1]]$cv_subsamples)
+  check_subsamples(indxs$subsamples, NULL, stratify = FALSE)
+
+  t0 <- proc.time()[3]
+  announce_start(messages, parallel, silent)
+
+  # Reduced-form estimation ----------------------------------------------------
+
+  # E[Y|X]
   y_X_res <- get_CEF(y, X,
-                     learners = learners, ensemble_type = ensemble_type,
+                     learners = learners,
+                     ensemble_type = ensemble_type,
                      shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                     silent = silent, progress = "E[Y|X]: ")
+                     custom_ensemble_weights =
+                       custom_ensemble_weights,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
+                     silent = silent, label = messages$y_X,
+                     parallel = parallel,
+                     fitted = fitted$y_X)
 
-  # Compute estimates of E[Z|X], loop through instruments
-  Z_X_res_list <- list()
-  for (k in 1:nZ) {
-    Z_X_res_list[[k]] <- get_CEF(Z[, k, drop = F], X,
-                                 learners = learners_ZX,
-                                 ensemble_type = ensemble_type,
-                                 shortstack = shortstack,
-                                 custom_ensemble_weights =
-                                   custom_ensemble_weights_ZX,
-                                 subsamples = cf_indxs$subsamples,
-                                 cv_subsamples_list =
-                                   cf_indxs$cv_subsamples_list,
-                                 silent = silent,
-                                 progress = paste0("E[Z", k, "|X]: "))
+  # E[Z|X]
+  Z_X_res_list <- vector("list", nZ)
+  for (k in seq_len(nZ)) {
+    Z_X_res_list[[k]] <- get_CEF(
+      Z[, k, drop = FALSE], X,
+      learners = learners_ZX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_ZX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      silent = silent,
+      label = paste0("E[Z", k, "|X]"),
+      parallel = parallel,
+      fitted = fitted[[paste0("Z", k, "_X")]])
   }#FOR
 
-  # Compute estimates of E[D|X], loop through endogenous variables
-  D_X_res_list <- list()
-  for (k in 1:nD) {
-    D_X_res_list[[k]] <- get_CEF(D[, k, drop = F], X,
-                                 learners = learners_DX,
-                                 ensemble_type = ensemble_type,
-                                 shortstack = shortstack,
-                                 custom_ensemble_weights =
-                                   custom_ensemble_weights_DX,
-                                 subsamples = cf_indxs$subsamples,
-                                 cv_subsamples_list =
-                                   cf_indxs$cv_subsamples_list,
-                                 silent = silent,
-                                 progress = paste0("E[D", k, "|X]: "))
+  # E[D|X]
+  D_X_res_list <- vector("list", nD)
+  for (k in seq_len(nD)) {
+    D_X_res_list[[k]] <- get_CEF(
+      D[, k, drop = FALSE], X,
+      learners = learners_DX,
+      ensemble_type = ensemble_type,
+      shortstack = shortstack,
+      custom_ensemble_weights = custom_ensemble_weights_DX,
+      subsamples = indxs$subsamples,
+      cv_subsamples = indxs$cv_subsamples,
+      silent = silent,
+      label = paste0("E[D", k, "|X]"),
+      parallel = parallel,
+      fitted = fitted[[paste0("D", k, "_X")]])
   }#FOR
 
-  # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_res$weights)[[2]]
-  nensb <- length(ensemble_type)
+  ensemble_type <- y_X_res$ensemble_type
+  nensb <- if (is.null(ensemble_type)) 1L
+    else length(ensemble_type)
 
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  # Target parameter & influence function --------------------------------------
 
-  # If a single ensemble is calculated, no loops are required.
-  if (!multiple_ensembles) {
+  coef <- matrix(0, nD + 1, nensb)
+  scores <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  J <- array(NA_real_, dim = c(nD + 1, nD + 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, nD + 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, nD + 1, nD + 1, nensb))
+  for (j in seq_len(nensb)) {
+    y_r <- y - cbind(y_X_res$cf_fitted)[, j]
+    D_r <- D - get_cf_fitted(D_X_res_list, j)
+    V_r <- Z - get_cf_fitted(Z_X_res_list, j)
 
-    # Residualize
-    y_r <- y - y_X_res$oos_fitted
-    D_r <- D - get_oosfitted(D_X_res_list)
-    V_r <- Z - get_oosfitted(Z_X_res_list)
+    D_r_mat <- as.matrix(D_r)
+    V_r_mat <- as.matrix(V_r)
+    
+    D_fit <- cbind(D_r_mat, 1)
+    V_fit <- cbind(V_r_mat, 1)
+    
+    # 2SLS
+    pi_hat <- qr.solve(V_fit, D_fit)
+    D_hat <- V_fit %*% pi_hat
+    coef_iv_j <- as.vector(qr.solve(D_hat, y_r))
+    coef[, j] <- coef_iv_j
 
-    # Compute IV estimate with constructed variables
-    iv_fit <- AER::ivreg(y_r ~ D_r | V_r)
+    X_hat <- D_hat
+    X_full <- D_fit
+    e_j <- as.vector(y_r - X_full %*% coef_iv_j)
+    
+    scores[, , j] <- X_hat * e_j
+    J[, , j] <- -crossprod(X_hat, X_full) / nobs
 
-    # Organize complementary ensemble output
-    coef <- stats::coef(iv_fit)[-1]
-  }#IF
+    J_inv <- csolve(matrix(J[, , j], nD + 1, nD + 1))
+    inf_func[, , j] <- -matrix(scores[, , j], nobs, nD + 1) %*% t(J_inv)
+    
+    U <- X_hat %*% t(J_inv)
+    dinf_dtheta[, , , j] <- sapply(seq_len(nD + 1), function(k) {
+      X_full[, k] * U
+    }, simplify = "array")
+  }#FOR
 
-  # If multiple ensembles are calculated, iterate over each type.
-  if (multiple_ensembles) {
-    # Iterate over ensemble type. Compute DDML IV estimate for each.
-    coef <- matrix(0, nD, nensb)
-    iv_fit <- rep(list(1), nensb)
-    nlearners <- length(learners)
-    nlearners_DX <- length(learners_DX); nlearners_ZX <- length(learners_ZX)
 
-    # Compute coefficients for each ensemble
-    for (j in 1:nensb) {
-      # Residualize
-      y_r <- y - y_X_res$oos_fitted[, j]
-      D_r <- D - get_oosfitted(D_X_res_list, j)
-      V_r <- Z - get_oosfitted(Z_X_res_list, j)
+  cn_weights <- dimnames(y_X_res$weights)[[2]]
+  colnames(coef) <- if (is.null(cn_weights)) ensemble_type else cn_weights
+  cn_j <- colnames(D)
+  if (is.null(cn_j)) cn_j <- paste0("D", seq_len(nD))
+  rownames(coef) <- c(cn_j, "(Intercept)")
+  coef_names <- rownames(coef)
 
-      # Compute IV estimate with constructed variables
-      iv_fit_j <- AER::ivreg(y_r ~ D_r | V_r)
+  # Output ---------------------------------------------------------------------
 
-      # Organize complementary ensemble output
-      coef[, j] <- stats::coef(iv_fit_j)[-1]
-      iv_fit[[j]] <- iv_fit_j
-    }#FOR
-    # Assign names for more legible output
-    colnames(coef) <- names(iv_fit) <- ensemble_type
-    rownames(coef) <- names(iv_fit_j$coefficients)[-1]
-  }#IF
-
-  # Store complementary ensemble output
-  weights <- list(y_X = y_X_res$weights)
+  ensemble_weights <- list(y_X = y_X_res$weights)
   mspe <- list(y_X = y_X_res$mspe)
-  for (k in 1:nD){
-    weights[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$weights
-    mspe[[paste0("D", k, "_X")]] <- D_X_res_list[[k]]$mspe
+  r2 <- list(y_X = y_X_res$r2)
+  for (k in seq_len(nD)) {
+    eq <- paste0("D", k, "_X")
+    ensemble_weights[[eq]] <- D_X_res_list[[k]]$weights
+    mspe[[eq]] <- D_X_res_list[[k]]$mspe
+    r2[[eq]] <- D_X_res_list[[k]]$r2
   }#FOR
-  for (k in 1:nZ){
-    weights[[paste0("Z", k, "_X")]] <- Z_X_res_list[[k]]$weights
-    mspe[[paste0("Z", k, "_X")]] <- Z_X_res_list[[k]]$mspe
+  for (k in seq_len(nZ)) {
+    eq <- paste0("Z", k, "_X")
+    ensemble_weights[[eq]] <- Z_X_res_list[[k]]$weights
+    mspe[[eq]] <- Z_X_res_list[[k]]$mspe
+    r2[[eq]] <- Z_X_res_list[[k]]$r2
   }#FOR
 
-  # Organize output
-  ddml_fit <- list(coef = coef, weights = weights, mspe = mspe,
-                   learners = learners,
-                   learners_ZX = learners_ZX,
-                   learners_DX = learners_DX,
-                   iv_fit = iv_fit,
-                   cluster_variable = cluster_variable,
-                   subsamples = subsamples,
-                   cv_subsamples_list = cv_subsamples_list,
-                   ensemble_type = ensemble_type)
+  announce_finish(t0, messages, silent)
 
-  # Amend class and return
-  class(ddml_fit) <- "ddml_pliv"
-  return(ddml_fit)
+  ddml(
+    coefficients = coef,
+    ensemble_weights = ensemble_weights,
+    mspe = mspe,
+    r2 = r2,
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
+    scores = scores, J = J,
+    coef_names = coef_names,
+    estimator_name = "Partially Linear IV Model",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    cluster_variable = cluster_variable,
+    fitted = c(
+      list(y_X = build_fitted_entry(y_X_res, save_crossval)),
+      build_fitted_flat(D_X_res_list, save_crossval,
+                        "D", "_X"),
+      build_fitted_flat(Z_X_res_list, save_crossval,
+                        "Z", "_X")),
+    splits = stats::setNames(
+      rep(list(list(subsamples = indxs$subsamples,
+                    cv_subsamples = indxs$cv_subsamples)),
+          length(ensemble_weights)),
+      names(ensemble_weights)),
+    call = cl,
+    subclass = "ddml_pliv",
+    # ddml_pliv-specific fields
+    learners = learners,
+    learners_DX = learners_DX,
+    learners_ZX = learners_ZX
+  )
 }#DDML_PLIV
-
-#' @rdname summary.ddml_plm
-#'
-#' @export
-summary.ddml_pliv <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- "single base learner"
-  # Compute and print inference results
-  coefficients <- organize_inf_results(fit_obj_list = object$iv_fit,
-                                       ensemble_type = object$ensemble_type,
-                                       cluster_variable =
-                                         object$cluster_variable,
-                                       ...)
-  class(coefficients) <- c("summary.ddml_pliv", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_PLIV
-
-#' @rdname print.summary.ddml_plm
-#'
-#' @export
-print.summary.ddml_pliv <- function(x, digits = 3, ...) {
-  cat("PLIV estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_PLIV

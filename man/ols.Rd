@@ -2,7 +2,7 @@
 % Please edit documentation in R/ols.R
 \name{ols}
 \alias{ols}
-\title{Ordinary least squares.}
+\title{Ordinary Least Squares}
 \usage{
 ols(y, X, const = TRUE, w = NULL)
 }
@@ -35,6 +35,7 @@ ols_fit$coef
 }
 \seealso{
 Other ml_wrapper: 
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glm}()},
 \code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},

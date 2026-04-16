@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_xgboost}
 \alias{mdl_xgboost}
-\title{Wrapper for \code{\link[xgboost:xgboost]{xgboost::xgboost()}}.}
+\title{Wrapper for xgboost::xgboost()}
 \usage{
 mdl_xgboost(y, X, nrounds = 500, verbosity = 0, ...)
 }
@@ -38,12 +38,13 @@ class(xgboost_fit)
 \references{
 Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
 Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
-Discovery and Data Mining, 785–794.
+Discovery and Data Mining, 785-794.
 }
 \seealso{
 \code{\link[xgboost:xgboost]{xgboost::xgboost()}}
 
 Other ml_wrapper: 
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glm}()},
 \code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},

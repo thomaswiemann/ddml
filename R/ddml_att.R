@@ -11,135 +11,199 @@ ddml_att <- function(y, D, X,
                      custom_ensemble_weights = NULL,
                      custom_ensemble_weights_DX = custom_ensemble_weights,
                      cluster_variable = seq_along(y),
-                     subsamples_byD = NULL,
-                     cv_subsamples_byD = NULL,
+                     stratify = TRUE,
                      trim = 0.01,
-                     silent = FALSE) {
-  # Data parameters
+                     silent = FALSE,
+                     parallel = NULL,
+                     fitted = NULL,
+                     splits = NULL,
+                     save_crossval = TRUE,
+                     ...) {
+  cl <- match.call()
+
+  # Preliminaries --------------------------------------------------------------
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_att", list(
+    y_D0 = "E[Y|D=0,X]",
+    D_X = "E[D|X]",
+    D = "E[D]"))
+
+  validate_inputs(y = y, D = D, X = X, learners = learners,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
+                  ensemble_type = ensemble_type, trim = trim,
+                  cluster_variable = cluster_variable,
+                  require_binary_D = TRUE)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DX,
+                          learners_DX)
+
   nobs <- length(y)
-  is_D0 <- which(D == 0)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = D,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples_byD = subsamples_byD,
-                                   cv_subsamples_byD = cv_subsamples_byD)
+  validate_fitted_splits_pair(fitted, splits)
 
-  # Create tuple for extrapolated fitted values
-  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, D)
+  indxs <- get_sample_splits(
+    cluster_variable = cluster_variable,
+    sample_folds = sample_folds,
+    cv_folds = cv_folds,
+    D = D, stratify = stratify,
+    subsamples = splits$D_X$subsamples,
+    subsamples_byD = list(
+      splits$y_X_D0$subsamples,
+      splits$y_X_D1$subsamples),
+    cv_subsamples = splits$D_X$cv_subsamples,
+    cv_subsamples_byD = list(
+      splits$y_X_D0$cv_subsamples,
+      splits$y_X_D1$cv_subsamples))
+  check_subsamples(indxs$subsamples, indxs$subsamples_byD,
+                   stratify, D)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  t0 <- proc.time()[3]
+  announce_start(messages, parallel, silent)
 
-  # Compute estimates of E[y|D=0,X]
-  y_X_D0_res <- get_CEF(y[is_D0], X[is_D0, , drop = F],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[1]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
-                        silent = silent, progress = "E[Y|D=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+  # Reduced-form estimation ----------------------------------------------------
 
-  # Compute estimates of E[D|X]
+  # E[D|X]
   D_X_res <- get_CEF(D, X,
-                     learners = learners_DX, ensemble_type = ensemble_type,
+                     learners = learners_DX,
+                     ensemble_type = ensemble_type,
                      shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights_DX,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                     silent = silent, progress = "E[D|X]: ")
+                     custom_ensemble_weights =
+                       custom_ensemble_weights_DX,
+                     subsamples = indxs$subsamples,
+                     cv_subsamples = indxs$cv_subsamples,
+                     silent = silent, label = messages$D_X,
+                     parallel = parallel,
+                     fitted = fitted$D_X)
 
-  # Compute estimates of E[D] -- simple computation of averages here
+  # E[D] (unconditional treatment probability, cross-fitted)
   D_res <- get_CEF(D, matrix(1, nobs, 1),
-                   learners = list(what = ols),
+                   learners = list(what = ols,
+                                   args = list(const = FALSE)),
                    ensemble_type = "average",
                    shortstack = FALSE,
-                   cv_subsamples_list = NULL,
-                   subsamples = cf_indxs$subsamples,
-                   silent = TRUE)
+                   subsamples = indxs$subsamples,
+                   cv_subsamples = indxs$cv_subsamples,
+                   silent = silent, label = messages$D,
+                   fitted = fitted$D)
 
-  # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_D0_res$weights)[[2]]
-  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
+  # E[Y|D=0,X]
+  is_d0 <- which(D == 0)
+  y_X_D0_res <- get_CEF(y[is_d0], X[is_d0, , drop = FALSE],
+                         learners = learners,
+                         ensemble_type = ensemble_type,
+                         shortstack = shortstack,
+                         custom_ensemble_weights =
+                           custom_ensemble_weights,
+                         subsamples = indxs$subsamples_byD[[1]],
+                         cv_subsamples =
+                           indxs$cv_subsamples_byD[[1]],
+                         silent = silent,
+                         label = messages$y_D0,
+                         auxiliary_X = get_auxiliary_X(
+                           indxs$aux_indx[[1]], X),
+                         parallel = parallel,
+                         fitted = fitted$y_X_D0)
 
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  ensemble_type <- y_X_D0_res$ensemble_type
+  nensb <- if (is.null(ensemble_type)) 1L
+    else length(ensemble_type)
 
-  # Construct reduced form variables
-  g_X_D0<- extrapolate_CEF(D = D,
-                             CEF_res_byD = list(list(fit = y_X_D0_res, d = 0)),
-                             aux_indxs = aux_indxs)[, , 1]
-  m_X <- D_X_res$oos_fitted
+  # Score construction ---------------------------------------------------------
 
-  # Trim propensity scores, return warnings
+  # Extrapolate E[Y|D=0,X] to full sample. aux_indx is indexed by
+  # sorted D levels {0, 1}: [[1]] holds positions of {D=1}
+  # observations per fold, where the D=0 model must extrapolate.
+  g_X_D0 <- extrapolate_CEF(
+    D = D,
+    CEF_res_byD = list(list(fit = y_X_D0_res, d = 0)),
+    aux_indx = indxs$aux_indx)[, , 1]
+
+  m_X <- D_X_res$cf_fitted
   m_X_tr <- trim_propensity_scores(m_X, trim, ensemble_type)
+  p <- D_res$cf_fitted[, 1]
 
-  # Compute the ATT using the constructed variables
-  y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  p_copy <- matrix(rep(D_res$oos_fitted, nensb), nobs, nensb)
-  psi_b <- D_copy * (y_copy - g_X_D0) / p_copy -
-    m_X_tr * (1 - D_copy) * (y_copy - g_X_D0) / (p_copy * (1 - m_X_tr))
-  psi_a <- -D_copy / p_copy
-  att <- -colMeans(psi_b) / colMeans(psi_a)
-  names(att) <- ensemble_type
+  D_mat <- matrix(D, nobs, nensb)
+  y_mat <- matrix(y, nobs, nensb)
+  p_mat <- matrix(p, nobs, nensb)
 
-  # Organize complementary ensemble output
-  weights <- list(y_X_D0 = y_X_D0_res$weights,
-                  D_X = D_X_res$weights)
+  psi_b_mat <- D_mat * (y_mat - g_X_D0) / p_mat -
+    m_X_tr * (1 - D_mat) * (y_mat - g_X_D0) / (p_mat * (1 - m_X_tr))
+  psi_a_vec <- -D / p
 
-  # Store complementary ensemble output
-  mspe <- list(y_X_D0 = y_X_D0_res$mspe,
-               D_X = D_X_res$mspe)
+  # Target parameter & influence function --------------------------------------
 
-  # Organize reduced form predicted values
-  oos_pred <- list(EY_D0_X = g_X_D0, ED_X = m_X, ED = D_res$oos_fitted)
+  att <- -colMeans(psi_b_mat) / mean(psi_a_vec)
 
-  # Organize output
-  ddml_fit <- list(att = att, weights = weights, mspe = mspe,
-                   psi_a = psi_a, psi_b = psi_b,
-                   oos_pred = oos_pred,
-                   learners = learners,
-                   learners_DX = learners_DX,
-                   cluster_variable = cluster_variable,
-                   subsamples = cf_indxs$subsamples_byD,
-                   cv_subsamples_list = cf_indxs$cv_subsamples_byD,
-                   ensemble_type = ensemble_type)
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
+  for (j in seq_len(nensb)) {
+    scores[, 1, j] <- psi_a_vec * att[j] + psi_b_mat[, j]
+    J[1, 1, j] <- mean(psi_a_vec)
+    
+    J_inv <- csolve(matrix(J[, , j], 1, 1))
+    inf_func[, 1, j] <- -matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    dinf_dtheta[, 1, 1, j] <- -psi_a_vec * J_inv[1, 1]
+  }#FOR
 
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
+  coef_names <- "ATT"
+  coef <- matrix(att, nrow = 1, ncol = nensb)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ensemble_type
 
-  # Amend class and return
-  class(ddml_fit) <- "ddml_att"
-  return(ddml_fit)
+  # Output ---------------------------------------------------------------------
+
+  announce_finish(t0, messages, silent)
+
+  ddml(
+    coefficients = coef,
+    ensemble_weights = list(
+      y_X_D0 = y_X_D0_res$weights,
+      D_X = D_X_res$weights,
+      D = D_res$weights),
+    mspe = list(y_X_D0 = y_X_D0_res$mspe,
+                D_X = D_X_res$mspe,
+                D = D_res$mspe),
+    r2 = list(y_X_D0 = y_X_D0_res$r2,
+              D_X = D_X_res$r2,
+              D = D_res$r2),
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
+    scores = scores, J = J,
+    coef_names = coef_names,
+    estimator_name =
+      "Average Treatment Effect on the Treated",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    cluster_variable = cluster_variable,
+    fitted = list(
+      y_X_D0 = build_fitted_entry(y_X_D0_res,
+                                   save_crossval,
+                                   include_auxiliary = TRUE),
+      D_X = build_fitted_entry(D_X_res, save_crossval),
+      D = build_fitted_entry(D_res, save_crossval)),
+    splits = list(
+      y_X_D0 = list(
+        subsamples = indxs$subsamples_byD[[1]],
+        cv_subsamples = indxs$cv_subsamples_byD[[1]]),
+      y_X_D1 = list(
+        subsamples = indxs$subsamples_byD[[2]],
+        cv_subsamples = indxs$cv_subsamples_byD[[2]]),
+      D_X = list(
+        subsamples = indxs$subsamples,
+        cv_subsamples = indxs$cv_subsamples),
+      D = list(
+        subsamples = indxs$subsamples,
+        cv_subsamples = indxs$cv_subsamples)),
+    call = cl,
+    subclass = "ddml_att",
+    # ddml_att-specific fields
+    learners = learners,
+    learners_DX = learners_DX
+  )
 }#DDML_ATT
-
-#' @rdname summary.ddml_ate
-#'
-#' @export
-summary.ddml_att <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- " "
-  # Compute and print inference results
-  coefficients <- organize_interactive_inf_results(coef = object$att,
-                                                   psi_a = object$psi_a,
-                                                   psi_b = object$psi_b,
-                                                   ensemble_type =
-                                                     object$ensemble_type,
-                                                   cluster_variable =
-                                                     object$cluster_variable)
-  class(coefficients) <- c("summary.ddml_att", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_ATT
-
-#' @rdname print.summary.ddml_ate
-#'
-#' @export
-print.summary.ddml_att <- function(x, digits = 3, ...) {
-  cat("ATT estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_ATT

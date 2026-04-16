@@ -1,6 +1,6 @@
 # glmnet =======================================================================
 
-#' Wrapper for [glmnet::glmnet()].
+#' Wrapper for glmnet::glmnet()
 #'
 #' @family ml_wrapper
 #'
@@ -23,11 +23,11 @@
 #' @references
 #' Friedman J, Hastie T, Tibshirani R (2010). "Regularization Paths for
 #'     Generalized Linear Models via Coordinate Descent." Journal of Statistical
-#'     Software, 33(1), 1–22.
+#'     Software, 33(1), 1-22.
 #'
 #' Simon N, Friedman J, Hastie T, Tibshirani R (2011). "Regularization Paths for
 #'     Cox's Proportional Hazards Model via Coordinate Descent." Journal of
-#'     Statistical Software, 39(5), 1–13.
+#'     Statistical Software, 39(5), 1-13.
 #'
 #' @examples
 #' glmnet_fit <- mdl_glmnet(rnorm(100), matrix(rnorm(1000), 100, 10))
@@ -35,7 +35,7 @@
 mdl_glmnet <- function(y, X,
                        cv = TRUE,
                        ...){
-  # Either copute glmnet with given lambda or determine lambda with cv.
+  # Either compute glmnet with given lambda or determine lambda with cv.
   if (cv) {
     mdl_fit <- glmnet::cv.glmnet(x = X, y = y, ...)
   } else {
@@ -47,21 +47,30 @@ mdl_glmnet <- function(y, X,
   return(mdl_fit)
 }#MDL_GLMNET
 
+#' Predict Method for mdl_glmnet Objects
+#'
+#' @param object A fitted \code{mdl_glmnet} object.
+#' @param newdata A (sparse) feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[glmnet:predict.glmnet]{predict.glmnet}}.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.mdl_glmnet <- function(object, newdata = NULL, ...){
   # Check whether cv.glmnet was run
-  cv <- "cv.glmnet" %in% class(object)
+  cv <- inherits(object, "cv.glmnet")
   class(object) <- class(object)[-1]
   # Compute predictions
   if (cv) {
-    # Determine mse-minimizing lambda
+    # CV mode: select MSE-minimizing lambda from the CV path
     which_lambda <- which.min(object$cvm)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object$glmnet.fit, newx = newdata,
                              s = object$lambda[which_lambda],
                              type = "response", ...)
   } else {
-    # Determine least regularizing lambda
+    # Non-CV mode: select the least-regularizing (last) lambda
     which_lambda <- length(object$lambda)
     # Predict using glmnet prediction method
     fitted <- stats::predict(object, newx = newdata,
@@ -74,7 +83,7 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 
 # xgboost ======================================================================
 
-#' Wrapper for [xgboost::xgboost()].
+#' Wrapper for xgboost::xgboost()
 #'
 #' @family ml_wrapper
 #'
@@ -96,7 +105,7 @@ predict.mdl_glmnet <- function(object, newdata = NULL, ...){
 #' @references
 #' Chen T, Guestrin C (2011). "Xgboost: A Scalable Tree Boosting System."
 #' Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge
-#' Discovery and Data Mining, 785–794.
+#' Discovery and Data Mining, 785-794.
 #'
 #' @examples
 #' xgboost_fit <- mdl_xgboost(rnorm(50), matrix(rnorm(150), 50, 3),
@@ -106,14 +115,31 @@ mdl_xgboost <- function(y, X,
                         nrounds = 500, verbosity = 0,
                         ...){
   # Compute xgboost
-  mdl_fit <- xgboost::xgboost(x = X, y = y,
-                              nrounds = nrounds,
-                              verbosity = verbosity, ...)
+  dots <- list(...)
+  
+  # Ensure binary/multi classification targets are factors (required by xgboost)
+  obj <- if (!is.null(dots$objective)) dots$objective else dots$params$objective
+  if (!is.null(obj) && grepl("^(binary|multi):", obj) && !is.factor(y)) {
+    y <- as.factor(y)
+  }#IF
+  
+  mdl_fit <- do.call(xgboost::xgboost,
+                     c(list(x = X, y = y, nrounds = nrounds,
+                            verbosity = verbosity), dots))
   # Set custom S3 class
   class(mdl_fit) <- c("mdl_xgboost", class(mdl_fit))
   return(mdl_fit)
 }#MDL_XGBOOST
 
+#' Predict Method for mdl_xgboost Objects
+#'
+#' @param object A fitted \code{mdl_xgboost} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[xgboost:predict.xgb.Booster]{predict.xgb.Booster}}.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.mdl_xgboost <- function(object, newdata = NULL, ...){
   # Predict using xgb.Booster prediction method.
@@ -123,7 +149,7 @@ predict.mdl_xgboost <- function(object, newdata = NULL, ...){
 
 # ranger =======================================================================
 
-#' Wrapper for [ranger::ranger()].
+#' Wrapper for ranger::ranger()
 #'
 #' @family ml_wrapper
 #'
@@ -161,29 +187,39 @@ mdl_ranger <- function(y, X, ...){
   return(mdl_fit)
 }#MDL_RANGER
 
+#' Predict Method for mdl_ranger Objects
+#'
+#' @param object A fitted \code{mdl_ranger} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[ranger:predict.ranger]{predict.ranger}}.
+#'
+#' @return A numeric vector of predicted values (probabilities for
+#'     probability forests, point predictions for regression forests).
+#'
 #' @exportS3Method
 predict.mdl_ranger <- function(object, newdata = NULL, ...){
   # Assign column names to newdata if none are given
   if (is.null(colnames(newdata))) {
     colnames(newdata) <- seq(dim(newdata)[2])
   }#IF
-  class(object) <- class(object)[2]
+  class(object) <- class(object)[-1]
   # Predict using randomForest prediction method
   if (object$treetype == "Probability estimation") {
-    #stats::predict(object, data = newdata, ...)$predictions[, 2]
+    # Column 2 = positive class probability (ranger orders factor levels)
     stats::predict(object, data = newdata, ...)$predictions[, 2]
   } else if (object$treetype == "Regression") {
-    #stats::predict(object, data = newdata, ...)$predictions
     stats::predict(object, data = newdata, ...)$predictions
   } else {
-    warning("mdl_ranger is only designed for regression and probability forests")
+    warning("mdl_ranger is only designed for regression and probability forests",
+            call. = FALSE)
     stats::predict(object, data = newdata, ...)$predictions
   }#IFELSE
 }#PREDICT.MDL_RANGER
 
 # glm ==========================================================================
 
-#' Wrapper for [stats::glm()].
+#' Wrapper for stats::glm()
 #'
 #' @family ml_wrapper
 #'
@@ -211,8 +247,60 @@ mdl_glm <- function(y, X, ...) {
   return(glm_fit) # return fitted glm object
 }#MDL_GLM
 
+#' Predict Method for mdl_glm Objects
+#'
+#' @param object A fitted \code{mdl_glm} object.
+#' @param newdata A feature matrix for prediction.
+#' @param ... Additional arguments passed to
+#'     \code{\link[stats:predict.glm]{predict.glm}}.
+#'
+#' @return A numeric vector of predicted response values.
+#'
 #' @exportS3Method
 predict.mdl_glm <- function(object, newdata, ...) {
   df <- data.frame(newdata) # transform data from matrices to data.frame
   stats::predict.glm(object, df, type = "response", ...)
 }#PREDICT.MDL_GLM
+
+# bigGlm =======================================================================
+
+#' Wrapper for glmnet::bigGlm()
+#'
+#' @family ml_wrapper
+#'
+#' @seealso [glmnet::bigGlm()]
+#'
+#' @description Simple wrapper for [glmnet::bigGlm()], designed for sparse matrices.
+#'
+#' @param y The outcome variable.
+#' @param X The (sparse) feature matrix.
+#' @param ... Additional arguments passed to \code{bigGlm}. See
+#'     [glmnet::bigGlm()] for a complete list of arguments.
+#'
+#' @return \code{mdl_bigGlm} returns an object of S3 class \code{mdl_bigGlm}.
+#' @export
+#'
+#' @examples
+#' bigglm_fit <- mdl_bigGlm(rnorm(100), matrix(rnorm(1000), 100, 10))
+#' class(bigglm_fit)
+mdl_bigGlm <- function(y, X, ...) {
+  mdl_fit <- glmnet::bigGlm(x = X, y = y, ...)
+  mdl_fit <- list(fitted_coef = stats::coef(mdl_fit))
+  class(mdl_fit) <- c("mdl_bigGlm", class(mdl_fit))
+  return(mdl_fit)
+}#MDL_BIGGLM
+
+#' Predict Method for mdl_bigGlm Objects
+#'
+#' @param object A fitted \code{mdl_bigGlm} object.
+#' @param newdata A (sparse) feature matrix for prediction.
+#' @param ... Currently unused.
+#'
+#' @return A numeric vector of predicted values.
+#'
+#' @exportS3Method
+predict.mdl_bigGlm <- function(object, newdata = NULL, ...) {
+  beta <- object$fitted_coef
+  fitted <- newdata %*% beta[2:nrow(beta), , drop = FALSE] + beta[1, 1]
+  fitted[, 1]
+}#PREDICT.MDL_BIGGLM

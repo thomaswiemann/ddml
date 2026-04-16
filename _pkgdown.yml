@@ -3,6 +3,13 @@ url: https://www.thomaswiemann.com/ddml
 template:
   bootstrap: 5
 
+# Exclude AI-tooling artifacts from the site
+exclude:
+  - GEMINI.md
+  - .cursor
+  - .discussion
+  - .discussions
+
 home:
   title: Double/Debiased Machine Learning in R
   description: Estimate common causal parameters using double/debiased machine
@@ -30,19 +37,27 @@ navbar:
     - github
 
 reference:
-- title: internal
-  contents:
-  - ddml
-  - matches("print")
-  - matches("summary")
-- title: Supported Models
+- title: Supported DDML Estimators
   contents:
   - ddml_plm
-  - ddml_ate
-  - ddml_att
   - ddml_pliv
   - ddml_fpliv
+  - ddml_ate
+  - ddml_att
   - ddml_late
+  - ddml_apo
+  - ddml_policy
+  - ddml_attgt
+
+- title: Repeated Resampling
+  contents:
+  - ddml_replicate
+
+- title: Linear Combinations and Aggregation
+  contents:
+  - lincom
+  - lincom_weights_did
+
 - title: Wrappers for Common (Machine) Learners
   contents:
   - ols
@@ -50,25 +65,60 @@ reference:
   - mdl_glmnet
   - mdl_ranger
   - mdl_xgboost
+  - mdl_bigGlm
+
 - title: Utilities
   contents:
   - crossval
   - crosspred
   - shortstacking
+  - ensemble
+  - diagnostics
+
 - title: Dataset
   contents:
   - AE98
 
+- title: internal
+  contents:
+  - ddml-package
+  - ddml-intro
+  - ddml
+  - ddml_rep
+  - ral
+  - ral_rep
+  - matches("summary")
+  - matches("print")
+  - matches("sub-")
+  - matches("coef")
+  - matches("vcov")
+  - matches("confint")
+  - matches("hatvalues")
+  - matches("nobs")
+  - matches("plot")
+  - matches("tidy")
+  - matches("glance")
+  - matches("predict")
+  - matches("as.list")
+  - matches("length")
+  - ensemble_weights
+  - reexports
+
 articles:
+- title: Background
+  contents:
+  - articles/neyman_orthogonality
 - title: Key Features
   navbar: ~
   contents:
   - ddml
   - articles/stacking
+  - articles/stacking_diagnostics
+  - articles/repeated_resampling
+  - articles/modelsummary_integration
   - articles/new_ml_wrapper
   - articles/sparse
   - articles/did
 - title: Case Studies
   contents:
   - starts_with("articles/example")
-

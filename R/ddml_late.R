@@ -1,62 +1,43 @@
-#' Estimator of the Local Average Treatment Effect.
+#' Estimator for the Local Average Treatment Effect
 #'
-#' @family ddml
+#' @family ddml estimators
 #'
-#' @seealso [ddml::summary.ddml_late()]
+#' @description Estimator for the local average treatment effect.
 #'
-#' @description Estimator of the local average treatment effect.
+#' @details
+#' \strong{Parameter of Interest:} \code{ddml_late} provides a
+#'     Double/Debiased Machine Learning estimator for the local average
+#'     treatment effect. Under the standard instrumental variable assumptions
+#'     (conditional independence, exclusion restriction, relevance, and 
+#'     monotonicity) with a binary instrument \eqn{Z} and a binary treatment 
+#'     \eqn{D}, the parameter is identified by the following reduced form 
+#'     parameter:
 #'
-#' @details \code{ddml_late} provides a double/debiased machine learning
-#'     estimator for the local average treatment effect in the interactive model
-#'     given by
+#' \deqn{\theta_0^{\textrm{LATE}} = \frac{E[E[Y|Z=1, X] - E[Y|Z=0, X]]}{E[E[D|Z=1, X] - E[D|Z=0, X]]}}
 #'
-#' \eqn{Y = g_0(D, X) + U,}
+#' where \eqn{W \equiv (Y, D, X, Z)} is the observed random vector.
 #'
-#' where \eqn{(Y, D, X, Z, U)} is a random vector such that
-#'     \eqn{\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}},
-#'     \eqn{E[U\vert X, Z] = 0}, \eqn{E[Var(E[D\vert X, Z]\vert X)] \neq 0},
-#'     \eqn{\Pr(Z=1\vert X) \in (0, 1)} with probability 1,
-#'     \eqn{p_0(1, X) \geq p_0(0, X)} with probability 1 where
-#'     \eqn{p_0(Z, X) \equiv \Pr(D=1\vert Z, X)}, and
-#'     \eqn{g_0} is an unknown nuisance function.
+#' \strong{Nuisance Parameters:} The nuisance parameters are
+#'     \eqn{\eta = (\ell_0, \ell_1, r_0, r_1, p)} taking true values
+#'     \eqn{\ell_{z,0}(X) = E[Y|Z=z, X]}, \eqn{r_{z,0}(X) = E[D|Z=z, X]},
+#'     and \eqn{p_0(X) = \Pr(Z=1|X)}.
 #'
-#' In this model, the local average treatment effect is defined as
+#' \strong{Neyman Orthogonal Score / Moment Equation:} The Neyman orthogonal score is:
 #'
-#' \eqn{\theta_0^{\textrm{LATE}} \equiv
-#'     E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) > p(0, X)]}.
+#' \deqn{m(W; \theta, \eta) = \frac{Z(Y - \ell_1(X))}{p(X)} - \frac{(1-Z)(Y-\ell_0(X))}{1-p(X)} + \ell_1(X) - \ell_0(X) - \theta\left(\frac{Z(D - r_1(X))}{p(X)} - \frac{(1-Z)(D-r_0(X))}{1-p(X)} + r_1(X) - r_0(X)\right)}
 #'
-#' @inheritParams ddml_ate
+#' \strong{Jacobian:}
+#'
+#' \deqn{J = -E[r_1(X) - r_0(X)]}
+#'
+#' See \code{\link{ddml-intro}} for how the influence function
+#' and inference are derived from these components.
+#'
+#' @inheritParams ddml-intro
+#' @inheritParams ddml_apo
 #' @param Z Binary instrumental variable.
-#' @param learners May take one of two forms, depending on whether a single
-#'     learner or stacking with multiple learners is used for estimation of the
-#'     conditional expectation functions.
-#'     If a single learner is used, \code{learners} is a list with two named
-#'     elements:
-#'     \itemize{
-#'         \item{\code{what} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
-#'     }
-#'     If stacking with multiple learners is used, \code{learners} is a list of
-#'     lists, each containing four named elements:
-#'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
-#'             such that it predicts a named input \code{y} using a named input
-#'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
-#'         \item{\code{assign_X} An optional vector of column indices
-#'             corresponding to control variables in \code{X} that are passed to
-#'             the base learner.}
-#'         \item{\code{assign_Z} An optional vector of column indices
-#'             corresponding to instruments in \code{Z} that are passed to the
-#'             base learner.}
-#'     }
-#'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
-#'     results in inclusion of all variables in \code{X} (and/or \code{Z}).
 #' @param learners_DXZ,learners_ZX Optional arguments to allow for different
-#'     estimators of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
+#'     base learners for estimation of \eqn{E[D \vert X, Z]}, \eqn{E[Z \vert X]}. Setup is
 #'     identical to \code{learners}.
 #' @param custom_ensemble_weights_DXZ,custom_ensemble_weights_ZX Optional
 #'     arguments to allow for different
@@ -65,50 +46,22 @@
 #'     \code{custom_ensemble_weights} and
 #'     \code{custom_ensemble_weights_DXZ},\code{custom_ensemble_weights_ZX} must
 #'     have the same number of columns.
-#' @param subsamples_byZ List of two lists corresponding to the two instrument
-#'     levels. Each list contains vectors with sample indices for
-#'     cross-fitting.
-#' @param cv_subsamples_byZ List of two lists, each corresponding to one of the
-#'     two instrument levels. Each of the two lists contains lists, each
-#'     corresponding to a subsample and contains vectors with subsample indices
-#'     for cross-validation.
+#' @param splits An optional list of sample split objects. For
+#'     \code{ddml_late}, recommended keys are \code{subsamples},
+#'     \code{subsamples_byZ}, \code{cv_subsamples}, and
+#'     \code{cv_subsamples_byZ}.
+#' @param ... Additional arguments passed to internal methods.
 #'
 #' @return \code{ddml_late} returns an object of S3 class
-#'     \code{ddml_late}. An object of class \code{ddml_late} is a list
-#'     containing the following components:
-#'     \describe{
-#'         \item{\code{late}}{A vector with the average treatment effect
-#'             estimates.}
-#'         \item{\code{weights}}{A list of matrices, providing the weight
-#'             assigned to each base learner (in chronological order) by the
-#'             ensemble procedure.}
-#'         \item{\code{mspe}}{A list of matrices, providing the MSPE of each
-#'             base learner (in chronological order) computed by the
-#'             cross-validation step in the ensemble construction.}
-#'         \item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-#'             of scores. Used in [ddml::summary.ddml_late()].}
-#'         \item{\code{oos_pred}}{List of matrices, providing the reduced form
-#'             predicted values.}
-#'         \item{\code{learners},\code{learners_DXZ},\code{learners_ZX},
-#'             \code{cluster_variable},\code{subsamples_Z0},
-#'             \code{subsamples_Z1},\code{cv_subsamples_list_Z0},
-#'             \code{cv_subsamples_list_Z1},\code{ensemble_type}}{Pass-through
-#'             of selected user-provided arguments. See above.}
-#'     }
+#'     \code{ddml_late} and \code{ddml}. See
+#'     \code{\link{ddml-intro}} for the common output structure.
+#'     Additional pass-through fields: \code{learners},
+#'     \code{learners_DXZ}, \code{learners_ZX}.
 #' @export
 #'
 #' @references
-#' Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and 
-#'     Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-#'
-#' Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-#'     Robins J (2018). "Double/debiased machine learning for treatment and
-#'     structural parameters." The Econometrics Journal, 21(1), C1-C68.
-#'
-#' Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+#' Imbens G, Angrist J (1994). "Identification and Estimation of Local Average
 #'     Treatment Effects." Econometrica, 62(2), 467-475.
-#'
-#' Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
 #'
 #' @examples
 #' # Construct variables from the included Angrist & Evans (1998) data
@@ -126,15 +79,16 @@
 #'                       silent = TRUE)
 #' summary(late_fit)
 #'
+#' \donttest{
 #' # Estimate the local average treatment effect using short-stacking with base
 #' #     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
-#' #     to estimate the ATE using every individual base learner.
+#' #     to estimate the LATE using every individual base learner.
 #' weights_everylearner <- diag(1, 3)
 #' colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 #' late_fit <- ddml_late(y, D, Z, X,
-#'                       learners = list(list(fun = ols),
-#'                                       list(fun = mdl_glmnet),
-#'                                       list(fun = mdl_glmnet,
+#'                       learners = list(list(what = ols),
+#'                                       list(what = mdl_glmnet),
+#'                                       list(what = mdl_glmnet,
 #'                                            args = list(alpha = 0))),
 #'                       ensemble_type = 'nnls',
 #'                       custom_ensemble_weights = weights_everylearner,
@@ -142,6 +96,7 @@
 #'                       sample_folds = 2,
 #'                       silent = TRUE)
 #' summary(late_fit)
+#' }
 ddml_late <- function(y, D, Z, X,
                       learners,
                       learners_DXZ = learners,
@@ -154,199 +109,179 @@ ddml_late <- function(y, D, Z, X,
                       custom_ensemble_weights_DXZ = custom_ensemble_weights,
                       custom_ensemble_weights_ZX = custom_ensemble_weights,
                       cluster_variable = seq_along(y),
-                      subsamples_byZ = NULL,
-                      cv_subsamples_byZ = NULL,
+                      stratify = TRUE,
                       trim = 0.01,
-                      silent = FALSE) {
-  # Data parameters
+                      silent = FALSE,
+                      parallel = NULL,
+                      fitted = NULL,
+                      splits = NULL,
+                      save_crossval = TRUE,
+                      ...) {
+  cl <- match.call()
+
+  # Preliminaries --------------------------------------------------------------
+
+  dots <- list(...)
+  messages <- resolve_messages(dots, "ddml_late", list(
+    y_Z0 = "E[Y|Z=0,X]",
+    y_Z1 = "E[Y|Z=1,X]",
+    D_Z0 = "E[D|Z=0,X]",
+    D_Z1 = "E[D|Z=1,X]",
+    Z_X = "E[Z|X]"))
+
+  validate_inputs(y = y, D = D, X = X, Z = Z,
+                  learners = learners,
+                  sample_folds = sample_folds,
+                  cv_folds = cv_folds,
+                  ensemble_type = ensemble_type, trim = trim,
+                  cluster_variable = cluster_variable,
+                  require_binary_D = FALSE)
+  validate_custom_weights(custom_ensemble_weights, learners)
+  validate_custom_weights(custom_ensemble_weights_DXZ,
+                          learners_DXZ)
+  validate_custom_weights(custom_ensemble_weights_ZX,
+                          learners_ZX)
+
   nobs <- length(y)
-  is_Z0 <- which(Z == 0)
 
-  # Create sample and cv-fold tuples
-  cf_indxs <- get_crossfit_indices(cluster_variable = cluster_variable, D = Z,
-                                   sample_folds = sample_folds,
-                                   cv_folds = cv_folds,
-                                   subsamples_byD = subsamples_byZ,
-                                   cv_subsamples_byD = cv_subsamples_byZ)
+  validate_fitted_splits_pair(fitted, splits)
 
-  # Create tuple for extrapolated fitted values
-  aux_indxs <- get_auxiliary_indx(cf_indxs$subsamples_byD, Z)
+  t0 <- proc.time()[3]
+  announce_start(messages, parallel, silent)
 
-  # Print to progress to console
-  if (!silent) cat("DDML estimation in progress. \n")
+  # Reduced-form estimation ----------------------------------------------------
 
-  # Compute estimates of E[y|Z=0,X]
-  y_X_Z0_res <- get_CEF(y[is_Z0], X[is_Z0, , drop = F],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[1]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
-                        silent = silent, progress = "E[Y|Z=0,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
+  # Map LATE splits/fitted to ATE's expected format.
+  ate_splits <- if (!is.null(splits)) list(
+    y_X_D0 = splits$y_X_Z0,
+    y_X_D1 = splits$y_X_Z1,
+    D_X = splits$Z_X)
+  ate_fitted_rf <- if (!is.null(fitted)) list(
+    y_X_D0 = fitted$y_X_Z0,
+    y_X_D1 = fitted$y_X_Z1,
+    D_X = fitted$Z_X)
 
-  # Compute estimates of E[y|Z=1,X]
-  y_X_Z1_res <- get_CEF(y[-is_Z0], X[-is_Z0, , drop = F],
-                        learners = learners, ensemble_type = ensemble_type,
-                        shortstack = shortstack,
-                        custom_ensemble_weights = custom_ensemble_weights,
-                        subsamples = cf_indxs$subsamples_byD[[2]],
-                        cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
-                        silent = silent, progress = "E[Y|Z=1,X]: ",
-                        auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
+  # Reduced form: Y ~ Z via ddml_ate
+  ate_rf <- ddml_ate(
+    y = y, D = Z, X = X,
+    learners = learners, learners_DX = learners_ZX,
+    sample_folds = sample_folds, cv_folds = cv_folds,
+    custom_ensemble_weights = custom_ensemble_weights,
+    custom_ensemble_weights_DX = custom_ensemble_weights_ZX,
+    cluster_variable = cluster_variable,
+    ensemble_type = ensemble_type, shortstack = shortstack,
+    stratify = stratify,
+    trim = trim, parallel = parallel, silent = silent,
+    splits = ate_splits,
+    fitted = ate_fitted_rf,
+    save_crossval = save_crossval,
+    messages = list(start = "", finish = "",
+                    y_D1 = messages$y_Z1,
+                    y_D0 = messages$y_Z0,
+                    D_X = messages$Z_X))
 
-  # Check for perfect non-compliance
-  if (all(D[Z==0] == 0)) {
-    # Artificially construct values for subsample with Z=0
-    D_X_Z0_res <- list(NULL)
-    D_X_Z0_res$oos_fitted <- rep(0, length(is_Z0))
-    D_X_Z0_res$auxiliary_fitted <-
-      lapply(y_X_Z0_res$auxiliary_fitted, function (x) {x * 0})
-    if (!silent) cat("E[D|Z=0,X]: perfect non-compliance -- Done! \n")
-  } else {
-    # Compute estimates of E[D|Z=0,X]
-    D_X_Z0_res <- get_CEF(D[is_Z0], X[is_Z0, , drop = F],
-                          learners = learners_DXZ,
-                          ensemble_type = ensemble_type,
-                          shortstack = shortstack,
-                          custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          subsamples = cf_indxs$subsamples_byD[[1]],
-                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[1]],
-                          silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxiliary_X = get_auxiliary_X(aux_indxs[[1]], X))
-  }#IFELSE
+  # First stage: D ~ Z via ddml_ate (reuses splits + propensity)
+  ate_fs <- ddml_ate(
+    y = D, D = Z, X = X,
+    learners = learners_DXZ, learners_DX = learners_ZX,
+    sample_folds = sample_folds, cv_folds = cv_folds,
+    custom_ensemble_weights = custom_ensemble_weights_DXZ,
+    custom_ensemble_weights_DX = custom_ensemble_weights_ZX,
+    cluster_variable = cluster_variable,
+    ensemble_type = ensemble_type, shortstack = shortstack,
+    stratify = stratify,
+    trim = trim, parallel = parallel, silent = silent,
+    splits = ate_rf$splits,
+    fitted = list(y_X_D0 = fitted$D_X_Z0,
+                  y_X_D1 = fitted$D_X_Z1,
+                  D_X = ate_rf$fitted$D_X),
+    save_crossval = save_crossval,
+    messages = list(start = "", finish = "",
+                    y_D1 = messages$D_Z1,
+                    y_D0 = messages$D_Z0, D_X = ""))
 
-  # Check for perfect compliance
-  if (all(D[Z==1] == 1)) {
-    # Artificially construct values for subsample with Z=0
-    D_X_Z1_res <- list(NULL)
-    D_X_Z1_res$oos_fitted <- rep(0, nobs - length(is_Z0))
-    D_X_Z1_res$auxiliary_fitted <-
-      lapply(y_X_Z1_res$auxiliary_fitted, function (x) {x * 0})
-    if (!silent) cat("E[D|Z=1,X]: perfect compliance -- Done! \n")
-  } else {
-    # Compute estimates of E[D|Z=1,X]
-    D_X_Z1_res <- get_CEF(D[-is_Z0], X[-is_Z0, , drop = F],
-                          learners = learners_DXZ,
-                          ensemble_type = ensemble_type,
-                          shortstack = shortstack,
-                          custom_ensemble_weights = custom_ensemble_weights_DXZ,
-                          subsamples = cf_indxs$subsamples_byD[[2]],
-                          cv_subsamples_list = cf_indxs$cv_subsamples_byD[[2]],
-                          silent = silent, progress = "E[Y|Z=0,X]: ",
-                          auxiliary_X = get_auxiliary_X(aux_indxs[[2]], X))
-  }#IFELSE
+  ensemble_type <- ate_rf$ensemble_type
+  nensb <- ncol(ate_rf$coefficients)
 
-  # Compute estimates of E[Z|X]
-  Z_X_res <- get_CEF(Z, X,
-                     learners = learners_ZX, ensemble_type = ensemble_type,
-                     shortstack = shortstack,
-                     custom_ensemble_weights = custom_ensemble_weights_ZX,
-                     subsamples = cf_indxs$subsamples,
-                     cv_subsamples_list = cf_indxs$cv_subsamples_list,
-                     compute_insample_predictions = F,
-                     silent = silent, progress = "E[Z|X]: ")
+  # Target parameter & influence function --------------------------------------
 
-  # Update ensemble type to account for (optional) custom weights
-  ensemble_type <- dimnames(y_X_Z0_res$weights)[[2]]
-  nensb <- ifelse(is.null(ensemble_type), 1, length(ensemble_type))
+  late <- as.vector(ate_rf$coefficients) / as.vector(ate_fs$coefficients)
 
-  # Check whether multiple ensembles are computed simultaneously
-  multiple_ensembles <- nensb > 1
+  scores <- array(NA_real_, dim = c(nobs, 1, nensb))
+  J <- array(NA_real_, dim = c(1, 1, nensb))
+  inf_func <- array(NA_real_, dim = c(nobs, 1, nensb))
+  dinf_dtheta <- array(NA_real_, dim = c(nobs, 1, 1, nensb))
+  
+  for (j in seq_len(nensb)) {
+    theta_fs <- ate_fs$coefficients[, j]
+    phi_rf <- ate_rf$inf_func[, 1, j]
+    phi_fs <- ate_fs$inf_func[, 1, j]
+    
+    scores[, 1, j] <- phi_rf - phi_fs * late[j]
+    J[1, 1, j] <- -theta_fs
+    
+    J_inv <- csolve(matrix(J[, , j], 1, 1))
+    inf_func[, 1, j] <- -matrix(scores[, 1, j], nobs, 1) %*% t(J_inv)
+    
+    dinf_dtheta[, 1, 1, j] <- phi_fs * J_inv[1, 1]
+  }#FOR
 
-  # Construct reduced form variables
-  l_X_byZ <- extrapolate_CEF(D = Z,
-                             CEF_res_byD = list(list(y_X_Z0_res, d=0),
-                                                list(y_X_Z1_res, d=1)),
-                             aux_indxs = aux_indxs)
-  p_X_byZ <- extrapolate_CEF(D = Z,
-                             CEF_res_byD = list(list(D_X_Z0_res, d=0),
-                                                list(D_X_Z1_res, d=1)),
-                             aux_indxs = aux_indxs)
-  r_X <- Z_X_res$oos_fitted
+  coef_names <- "LATE"
+  coef <- matrix(late, nrow = 1, ncol = nensb)
+  rownames(coef) <- coef_names
+  colnames(coef) <- ensemble_type
 
-  # Trim propensity scores, return warnings
-  r_X_tr <- trim_propensity_scores(r_X, trim, ensemble_type)
+  # Output ---------------------------------------------------------------------
 
-  # Compute the ATE using the constructed variables
-  y_copy <- matrix(rep(y, nensb), nobs, nensb)
-  D_copy <- matrix(rep(D, nensb), nobs, nensb)
-  Z_copy <- matrix(rep(Z, nensb), nobs, nensb)
-  psi_b <- Z_copy * (y_copy - l_X_byZ[, , 2]) / r_X_tr -
-    (1 - Z_copy) * (y_copy - l_X_byZ[, , 1]) / (1 - r_X_tr) +
-    l_X_byZ[, , 2] - l_X_byZ[, , 1]
-  psi_a <- -(Z_copy * (D_copy - p_X_byZ[, , 2]) / r_X_tr -
-    (1 - Z_copy) * (D_copy - p_X_byZ[, , 1]) / (1 - r_X_tr) +
-      p_X_byZ[, , 2] - p_X_byZ[, , 1])
-  numerator <- colMeans(psi_b)
-  denominator <- colMeans(psi_a)
-  late <- -numerator / denominator
-  names(late) <- ensemble_type
+  announce_finish(t0, messages, silent)
 
-  # Organize complementary ensemble output
-  weights <- list(y_X_Z0 = y_X_Z0_res$weights,
-                  y_X_Z1 = y_X_Z1_res$weights,
-                  D_X_Z0 = D_X_Z0_res$weights,
-                  D_X_Z1 = D_X_Z1_res$weights,
-                  Z_X = Z_X_res$weights)
-
-  # Store complementary ensemble output
-  mspe <- list(y_X_Z0 = y_X_Z0_res$mspe,
-               y_X_Z1 = y_X_Z1_res$mspe,
-               D_X_Z0 = D_X_Z0_res$mspe,
-               D_X_Z1 = D_X_Z1_res$mspe,
-               Z_X = Z_X_res$mspe)
-
-  # Organize reduced form predicted values
-  oos_pred <- list(EY_Z0_X = l_X_byZ[, , 1], EY_Z1_X = l_X_byZ[, , 2],
-                   ED_Z0_X = p_X_byZ[, , 1], ED_Z1_X = p_X_byZ[, , 2],
-                   EZ_X = r_X)
-
-  # Organize output
-  ddml_fit <- list(late = late, weights = weights, mspe = mspe,
-                   psi_a = psi_a, psi_b = psi_b,
-                   oos_pred = oos_pred,
-                   learners = learners,
-                   learners_DXZ = learners_DXZ,
-                   learners_ZX = learners_ZX,
-                   cluster_variable = cluster_variable,
-                   subsamples_byZ = subsamples_byZ,
-                   cv_subsamples_byZ = cv_subsamples_byZ,
-                   ensemble_type = ensemble_type)
-
-  # Print estimation progress
-  if (!silent) cat("DDML estimation completed. \n")
-
-  # Amend class and return
-  class(ddml_fit) <- "ddml_late"
-  return(ddml_fit)
+  ddml(
+    coefficients = coef,
+    ensemble_weights = list(
+      y_X_Z0 = ate_rf$ensemble_weights$y_X_D0,
+      y_X_Z1 = ate_rf$ensemble_weights$y_X_D1,
+      D_X_Z0 = ate_fs$ensemble_weights$y_X_D0,
+      D_X_Z1 = ate_fs$ensemble_weights$y_X_D1,
+      Z_X = ate_rf$ensemble_weights$D_X),
+    mspe = list(
+      y_X_Z0 = ate_rf$mspe$y_X_D0,
+      y_X_Z1 = ate_rf$mspe$y_X_D1,
+      D_X_Z0 = ate_fs$mspe$y_X_D0,
+      D_X_Z1 = ate_fs$mspe$y_X_D1,
+      Z_X = ate_rf$mspe$D_X),
+    r2 = list(
+      y_X_Z0 = ate_rf$r2$y_X_D0,
+      y_X_Z1 = ate_rf$r2$y_X_D1,
+      D_X_Z0 = ate_fs$r2$y_X_D0,
+      D_X_Z1 = ate_fs$r2$y_X_D1,
+      Z_X = ate_rf$r2$D_X),
+    inf_func = inf_func, dinf_dtheta = dinf_dtheta,
+    scores = scores, J = J,
+    coef_names = coef_names,
+    estimator_name = "Local Average Treatment Effect",
+    ensemble_type = ensemble_type,
+    nobs = nobs,
+    sample_folds = sample_folds,
+    cv_folds = if (shortstack) NULL else cv_folds,
+    shortstack = shortstack,
+    cluster_variable = cluster_variable,
+    fitted = list(
+      y_X_Z0 = ate_rf$fitted$y_X_D0,
+      y_X_Z1 = ate_rf$fitted$y_X_D1,
+      D_X_Z0 = ate_fs$fitted$y_X_D0,
+      D_X_Z1 = ate_fs$fitted$y_X_D1,
+      Z_X = ate_rf$fitted$D_X),
+    splits = list(
+      y_X_Z0 = ate_rf$splits$y_X_D0,
+      y_X_Z1 = ate_rf$splits$y_X_D1,
+      D_X_Z0 = ate_fs$splits$y_X_D0,
+      D_X_Z1 = ate_fs$splits$y_X_D1,
+      Z_X = ate_rf$splits$D_X),
+    call = cl,
+    subclass = "ddml_late",
+    # ddml_late-specific fields
+    learners = learners,
+    learners_DXZ = learners_DXZ,
+    learners_ZX = learners_ZX
+  )
 }#DDML_LATE
-
-#' @rdname summary.ddml_ate
-#'
-#' @export
-summary.ddml_late <- function(object, ...) {
-  # Check whether stacking was used, replace ensemble type if TRUE
-  single_learner <- ("what" %in% names(object$learners))
-  if (single_learner) object$ensemble_type <- " "
-  # Compute and print inference results
-  coefficients <- organize_interactive_inf_results(coef = object$late,
-                                                   psi_a = object$psi_a,
-                                                   psi_b = object$psi_b,
-                                                   ensemble_type =
-                                                     object$ensemble_type,
-                                                   cluster_variable =
-                                                     object$cluster_variable)
-  class(coefficients) <- c("summary.ddml_late", class(coefficients))
-  coefficients
-}#SUMMARY.DDML_LATE
-
-#' @rdname print.summary.ddml_ate
-#'
-#' @export
-print.summary.ddml_late <- function(x, digits = 3, ...) {
-  cat("LATE estimation results: \n \n")
-  class(x) <- class(x)[-1]
-  print(x, digits = digits)
-}#PRINT.SUMMARY.DDML_LATE
-

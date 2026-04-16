@@ -1,31 +1,105 @@
-# Articles that depend on other packages are precompiled
-library(knitr)
-
-# depends on keras
-knit("vignettes/articles/new_ml_wrapper.Rmd.txt",
-     "vignettes/articles/new_ml_wrapper.Rmd")
-
-# depends on AER, hdm
-knit("vignettes/articles/example_BLP95.Rmd.txt",
-     "vignettes/articles/example_BLP95.Rmd")
-
-# depends on SIPP data
-knit("vignettes/articles/example_401k.Rmd.txt",
-     "vignettes/articles/example_401k.Rmd")
-
-# depends on AK91 data
-knit("vignettes/articles/sparse.Rmd.txt",
-     "vignettes/articles/sparse.Rmd")
-
+#!/usr/bin/env Rscript
+# Precompile vignettes that depend on external packages, large data,
+# or long-running computations.
 #
-knit("vignettes/articles/stacking.Rmd.txt",
-     "vignettes/articles/stacking.Rmd")
+# Usage (from package root):
+#   Rscript vignettes/precompile.R              # knit all vignettes
+#   Rscript vignettes/precompile.R sparse did   # knit selected only
 
-# takes too long to run on cran...
-knit("vignettes/ddml.Rmd.txt",
-     "vignettes/ddml.Rmd")
+library(knitr)
+set.seed(54321)
 
-# depends on did, change wd for figure references...
-setwd("vignettes/articles")
-knit("did.Rmd.txt",
-     "did.Rmd")
+VIGNETTES <- list(
+  list(name = "ddml",
+       src  = "vignettes/ddml.Rmd.txt",
+       out  = "vignettes/ddml.Rmd",
+       deps = "ddml",
+       note = "takes too long for CRAN"),
+  list(name = "example_BLP95",
+       src  = "vignettes/articles/example_BLP95.Rmd.txt",
+       out  = "vignettes/articles/example_BLP95.Rmd",
+       deps = c("ddml", "AER", "hdm")),
+  list(name = "example_401k",
+       src  = "vignettes/articles/example_401k.Rmd.txt",
+       out  = "vignettes/articles/example_401k.Rmd",
+       deps = "ddml"),
+  list(name = "sparse",
+       src  = "vignettes/articles/sparse.Rmd.txt",
+       out  = "vignettes/articles/sparse.Rmd",
+       deps = c("ddml", "Matrix")),
+  list(name = "stacking",
+       src  = "vignettes/articles/stacking.Rmd.txt",
+       out  = "vignettes/articles/stacking.Rmd",
+       deps = "ddml"),
+  list(name = "new_ml_wrapper",
+       src  = "vignettes/articles/new_ml_wrapper.Rmd.txt",
+       out  = "vignettes/articles/new_ml_wrapper.Rmd",
+       deps = c("ddml", "gbm", "keras")),
+  list(name = "did",
+       src  = "vignettes/articles/did.Rmd.txt",
+       out  = "vignettes/articles/did.Rmd",
+       deps = c("ddml", "did"),
+       note = "needs setwd for fig.path"),
+  list(name = "stacking_diagnostics",
+       src  = "vignettes/articles/stacking_diagnostics.Rmd.txt",
+       out  = "vignettes/articles/stacking_diagnostics.Rmd",
+       deps = "ddml"),
+  list(name = "modelsummary_integration",
+       src  = "vignettes/articles/modelsummary_integration.Rmd.txt",
+       out  = "vignettes/articles/modelsummary_integration.Rmd",
+       deps = "ddml"),
+  list(name = "repeated_resampling",
+       src  = "vignettes/articles/repeated_resampling.Rmd.txt",
+       out  = "vignettes/articles/repeated_resampling.Rmd",
+       deps = "ddml"),
+  list(name = "neyman_orthogonality",
+       src  = "vignettes/articles/neyman_orthogonality.Rmd.txt",
+       out  = "vignettes/articles/neyman_orthogonality.Rmd",
+       deps = c("ddml", "sandwich", "lmtest"))
+)
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) > 0L) {
+  VIGNETTES <- Filter(function(v) v$name %in% args, VIGNETTES)
+  if (length(VIGNETTES) == 0L) {
+    known <- vapply(VIGNETTES, `[[`, character(1L), "name")
+    stop("No matching vignettes. Known names: ",
+         paste(known, collapse = ", "))
+  }
+}
+
+message("=== Precompiling ", length(VIGNETTES), " vignette(s) ===\n")
+
+for (v in VIGNETTES) {
+  missing <- vapply(v$deps, function(pkg) {
+    !requireNamespace(pkg, quietly = TRUE)
+  }, logical(1L))
+  if (any(missing)) {
+    message("[SKIP] ", v$name, " -- missing: ",
+            paste(v$deps[missing], collapse = ", "))
+    next
+  }
+
+  if (!file.exists(v$src)) {
+    message("[SKIP] ", v$name, " -- source not found: ", v$src)
+    next
+  }
+
+  message("[KNIT] ", v$name, " (", v$src, " -> ", v$out, ")")
+  t0 <- proc.time()
+
+  if (identical(v$name, "did") || identical(v$name, "did_native")) {
+    old_wd <- setwd("vignettes/articles")
+    tryCatch(
+      knit(basename(v$src), basename(v$out)),
+      finally = setwd(old_wd))
+  } else {
+    knit(v$src, v$out)
+  }
+
+  elapsed <- (proc.time() - t0)[["elapsed"]]
+  message("       done in ", round(elapsed, 1L), "s\n")
+}
+
+message("=== Session info ===")
+print(utils::sessionInfo())

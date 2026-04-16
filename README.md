@@ -82,11 +82,11 @@ learners:
 
 ``` r
 # Estimate the local average treatment effect using short-stacking with base
-#     learners ols, rlasso, and xgboost.
+#     learners ols, lasso, and xgboost.
 late_fit_short <- ddml_late(y, D, Z, X,
-                            learners = list(list(fun = ols),
-                                            list(fun = mdl_glmnet),
-                                            list(fun = mdl_xgboost,
+                            learners = list(list(what = ols),
+                                            list(what = mdl_glmnet),
+                                            list(what = mdl_xgboost,
                                                  args = list(nrounds = 100,
                                                              max_depth = 1))),
                             ensemble_type = 'nnls1',
@@ -94,25 +94,34 @@ late_fit_short <- ddml_late(y, D, Z, X,
                             sample_folds = 10,
                             silent = TRUE)
 summary(late_fit_short)
-#> LATE estimation results: 
-#>  
-#>       Estimate Std. Error t value Pr(>|t|)
-#> nnls1   -0.221      0.187   -1.18    0.236
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 10  Stacking: short-stack
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.220      0.187   -1.18     0.24
 ```
 
 ## Learn More about `ddml`
 
 Check out our articles to learn more:
 
+- `vignette("neyman_orthogonality")` introduces Neyman orthogonality in
+  simple linear regression
 - `vignette("ddml")` is a more detailed introduction to `ddml`
 - `vignette("stacking")` discusses computational benefits of
   short-stacking
+- `vignette("stacking_diagnostics")` shows how to evaluate base learners
+  and perform inference on learner performance
+- `vignette("repeated_resampling")` demonstrates robust inference via
+  repeated cross-fitting
+- `vignette("modelsummary_integration")` illustrates integration with
+  `broom` and `modelsummary`
 - `vignette("new_ml_wrapper")` shows how to write user-provided base
   learners
 - `vignette("sparse")` illustrates support of sparse matrices (see
   `?Matrix`)
-- `vignette("did")` discusses integration with the diff-in-diff package
-  [`did`](https://bcallaway11.github.io/did/)
+- `vignette("did")` covers DiD estimation, aggregation, and inference in
+  staggered adoption designs
 
 For additional applied examples, see our case studies:
 
@@ -135,13 +144,24 @@ clustering](https://docs.doubleml.org/stable/examples/R_double_ml_multiway_clust
 and
 [stacking](https://docs.doubleml.org/stable/examples/R_double_ml_pipeline.html).
 
+## AI Disclosure
+
+Portions of this package’s code, documentation, and tests were developed
+with the assistance of AI tools. We reviewed, tested, and edited all
+AI-generated content. All errors are our own.
+
 ## References
+
+Ahrens A, Chernozhukov V, Hansen C B, Kozbur D, Schaffer M E, Wiemann T
+(2026). “An Introduction to Double/Debiased Machine Learning.” Journal
+of Economic Literature, forthcoming.
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024a). “ddml:
 Double/debiased machine learning in Stata.” Stata Journal, 24(1): 3-45.
 
 Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024b). “Model averaging
-and double machine learning.” Journal of Applied Econometrics, 40(3): 249-269.
+and double machine learning.” Journal of Applied Econometrics, 40(3):
+249-269.
 
 Angrist J, Evans W, (1998). “Children and Their Parents’ Labor Supply:
 Evidence from Exogenous Variation in Family Size.” American Economic

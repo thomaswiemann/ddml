@@ -1,35 +1,34 @@
-#' Predictions using Short-Stacking.
+#' Predictions using Short-Stacking
 #'
 #' @family utilities
 #'
 #' @description Predictions using short-stacking.
 #'
 #' @inheritParams crosspred
-#' @param shortstack_y Optional vector of the outcome variable to form
-#'     short-stacking predictions for. Base learners are always trained on
-#'     \code{y}.
+#' @inheritParams ddml-intro
 #'
 #' @return \code{shortstack} returns a list containing the following components:
 #'     \describe{
-#'         \item{\code{oos_fitted}}{A matrix of out-of-sample predictions,
+#'         \item{\code{cf_fitted}}{A matrix of out-of-sample predictions,
 #'             each column corresponding to an ensemble type (in chronological
 #'             order).}
 #'         \item{\code{weights}}{An array, providing the weight
 #'             assigned to each base learner (in chronological order) by the
 #'             ensemble procedures.}
-#'         \item{\code{is_fitted}}{When \code{compute_insample_predictions = T}.
-#'             a list of matrices with in-sample predictions by sample fold.}
+#'         \item{\code{mspe}}{A numeric vector of per-learner out-of-sample
+#'             MSPEs, computed from cross-fitted residuals.}
+#'         \item{\code{r2}}{A numeric vector of per-learner out-of-sample
+#'             R-squared values.}
 #'         \item{\code{auxiliary_fitted}}{When \code{auxiliary_X} is not
 #'             \code{NULL}, a list of matrices with additional predictions.}
-#'         \item{\code{oos_fitted_bylearner}}{A matrix of
-#'             out-of-sample predictions, each column corresponding to a base
-#'             learner (in chronological order).}
-#'         \item{\code{is_fitted_bylearner}}{When
-#'             \code{compute_insample_predictions = T}, a list of matrices with
-#'             in-sample predictions by sample fold.}
+#'         \item{\code{cf_fitted_bylearner}}{A matrix of out-of-sample
+#'             predictions, each column corresponding to a base learner (in
+#'             chronological order).}
+#'         \item{\code{cf_resid_bylearner}}{A matrix of per-learner
+#'             out-of-sample residuals used for weight estimation.}
 #'         \item{\code{auxiliary_fitted_bylearner}}{When \code{auxiliary_X} is
-#'             not \code{NULL}, a
-#'             list of matrices with additional predictions for each learner.}
+#'             not \code{NULL}, a list of matrices with additional predictions
+#'             for each learner.}
 #'     }
 #'     Note that unlike \code{crosspred}, \code{shortstack} always computes
 #'        out-of-sample predictions for each base learner (at no additional
@@ -53,116 +52,95 @@
 #' #     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
 #' #     learner are also calculated.
 #' shortstack_res <- shortstacking(y, X,
-#'                                 learners = list(list(fun = ols),
-#'                                                 list(fun = mdl_glmnet)),
+#'                                 learners = list(list(what = ols),
+#'                                                 list(what = mdl_glmnet)),
 #'                                 ensemble_type = c("average",
 #'                                                   "nnls1",
 #'                                                   "singlebest"),
 #'                                 sample_folds = 2,
 #'                                 silent = TRUE)
-#' dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
-#' dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
-shortstacking <- function (y, X, Z = NULL,
-                           learners,
-                           sample_folds = 2,
-                           ensemble_type = "average",
-                           custom_ensemble_weights = NULL,
-                           compute_insample_predictions = FALSE,
-                           subsamples = NULL,
-                           silent = FALSE,
-                           progress = NULL,
-                           auxiliary_X = NULL,
-                           shortstack_y = y) {
-
+#' dim(shortstack_res$cf_fitted) # = length(y) by length(ensemble_type)
+#' dim(shortstack_res$cf_fitted_bylearner) # = length(y) by length(learners)
+shortstacking <- function(y, X,
+                          learners,
+                          sample_folds = 2,
+                          ensemble_type = "average",
+                          custom_ensemble_weights = NULL,
+                          cluster_variable = seq_along(y),
+                          subsamples = NULL,
+                          silent = FALSE,
+                          auxiliary_X = NULL,
+                          parallel = NULL) {
   # Data parameters
   nobs <- nrow(X)
   nlearners <- length(learners)
 
-  # Throw error if no ensemble is estimated
-  calc_ensemble <- !("what" %in% names(learners))
-  if (!calc_ensemble) {
+  if (is_single_learner(learners)) {
     stop("shortstacking cannot be estimated with a single learner.")
   }#IF
 
-  # Create sample fold tuple
-  if (is.null(subsamples)) {
-    subsamples <- generate_subsamples(nobs, sample_folds)
-  }#IF
+  # Create crossfitting tuples
+  indxs <- get_sample_splits(cluster_variable,
+                             sample_folds = sample_folds,
+                             subsamples = subsamples)
+  subsamples <- indxs$subsamples
   sample_folds <- length(subsamples)
-  ncustom <- ncol(custom_ensemble_weights)
-  ncustom <- ifelse(is.null(ncustom), 0, ncustom)
-  nensb <- length(ensemble_type) + ncustom
 
-  # Compute out-of-sample predictions for each learner
-  res <- crosspred(y, X, Z,
+  # Compute out-of-sample predictions for each learner.
+  # Pass cv_folds = NULL to skip unnecessary CV subsample creation
+  # since shortstacking computes its own weights from OOS residuals.
+  res <- crosspred(y, X,
                    learners = learners,
                    ensemble_type = "average",
-                   compute_insample_predictions = compute_insample_predictions,
-                   compute_predictions_bylearner = TRUE,
+                   cv_folds = NULL,
                    subsamples = subsamples,
-                   silent = silent, progress = progress,
-                   auxiliary_X = auxiliary_X)
+                   silent = silent,
+                   auxiliary_X = auxiliary_X,
+                   parallel = parallel)
 
   # Compute ensemble weights via subsample cross-fitted residual
   fakecv <- list()
-  fakecv$oos_resid <- kronecker(shortstack_y, t(rep(1, nlearners))) -
-    res$oos_fitted_bylearner
-  weights <- ensemble_weights(shortstack_y, X, learners = learners,
+  fakecv$cv_resid <- matrix(y, nobs, nlearners) -
+    res$cf_fitted_bylearner
+  weights <- ensemble_weights(y, X, learners = learners,
                               type = ensemble_type,
                               custom_weights = custom_ensemble_weights,
                               cv_results = fakecv)$weights
 
   # Compute predictions
-  oos_fitted <- res$oos_fitted_bylearner %*% weights
+  cf_fitted <- res$cf_fitted_bylearner %*% weights
 
-  # Compute auxilliary predictions (optional)
+  # Compute auxiliary predictions (optional)
   auxiliary_fitted <- rep(list(NULL), sample_folds)
   if (!is.null(auxiliary_X)) {
-    for (k in 1:sample_folds) {
+    for (k in seq_len(sample_folds)) {
       auxiliary_fitted[[k]] <- res$auxiliary_fitted_bylearner[[k]] %*% weights
     }#FOR
-  }#if
-
-  # Compute in-sample predictions (optional)
-  is_fitted <- rep(list(NULL), sample_folds)
-  fakecv_k <- list()
-  if (compute_insample_predictions) {
-    for (k in 1:sample_folds) {
-      # Compute shortstacking weights in-sample
-      fakecv_k$oos_resid <- kronecker(y[-subsamples[[k]]], t(rep(1, nlearners))) -
-        res$is_fitted_bylearner[[k]]
-      weights_k <- ensemble_weights(y[-subsamples[[k]]], X[-subsamples[[k]], ],
-                                    learners = learners,
-                                    type = ensemble_type,
-                                    custom_weights = custom_ensemble_weights,
-                                    cv_results = fakecv_k)$weights
-      # Combine base learners
-      is_fitted[[k]] <- res$is_fitted_bylearner[[k]] %*% weights_k
-    }#FOR
-
-    # When multiple ensembles are computed, need to reorganize is_fitted
-    if (nensb > 1) {
-      # Loop over each ensemble type to creat list of is_fitted's
-      new_is_fitted <- rep(list(rep(list(1), sample_folds)), nensb)
-      for (i in 1:nensb) {
-        for (k in 1:sample_folds) {
-          new_is_fitted[[i]][[k]] <- is_fitted[[k]][, i, drop = F]
-        }#FOR
-      }#FOR
-      is_fitted <- new_is_fitted
-    }#IF
   }#IF
 
-  # Compute mspe
-  mspe <- colMeans((kronecker(shortstack_y, t(rep(1, nensb))) - oos_fitted)^2)
+  # Per-learner OOS mspe and r-squared
+  cf_resid_bylearner <- as.matrix(fakecv$cv_resid)
+  oos_stats <- compute_mspe_r2(cf_resid_bylearner, y)
+  mspe <- oos_stats$mspe
+  r2 <- oos_stats$r2
+
+  if (nlearners > 1) {
+    # Ensemble OOS mspe and r-squared
+    cf_resid_ens <- drop(y) - cf_fitted
+    oos_stats_ens <- compute_mspe_r2(cf_resid_ens, y)
+    
+    mspe <- c(mspe, oos_stats_ens$mspe)
+    r2 <- c(r2, oos_stats_ens$r2)
+    names(mspe) <- names(r2) <- c(paste0("learner_", seq_len(nlearners)), 
+                                  colnames(weights))
+  }#IF
 
   # return shortstacking output
-  output <- list(oos_fitted = oos_fitted,
-                 weights = weights, mspe = mspe,
-                 is_fitted = is_fitted,
+  output <- list(cf_fitted = cf_fitted,
+                 weights = weights, mspe = mspe, r2 = r2,
                  auxiliary_fitted = auxiliary_fitted,
-                 oos_fitted_bylearner = res$oos_fitted_bylearner,
-                 is_fitted_bylearner = res$is_fitted_bylearner,
+                 cf_fitted_bylearner = res$cf_fitted_bylearner,
+                 cf_resid_bylearner = cf_resid_bylearner,
                  auxiliary_fitted_bylearner = res$auxiliary_fitted_bylearner)
   return(output)
 }#SHORTSTACKING

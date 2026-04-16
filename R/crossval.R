@@ -1,46 +1,84 @@
-#' Estimator of the Mean Squared Prediction Error using Cross-Validation.
+#' Estimator of the Mean Squared Prediction Error Using Cross-Validation
 #'
 #' @family utilities
 #'
 #' @description Estimator of the mean squared prediction error of
 #'     different learners using cross-validation.
 #'
+#' @details \code{crossval} estimates the mean squared prediction error
+#'     (MSPE) of \eqn{J} base learners via \eqn{K}-fold
+#'     cross-validation. It is the inner workhorse of the stacking
+#'     machinery used by \code{\link{ensemble_weights}} to determine
+#'     ensemble weights.
+#'
+#' Given a generic conditional expectation function \eqn{f_0(\cdot)}
+#'     (e.g., \eqn{E[Y\vert X]}, \eqn{E[D\vert X]}), let
+#'     \eqn{\{I_1, \ldots, I_K\}} be a \eqn{K}-fold partition of
+#'     \eqn{\{1, \ldots, n\}} and let \eqn{\hat{f}_j^{(-k)}} denote
+#'     learner \eqn{j} trained on all observations outside fold
+#'     \eqn{I_k}. The out-of-sample residual for observation
+#'     \eqn{i \in I_k} is
+#'
+#' \eqn{\hat{e}_{i,j} = y_i - \hat{f}_j^{(-k)}(X_i).}
+#'
+#' Since every observation belongs to exactly one fold, this yields a
+#'     complete \eqn{n \times J} residual matrix. The cross-validated
+#'     MSPE for learner \eqn{j} is
+#'
+#' \eqn{\widehat{\textrm{MSPE}}_j = n^{-1} \sum_{i=1}^{n} \hat{e}_{i,j}^2,}
+#'
+#' and the cross-validated \eqn{R^2} is
+#'
+#' \eqn{\hat{R}^2_j = 1 - \widehat{\textrm{MSPE}}_j \,/\, \hat{\sigma}^2_y,}
+#'
+#' where \eqn{\hat{\sigma}^2_y} is the sample variance of \eqn{y}.
+#'
 #' @inheritParams ddml_plm
 #' @param y The outcome variable.
 #' @param X A (sparse) matrix of predictive variables.
-#' @param Z Optional additional (sparse) matrix of predictive variables.
-#' @param learners \code{learners} is a list of lists, each containing four
+#' @param learners \code{learners} is a list of lists, each containing three
 #'     named elements:
 #'     \itemize{
-#'         \item{\code{fun} The base learner function. The function must be
+#'         \item{\code{what} The base learner function. The function must be
 #'             such that it predicts a named input \code{y} using a named input
 #'             \code{X}.}
-#'         \item{\code{args} Optional arguments to be passed to \code{fun}.}
+#'         \item{\code{args} Optional arguments to be passed to \code{what}.}
 #'         \item{\code{assign_X} An optional vector of column indices
 #'             corresponding to variables in \code{X} that are passed to
 #'             the base learner.}
-#'         \item{\code{assign_Z} An optional vector of column indices
-#'             corresponding to variables in \code{Z} that are passed to the
-#'             base learner.}
 #'     }
 #'     Omission of the \code{args} element results in default arguments being
-#'     used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
-#'     results in inclusion of all predictive variables in \code{X} (and/or
-#'     \code{Z}).
+#'     used in \code{what}. Omission of \code{assign_X}
+#'     results in inclusion of all predictive variables in \code{X}.
 #' @param cv_folds Number of folds used for cross-validation.
 #' @param cv_subsamples List of vectors with sample indices for
 #'     cross-validation.
-#' @param progress String to print before learner and cv fold progress.
+#' @param parallel An optional named list with parallel processing
+#'     options. When \code{NULL} (the default), computation is
+#'     sequential. Supported fields:
+#'     \describe{
+#'         \item{\code{cores}}{Number of cores to use.}
+#'         \item{\code{export}}{Character vector of object names to
+#'             export to parallel workers (for custom learners that
+#'             reference global objects).}
+#'         \item{\code{packages}}{Character vector of additional
+#'             package names to load on workers (for custom learners
+#'             that use packages not imported by \code{ddml}).}
+#'     }
 #'
 #' @return \code{crossval} returns a list containing the following components:
 #'     \describe{
 #'         \item{\code{mspe}}{A vector of MSPE estimates,
-#'             each corresponding to a base learners (in chronological order).}
-#'         \item{\code{oos_resid}}{A matrix of out-of-sample prediction errors,
-#'             each column corresponding to a base learners (in chronological
+#'             each corresponding to a base learner (in chronological
 #'             order).}
-#'         \item{\code{cv_subsamples}}{Pass-through of \code{cv_subsamples}.
-#'             See above.}
+#'         \item{\code{r2}}{A vector of cross-validated \eqn{R^2}
+#'             values, each corresponding to a base learner (in
+#'             chronological order).}
+#'         \item{\code{cv_resid}}{A matrix of out-of-sample residuals,
+#'             each column corresponding to a base learner (in
+#'             chronological order).}
+#'         \item{\code{cv_subsamples}}{Pass-through of
+#'             \code{cv_subsamples}. See above.}
 #'     }
 #' @export
 #'
@@ -51,88 +89,82 @@
 #'
 #' # Compare ols, lasso, and ridge using 4-fold cross-validation
 #' cv_res <- crossval(y, X,
-#'                    learners = list(list(fun = ols),
-#'                                    list(fun = mdl_glmnet),
-#'                                    list(fun = mdl_glmnet,
+#'                    learners = list(list(what = ols),
+#'                                    list(what = mdl_glmnet),
+#'                                    list(what = mdl_glmnet,
 #'                                         args = list(alpha = 0))),
 #'                    cv_folds = 4,
 #'                    silent = TRUE)
 #' cv_res$mspe
-crossval <- function(y, X, Z = NULL,
+crossval <- function(y, X,
                      learners,
-                     cv_folds = 5,
+                     cv_folds = 10,
+                     cluster_variable = seq_along(y),
                      cv_subsamples = NULL,
                      silent = FALSE,
-                     progress = NULL) {
+                     parallel = NULL) {
+  # Normalize learner specs before parallel dispatch
+  learners <- normalize_learners(learners)
+
+  # Validate inputs
+  validate_inputs(y = y, X = X, learners = learners,
+                  cv_folds = cv_folds)
+
   # Data parameters
   nobs <- length(y)
   nlearners <- length(learners)
 
-  # Create cv sample fold tuple
-  if (is.null(cv_subsamples)) {
-    cv_subsamples <- generate_subsamples(nobs, cv_folds)
-  }#IF
+  # Get cv subsample tuple
+  indx <- get_crossfit_indices(cluster_variable,
+                               sample_folds = cv_folds,
+                               subsamples = cv_subsamples)
+  cv_subsamples <- indx$subsamples
   cv_folds <- length(cv_subsamples)
   nobs <- length(unlist(cv_subsamples)) # In case subsamples are user-provided
 
-  # Compute out-of-sample errors
-  cv_res <- sapply(1:(cv_folds * nlearners), function(x) {
-    # Select model and cv-fold for this job
-    j <- ceiling(x / cv_folds) # jth model
-    i <- x - cv_folds * (ceiling(x / cv_folds) - 1) # ith CV fold
+  # Define the computation function
+  cv_fun <- function(x) {
+    j <- (x - 1) %/% cv_folds + 1
+    i <- (x - 1) %% cv_folds + 1
     fold_x <- cv_subsamples[[i]]
-    # Print progress
-    if (!silent) {
-      cat(paste0("\r", progress,
-                 "learner ", j, "/", nlearners,
-                 ", cv fold ", i, "/", cv_folds))
-    }#IF
-    # Compute model for this fold
     crossval_compute(test_sample = fold_x,
                      learner = learners[[j]],
-                     y, X, Z)
-  })#SAPPLY
+                     y, X)
+  }#CV_FUN
+
+  # Compute out-of-sample errors
+  njobs <- cv_folds * nlearners
+  cv_res <- with_parallel(njobs, cv_fun, parallel, silent)
 
   # Compile residual matrix
-  oos_resid <- unlist(cv_res)
-  oos_resid <- matrix(oos_resid, nobs, nlearners)
-  oos_resid <- oos_resid[order(unlist(cv_subsamples)), , drop = FALSE]
+  cv_resid <- unlist(cv_res)
+  cv_resid <- matrix(cv_resid, nobs, nlearners)
+  cv_resid <- cv_resid[order(unlist(cv_subsamples)), , drop = FALSE]
 
-  # Compute MSPE by learner
-  mspe <- colMeans(oos_resid^2)
+  # Compute MSPE and R-squared by learner
+  cv_stats <- compute_mspe_r2(cv_resid, y)
+  mspe <- cv_stats$mspe
+  r2 <- cv_stats$r2
 
   # Organize and return output
-  output <- list(mspe = mspe,
-                 oos_resid = oos_resid,
+  output <- list(mspe = mspe, r2 = r2,
+                 cv_resid = cv_resid,
                  cv_subsamples = cv_subsamples)
   return(output)
 }#CROSSVAL
 
 # Complementary functions ======================================================
 crossval_compute <- function(test_sample, learner,
-                             y, X, Z = NULL) {
-  # Check whether X, Z assignment has been specified. If not, include all.
-  if (is.null(learner$assign_X)) learner$assign_X <- 1:ncol(X)
-  if (is.null(learner$assign_Z) & !is.null(Z)) learner$assign_Z <- 1:ncol(Z)
-
-  # Extract model arguments
-  mdl_fun <- list(what = learner$fun, args = learner$args)
-  assign_X <- learner$assign_X
-  assign_Z <- learner$assign_Z
-
-  # Compute model for this fold
-  #     Note: this is effectively copying the data -- improvement needed.
-  mdl_fun$args$y <- y[-test_sample]
-  mdl_fun$args$X <- cbind(X[-test_sample, assign_X, drop = F],
-                          Z[-test_sample, assign_Z, drop = F])
-  mdl_fit <- do.call(do.call, mdl_fun)
-
-  # Compute out of sample residuals
-  oos_fitted <- stats::predict(mdl_fit,
-                               cbind(X[test_sample, assign_X, drop = F],
-                                     Z[test_sample, assign_Z, drop = F]))
-  oos_resid <- y[test_sample] - methods::as(oos_fitted, "matrix")
-
-  # Return residuals and cv_Z
-  return(oos_resid)
+                             y, X) {
+  assign_X <- if (is.null(learner$assign_X)) seq_len(ncol(X))
+    else learner$assign_X
+  mdl_fit <- fit_learner(learner,
+                         y[-test_sample],
+                         X[-test_sample, , drop = FALSE])
+  cv_fitted <- stats::predict(mdl_fit,
+                              X[test_sample, assign_X,
+                                drop = FALSE])
+  if (!is.matrix(cv_fitted)) cv_fitted <- as.matrix(cv_fitted)
+  cv_resid <- y[test_sample] - cv_fitted
+  return(cv_resid)
 }#CROSSVAL_COMPUTE

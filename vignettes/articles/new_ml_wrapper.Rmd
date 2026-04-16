@@ -99,10 +99,11 @@ late_fit <- ddml_late(y, D, Z, X,
                       sample_folds = 10,
                       silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>   Estimate Std. Error t value Pr(>|t|)
-#>     -0.236       0.19   -1.24    0.214
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 10
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   -0.237      0.190   -1.25     0.21
 ```
 
 All works well!
@@ -148,10 +149,10 @@ mdl_keras <- function(y, X,
   std_y <- c(mean(y), sd(y))
   std_X <- apply(X, 2, function(x) c(mean(x), max(sd(x), 1e-3)))
   y <- (y - std_y[1])/std_y[2]
-  X <- X - matrix(replicate(nobs, std_X[1, , drop = F]),
-    nrow = nobs, byrow = T)
-  X <- X / matrix(replicate(nobs, std_X[2, , drop = F]),
-    nrow = nobs, byrow = T)
+  X <- X - matrix(replicate(nobs, std_X[1, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
+  X <- X / matrix(replicate(nobs, std_X[2, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
 
   # ===============================================
   # ADJUST THIS PART FOR DIFFERENT ARCHITECTURES ==
@@ -160,11 +161,11 @@ mdl_keras <- function(y, X,
   nnet <- keras_model_sequential()
   for (k in 1:nhidden) {
     nnet <- nnet %>%
-      layer_dense(units = units, use_bias = T,
+      layer_dense(units = units, use_bias = TRUE,
                   activation = "relu")
   }#FOR
   nnet <- nnet %>%
-    layer_dense(units = 1, use_bias = T)
+    layer_dense(units = 1, use_bias = TRUE)
 
   # ===============================================
   # ===============================================
@@ -183,15 +184,12 @@ mdl_keras <- function(y, X,
                        steps_per_epoch = steps_per_epoch,
                        verbose = verbose)
 
-  # Add standardization to object
-  nnet$std_y <- std_y
-  nnet$std_X <- std_X
-
-  # Append class
-  class(nnet) <- c("mdl_keras", class(nnet))
+  # Wrap in an R list to avoid reticulate attribute issues
+  result <- list(model = nnet, std_y = std_y, std_X = std_X)
+  class(result) <- "mdl_keras"
 
   # Return fitted object
-  return(nnet)
+  return(result)
 }#MDL_KERAS
 ```
 
@@ -199,16 +197,15 @@ The prediction method for our fitted object ensures the predictions are returned
 
 
 ```r
-predict.mdl_keras <- function(object, newdata){
+predict.mdl_keras <- function(object, newdata, ...){
   # Standardize newdata
   nobs <- nrow(newdata)
-  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = F]),
-    nrow = nobs, byrow = T)
-  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = F]),
-    nrow = nobs, byrow = T)
-  # Predict data and output as matrix
-  class(object) <- class(object)[-1] # Not a pretty solution...
-  fitted <- as.numeric(predict(object, newdata))
+  newdata <- newdata - matrix(replicate(nobs, object$std_X[1, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
+  newdata <- newdata / matrix(replicate(nobs, object$std_X[2, , drop = FALSE]),
+    nrow = nobs, byrow = TRUE)
+  # Predict and convert to numeric vector
+  fitted <- as.numeric(predict(object$model, newdata, verbose = 0))
   # Re-standardize to output and return
   object$std_y[2] * fitted + object$std_y[1]
 }#PREDICT.MDL_KERAS
@@ -222,17 +219,17 @@ To test the wrapper, we again estimate the local average treatment effect. In ad
 # Specify callbacks
 callbacks_list <- list(callback_early_stopping(monitor = "val_loss",
                                                patience = 15,
-                                               restore_best_weights = T),
+                                               restore_best_weights = TRUE),
                        callback_reduce_lr_on_plateau(monitor = "val_loss",
                                                      factor = 1/10,
                                                      patience = 10,
-                                                     verbose = F))
+                                                     verbose = FALSE))
 
 # Use the neural network base learner
 learner_keras = list(what = mdl_keras,
                      args = list(units = 10, nhidden = 1,
                                  epochs = 100,
-                                 verbose = F,
+                                 verbose = FALSE,
                                  validation_split = 0.1,
                                  callbacks = callbacks_list))
 
@@ -240,14 +237,13 @@ learner_keras = list(what = mdl_keras,
 late_fit <- ddml_late(y, D, Z, X,
                       learners = learner_keras,
                       sample_folds = 10,
-                      silent = T)
-#> Warning in trim_propensity_scores(r_X, trim, ensemble_type): : 2 propensity
-#> scores were trimmed.
+                      silent = TRUE)
 summary(late_fit)
-#> LATE estimation results: 
-#>  
-#>   Estimate Std. Error t value Pr(>|t|)
-#>     -0.187      0.189  -0.989    0.322
+#> DDML estimation: Local Average Treatment Effect 
+#> Obs: 5000   Folds: 10
+#> 
+#>      Estimate Std. Error z value Pr(>|z|)
+#> LATE   0.0227     0.3997    0.06     0.95
 ```
 
 All works well!

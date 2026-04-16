@@ -3,7 +3,7 @@
 \name{ddml_ate}
 \alias{ddml_ate}
 \alias{ddml_att}
-\title{Estimators of Average Treatment Effects.}
+\title{Estimator for the Average Treatment Effect}
 \usage{
 ddml_ate(
   y,
@@ -18,10 +18,14 @@ ddml_ate(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples_byD = NULL,
-  cv_subsamples_byD = NULL,
+  stratify = TRUE,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 
 ddml_att(
@@ -37,10 +41,14 @@ ddml_att(
   custom_ensemble_weights = NULL,
   custom_ensemble_weights_DX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples_byD = NULL,
-  cv_subsamples_byD = NULL,
+  stratify = TRUE,
   trim = 0.01,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 }
 \arguments{
@@ -50,44 +58,49 @@ ddml_att(
 
 \item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{May take one of two forms, depending on whether a single
-learner or stacking with multiple learners is used for estimation of the
-conditional expectation functions.
-If a single learner is used, \code{learners} is a list with two named
-elements:
+\item{learners}{May take one of two forms, depending on whether a
+single learner or stacking with multiple learners is used for
+estimation of the conditional expectation functions.
+If a single learner is used, \code{learners} is a list with
+two named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 }
-If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing four named elements:
+If stacking with multiple learners is used, \code{learners} is
+a list of lists, each containing three named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to control variables in \code{X} that are passed to
-the base learner.}
+corresponding to control variables in \code{X} that
+are passed to the base learner.}
 }
-Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} results in inclusion of
-all variables in \code{X}.}
+Omission of the \code{args} element results in default
+arguments being used in \code{what}. Omission of
+\code{assign_X} results in inclusion of all variables in
+\code{X}.}
 
 \item{learners_DX}{Optional argument to allow for different estimators of
 \eqn{E[D|X]}. Setup is identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{Ensemble method to combine base learners into final
-estimate of the conditional expectation functions. Possible values are:
+\item{ensemble_type}{Ensemble method to combine base learners into
+final estimate of the conditional expectation functions.
+Possible values are:
 \itemize{
 \item{\code{"nnls"} Non-negative least squares.}
-\item{\code{"nnls1"} Non-negative least squares with the constraint
-that all weights sum to one.}
-\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"nnls1"} Non-negative least squares with the
+constraint that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum
+MSPE.}
 \item{\code{"ols"} Ordinary least squares.}
 \item{\code{"average"} Simple average over base learners.}
 }
@@ -95,14 +108,15 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{Number of folds used for cross-validation in ensemble
-construction.}
+\item{cv_folds}{Number of folds used for cross-validation in
+ensemble construction.}
 
-\item{custom_ensemble_weights}{A numerical matrix with user-specified
-ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to a base learner in \code{learners}
-(in chronological order). Optional column names are used to name the
-estimation results corresponding the custom ensemble specification.}
+\item{custom_ensemble_weights}{A numerical matrix with
+user-specified ensemble weights. Each column corresponds to a
+custom ensemble specification, each row corresponds to a base
+learner in \code{learners} (in chronological order). Optional
+column names are used to name the estimation results
+corresponding the custom ensemble specification.}
 
 \item{custom_ensemble_weights_DX}{Optional argument to allow for different
 custom ensemble weights for \code{learners_DX}. Setup is identical to
@@ -111,70 +125,93 @@ custom ensemble weights for \code{learners_DX}. Setup is identical to
 
 \item{cluster_variable}{A vector of cluster indices.}
 
-\item{subsamples_byD}{List of two lists corresponding to the two treatment
-levels. Each list contains vectors with sample indices for
-cross-fitting.}
-
-\item{cv_subsamples_byD}{List of two lists, each corresponding to one of the
-two treatment levels. Each of the two lists contains lists, each
-corresponding to a subsample and contains vectors with subsample indices
-for cross-validation.}
+\item{stratify}{Boolean for stratified cross-fitting: if \code{TRUE},
+subsamples are constructed to be balanced across treatment levels.}
 
 \item{trim}{Number in (0, 1) for trimming the estimated propensity scores at
 \code{trim} and \code{1-trim}.}
 
 \item{silent}{Boolean to silence estimation updates.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
+
+\item{fitted}{An optional named list of per-equation cross-fitted
+predictions, typically obtained from a previous fit via
+\code{fit$fitted}. When supplied (together with \code{splits}),
+base learners are not re-fitted; only ensemble weights are
+recomputed. This allows fast re-estimation with a different
+\code{ensemble_type}. See \code{\link{ddml_plm}} for
+an example.}
+
+\item{splits}{An optional list of sample split objects. For
+\code{ddml_ate}/\code{ddml_att}, recommended keys are
+\code{subsamples}, \code{subsamples_byD}, \code{cv_subsamples},
+and \code{cv_subsamples_byD}.}
+
+\item{save_crossval}{Logical indicating whether to store the inner
+cross-validation residuals used for ensemble weight
+computation. Default \code{TRUE}. When \code{TRUE}, subsequent
+pass-through calls with data-driven ensembles (e.g.,
+\code{"nnls"}) reproduce per-fold weights exactly. Set to
+\code{FALSE} to reduce object size at the cost of approximate
+weight recomputation.}
+
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
-\code{ddml_ate} and \code{ddml_att} return an object of S3 class
-\code{ddml_ate} and \code{ddml_att}, respectively. An object of class
-\code{ddml_ate} or \code{ddml_att} is a list containing
-the following components:
-\describe{
-\item{\code{ate} / \code{att}}{A vector with the average treatment
-effect / average treatment effect on the treated estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
-assigned to each base learner (in chronological order) by the
-ensemble procedure.}
-\item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner (in chronological order) computed by the
-cross-validation step in the ensemble construction.}
-\item{\code{psi_a}, \code{psi_b}}{Matrices needed for the computation
-of scores. Used in \code{\link[=summary.ddml_ate]{summary.ddml_ate()}} or
-\code{\link[=summary.ddml_att]{summary.ddml_att()}}.}
-\item{\code{oos_pred}}{List of matrices, providing the reduced form
-predicted values.}
-\item{\code{learners},\code{learners_DX},\code{cluster_variable},
-\code{subsamples_D0},\code{subsamples_D1},
-\code{cv_subsamples_list_D0},\code{cv_subsamples_list_D1},
-\code{ensemble_type}}{Pass-through of
-selected user-provided arguments. See above.}
-}
+\code{ddml_ate} and \code{ddml_att} return objects of S3
+class \code{ddml_ate}/\code{ddml_att} and \code{ddml}. See
+\code{\link{ddml-intro}} for the common output structure.
+Additional pass-through fields: \code{learners},
+\code{learners_DX}.
 }
 \description{
-Estimators of the average treatment effect and the average
+Estimator for the average treatment effect and the average
 treatment effect on the treated.
 }
 \details{
-\code{ddml_ate} and \code{ddml_att} provide double/debiased machine
-learning  estimators for the average treatment effect and the average
-treatment effect on the treated, respectively, in the interactive model
-given by
+\strong{Parameter of Interest:} \code{ddml_ate} and \code{ddml_att} provide
+Double/Debiased Machine Learning estimators for the average treatment
+effect and the average treatment effect on the treated, respectively.
+Under conditional unconfoundedness and overlap, the parameters
+are identified by the following reduced form parameters:
 
-\eqn{Y = g_0(D, X) + U,}
+\deqn{\theta_0^{\textrm{ATE}} = E[E[Y|D=1, X] - E[Y|D=0, X]]}
 
-where \eqn{(Y, D, X, U)} is a random vector such that
-\eqn{\operatorname{supp} D = \{0,1\}}, \eqn{E[U\vert D, X] = 0}, and
-\eqn{\Pr(D=1\vert X) \in (0, 1)} with probability 1,
-and \eqn{g_0} is an unknown nuisance function.
+and the average treatment effect on the treated (ATT) is defined as
 
-In this model, the average treatment effect is defined as
+\deqn{\theta_0^{\textrm{ATT}} = E[Y|D=1] - E[E[Y|D=0, X]|D = 1].}
 
-\eqn{\theta_0^{\textrm{ATE}} \equiv E[g_0(1, X) - g_0(0, X)]}.
+where \eqn{W \equiv (Y, D, X)} is the observed random vector.
 
-and the average treatment effect on the treated is defined as
+\strong{Neyman Orthogonal Score:} The Neyman orthogonal scores are:
 
-\eqn{\theta_0^{\textrm{ATT}} \equiv E[g_0(1, X) - g_0(0, X)\vert D = 1]}.
+\deqn{m^{\textrm{ATE}}(W; \theta, \eta) = \frac{D(Y - \ell_1(X))}{r(X)} - \frac{(1-D)(Y-\ell_0(X))}{1-r(X)} + \ell_1(X) - \ell_0(X) - \theta}
+
+\deqn{m^{\textrm{ATT}}(W; \theta, \eta) = \frac{D(Y - \ell_0(X))}{\pi} - \frac{r(X)(1-D)(Y-\ell_0(X))}{\pi(1-r(X))} - \frac{D}{\pi}\theta}
+
+where the nuisance parameters are \eqn{\eta = (\ell_0, \ell_1, r, \pi)} taking true values
+\eqn{\ell_{d,0}(X) = E[Y|D=d, X]}, \eqn{r_0(X) = \Pr(D=1|X)}, and \eqn{\pi_0 = \Pr(D=1)}.
+
+\strong{Jacobian:}
+
+\deqn{J^{\textrm{ATE}} = -1}
+
+\deqn{J^{\textrm{ATT}} = -1}
+
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -196,9 +233,9 @@ summary(ate_fit)
 weights_everylearner <- diag(1, 3)
 colnames(weights_everylearner) <- c("mdl:ols", "mdl:lasso", "mdl:ridge")
 ate_fit <- ddml_ate(y, D, X,
-                    learners = list(list(fun = ols),
-                                    list(fun = mdl_glmnet),
-                                    list(fun = mdl_glmnet,
+                    learners = list(list(what = ols),
+                                    list(what = mdl_glmnet),
+                                    list(what = mdl_glmnet,
                                          args = list(alpha = 0))),
                     ensemble_type = 'nnls',
                     custom_ensemble_weights = weights_everylearner,
@@ -207,20 +244,15 @@ ate_fit <- ddml_ate(y, D, X,
                     silent = TRUE)
 summary(ate_fit)
 }
-\references{
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
-}
 \seealso{
-\code{\link[=summary.ddml_ate]{summary.ddml_ate()}}, \code{\link[=summary.ddml_att]{summary.ddml_att()}}
-
-Other ddml: 
+Other ddml estimators: 
+\code{\link{ddml-intro}},
+\code{\link{ddml_apo}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
 \code{\link{ddml_pliv}()},
-\code{\link{ddml_plm}()}
+\code{\link{ddml_plm}()},
+\code{\link{ddml_policy}()}
 }
-\concept{ddml}
+\concept{ddml estimators}

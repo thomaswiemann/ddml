@@ -2,7 +2,7 @@
 % Please edit documentation in R/ml_wrappers.R
 \name{mdl_glm}
 \alias{mdl_glm}
-\title{Wrapper for \code{\link[stats:glm]{stats::glm()}}.}
+\title{Wrapper for stats::glm()}
 \usage{
 mdl_glm(y, X, ...)
 }
@@ -30,6 +30,7 @@ class(glm_fit)
 \code{\link[stats:glm]{stats::glm()}}
 
 Other ml_wrapper: 
+\code{\link{mdl_bigGlm}()},
 \code{\link{mdl_glmnet}()},
 \code{\link{mdl_ranger}()},
 \code{\link{mdl_xgboost}()},

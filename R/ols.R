@@ -1,4 +1,4 @@
-#' Ordinary least squares.
+#' Ordinary Least Squares
 #'
 #' @family ml_wrapper
 #'
@@ -43,7 +43,7 @@ ols <- function(y, X,
   }#IFELSE
   # Return estimate
   coef <- as.matrix(coef)
-  try(rownames(coef) <- colnames(X)) # assign coefficient names
+  if (!is.null(colnames(X))) rownames(coef) <- colnames(X)
   output <- list(coef = coef, y = y, X = X,
                  const = const, w = w)
   class(output) <- "ols" # define S3 class
@@ -52,6 +52,15 @@ ols <- function(y, X,
 
 # Complementary methods ========================================================
 
+#' Predict Method for ols Objects
+#'
+#' @param object A fitted \code{ols} object.
+#' @param newdata A feature matrix for prediction. If \code{NULL},
+#'     returns fitted values from the training data.
+#' @param ... Currently unused.
+#'
+#' @return A numeric vector of predicted values.
+#'
 #' @exportS3Method
 predict.ols <- function(object, newdata = NULL, ...){
   # Obtain datamatrix

@@ -11,7 +11,9 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = TRUE
+  eval = TRUE,
+  warning = FALSE,
+  message = FALSE
 )
 ```
 
@@ -32,7 +34,7 @@ library(ddml)
 set.seed(2410072)
 ```
 
-# Data construction
+# Data Construction
 
 The 401K data considered here is from the Survey of Income and Program Participation (SIPP) from the year 1991. We use the data taken from the application in
 [Chernozhukov et al. (2018)](https://academic.oup.com/ectj/article/21/1/C1/5056401s}).
@@ -53,7 +55,7 @@ X <- as.matrix(SIPP91[, c("age", "inc", "educ", "fsize",
 
 # Estimation using a Single Machine Learner
 
-The simplest double/debiased machine learning estimator for the causal effect of 401k participation on financial assets considers a single machine learner to (nonparametrically) control for individual characteristics. We consider gradient boosting in the code snippet below (see ``?ddml_plm`` and  ``?mdl_xgboost`` for details).
+The simplest Double/Debiased Machine Learning estimator for the causal effect of 401k participation on financial assets considers a single machine learner to (nonparametrically) control for individual characteristics. We consider gradient boosting in the code snippet below (see ``?ddml_plm`` and  ``?mdl_xgboost`` for details).
 
 A comparison with a simple multiple linear regression estimate indicates a difference in the point estimates of about one standard deviation, suggesting that there are at least some non-linearities present in the data.
 
@@ -61,9 +63,9 @@ A comparison with a simple multiple linear regression estimate indicates a diffe
 # PLM with gradient boosting
 xgboost_fit <- ddml_plm(y = y, D = D, X = X,
                         learners = list(what = mdl_xgboost,
-                                        args = list(nrounds = 300)),
-                        sample_folds = 10,
-                        silent = T)
+                                        args = list(nrounds = 50)),
+                        sample_folds = 5,
+                        silent = TRUE)
 summary(xgboost_fit)
 
 # Comparison to multiple linear regression
@@ -79,32 +81,32 @@ The estimate is nearly identical to the estimate using just gradient boosting.
 
 ```{r}
 # Specify set of learners
-learners <- list(list(fun = ols),
-                 list(fun = mdl_glmnet),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+learners <- list(list(what = ols),
+                 list(what = mdl_glmnet),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4)),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12)),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100)),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300)))
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8)),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50)),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150)))
 
 # PLM with short-stacking
 stacking_fit <- ddml_plm(y = y, D = D, X = X,
                          learners = learners,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         sample_folds = 5,
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
-To better understand which machine learners contribute to the final estimate, we can take a look at the assigned stacking weights. Each row corresponds to a base-learner (in chronological order) while the columns indicate the corresponding reduced form. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
+To better understand which machine learners contribute to the final estimate, we can inspect the stacking diagnostics. The weights show that the two random forest estimators contribute the most in both reduced forms, followed by the lasso estimator. Neither gradient boosting nor linear regression are assigned substantial weight.
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+diagnostics(stacking_fit)
 ```
 
 # Estimation with Different Sets of Control Variables
@@ -127,73 +129,73 @@ X_extended <- 5:dim(X_c)[2] # indicators & series expansion
 
 ```{r}
 # Specify base learners with different sets of controls
-learners <- list(list(fun = ols,
+learners <- list(list(what = ols,
                       assign_X = X_baseline),
-                 list(fun = ols,
+                 list(what = ols,
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150),
                       assign_X = X_baseline))
 
 # PLM with short-stacking
 stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         sample_folds = 5,
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
-To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking weights. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
+To assess whether the additional effort in expanding the control variables had an effect on the composition of the reduced form estimates, we can again inspect the stacking diagnostics. Indeed, the new base learner that combines lasso with the polynomial expansion of the controls is assigned the largest weight, followed by the random forest estimators.
 
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+diagnostics(stacking_fit)
 ```
 
-# Estimation with Continious and Binary Outcome and Treatment Variables
+# Estimation with Continuous and Binary Outcome and Treatment Variables
 
 Thus far, we have considered the same set of base learners for the reduced form of the outcome on controls and the reduced form of the endogenous variable on the controls. In contrast to net financial assets which is (approximately) continuous, participating in a 401k is a binary indicator. It may thus sensible to consider reduced form estimators with support on the unit-interval for the latter reduced form. For example, we could consider logistic regression instead of linear regression.
 
-Equipped with the included ``mdl_glm`` wrapper for generalized linear models (see also ``?mdl_glm``), we now specify a second set of base-learners for the reduced form of the binary endogenous variable of interest on the controls. As in the previous section, we consider different sets of control variables as well. When estimating the double/debiased machine learning estimator, we pass the second set of base learners via the ``learners_DX`` argument.
+Equipped with the included ``mdl_glm`` wrapper for generalized linear models (see also ``?mdl_glm``), we now specify a second set of base-learners for the reduced form of the binary endogenous variable of interest on the controls. As in the previous section, we consider different sets of control variables as well. When estimating the Double/Debiased Machine Learning estimator, we pass the second set of base learners via the ``learners_DX`` argument.
 
 ```{r}
 # Specify an additional set of learners for the reduced form E[D|X]
-learners_DX <- list(list(fun = mdl_glm,
+learners_DX <- list(list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_baseline),
-                 list(fun = mdl_glm,
+                 list(what = mdl_glm,
                          args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_glmnet,
+                 list(what = mdl_glmnet,
                       args = list(family = "binomial"),
                       assign_X = X_extended),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
                                   max.depth = 4),
                       assign_X = X_baseline),
-                 list(fun = mdl_ranger,
-                      args = list(num.trees = 250,
-                                  max.depth = 12),
+                 list(what = mdl_ranger,
+                      args = list(num.trees = 100,
+                                  max.depth = 8),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 100),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 50),
                       assign_X = X_baseline),
-                 list(fun = mdl_xgboost,
-                      args = list(nrounds = 300),
+                 list(what = mdl_xgboost,
+                      args = list(nrounds = 150),
                       assign_X = X_baseline))
 
 # PLM with short-stacking and different sets of learners
@@ -201,17 +203,40 @@ stacking_fit <- ddml_plm(y = y, D = D, X = X_c,
                          learners = learners,
                          learners_DX = learners_DX,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         sample_folds = 5,
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_fit)
 ```
 
-The weights associated with the new base learners are now slightly larger:
+The diagnostics associated with the new base learners show slightly larger weights:
 
 
 ```{r}
-sapply(stacking_fit$weights, round, 4)
+diagnostics(stacking_fit)
+```
+
+# Advanced: Rapid Refits with the Passthrough API
+
+Estimating multiple machine learners via cross-fitting can be computationally expensive. Suppose that, after inspecting ``stacking_fit`` above, you decide you additionally want to see the results if you had used the ``singlebest`` ensemble type instead of ``nnls``. 
+
+Rather than waiting for all base learners to be refit from scratch, ``ddml`` allows you to extract the out-of-sample predictions from the initial fit and pass them directly into a new ``ddml_plm`` call via the ``fitted`` argument. 
+
+Because ``stacking_fit`` already contains the cross-fitted predictions and sample splits in its ``fitted`` component, we can bypass the estimation step entirely.
+
+```{r}
+# Recompute the structural parameter instantly using 'singlebest'
+stacking_refit <- ddml_plm(
+  y = y, D = D, X = X_c,
+  learners = learners,
+  learners_DX = learners_DX,
+  ensemble_type = "singlebest",
+  sample_folds = 5,
+  fitted = stacking_fit$fitted, # Pass the predictions directly
+  splits = stacking_fit$splits, # Pass the splits used directly
+  silent = TRUE
+)
+summary(stacking_refit)
 ```
 
 # Bonus: Instrumental Variable Estimation
@@ -230,13 +255,16 @@ stacking_IV_fit <- ddml_pliv(y = y, D = D, Z = Z, X = X_c,
                          learners_DX = learners_DX,
                          learners_ZX = learners_DX,
                          ensemble_type = "nnls",
-                         sample_folds = 10,
-                         shortstack = T,
-                         silent = T)
+                         sample_folds = 5,
+                         shortstack = TRUE,
+                         silent = TRUE)
 summary(stacking_IV_fit)
+```
 
-# Stacking weights associated with each base learner
-sapply(stacking_IV_fit$weights, round, 4)
+The stacking diagnostics for the IV model:
+
+```{r}
+diagnostics(stacking_IV_fit)
 ```
 
 

@@ -1,5 +1,49 @@
 # Collection of small internal functions
 
+# Resolve estimator progress messages.
+#
+# Merges user-supplied message overrides (passed via dots by
+# internal callers like ddml_ate) with estimator defaults.
+# Standard start/finish templates are derived from `name`.
+#
+# @param dots The `list(...)` captured in the estimator.
+# @param name Estimator name, e.g. "ddml_apo".
+# @param labels Named list of equation-specific labels,
+#   e.g. list(y_X = "E[Y|D=1,X]", D_X = "P(D=1|X)").
+# @return A named list of message strings.
+resolve_messages <- function(dots, name, labels = list()) {
+  defaults <- c(
+    list(start = paste0(name, ": estimating (%s)"),
+         finish = paste0(name, ": completed in %s s")),
+    labels)
+  user <- dots[["messages"]]
+  if (is.null(user)) return(defaults)
+  c(user, defaults[setdiff(names(defaults), names(user))])
+}#RESOLVE_MESSAGES
+
+# Emit the estimator start message with mode info.
+announce_start <- function(messages, parallel, silent) {
+  mode_str <- if (!is.null(parallel)) {
+    p <- parse_parallel(parallel)
+    paste0("parallel, ", p$num_cores, " cores")
+  } else {
+    "sequential"
+  }#IFELSE
+  if (!is.null(messages$start) && messages$start != "") {
+    info_msg(sprintf(messages$start, mode_str),
+             silent = silent)
+  }#IF
+}#ANNOUNCE_START
+
+# Emit the estimator finish message with elapsed time.
+announce_finish <- function(t0, messages, silent) {
+  elapsed <- round(proc.time()[3] - t0, 1)
+  if (!is.null(messages$finish) && messages$finish != "") {
+    info_msg(sprintf(messages$finish, elapsed),
+             silent = silent)
+  }#IF
+}#ANNOUNCE_FINISH
+
 # Simple generalized inverse wrapper.
 csolve <- function(X) {
   # Attempt inversion
@@ -12,35 +56,37 @@ csolve <- function(X) {
   X_inv
 }#CSOLVE
 
-# Function to pull oosresid from get_CEF results
-get_oosfitted <- function(res_list, j = NULL) {
+# Extract ensemble cross-fitted predictions from a CEF result list.
+get_cf_fitted <- function(res_list, j = NULL) {
   if (is.null(j)) {
-    vapply(res_list, function (x) x$oos_fitted,
-           FUN.VALUE = c(res_list[[1]]$oos_fitted))
+    vapply(res_list, function (x) x$cf_fitted,
+           FUN.VALUE = c(res_list[[1]]$cf_fitted))
   } else {
-    vapply(res_list, function (x) x$oos_fitted[, j],
-           FUN.VALUE = res_list[[1]]$oos_fitted[, 1])
+    vapply(res_list, function (x) x$cf_fitted[, j],
+           FUN.VALUE = res_list[[1]]$cf_fitted[, 1])
   }#IFELSE
-}#GET_OOSRESID
+}#GET_CF_FITTED
 
 # Function to trim propensity scores and warn user
-trim_propensity_scores <- function(m_X, trim, ensemble_type) {
-  # Data parameter
+trim_propensity_scores <- function(m_X, trim, ensemble_type,
+                                   silent = FALSE) {
   nensb <- length(ensemble_type)
-  # Trim by ensemble type
-  for (j in length(nensb)) {
+  for (j in seq_len(nensb)) {
     indx_trim_0 <- which(m_X[, j] <= trim)
     indx_trim_1 <- which(m_X[, j] >= 1 - trim)
     ntrim <- length(c(indx_trim_0, indx_trim_1))
     if (ntrim > 0) {
-      # Warn user
-      if (nensb == 1) {
-        warning(paste0(ntrim, " propensity scores were trimmed."))
-      } else {
-        warning(paste0(ensemble_type[j], ": ", ntrim,
-                       " propensity scores were trimmed."))
-      }#IFELSE
-      # Replace scores by constant
+      if (!silent) {
+        if (nensb == 1) {
+          warning(paste0(ntrim,
+                         " propensity scores were trimmed."),
+                  call. = FALSE)
+        } else {
+          warning(paste0(ensemble_type[j], ": ", ntrim,
+                         " propensity scores were trimmed."),
+                  call. = FALSE)
+        }#IFELSE
+      }#IF
       m_X[indx_trim_0, j] <- trim
       m_X[indx_trim_1, j] <- 1 - trim
     }#IF
@@ -48,3 +94,360 @@ trim_propensity_scores <- function(m_X, trim, ensemble_type) {
   # Return trimmed scores
   m_X
 }#TRIM_PROPENSITY_SCORES
+
+# Detect whether learners is a single-learner spec or stacking.
+# Single: list(what = fn, args = ...) — first element is not a list.
+# Stacking: list(list(what = fn), list(what = fn2)) — first element is a list.
+is_single_learner <- function(learners) {
+  is.list(learners) && !is.list(learners[[1]])
+}#IS_SINGLE_LEARNER
+
+# Ensure all learner specs have $what set.
+# Accepts $fun as deprecated alias. Removes $fun after resolving.
+normalize_learners <- function(learners) {
+  resolve <- function(l) {
+    if (!is.null(l$what)) return(l$what)
+    if (!is.null(l$fun)) {
+      message("Note: 'fun' in learner specifications ",
+              "is deprecated. Use 'what' instead.")
+      return(l$fun)
+    }#IF
+    stop("Learner must have a 'what' element.",
+         call. = FALSE)
+  }#RESOLVE
+
+  if (is_single_learner(learners)) {
+    learners$what <- resolve(learners)
+    learners$fun <- NULL
+    return(learners)
+  }#IF
+  for (i in seq_along(learners)) {
+    learners[[i]]$what <- resolve(learners[[i]])
+    learners[[i]]$fun <- NULL
+  }#FOR
+  learners
+}#NORMALIZE_LEARNERS
+
+# Compute MSPE and R-squared from a residual matrix and outcome.
+compute_mspe_r2 <- function(resid, y) {
+  mspe <- colMeans(resid^2)
+  y_var <- as.numeric(stats::var(y))
+  r2 <- if (y_var > 0) 1 - mspe / y_var else
+    rep(NA_real_, length(mspe))
+  list(mspe = mspe, r2 = r2)
+}#COMPUTE_MSPE_R2
+
+# Fit a single base learner to y and X, with tryCatch wrapping.
+fit_learner <- function(learner, y, X) {
+  if (is.null(learner$assign_X))
+    learner$assign_X <- seq_len(ncol(X))
+  mdl_fun <- list(what = learner$what, args = learner$args)
+  mdl_fun$args$y <- y
+  mdl_fun$args$X <- X[, learner$assign_X, drop = FALSE]
+  tryCatch(
+    do.call(do.call, mdl_fun),
+    error = function(e) {
+      stop("Learner fitting failed: ", conditionMessage(e),
+           call. = FALSE)
+    })
+}#FIT_LEARNER
+
+# Count custom ensemble weight columns (0L when NULL).
+n_custom <- function(custom_weights) {
+  if (is.null(custom_weights)) 0L else ncol(custom_weights)
+}#N_CUSTOM
+
+# Build a CEF-like result from pre-computed per-learner predictions.
+# When cv_resid_byfold + subsamples are available, recomputes
+# per-fold weights from inner-CV residuals (exact). Otherwise
+# uses sample-fold residuals (approximate, exact for shortstacking).
+build_CEF_from_crossfit <- function(y, cf_fitted_bylearner_eq,
+                                    ensemble_type,
+                                    custom_ensemble_weights,
+                                    cv_resid_byfold = NULL,
+                                    subsamples = NULL,
+                                    auxiliary_fitted_bylearner = NULL) {
+  nobs <- length(y)
+  cf <- as.matrix(cf_fitted_bylearner_eq)
+
+  cf_resid_bylearner <- drop(y) - cf
+  mspe_bylearner <- colMeans(cf_resid_bylearner^2)
+
+  # Two weight-computation paths:
+  # Per-fold: uses inner-CV residuals from the training fold to
+  #   compute fold-specific weights (exact stacking).
+  # Pooled: uses OOS cross-fitted residuals from the full sample
+  #   to compute a single set of weights (approximate; exact for
+  #   short-stacking where OOS residuals ARE the stacking residuals).
+  if (!is.null(cv_resid_byfold) && !is.null(cv_resid_byfold[[1]]) &&
+      !is.null(subsamples)) {
+    K <- length(subsamples)
+    ncustom <- n_custom(custom_ensemble_weights)
+    nensb <- length(ensemble_type) + ncustom
+    cf_fitted <- matrix(0, nobs, nensb)
+    all_weights <- vector("list", K)
+    for (k in seq_len(K)) {
+      train_idx <- setdiff(seq_len(nobs), subsamples[[k]])
+      fakecv_k <- list(
+        cv_resid = cv_resid_byfold[[k]],
+        mspe = colMeans(cv_resid_byfold[[k]]^2))
+      ew_k <- ensemble_weights(
+        y[train_idx], cf[train_idx, ],
+        type = ensemble_type,
+        cv_results = fakecv_k,
+        custom_weights = custom_ensemble_weights,
+        silent = TRUE)
+      all_weights[[k]] <- ew_k$weights
+      cf_fitted[subsamples[[k]], ] <- cf[subsamples[[k]], ] %*%
+        ew_k$weights
+    }#FOR
+    weights <- array(0, dim = c(ncol(cf), nensb, K))
+    for (k in seq_len(K)) weights[, , k] <- all_weights[[k]]
+    dimnames(weights) <- list(NULL, colnames(all_weights[[1]]),
+                              paste("sample fold ", seq_len(K)))
+  } else {
+    fakecv <- list(cv_resid = cf_resid_bylearner,
+                   mspe = mspe_bylearner)
+    ew <- ensemble_weights(
+      y, cf, type = ensemble_type,
+      cv_results = fakecv,
+      custom_weights = custom_ensemble_weights,
+      silent = TRUE)
+    weights <- ew$weights
+    cf_fitted <- cf %*% weights
+  }#IFELSE
+
+  ens_names <- colnames(weights)
+  if (!is.null(ens_names)) colnames(cf_fitted) <- ens_names
+
+  auxiliary_fitted <- extrapolate_auxiliary(
+    auxiliary_fitted_bylearner, weights)
+
+  oos_stats <- compute_mspe_r2(cf_resid_bylearner, y)
+  mspe <- oos_stats$mspe
+  r2 <- oos_stats$r2
+
+  nlearners <- ncol(cf)
+  if (nlearners > 1) {
+    # Ensemble OOS mspe and r-squared
+    cf_resid_ens <- drop(y) - cf_fitted
+    oos_stats_ens <- compute_mspe_r2(cf_resid_ens, y)
+    
+    mspe <- c(mspe, oos_stats_ens$mspe)
+    r2 <- c(r2, oos_stats_ens$r2)
+    names(mspe) <- names(r2) <- c(paste0("learner_", seq_len(nlearners)), 
+                                  ens_names)
+  }#IF
+
+  list(cf_fitted = cf_fitted,
+       weights = weights,
+       ensemble_type = ens_names,
+       mspe = mspe,
+       r2 = r2,
+       auxiliary_fitted = auxiliary_fitted,
+       cf_fitted_bylearner = cf,
+       cf_resid_bylearner = cf_resid_bylearner,
+       cv_resid_byfold = cv_resid_byfold)
+}#BUILD_CEF_FROM_CROSSFIT
+
+# Apply ensemble weights to per-learner auxiliary predictions.
+extrapolate_auxiliary <- function(auxiliary_fitted_bylearner,
+                                  weights) {
+  if (is.null(auxiliary_fitted_bylearner)) return(NULL)
+  K <- length(auxiliary_fitted_bylearner)
+  per_fold <- length(dim(weights)) == 3
+  auxiliary_fitted <- vector("list", K)
+  for (k in seq_len(K)) {
+    w_k <- if (per_fold) weights[, , k] else weights
+    auxiliary_fitted[[k]] <-
+      as.matrix(auxiliary_fitted_bylearner[[k]]) %*% w_k
+  }#FOR
+  auxiliary_fitted
+}#EXTRAPOLATE_AUXILIARY
+
+validate_fitted_splits_pair <- function(fitted, splits) {
+  if (is.null(fitted)) return(invisible(NULL))
+  if (is.null(splits)) {
+    stop("'splits' must be supplied when 'fitted' is ",
+         "supplied.", call. = FALSE)
+  }#IF
+}#VALIDATE_FITTED_SPLITS_PAIR
+
+build_fitted_entry <- function(res, save_crossval,
+                               include_auxiliary = FALSE) {
+  entry <- list(cf_fitted = res$cf_fitted,
+                cf_fitted_bylearner = res$cf_fitted_bylearner,
+                cf_resid_bylearner = res$cf_resid_bylearner)
+  if (save_crossval) {
+    entry$cv_resid_byfold <- res$cv_resid_byfold
+  }#IF
+  if (include_auxiliary) {
+    entry$auxiliary_fitted <- res$auxiliary_fitted
+    entry$auxiliary_fitted_bylearner <-
+      res$auxiliary_fitted_bylearner
+  }#IF
+  entry
+}#BUILD_FITTED_ENTRY
+
+build_fitted_flat <- function(res_list, save_crossval,
+                              key_prefix, key_suffix) {
+  out <- list()
+  for (k in seq_along(res_list)) {
+    key <- paste0(key_prefix, k, key_suffix)
+    out[[key]] <- build_fitted_entry(res_list[[k]],
+                                     save_crossval)
+  }#FOR
+  out
+}#BUILD_FITTED_FLAT
+
+# Input validation checks for DDML estimators
+validate_inputs <- function(y = NULL, D = NULL, X = NULL, Z = NULL,
+                            learners = NULL,
+                            sample_folds = NULL, cv_folds = NULL,
+                            ensemble_type = NULL, trim = NULL,
+                            weights = NULL,
+                            cluster_variable = NULL,
+                            require_binary_D = FALSE) {
+  nobs <- length(y)
+  if (!is.null(y)) {
+    if (!is.numeric(y) || anyNA(y) || nobs == 0) {
+      stop("y must be a numeric vector with no NAs.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(D) && !is.null(y)) {
+    D_mat <- as.matrix(D)
+    if (!is.numeric(D_mat) || anyNA(D_mat)) {
+      stop("D must be numeric with no NAs.", call. = FALSE)
+    }
+    if (nrow(D_mat) != nobs) {
+      stop("Length/number of rows of D must match length of y.",
+           call. = FALSE)
+    }
+    if (require_binary_D) {
+      if (!all(D_mat %in% c(0, 1))) {
+        stop("D must be binary (0 or 1).", call. = FALSE)
+      }
+    }
+  }
+
+  if (!is.null(X) && !is.null(y)) {
+    if (NROW(X) != nobs) {
+      stop("Number of rows of X must match length of y.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(Z) && !is.null(y)) {
+    if (NROW(Z) != nobs) {
+      stop("Number of rows of Z must match length of y.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(learners)) {
+    if (!is.list(learners)) {
+      stop("learners must be a list.", call. = FALSE)
+    } else {
+      is_single <- is_single_learner(learners)
+      if (!is_single) {
+        for (l in learners) {
+          if (!is.list(l) ||
+              (is.null(l$what) && is.null(l$fun))) {
+            stop("Each stacking learner must have a ",
+                 "'what' element.",
+                 call. = FALSE)
+          }#IF
+        }#FOR
+      }#IF
+    }
+  }
+
+  if (!is.null(sample_folds)) {
+    if (!is.numeric(sample_folds) || length(sample_folds) > 1 ||
+        sample_folds < 1 || sample_folds %% 1 != 0) {
+      stop("sample_folds must be a positive integer.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(cv_folds)) {
+    if (!is.numeric(cv_folds) || length(cv_folds) > 1 ||
+        cv_folds < 1 || cv_folds %% 1 != 0) {
+      stop("cv_folds must be a positive integer.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(ensemble_type)) {
+    allowed_types <- c("nnls", "nnls1", "singlebest", "ols", "average")
+    if (!is.character(ensemble_type) ||
+        any(!ensemble_type %in% allowed_types)) {
+      stop("ensemble_type must be one or more of: ",
+           "nnls, nnls1, singlebest, ols, average.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(trim)) {
+    if (!is.numeric(trim) || length(trim) > 1 ||
+        trim <= 0 || trim >= 0.5) {
+      stop("trim must be a numeric value strictly ",
+           "between 0 and 0.5.", call. = FALSE)
+    }
+  }
+
+  if (!is.null(weights) && !is.null(y)) {
+    if (!is.numeric(weights) || anyNA(weights)) {
+      stop("weights must be a numeric vector with no NAs.",
+           call. = FALSE)
+    }
+    if (length(weights) != nobs) {
+      stop("weights must have the same length as y.",
+           call. = FALSE)
+    }
+  }
+
+  if (!is.null(cluster_variable)) {
+    if (anyNA(cluster_variable)) {
+      stop("cluster_variable must not contain NAs.",
+           call. = FALSE)
+    }
+  }
+}#VALIDATE_INPUTS
+
+validate_custom_weights <- function(custom_weights, learners) {
+  if (is.null(custom_weights)) return(invisible(NULL))
+  if (!is.numeric(custom_weights)) {
+    stop("custom_ensemble_weights must be numeric.",
+         call. = FALSE)
+  }
+  custom_weights <- as.matrix(custom_weights)
+  n_learners <- if (is_single_learner(learners)) 1 else length(learners)
+  if (nrow(custom_weights) != n_learners) {
+    stop("Number of rows in custom_ensemble_weights must match ",
+         "the number of base learners.", call. = FALSE)
+  }
+}#VALIDATE_CUSTOM_WEIGHTS
+
+# print a 3D coefficient array.
+# Used by print.summary.ral, print.summary.ddml, and their
+# _rep counterparts.
+print_coef_tables <- function(coefficients, fit_label = "Fit", digits = 3) {
+  nfit <- dim(coefficients)[3]
+  for (j in seq_len(nfit)) {
+    if (nfit > 1) {
+      cat(fit_label, ": ", dimnames(coefficients)[[3]][j], "\n", sep = "")
+    }#IF
+    tbl <- coefficients[, , j]
+    if (!is.matrix(tbl)) {
+      tbl <- matrix(tbl, nrow = 1, dimnames = list(
+        dimnames(coefficients)[[1]],
+        dimnames(coefficients)[[2]]))
+    }#IF
+    stats::printCoefmat(tbl, digits = digits, has.Pvalue = TRUE,
+                        signif.stars = TRUE)
+    if (j < nfit) cat("\n")
+  }#FOR
+}#PRINT_COEF_TABLES

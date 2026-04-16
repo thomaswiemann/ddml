@@ -1,7 +1,7 @@
 Package: ddml
 Title: Double/Debiased Machine Learning
-Version: 0.3.1
-Date: 2025-12-10
+Version: 0.9.0
+Date: 2026-03-06
 Authors@R: c(
     person("Achim", "Ahrens", role = "aut"),
     person("Christian B", "Hansen", role = "aut"),
@@ -23,21 +23,26 @@ RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.3)
 Imports: 
-    methods,
-    stats,
-    AER,
+    generics,
+    glmnet,
+    graphics,
     MASS,
     Matrix,
+    methods,
     nnls,
+    pbapply,
     quadprog,
-    glmnet,
     ranger,
+    stats,
     xgboost
 Suggests: 
-    sandwich,
+    AER,
     covr,
-    testthat (>= 3.0.0),
+    CVXR,
     knitr,
-    rmarkdown
+    parallel,
+    rmarkdown,
+    sandwich,
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

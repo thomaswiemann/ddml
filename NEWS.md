@@ -1,9 +1,25 @@
-# ddml 0.3.1
+# ddml 0.9.0
 
-* Updates internals of ``ddml::mdl_xgboost()`` with new ``xgboost`` syntax.
-* Fixes ``ddml::ddml_fpliv()`` with custom weights.
-* Allows for stacking with no positive stacking weights.
-* Fixes ``ddml::mdl_glmnet`` predictions for binomial regression.
+* Adds `ddml_attgt()` for staggered DiD and `ddml_apo()` for average potential outcomes.
+* Adds `ddml_policy()` for multi-action policy value estimation.
+* Adds `ddml()` constructor for custom DML estimators with user-supplied scores.
+* Adds `lincom()` for inference on linear combinations. Supports computation of dynamic average treatment effects via `lincom_weights_did()`.
+* Influence-function-based inference via the `ral` class; all estimators now inherit from `ral`.
+* Adds `ddml_rep()` and `ddml_replicate()` for repeated cross-fitting with median, mean, or spectral-norm aggregation.
+* Adds `diagnostics()` for MSPE, R-squared, stacking weights, and CVC tests.
+* Adds `fitted`/`splits` pass-through to all `ddml_*()` estimators.
+* New S3 methods: `plot()`, `as.list()`, `hatvalues()`, `nobs()`, multi-ensemble `tidy()`/`glance()`.
+* Adds uniform confidence bands via multiplier bootstrap (`confint(uniform = TRUE)`).
+* Adds HC0/HC3 variance estimators, parallel computation, stratified cross-fitting, cluster-aware splitting, and input validation.
+* Adds `broom` compatibility.
+* Fixes `ddml_fpliv()` with custom weights.
+* Breaking changes:
+    - Inference internals use `$inf_func` instead of `$scores`/`$J`/`$psi_a`/`$psi_b`.
+    - Utility functions (`crosspred`, `crossval`, `ensemble`, `ensemble_weights`, `shortstacking`) no longer accept `Z`/`newZ`. Pre-concatenate instruments with covariates (e.g., `cbind(X, Z)`).
+    - `crosspred()` and `shortstacking()` drop `compute_insample_predictions` and `insample_fitted` output.
+    - `ddml_fpliv()` drops the `enforce_LIE` argument.
+    - `shortstacking()` drops `shortstack_y`.
+    - `ddml_*()` estimators drop `subsamples`, `cv_subsamples`, `subsamples_byD`, `cv_subsamples_byD`. Use the new `splits` parameter instead.
 
 # ddml 0.3.0
 

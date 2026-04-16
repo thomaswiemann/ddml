@@ -2,7 +2,7 @@
 % Please edit documentation in R/ddml_pliv.R
 \name{ddml_pliv}
 \alias{ddml_pliv}
-\title{Estimator for the Partially Linear IV Model.}
+\title{Estimator for the Partially Linear IV Coefficient}
 \usage{
 ddml_pliv(
   y,
@@ -20,9 +20,12 @@ ddml_pliv(
   custom_ensemble_weights_DX = custom_ensemble_weights,
   custom_ensemble_weights_ZX = custom_ensemble_weights,
   cluster_variable = seq_along(y),
-  subsamples = NULL,
-  cv_subsamples_list = NULL,
-  silent = FALSE
+  silent = FALSE,
+  parallel = NULL,
+  fitted = NULL,
+  splits = NULL,
+  save_crossval = TRUE,
+  ...
 )
 }
 \arguments{
@@ -34,34 +37,34 @@ ddml_pliv(
 
 \item{X}{A (sparse) matrix of control variables.}
 
-\item{learners}{May take one of two forms, depending on whether a single
-learner or stacking with multiple learners is used for estimation of the
-conditional expectation functions.
-If a single learner is used, \code{learners} is a list with two named
-elements:
+\item{learners}{May take one of two forms, depending on whether a
+single learner or stacking with multiple learners is used for
+estimation of the conditional expectation functions.
+If a single learner is used, \code{learners} is a list with
+two named elements:
 \itemize{
-\item{\code{what} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{what}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 }
-If stacking with multiple learners is used, \code{learners} is a list of
-lists, each containing four named elements:
+If stacking with multiple learners is used, \code{learners} is
+a list of lists, each containing three named elements:
 \itemize{
-\item{\code{fun} The base learner function. The function must be
-such that it predicts a named input \code{y} using a named input
-\code{X}.}
-\item{\code{args} Optional arguments to be passed to \code{fun}.}
+\item{\code{what} The base learner function. The function
+must be such that it predicts a named input \code{y}
+using a named input \code{X}.}
+\item{\code{args} Optional arguments to be passed to
+\code{what}.}
 \item{\code{assign_X} An optional vector of column indices
-corresponding to control variables in \code{X} that are passed to
-the base learner.}
-\item{\code{assign_Z} An optional vector of column indices
-corresponding to instruments in \code{Z} that are passed to the
-base learner.}
+corresponding to control variables in \code{X} that
+are passed to the base learner.}
 }
-Omission of the \code{args} element results in default arguments being
-used in \code{fun}. Omission of \code{assign_X} (and/or \code{assign_Z})
-results in inclusion of all variables in \code{X} (and/or \code{Z}).}
+Omission of the \code{args} element results in default
+arguments being used in \code{what}. Omission of
+\code{assign_X} results in inclusion of all variables in
+\code{X}.}
 
 \item{learners_DX, learners_ZX}{Optional arguments to allow for different
 base learners for estimation of \eqn{E[D|X]}, \eqn{E[Z|X]}. Setup is
@@ -69,13 +72,15 @@ identical to \code{learners}.}
 
 \item{sample_folds}{Number of cross-fitting folds.}
 
-\item{ensemble_type}{Ensemble method to combine base learners into final
-estimate of the conditional expectation functions. Possible values are:
+\item{ensemble_type}{Ensemble method to combine base learners into
+final estimate of the conditional expectation functions.
+Possible values are:
 \itemize{
 \item{\code{"nnls"} Non-negative least squares.}
-\item{\code{"nnls1"} Non-negative least squares with the constraint
-that all weights sum to one.}
-\item{\code{"singlebest"} Select base learner with minimum MSPE.}
+\item{\code{"nnls1"} Non-negative least squares with the
+constraint that all weights sum to one.}
+\item{\code{"singlebest"} Select base learner with minimum
+MSPE.}
 \item{\code{"ols"} Ordinary least squares.}
 \item{\code{"average"} Simple average over base learners.}
 }
@@ -83,14 +88,15 @@ Multiple ensemble types may be passed as a vector of strings.}
 
 \item{shortstack}{Boolean to use short-stacking.}
 
-\item{cv_folds}{Number of folds used for cross-validation in ensemble
-construction.}
+\item{cv_folds}{Number of folds used for cross-validation in
+ensemble construction.}
 
-\item{custom_ensemble_weights}{A numerical matrix with user-specified
-ensemble weights. Each column corresponds to a custom ensemble
-specification, each row corresponds to a base learner in \code{learners}
-(in chronological order). Optional column names are used to name the
-estimation results corresponding the custom ensemble specification.}
+\item{custom_ensemble_weights}{A numerical matrix with
+user-specified ensemble weights. Each column corresponds to a
+custom ensemble specification, each row corresponds to a base
+learner in \code{learners} (in chronological order). Optional
+column names are used to name the estimation results
+corresponding the custom ensemble specification.}
 
 \item{custom_ensemble_weights_DX, custom_ensemble_weights_ZX}{Optional
 arguments to allow for different
@@ -102,48 +108,77 @@ have the same number of columns.}
 
 \item{cluster_variable}{A vector of cluster indices.}
 
-\item{subsamples}{List of vectors with sample indices for cross-fitting.}
-
-\item{cv_subsamples_list}{List of lists, each corresponding to a subsample
-containing vectors with subsample indices for cross-validation.}
-
 \item{silent}{Boolean to silence estimation updates.}
+
+\item{parallel}{An optional named list with parallel processing
+options. When \code{NULL} (the default), computation is
+sequential. Supported fields:
+\describe{
+\item{\code{cores}}{Number of cores to use.}
+\item{\code{export}}{Character vector of object names to
+export to parallel workers (for custom learners that
+reference global objects).}
+\item{\code{packages}}{Character vector of additional
+package names to load on workers (for custom learners
+that use packages not imported by \code{ddml}).}
+}}
+
+\item{fitted}{An optional named list of per-equation cross-fitted
+predictions, typically obtained from a previous fit via
+\code{fit$fitted}. When supplied (together with \code{splits}),
+base learners are not re-fitted; only ensemble weights are
+recomputed. This allows fast re-estimation with a different
+\code{ensemble_type}. See \code{\link{ddml_plm}} for
+an example.}
+
+\item{splits}{An optional list of sample split objects, typically
+obtained from a previous fit via \code{fit$splits}. Must be
+supplied when \code{fitted} is provided. Can also be used
+standalone to provide pre-computed sample folds.}
+
+\item{save_crossval}{Logical indicating whether to store the inner
+cross-validation residuals used for ensemble weight
+computation. Default \code{TRUE}. When \code{TRUE}, subsequent
+pass-through calls with data-driven ensembles (e.g.,
+\code{"nnls"}) reproduce per-fold weights exactly. Set to
+\code{FALSE} to reduce object size at the cost of approximate
+weight recomputation.}
+
+\item{...}{Additional arguments passed to internal methods.}
 }
 \value{
 \code{ddml_pliv} returns an object of S3 class
-\code{ddml_pliv}. An object of class \code{ddml_pliv} is a list
-containing the following components:
-\describe{
-\item{\code{coef}}{A vector with the \eqn{\theta_0} estimates.}
-\item{\code{weights}}{A list of matrices, providing the weight
-assigned to each base learner (in chronological order) by the
-ensemble procedure.}
-\item{\code{mspe}}{A list of matrices, providing the MSPE of each
-base learner (in chronological order) computed by the
-cross-validation step in the ensemble construction.}
-\item{\code{iv_fit}}{Object of class \code{ivreg} from the IV
-regression of \eqn{Y - \hat{E}[Y\vert X]} on
-\eqn{D - \hat{E}[D\vert X]} using \eqn{Z - \hat{E}[Z\vert X]} as
-the instrument. See also \code{\link[AER:ivreg]{AER::ivreg()}} for details.}
-\item{\code{learners},\code{learners_DX},\code{learners_ZX},
-\code{cluster_variable}, \code{subsamples},
-\code{cv_subsamples_list},\code{ensemble_type}}{Pass-through of
-selected user-provided arguments. See above.}
-}
+\code{ddml_pliv} and \code{ddml}. See \code{\link{ddml-intro}}
+for the common output structure. Additional pass-through
+fields: \code{learners}, \code{learners_DX},
+\code{learners_ZX}.
 }
 \description{
-Estimator for the partially linear IV model.
+Estimator for the partially linear IV coefficient.
 }
 \details{
-\code{ddml_pliv} provides a double/debiased machine learning
-estimator for the parameter of interest \eqn{\theta_0} in the partially
-linear IV model given by
+\strong{Parameter of Interest:} \code{ddml_pliv} provides a Double/Debiased
+Machine Learning estimator for the partially linear instrumental variable
+(IV) coefficient \eqn{\theta_0}, defined by the partially linear IV model:
 
-\eqn{Y = \theta_0D + g_0(X) + U,}
+\deqn{Y = \theta_0 D + g_0(X) + \varepsilon, \quad E[Z\varepsilon] = 0, \quad E[\varepsilon|X] = 0,}
 
-where \eqn{(Y, D, X, Z, U)} is a random vector such that
-\eqn{E[Cov(U, Z\vert X)] = 0} and \eqn{E[Cov(D, Z\vert X)] \neq 0}, and
-\eqn{g_0} is an unknown nuisance function.
+where \eqn{W \equiv (Y, D, X, Z, \varepsilon)} is a random vector such that
+\eqn{E[Cov(D, Z|X)] \neq 0}, and \eqn{g_0(X)} is an unknown nuisance function.
+
+\strong{Neyman Orthogonal Score:} The Neyman orthogonal score is:
+
+\deqn{m(W; \theta, \eta) = [(Y - \ell(X)) - \theta(D - r_D(X))](Z - r_Z(X))}
+
+where the nuisance parameters are \eqn{\eta = (\ell, r_D, r_Z)} taking
+true values \eqn{\ell_0(X) = E[Y|X]}, \eqn{r_{D,0}(X) = E[D|X]}, and \eqn{r_{Z,0}(X) = E[Z|X]}.
+
+\strong{Jacobian:}
+
+\deqn{J = -E[(D - r_D(X))(Z - r_Z(X))^\top]}
+
+See \code{\link{ddml-intro}} for how the influence function
+and inference are derived from these components.
 }
 \examples{
 # Construct variables from the included Angrist & Evans (1998) data
@@ -160,26 +195,15 @@ pliv_fit <- ddml_pliv(y, D, Z, X,
                       silent = TRUE)
 summary(pliv_fit)
 }
-\references{
-Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2024). "Model Averaging and
-Double Machine Learning." Journal of Applied Econometrics, 40(3): 249-269.
-
-Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
-Robins J (2018). "Double/debiased machine learning for treatment and
-structural parameters." The Econometrics Journal, 21(1), C1-C68.
-
-Kleiber C, Zeileis A (2008). Applied Econometrics with R. Springer-Verlag,
-New York.
-
-Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
-}
 \seealso{
-\code{\link[=summary.ddml_pliv]{summary.ddml_pliv()}}, \code{\link[AER:ivreg]{AER::ivreg()}}
-
-Other ddml: 
+Other ddml estimators: 
+\code{\link{ddml-intro}},
+\code{\link{ddml_apo}()},
 \code{\link{ddml_ate}()},
+\code{\link{ddml_attgt}()},
 \code{\link{ddml_fpliv}()},
 \code{\link{ddml_late}()},
-\code{\link{ddml_plm}()}
+\code{\link{ddml_plm}()},
+\code{\link{ddml_policy}()}
 }
-\concept{ddml}
+\concept{ddml estimators}
